@@ -1,0 +1,28 @@
+# Built objects
+bin/
+gen/
+out/
+build/
+.gradle/
+.kotlin/
+.idea/
+
+# Android Studio / IntelliJ IDEA
+*.iml
+*.iws
+*.ipr
+/captures/
+.externalNativeBuild
+.cxx/
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Log files
+*.log
+
+# Keystore files
+*.jks
+*.keystore
+*.p12
+
