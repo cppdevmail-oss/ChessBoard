@@ -7,6 +7,9 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Database
 import androidx.sqlite.db.SupportSQLiteDatabase
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 
 import androidx.room.Entity
 import androidx.room.Index
@@ -23,7 +26,7 @@ import androidx.room.ForeignKey
         Index(value = ["date"])
     ]
 )
-private data class GameEntity(
+data class GameEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
 
@@ -80,6 +83,12 @@ private data class GamePositionEntity(
     val ply: Int
 )
 
+@Dao
+private interface GameDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertGame(game: GameEntity): Long
+}
+
 @Database(
     entities = [
         GameEntity::class,
@@ -88,7 +97,9 @@ private data class GamePositionEntity(
     ],
     version = 1
 )
-abstract private  class AppDatabase : RoomDatabase()
+abstract private class AppDatabase : RoomDatabase() {
+    abstract fun gameDao(): GameDao
+}
 
 // End tables description
 // ########################################################
@@ -126,6 +137,15 @@ class DatabaseProvider private constructor(
             super.onOpen(db)
             Log.d("DB", "Database opened")
         }
+    }
+
+    /**
+     * Inserts a chess game into the database.
+     * @param game The GameEntity object to insert.
+     * @return The row ID of the newly inserted game.
+     */
+    suspend fun addGame(game: GameEntity): Long {
+        return database.gameDao().insertGame(game)
     }
 
     companion object {
