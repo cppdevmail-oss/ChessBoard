@@ -187,6 +187,10 @@ class DatabaseProvider private constructor(
         return database.gameDao().getCount()
     }
 
+    suspend fun clearAllData () {
+        database.clearAllData()
+    }
+
     companion object {
         private const val DB_NAME = "app_database"
 

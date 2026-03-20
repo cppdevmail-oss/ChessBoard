@@ -1,5 +1,8 @@
 package com.example.chessboard.boardmodel
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.example.chessboard.ui.BoardOrientation
 import com.github.bhlangonijr.chesslib.Board
 import com.github.bhlangonijr.chesslib.Piece
@@ -8,12 +11,42 @@ import com.github.bhlangonijr.chesslib.move.Move
 
 class GameController (val inOrientation : BoardOrientation = BoardOrientation.WHITE) {
 
-    private val board = Board()
+    private var board = Board()
     private var orientation = inOrientation
     private val moves = mutableListOf<Move>()
     private var currentMoveIndex = 0
     private var startSquare : String? = null
 
+    var canUndo by mutableStateOf(false)
+        private set
+
+    var canRedo by mutableStateOf(false)
+        private set
+
+    fun resetToStartPosition() {
+        canUndo = false
+        canRedo = false
+        startSquare = null
+        currentMoveIndex = 0
+        board = Board()
+        moves.clear()
+    }
+
+    private fun tryMove(move : Move) : Boolean {
+        if (!board.legalMoves().contains(move)) { return false }
+
+        println("Move ${move} is fucking legal")
+        this.board.doMove(move)
+        moves.add(move)
+
+        // If in middle game - need delete tails moves
+        if (currentMoveIndex < moves.size) {
+            moves.subList(currentMoveIndex, moves.size).clear()
+        }
+        updateState()
+
+        return true
+    }
 
     fun tryMove(from: String, to: String): Boolean {
         return try {
@@ -23,21 +56,8 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
                 Square.fromValue(to.uppercase())
             )
 
-            if (board.legalMoves().contains(move)) {
-                println("Move ${move} is fucking legal")
-                this.board.doMove(move)
-                moves.add(move)
-
-                // If in middle game - need delete tails moves
-                if (currentMoveIndex < moves.size) {
-                    moves.subList(currentMoveIndex, moves.size).clear()
-                }
-
-                currentMoveIndex++
-
-                return true
-            }
-            false
+            currentMoveIndex++
+            tryMove(move)
         } catch (e: Exception) {
             println("Error on try move. Err ${e}")
             return false
@@ -47,8 +67,9 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
     fun undoMove(): Boolean {
         if (currentMoveIndex == 0) { return false }
 
-        board.undoMove()
         currentMoveIndex--
+        board.undoMove()
+        updateState()
 
         return true
     }
@@ -56,9 +77,9 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
     fun redoMove(): Boolean {
         if (currentMoveIndex >= moves.size) return false
 
-        val move = moves[currentMoveIndex]
-        board.doMove(move)
+        this.board.doMove(moves[currentMoveIndex])
         currentMoveIndex++
+        updateState()
 
         return true
     }
@@ -66,21 +87,18 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
     fun goToMove(index: Int) : Boolean {
         if (index < 0 || index > moves.size) { return false }
 
-        // сброс доски
-        board.loadFromFen(Board().fen)
-
-        // применяем заново
+        board = Board()
         for (i in 0 until index) {
-            board.doMove(moves[i])
+            tryMove(moves[i])
         }
 
-        currentMoveIndex = index
         return true
     }
 
-    fun canUndo(): Boolean = currentMoveIndex > 0
-
-    fun canRedo(): Boolean = currentMoveIndex < moves.size
+    private fun updateState() {
+        canUndo = currentMoveIndex > 0
+        canRedo = currentMoveIndex < moves.size
+    }
 
     // const function
     fun getOrientation() : BoardOrientation {
