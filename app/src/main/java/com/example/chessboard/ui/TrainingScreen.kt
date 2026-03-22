@@ -22,8 +22,85 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
 import com.example.chessboard.boardmodel.GameController
+import com.example.chessboard.database.DatabaseProvider
+import com.example.chessboard.database.GameEntity
 import com.example.chessboard.ui.theme.ChessBoardTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import android.app.Activity
+
+// TrainingScreenContainer - Manages all backend logic
+@Composable
+fun TrainingScreenContainer(
+    activity: Activity,
+    modifier: Modifier = Modifier,
+    onBackClick: () -> Unit = {}
+) {
+    val gameController = remember { GameController() }
+    val dataBaseController = remember { DatabaseProvider.createInstance(context = activity.applicationContext) }
+    var isDatabaseBusy by remember { mutableStateOf(false) }
+
+    val saveGame: () -> Unit = {
+        println("Save game clicked")
+
+        if (!isDatabaseBusy) {
+            isDatabaseBusy = true
+
+            val localPgn = gameController.generatePgn()
+            val gameEntity = GameEntity(
+                white = "Biba",
+                black = "Buba",
+                result = null,
+                event = null,
+                site = null,
+                date = 0,
+                round = null,
+                eco = null,
+                pgn = localPgn,
+                initialFen = "",
+            )
+
+            (activity as? androidx.lifecycle.LifecycleOwner)?.let { lifecycleOwner ->
+                lifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                    dataBaseController.addGame(gameEntity)
+                    withContext(Dispatchers.Main) {
+                        isDatabaseBusy = false
+                    }
+                }
+                lifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                    val count = dataBaseController.getGamesCount()
+                    println("Count = $count")
+                }
+            }
+        }
+    }
+
+    val clearDatabase: () -> Unit = {
+        if (!isDatabaseBusy) {
+            isDatabaseBusy = true
+
+            (activity as? androidx.lifecycle.LifecycleOwner)?.let { lifecycleOwner ->
+                lifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                    dataBaseController.clearAllData()
+                    withContext(Dispatchers.Main) {
+                        isDatabaseBusy = false
+                    }
+                }
+            }
+        }
+    }
+
+    TrainingScreen(
+        gameController = gameController,
+        modifier = modifier,
+        onBackClick = onBackClick,
+        onSaveGame = saveGame,
+        onDatabaseClear = clearDatabase
+    )
+}
 
 // Color Palette for Training Screen
 private object TrainingColors {
@@ -46,10 +123,12 @@ fun TrainingScreen(
     gameController: GameController,
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
-    onNavigate: (String) -> Unit = {}
+    onNavigate: (String) -> Unit = {},
+    onSaveGame: () -> Unit = {},
+    onDatabaseClear: () -> Unit = {}
 ) {
     var selectedNavItem by remember { mutableStateOf("Training") }
-    
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = TrainingColors.BackgroundDark,
@@ -59,7 +138,7 @@ fun TrainingScreen(
         bottomBar = {
             TrainingBottomNavigation(
                 selectedItem = selectedNavItem,
-                onItemSelected = { 
+                onItemSelected = {
                     selectedNavItem = it
                     onNavigate(it)
                 }
@@ -74,16 +153,16 @@ fun TrainingScreen(
                 .padding(horizontal = 16.dp)
         ) {
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // Stats Row
             TrainingStatsRow(
                 correctCount = 0,
                 incorrectCount = 0,
                 streakCount = 0
             )
-            
+
             Spacer(modifier = Modifier.height(20.dp))
-            
+
             // Chess Board Section
             // ============================================================
             // PLUG YOUR EXISTING CHESSBOARD HERE
@@ -100,20 +179,172 @@ fun TrainingScreen(
                     modifier = Modifier.fillMaxSize()
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(20.dp))
-            
+
+            // Action Buttons
+            TrainingActionButtons(
+                onSaveGame = onSaveGame,
+                onDatabaseClear = onDatabaseClear,
+                gameController = gameController
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
             // Status Card
             TrainingStatusCard()
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // Reset Button
             ResetTrainingButton(onResetClick = {
                 // Handle reset logic
             })
-            
+
             Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+}
+
+@Composable
+private fun TrainingActionButtons(
+    onSaveGame: () -> Unit,
+    onDatabaseClear: () -> Unit,
+    gameController: GameController,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth()
+    ) {
+        // Primary actions: Save game, Clear database
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Button(
+                onClick = onSaveGame,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = TrainingColors.AccentTeal,
+                    contentColor = Color.White
+                ),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 2.dp,
+                    pressedElevation = 4.dp
+                )
+            ) {
+                Text(
+                    text = "Save game",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp
+                )
+            }
+
+            Button(
+                onClick = onDatabaseClear,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = TrainingColors.SurfaceDark,
+                    contentColor = TrainingColors.TextPrimary
+                ),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 2.dp,
+                    pressedElevation = 4.dp
+                )
+            ) {
+                Text(
+                    text = "Clear database",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Secondary actions: Back, Forward, Reset
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Button(
+                onClick = { gameController.undoMove() },
+                enabled = gameController.canUndo,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = TrainingColors.SurfaceDark,
+                    contentColor = TrainingColors.TextPrimary,
+                    disabledContainerColor = TrainingColors.CardDark,
+                    disabledContentColor = TrainingColors.TextSecondary
+                ),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 2.dp,
+                    pressedElevation = 4.dp
+                )
+            ) {
+                Text(
+                    text = "Back",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp
+                )
+            }
+
+            Button(
+                onClick = { gameController.redoMove() },
+                enabled = gameController.canRedo,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = TrainingColors.SurfaceDark,
+                    contentColor = TrainingColors.TextPrimary,
+                    disabledContainerColor = TrainingColors.CardDark,
+                    disabledContentColor = TrainingColors.TextSecondary
+                ),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 2.dp,
+                    pressedElevation = 4.dp
+                )
+            ) {
+                Text(
+                    text = "Forward",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp
+                )
+            }
+
+            Button(
+                onClick = { gameController.resetToStartPosition() },
+                enabled = true,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = TrainingColors.SurfaceDark,
+                    contentColor = TrainingColors.TextPrimary
+                ),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 2.dp,
+                    pressedElevation = 4.dp
+                )
+            ) {
+                Text(
+                    text = "Reset",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp
+                )
+            }
         }
     }
 }
