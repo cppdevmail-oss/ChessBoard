@@ -1,6 +1,7 @@
 package com.example.chessboard.boardmodel
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.example.chessboard.ui.BoardOrientation
@@ -16,6 +17,8 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
     private val moves = mutableListOf<Move>()
     private var currentMoveIndex = 0
     private var startSquare : String? = null
+    var boardState by mutableIntStateOf(0)
+        private set
 
     var canUndo by mutableStateOf(false)
         private set
@@ -30,6 +33,7 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
         currentMoveIndex = 0
         board = Board()
         moves.clear()
+        boardState++
     }
 
     private fun tryMove(move : Move) : Boolean {
@@ -44,6 +48,7 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
             moves.subList(currentMoveIndex, moves.size).clear()
         }
         updateState()
+        boardState++
 
         return true
     }
@@ -70,6 +75,7 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
         currentMoveIndex--
         board.undoMove()
         updateState()
+        boardState++
 
         return true
     }
@@ -80,6 +86,7 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
         this.board.doMove(moves[currentMoveIndex])
         currentMoveIndex++
         updateState()
+        boardState++
 
         return true
     }

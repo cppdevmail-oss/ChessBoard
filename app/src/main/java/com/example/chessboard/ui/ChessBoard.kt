@@ -5,6 +5,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.setValue
 
 import androidx.compose.ui.Modifier
@@ -209,8 +210,9 @@ fun ChessBoard(
                 (i * squareSizePx) - squareSizePx * 0.2f,
                 Paint().apply {
                     textAlign = Paint.Align.LEFT
-                    textSize = squareSizePx * 0.4f
+                    textSize = squareSizePx * 0.25f
                     isAntiAlias = true
+                    alpha = 100
                 }
             )
         }
@@ -222,8 +224,9 @@ fun ChessBoard(
                 (CellCount * squareSizePx) - squareSizePx * 0.2f,
                 Paint().apply {
                     textAlign = Paint.Align.CENTER
-                    textSize = squareSizePx * 0.4f
+                    textSize = squareSizePx * 0.25f
                     isAntiAlias = true
+                    alpha = 100
                 }
             )
         }
@@ -255,6 +258,8 @@ fun ChessBoardWithCoordinates(
     gameController: GameController,
     modifier: Modifier = Modifier,
 ) {
+    // Observe board state changes to trigger recomposition
+    val boardState = gameController.boardState
 
     val orientation = gameController.getOrientation()
     val squareSizeDp = minScreenSizeDp(0.8f)
@@ -266,16 +271,18 @@ fun ChessBoardWithCoordinates(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        ChessBoard(
-            gameController,
-            squareSizePx,
-            selectedSquare = selectedSquare,
-            onSquareClick = { square ->
-                println("Clicked: $square")
-                selectedSquare = square
-            },
-            modifier = Modifier.size(squareSizeDp.dp) // фиксированный размер
-        )
+        key(boardState) {
+            ChessBoard(
+                gameController,
+                squareSizePx,
+                selectedSquare = selectedSquare,
+                onSquareClick = { square ->
+                    println("Clicked: $square")
+                    selectedSquare = square
+                },
+                modifier = Modifier.size(squareSizeDp.dp) // фиксированный размер
+            )
+        }
     }
 }
 
@@ -307,8 +314,10 @@ private fun DrawScope.drawFigure(
     if (painter != null) {
         val pieceColor = if (letter.isUpperCase()) Color.White else Color(0xFF312E2B)
         val outlineColor = if (letter.isUpperCase()) Color.Black else Color.White
-        
-        translate(left = displayCol * squareSize, top = displayRow * squareSize) {
+        val pieceSize = squareSize * 0.9f
+        val piecePadding = (squareSize - pieceSize) / 2
+
+        translate(left = displayCol * squareSize + piecePadding, top = displayRow * squareSize + piecePadding) {
             // Draw outline (slight shadow/border effect)
             val strokeWidth = 1.dp.toPx()
             val offsets = listOf(
@@ -317,22 +326,22 @@ private fun DrawScope.drawFigure(
                 Offset(0f, -strokeWidth),
                 Offset(0f, strokeWidth)
             )
-            
+
             offsets.forEach { offset ->
                 translate(offset.x, offset.y) {
                     with(painter) {
                         draw(
-                            size = Size(squareSize, squareSize),
+                            size = Size(pieceSize, pieceSize),
                             colorFilter = ColorFilter.tint(outlineColor)
                         )
                     }
                 }
             }
-            
+
             // Draw main body
             with(painter) {
                 draw(
-                    size = Size(squareSize, squareSize),
+                    size = Size(pieceSize, pieceSize),
                     colorFilter = ColorFilter.tint(pieceColor)
                 )
             }
