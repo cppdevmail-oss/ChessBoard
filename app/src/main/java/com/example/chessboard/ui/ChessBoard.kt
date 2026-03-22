@@ -20,13 +20,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.material3.Text
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 
+import com.example.chessboard.R
 import com.example.chessboard.boardmodel.GameController
+import com.example.chessboard.ui.theme.ChessDark
+import com.example.chessboard.ui.theme.ChessLight
 
 enum class BoardOrientation {
     WHITE,
@@ -36,14 +43,8 @@ enum class BoardOrientation {
 private const val CellCount = 8
 
 private fun getColor(row : Int, col : Int) : Color {
-    val lightColor = Color(0xFFEEEED2)
-    val darkColor  = Color(0xFF769656)
-
     val isLight = (row + col) % 2 == 0
-    if (isLight) {
-        return lightColor
-    }
-    return darkColor
+    return if (isLight) ChessLight else ChessDark
 }
 
 private fun getRowOrColumn(orientation: BoardOrientation, rowCol : Int ) : Int {
@@ -166,6 +167,13 @@ fun ChessBoard(
     modifier: Modifier = Modifier
 ) {
     val orientation = gameController.getOrientation()
+    val rookPainter = painterResource(id = R.drawable.ic_rook)
+    val pawnPainter = painterResource(id = R.drawable.ic_pawn)
+    val knightPainter = painterResource(id = R.drawable.ic_knight)
+    val bishopPainter = painterResource(id = R.drawable.ic_bishop)
+    val kingPainter = painterResource(id = R.drawable.ic_king)
+    val queenPainter = painterResource(id = R.drawable.ic_queen)
+
     Canvas(
         modifier = modifier
             .aspectRatio(1f)
@@ -186,6 +194,40 @@ fun ChessBoard(
             }
         }
 
+        // Draw row and column labels
+        var ranks: IntProgression = 1..CellCount
+        var files = listOf("a", "b", "c", "d", "e", "f", "g", "h")
+        if (orientation == BoardOrientation.WHITE) {
+            ranks = CellCount downTo 1
+            files = listOf("h", "g", "f", "e", "d", "c", "b", "a")
+        }
+
+        for (i in ranks) {
+            drawContext.canvas.nativeCanvas.drawText(
+                i.toString(),
+                squareSizePx * 0.1f,
+                (i * squareSizePx) - squareSizePx * 0.2f,
+                Paint().apply {
+                    textAlign = Paint.Align.LEFT
+                    textSize = squareSizePx * 0.4f
+                    isAntiAlias = true
+                }
+            )
+        }
+
+        for ((index, file) in files.withIndex()) {
+            drawContext.canvas.nativeCanvas.drawText(
+                file,
+                (index * squareSizePx) + squareSizePx * 0.8f,
+                (CellCount * squareSizePx) - squareSizePx * 0.2f,
+                Paint().apply {
+                    textAlign = Paint.Align.CENTER
+                    textSize = squareSizePx * 0.4f
+                    isAntiAlias = true
+                }
+            )
+        }
+
         SelectStartSquareOrDoMove(gameController, selectedSquare, squareSizePx)
 
         val position = gameController.getBoardPosition()
@@ -194,7 +236,15 @@ fun ChessBoard(
                 piece.letter,
                 piece.field,
                 squareSizePx,
-                orientation
+                orientation,
+                mapOf(
+                    'r' to rookPainter,
+                    'p' to pawnPainter,
+                    'n' to knightPainter,
+                    'b' to bishopPainter,
+                    'k' to kingPainter,
+                    'q' to queenPainter
+                )
             )
         }
     }
@@ -207,10 +257,6 @@ fun ChessBoardWithCoordinates(
 ) {
 
     val orientation = gameController.getOrientation()
-    var letters = listOf("h","g","f","e","d","c","b","a")
-    if (orientation == BoardOrientation.WHITE) {
-        letters = listOf("a", "b", "c", "d", "e", "f", "g", "h")
-    }
     val squareSizeDp = minScreenSizeDp(0.8f)
     val squareSizePx = minScreenSizePx(0.8f) / CellCount
 
@@ -220,51 +266,16 @@ fun ChessBoardWithCoordinates(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            // Цифры слева
-            Column(
-                modifier = Modifier.height(squareSizeDp.dp),   // фиксируем высоту
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                var ranks: IntProgression = 1..CellCount
-                if (orientation == BoardOrientation.WHITE) {
-                    ranks = CellCount downTo 1
-                }
-
-                for (i in ranks) {
-                    Text(i.toString())
-                }
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-            // Доска
-            ChessBoard(
-                gameController,
-                squareSizePx,
-                selectedSquare = selectedSquare,
-                onSquareClick = { square ->
-                    println("Clicked: $square")
-                    selectedSquare = square
-                },
-                modifier = Modifier.size(squareSizeDp.dp) // фиксированный размер
-            )
-        }
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        // Буквы снизу
-        Row(
-            modifier = Modifier.width(squareSizeDp.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            letters.forEach {
-                Text(it)
-            }
-        }
+        ChessBoard(
+            gameController,
+            squareSizePx,
+            selectedSquare = selectedSquare,
+            onSquareClick = { square ->
+                println("Clicked: $square")
+                selectedSquare = square
+            },
+            modifier = Modifier.size(squareSizeDp.dp) // фиксированный размер
+        )
     }
 }
 
@@ -272,7 +283,8 @@ private fun DrawScope.drawFigure(
     letter: Char,
     fieldName: String,
     squareSize: Float,
-    orientation: BoardOrientation
+    orientation: BoardOrientation,
+    painters: Map<Char, Painter>
 ) {
     fun fieldToBoardCoords(field: String): Pair<Int, Int> {
         val file = field[0]          // 'a'..'h'
@@ -289,17 +301,55 @@ private fun DrawScope.drawFigure(
     val displayRow = if (orientation == BoardOrientation.WHITE) row else 7 - row
     val displayCol = if (orientation == BoardOrientation.WHITE) col else 7 - col
 
-    val x = displayCol * squareSize + squareSize / 2
-    val y = displayRow * squareSize + squareSize / 2
+    val lowerLetter = letter.lowercaseChar()
+    val painter = painters[lowerLetter]
 
-    drawContext.canvas.nativeCanvas.drawText(
-        letter.toString(),
-        x,
-        y + squareSize / 4,
-        Paint().apply {
-            textAlign = Paint.Align.CENTER
-            textSize = squareSize * 0.6f
-            isAntiAlias = true
+    if (painter != null) {
+        val pieceColor = if (letter.isUpperCase()) Color.White else Color(0xFF312E2B)
+        val outlineColor = if (letter.isUpperCase()) Color.Black else Color.White
+        
+        translate(left = displayCol * squareSize, top = displayRow * squareSize) {
+            // Draw outline (slight shadow/border effect)
+            val strokeWidth = 1.dp.toPx()
+            val offsets = listOf(
+                Offset(-strokeWidth, 0f),
+                Offset(strokeWidth, 0f),
+                Offset(0f, -strokeWidth),
+                Offset(0f, strokeWidth)
+            )
+            
+            offsets.forEach { offset ->
+                translate(offset.x, offset.y) {
+                    with(painter) {
+                        draw(
+                            size = Size(squareSize, squareSize),
+                            colorFilter = ColorFilter.tint(outlineColor)
+                        )
+                    }
+                }
+            }
+            
+            // Draw main body
+            with(painter) {
+                draw(
+                    size = Size(squareSize, squareSize),
+                    colorFilter = ColorFilter.tint(pieceColor)
+                )
+            }
         }
-    )
+    } else {
+        val x = displayCol * squareSize + squareSize / 2
+        val y = displayRow * squareSize + squareSize / 2
+
+        drawContext.canvas.nativeCanvas.drawText(
+            letter.toString(),
+            x,
+            y + squareSize / 4,
+            Paint().apply {
+                textAlign = Paint.Align.CENTER
+                textSize = squareSize * 0.6f
+                isAntiAlias = true
+            }
+        )
+    }
 }
