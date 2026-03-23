@@ -93,7 +93,8 @@ class GameSaver(
             GamePositionEntity(
                 gameId = gameId,
                 positionId = positionId,
-                ply = ply
+                ply = ply,
+                sideMask = sideMask,
             )
         )
     }

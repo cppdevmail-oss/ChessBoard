@@ -36,7 +36,7 @@ class GameUniqueChecker(
     private suspend fun isPositionUnique(board: Board, sideMask: Int): Boolean {
         val fen = board.fen
         val hash = board.zobristKey
-        val existingFens = positionDao.getFensByHash(hash, sideMask)
+        val existingFens = positionDao.getFensByHashAndSide(hash, sideMask)
 
         if (existingFens.isEmpty()) {
             return true
