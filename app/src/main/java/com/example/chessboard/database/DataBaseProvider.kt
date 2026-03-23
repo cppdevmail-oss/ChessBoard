@@ -112,9 +112,11 @@ data class PositionEntity(
 data class GamePositionEntity(
     val gameId: Long,
     val positionId: Long,
-    val ply: Int
+    val ply: Int,
+    val sideMask: Int
 )
 
+//++++++++++++++++++++++++++++
 @Dao
 interface GameDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
@@ -122,6 +124,9 @@ interface GameDao {
 
     @Query("DELETE FROM games")
     suspend fun deleteAllGames()
+
+    @Query("DELETE FROM games WHERE id = :id")
+    suspend fun deleteById(id: Long)
 
     @Query("SELECT COUNT(*) FROM games")
     suspend fun getCount(): Int
@@ -131,6 +136,8 @@ data class PositionIdWithMask(
     val id: Long,
     val sideMask: Int
 )
+
+//++++++++++++++++++++++++++++
 @Dao
 interface PositionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -139,11 +146,14 @@ interface PositionDao {
     @Query("DELETE FROM positions")
     suspend fun deleteAllPositions()
 
+    @Query("DELETE FROM positions WHERE id = :id")
+    suspend fun deleteById(id: Long)
+
     // Possible to have different fen by same hash
     // So select list of fen
     @Query("""SELECT fen FROM positions
             WHERE hash = :hash AND sideMask = :sideMask""")
-    suspend fun getFensByHash(hash: Long, sideMask: Int): List<String>
+    suspend fun getFensByHashAndSide(hash: Long, sideMask: Int): List<String>
 
     @Query("""SELECT id, sideMask FROM positions
         WHERE hash = :hash AND fen = :fen 
@@ -160,6 +170,12 @@ interface PositionDao {
     suspend fun getCount(): Int
 }
 
+//++++++++++++++++++++++++++++
+
+data class PositionUsage(
+    val positionId: Long,
+    val sideMask: Int
+)
 @Dao
 interface GamePositionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -168,9 +184,27 @@ interface GamePositionDao {
     @Query("DELETE FROM game_positions")
     suspend fun deleteAllGamePositions()
 
+    @Query("DELETE FROM game_positions WHERE gameId = :gameId")
+    suspend fun deleteByGameId(gameId: Long)
+
     @Query("SELECT COUNT(*) FROM game_positions")
     suspend fun getCount(): Int
+
+    @Query("""
+        SELECT positionId, sideMask 
+        FROM game_positions 
+        WHERE gameId = :gameId""")
+    suspend fun getPositionsForGame(gameId: Long): List<PositionUsage>
+
+    @Query("""
+        SELECT gp.positionId, g.sideMask as sideMask
+        FROM game_positions gp
+        JOIN games g ON g.id = gp.gameId
+        WHERE gp.positionId = :positionId""")
+    suspend fun getUsage(positionId: Long): List<PositionUsage>
 }
+
+//++++++++++++++++++++++++++++
 
 @Database(
     entities = [
