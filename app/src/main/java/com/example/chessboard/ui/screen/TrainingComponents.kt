@@ -10,24 +10,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import com.example.chessboard.ui.theme.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.ui.ChessBoardWithCoordinates
 
-internal object TrainingColors {
-    val BackgroundDark = Color(0xFF0D0D0D)
-    val SurfaceDark = Color(0xFF1A1A1A)
-    val CardDark = Color(0xFF252525)
-    val TextPrimary = Color(0xFFFFFFFF)
-    val TextSecondary = Color(0xFF9E9E9E)
-    val AccentTeal = Color(0xFF1DB584)
-    val SuccessGreen = Color(0xFF4CAF50)
-    val ErrorRed = Color(0xFFF44336)
-    val WarningOrange = Color(0xFFFF9800)
-    val IconInactive = Color(0xFF666666)
-    val DividerColor = Color(0xFF2A2A2A)
-}
 
 @Composable
 fun ChessBoardSection(
@@ -65,7 +53,7 @@ fun TrainingActionButtons(
                 modifier = Modifier.weight(1f).height(48.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = TrainingColors.AccentTeal,
+                    containerColor = TrainingAccentTeal,
                     contentColor = Color.White
                 ),
                 elevation = ButtonDefaults.buttonElevation(
@@ -81,8 +69,8 @@ fun TrainingActionButtons(
                 modifier = Modifier.weight(1f).height(48.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = TrainingColors.SurfaceDark,
-                    contentColor = TrainingColors.TextPrimary
+                    containerColor = TrainingSurfaceDark,
+                    contentColor = TrainingTextPrimary
                 ),
                 elevation = ButtonDefaults.buttonElevation(
                     defaultElevation = 2.dp,
@@ -106,10 +94,10 @@ fun TrainingActionButtons(
                 modifier = Modifier.weight(1f).height(48.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = TrainingColors.SurfaceDark,
-                    contentColor = TrainingColors.TextPrimary,
-                    disabledContainerColor = TrainingColors.CardDark,
-                    disabledContentColor = TrainingColors.TextSecondary
+                    containerColor = TrainingSurfaceDark,
+                    contentColor = TrainingTextPrimary,
+                    disabledContainerColor = TrainingCardDark,
+                    disabledContentColor = TrainingTextSecondary
                 ),
                 elevation = ButtonDefaults.buttonElevation(
                     defaultElevation = 2.dp,
@@ -125,10 +113,10 @@ fun TrainingActionButtons(
                 modifier = Modifier.weight(1f).height(48.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = TrainingColors.SurfaceDark,
-                    contentColor = TrainingColors.TextPrimary,
-                    disabledContainerColor = TrainingColors.CardDark,
-                    disabledContentColor = TrainingColors.TextSecondary
+                    containerColor = TrainingSurfaceDark,
+                    contentColor = TrainingTextPrimary,
+                    disabledContainerColor = TrainingCardDark,
+                    disabledContentColor = TrainingTextSecondary
                 ),
                 elevation = ButtonDefaults.buttonElevation(
                     defaultElevation = 2.dp,
@@ -143,8 +131,8 @@ fun TrainingActionButtons(
                 modifier = Modifier.weight(1f).height(48.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = TrainingColors.SurfaceDark,
-                    contentColor = TrainingColors.TextPrimary
+                    containerColor = TrainingSurfaceDark,
+                    contentColor = TrainingTextPrimary
                 ),
                 elevation = ButtonDefaults.buttonElevation(
                     defaultElevation = 2.dp,
@@ -167,8 +155,8 @@ fun ResetTrainingButton(
         modifier = modifier.fillMaxWidth().height(56.dp),
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = TrainingColors.SurfaceDark,
-            contentColor = TrainingColors.TextPrimary
+            containerColor = TrainingSurfaceDark,
+            contentColor = TrainingTextPrimary
         ),
         elevation = ButtonDefaults.buttonElevation(
             defaultElevation = 0.dp,

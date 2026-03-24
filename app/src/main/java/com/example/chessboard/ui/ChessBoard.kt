@@ -34,6 +34,7 @@ import com.example.chessboard.R
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.ui.theme.ChessDark
 import com.example.chessboard.ui.theme.ChessLight
+import com.example.chessboard.ui.theme.ChessPieceDark
 
 enum class BoardOrientation {
     WHITE,
@@ -318,7 +319,7 @@ private fun DrawScope.drawFigure(
     val painter = painters[lowerLetter]
 
     if (painter != null) {
-        val pieceColor = if (letter.isUpperCase()) Color.White else Color(0xFF312E2B)
+        val pieceColor = if (letter.isUpperCase()) Color.White else ChessPieceDark
         val outlineColor = if (letter.isUpperCase()) Color.Black else Color.White
         val pieceSize = squareSize * 0.770f
         val piecePadding = (squareSize - pieceSize) / 2

@@ -25,7 +25,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.entity.GameEntity
-import com.example.chessboard.ui.theme.ChessBoardTheme
+import com.example.chessboard.ui.theme.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -114,7 +114,7 @@ fun TrainingScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = TrainingColors.BackgroundDark,
+        containerColor = TrainingBackgroundDark,
         topBar = {
             TrainingTopBar(onBackClick = onBackClick)
         },
@@ -179,9 +179,9 @@ private fun TrainingTopBar(
     TopAppBar(
         modifier = modifier,
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = TrainingColors.BackgroundDark,
-            navigationIconContentColor = TrainingColors.TextPrimary,
-            titleContentColor = TrainingColors.TextPrimary
+            containerColor = TrainingBackgroundDark,
+            navigationIconContentColor = TrainingTextPrimary,
+            titleContentColor = TrainingTextPrimary
         ),
         navigationIcon = {
             IconButton(
@@ -190,14 +190,14 @@ private fun TrainingTopBar(
                     .padding(start = 8.dp)
                     .size(40.dp)
                     .background(
-                        color = TrainingColors.SurfaceDark,
+                        color = TrainingSurfaceDark,
                         shape = RoundedCornerShape(10.dp)
                     )
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
-                    tint = TrainingColors.TextPrimary,
+                    tint = TrainingTextPrimary,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -207,7 +207,7 @@ private fun TrainingTopBar(
                 text = "Training: Italian Game",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = TrainingColors.TextPrimary
+                color = TrainingTextPrimary
             )
         }
     )
@@ -227,19 +227,19 @@ private fun TrainingStatsRow(
         StatChip(
             icon = "✓",
             count = correctCount,
-            color = TrainingColors.SuccessGreen,
+            color = TrainingSuccessGreen,
             modifier = Modifier.weight(1f)
         )
         StatChip(
             icon = "✕",
             count = incorrectCount,
-            color = TrainingColors.ErrorRed,
+            color = TrainingErrorRed,
             modifier = Modifier.weight(1f)
         )
         StatChip(
             icon = "🔥",
             count = streakCount,
-            color = TrainingColors.WarningOrange,
+            color = TrainingWarningOrange,
             modifier = Modifier.weight(1f)
         )
     }
@@ -255,7 +255,7 @@ private fun StatChip(
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(8.dp),
-        color = TrainingColors.CardDark
+        color = TrainingCardDark
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
@@ -268,7 +268,7 @@ private fun StatChip(
                 text = count.toString(),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = TrainingColors.TextPrimary
+                color = TrainingTextPrimary
             )
         }
     }
@@ -281,7 +281,7 @@ private fun TrainingStatusCard(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        color = TrainingColors.CardDark,
+        color = TrainingCardDark,
         tonalElevation = 2.dp
     ) {
         Row(
@@ -293,13 +293,13 @@ private fun TrainingStatusCard(
             Surface(
                 modifier = Modifier.size(56.dp),
                 shape = RoundedCornerShape(12.dp),
-                color = TrainingColors.AccentTeal.copy(alpha = 0.15f)
+                color = TrainingAccentTeal.copy(alpha = 0.15f)
             ) {
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    Text(text = "♟", fontSize = 28.sp, color = TrainingColors.AccentTeal)
+                    Text(text = "♟", fontSize = 28.sp, color = TrainingAccentTeal)
                 }
             }
 
@@ -310,13 +310,13 @@ private fun TrainingStatusCard(
                     text = "Your Turn",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TrainingColors.TextPrimary
+                    color = TrainingTextPrimary
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "Make the correct move to continue the opening",
                     fontSize = 13.sp,
-                    color = TrainingColors.TextSecondary,
+                    color = TrainingTextSecondary,
                     lineHeight = 18.sp
                 )
             }
@@ -339,11 +339,11 @@ private fun TrainingBottomNavigation(
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = TrainingColors.SurfaceDark,
+        color = TrainingSurfaceDark,
         tonalElevation = 8.dp
     ) {
         Column {
-            HorizontalDivider(thickness = 0.5.dp, color = TrainingColors.DividerColor)
+            HorizontalDivider(thickness = 0.5.dp, color = TrainingDividerColor)
 
             Row(
                 modifier = Modifier
@@ -376,7 +376,7 @@ private fun BottomNavItemView(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val color = if (isSelected) TrainingColors.AccentTeal else TrainingColors.IconInactive
+    val color = if (isSelected) TrainingAccentTeal else TrainingIconInactive
 
     Column(
         modifier = modifier
