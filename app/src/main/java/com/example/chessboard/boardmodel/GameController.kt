@@ -110,6 +110,83 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
         canRedo = currentMoveIndex < moves.size
     }
 
+    /** Returns true if moving [from] → [to] is a pawn promotion (and is legal). */
+    fun isPawnPromotion(from: String?, to: String?): Boolean {
+        if (from == null || to == null) return false
+        return try {
+            val fromSq = Square.fromValue(from.uppercase())
+            val toSq   = Square.fromValue(to.uppercase())
+            val piece  = board.getPiece(fromSq)
+            if (piece != Piece.WHITE_PAWN && piece != Piece.BLACK_PAWN) return false
+            val toRank = to[1]
+            if (piece == Piece.WHITE_PAWN && toRank != '8') return false
+            if (piece == Piece.BLACK_PAWN && toRank != '1') return false
+            board.legalMoves().any { it.from == fromSq && it.to == toSq }
+        } catch (_: Exception) { false }
+    }
+
+    /**
+     * Executes a pawn promotion move using the current [startSquare] → [to],
+     * promoting to [promotionPiece]. Returns false if the move is illegal.
+     */
+    fun tryMoveWithPromotion(to: String, promotionPiece: PromotionPiece): Boolean {
+        val from = startSquare ?: return false
+        return try {
+            val fromSq  = Square.fromValue(from.uppercase())
+            val toSq    = Square.fromValue(to.uppercase())
+            val isWhite = board.getPiece(fromSq) == Piece.WHITE_PAWN
+            val piece   = when (promotionPiece) {
+                PromotionPiece.QUEEN  -> if (isWhite) Piece.WHITE_QUEEN  else Piece.BLACK_QUEEN
+                PromotionPiece.ROOK   -> if (isWhite) Piece.WHITE_ROOK   else Piece.BLACK_ROOK
+                PromotionPiece.BISHOP -> if (isWhite) Piece.WHITE_BISHOP else Piece.BLACK_BISHOP
+                PromotionPiece.KNIGHT -> if (isWhite) Piece.WHITE_KNIGHT else Piece.BLACK_KNIGHT
+            }
+            val result = tryMove(Move(fromSq, toSq, piece))
+            startSquare = null
+            result
+        } catch (_: Exception) { false }
+    }
+
+    /** Cancels the current start-square selection without triggering a board redraw. */
+    fun cancelStartSquare() {
+        startSquare = null
+    }
+
+    /**
+     * Loads a game from UCI move strings and places the board at [targetPly].
+     * All moves are stored so undo/redo still works across the full game.
+     */
+    fun loadFromUciMoves(uciMoves: List<String>, targetPly: Int = uciMoves.size) {
+        startSquare = null
+        // Parse all UCI strings into Move objects using a temp board
+        val allMoves = mutableListOf<Move>()
+        val tempBoard = Board()
+        for (uci in uciMoves) {
+            val from = uci.take(2)
+            val to   = uci.drop(2).take(2)
+            try {
+                val move = Move(Square.fromValue(from.uppercase()), Square.fromValue(to.uppercase()))
+                if (tempBoard.legalMoves().contains(move)) {
+                    tempBoard.doMove(move)
+                    allMoves.add(move)
+                }
+            } catch (_: Exception) {}
+        }
+        val limit = targetPly.coerceIn(0, allMoves.size)
+        // Reset and replay board to targetPly
+        board = Board()
+        moves.clear()
+        currentMoveIndex = 0
+        for (i in 0 until limit) {
+            board.doMove(allMoves[i])
+            currentMoveIndex++
+        }
+        // Keep all moves so redo works beyond targetPly
+        moves.addAll(allMoves)
+        updateState()
+        boardState++
+    }
+
     // const function
     fun getMovesCopy(): List<Move> {
         return moves.toList()

@@ -4,7 +4,6 @@ import android.app.Activity
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -12,8 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -66,6 +63,7 @@ fun CreateOpeningScreen(
 ) {
     var openingName by remember { mutableStateOf("") }
     var ecoCode by remember { mutableStateOf("") }
+    var nameError by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -109,7 +107,13 @@ fun CreateOpeningScreen(
                 },
                 actions = {
                     Button(
-                        onClick = { onSave(openingName, ecoCode) },
+                        onClick = {
+                            if (openingName.isBlank()) {
+                                nameError = true
+                            } else {
+                                onSave(openingName, ecoCode)
+                            }
+                        },
                         modifier = Modifier.padding(end = 12.dp),
                         shape = RoundedCornerShape(10.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = TrainingAccentTeal),
@@ -138,9 +142,10 @@ fun CreateOpeningScreen(
 
             DarkInputField(
                 value = openingName,
-                onValueChange = { openingName = it },
+                onValueChange = { openingName = it; nameError = false },
                 placeholder = "e.g., Sicilian Defense",
-                label = "Opening Name"
+                label = "Opening Name *",
+                isError = nameError
             )
 
             DarkInputField(
@@ -165,44 +170,3 @@ fun CreateOpeningScreen(
     }
 }
 
-@Composable
-private fun DarkInputField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    label: String,
-    modifier: Modifier = Modifier,
-    minLines: Int = 1
-) {
-    Column(modifier = modifier) {
-        Text(
-            text = label,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            color = TrainingTextSecondary,
-            modifier = Modifier.padding(bottom = 6.dp)
-        )
-        Surface(
-            shape = RoundedCornerShape(10.dp),
-            color = TrainingSurfaceDark,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            BasicTextField(
-                value = value,
-                onValueChange = onValueChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                textStyle = TextStyle(color = TrainingTextPrimary, fontSize = 15.sp),
-                cursorBrush = SolidColor(TrainingAccentTeal),
-                minLines = minLines,
-                decorationBox = { innerTextField ->
-                    if (value.isEmpty()) {
-                        Text(text = placeholder, color = TrainingIconInactive, fontSize = 15.sp)
-                    }
-                    innerTextField()
-                }
-            )
-        }
-    }
-}

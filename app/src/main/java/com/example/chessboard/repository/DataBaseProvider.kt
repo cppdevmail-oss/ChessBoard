@@ -93,6 +93,10 @@ class DatabaseProvider private constructor(
         database.gameDao().updatePgn(id, pgn)
     }
 
+    suspend fun updateGameMeta(id: Long, event: String?, eco: String?) {
+        database.gameDao().updateMeta(id, event, eco)
+    }
+
     suspend fun deleteGame(id: Long) {
         database.gameDao().deleteById(id)
     }

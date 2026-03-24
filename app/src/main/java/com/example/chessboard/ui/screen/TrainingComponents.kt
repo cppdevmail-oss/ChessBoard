@@ -1,21 +1,179 @@
 package com.example.chessboard.ui.screen
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import com.example.chessboard.ui.theme.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chessboard.boardmodel.GameController
+import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.ui.ChessBoardWithCoordinates
+import com.example.chessboard.ui.theme.*
+import com.github.bhlangonijr.chesslib.Board
+import com.github.bhlangonijr.chesslib.Piece
+import com.github.bhlangonijr.chesslib.PieceType
+import com.github.bhlangonijr.chesslib.Square
+import com.github.bhlangonijr.chesslib.move.Move
 
+// ──────────────────────────────────────────────────────────────────────────────
+// Shared data
+// ──────────────────────────────────────────────────────────────────────────────
+
+data class ParsedGame(
+    val game: GameEntity,
+    val uciMoves: List<String>,
+    val moveLabels: List<String>
+)
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Shared PGN / label helpers
+// ──────────────────────────────────────────────────────────────────────────────
+
+/** Parses UCI move tokens from stored PGN (e.g. "1. e2e4 e7e5 2. g1f3 *"). */
+fun parsePgnMoves(pgn: String): List<String> {
+    val uciRegex = Regex("[a-h][1-8][a-h][1-8][qrbnQRBN]?")
+    return pgn.lines()
+        .filterNot { it.trim().startsWith("[") }
+        .joinToString(" ")
+        .split("\\s+".toRegex())
+        .filter { uciRegex.matches(it) }
+}
+
+/** Computes an algebraic notation label for [move] given the FEN before the move. */
+fun computeLabel(move: Move, boardBeforeFen: String): String {
+    val board = Board()
+    board.loadFromFen(boardBeforeFen)
+    val piece = board.getPiece(move.from)
+    val toSquare = move.to.value().lowercase()
+    val isCapture = board.getPiece(move.to) != Piece.NONE
+    val captureStr = if (isCapture) "x" else ""
+
+    val base = when (piece.pieceType) {
+        PieceType.PAWN -> if (isCapture) "${move.from.value()[0].lowercaseChar()}x$toSquare" else toSquare
+        PieceType.KNIGHT -> "N$captureStr$toSquare"
+        PieceType.BISHOP -> "B$captureStr$toSquare"
+        PieceType.ROOK -> "R$captureStr$toSquare"
+        PieceType.QUEEN -> "Q$captureStr$toSquare"
+        PieceType.KING -> when {
+            move.from.value()[0] == 'E' && move.to.value()[0] == 'G' -> "O-O"
+            move.from.value()[0] == 'E' && move.to.value()[0] == 'C' -> "O-O-O"
+            else -> "K$captureStr$toSquare"
+        }
+        else -> toSquare
+    }
+
+    board.doMove(move)
+    val suffix = when {
+        board.legalMoves().isEmpty() && board.isKingAttacked -> "#"
+        board.isKingAttacked -> "+"
+        else -> ""
+    }
+    return "$base$suffix"
+}
+
+/** Replays [uciMoves] and builds a list of algebraic notation labels. */
+fun buildMoveLabels(uciMoves: List<String>): List<String> {
+    val labels = mutableListOf<String>()
+    val board = Board()
+    for (uci in uciMoves) {
+        val from = uci.take(2)
+        val to = uci.drop(2).take(2)
+        try {
+            val move = Move(Square.fromValue(from.uppercase()), Square.fromValue(to.uppercase()))
+            val label = computeLabel(move, board.fen)
+            if (board.legalMoves().contains(move)) {
+                board.doMove(move)
+                labels.add(label)
+            }
+        } catch (_: Exception) {}
+    }
+    return labels
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Shared composables
+// ──────────────────────────────────────────────────────────────────────────────
+
+@Composable
+fun DarkInputField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    isError: Boolean = false,
+    minLines: Int = 1,
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = label,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            color = if (isError) TrainingErrorRed else TrainingTextSecondary,
+            modifier = Modifier.padding(bottom = 6.dp)
+        )
+        Surface(
+            shape = RoundedCornerShape(10.dp),
+            color = TrainingSurfaceDark,
+            border = if (isError) androidx.compose.foundation.BorderStroke(1.dp, TrainingErrorRed) else null,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                textStyle = TextStyle(color = TrainingTextPrimary, fontSize = 15.sp),
+                cursorBrush = SolidColor(TrainingAccentTeal),
+                minLines = minLines,
+                decorationBox = { innerTextField ->
+                    if (value.isEmpty()) {
+                        Text(text = placeholder, color = TrainingIconInactive, fontSize = 15.sp)
+                    }
+                    innerTextField()
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun MoveChip(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    unselectedBackground: Color = TrainingSurfaceDark,
+) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(if (isSelected) TrainingAccentTeal else unselectedBackground)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            fontSize = 13.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+            color = if (isSelected) Color.White else TrainingTextSecondary
+        )
+    }
+}
 
 @Composable
 fun ChessBoardSection(

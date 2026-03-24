@@ -25,4 +25,7 @@ interface GameDao {
 
     @Query("UPDATE games SET pgn = :pgn WHERE id = :id")
     suspend fun updatePgn(id: Long, pgn: String)
+
+    @Query("UPDATE games SET event = :event, eco = :eco WHERE id = :id")
+    suspend fun updateMeta(id: Long, event: String?, eco: String?)
 }

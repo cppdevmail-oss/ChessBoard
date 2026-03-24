@@ -1,12 +1,11 @@
 package com.example.chessboard.ui.screen
 
 import android.app.Activity
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
@@ -16,7 +15,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -27,55 +25,11 @@ import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.ui.theme.*
-import com.github.bhlangonijr.chesslib.Board
-import com.github.bhlangonijr.chesslib.Piece
-import com.github.bhlangonijr.chesslib.PieceType
 import com.github.bhlangonijr.chesslib.Square
 import com.github.bhlangonijr.chesslib.move.Move
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-// Parses UCI move tokens from stored PGN (e.g. "1. e2e4 e7e5 2. g1f3 *")
-private fun parsePgnMoves(pgn: String): List<String> {
-    val uciRegex = Regex("[a-h][1-8][a-h][1-8][qrbnQRBN]?")
-    return pgn.lines()
-        .filterNot { it.trim().startsWith("[") }
-        .joinToString(" ")
-        .split("\\s+".toRegex())
-        .filter { uciRegex.matches(it) }
-}
-
-private fun computeLabel(move: Move, boardBeforeFen: String): String {
-    val board = Board()
-    board.loadFromFen(boardBeforeFen)
-    val piece = board.getPiece(move.from)
-    val toSquare = move.to.value().lowercase()
-    val isCapture = board.getPiece(move.to) != Piece.NONE
-    val captureStr = if (isCapture) "x" else ""
-
-    val base = when (piece.pieceType) {
-        PieceType.PAWN -> if (isCapture) "${move.from.value()[0].lowercaseChar()}x$toSquare" else toSquare
-        PieceType.KNIGHT -> "N$captureStr$toSquare"
-        PieceType.BISHOP -> "B$captureStr$toSquare"
-        PieceType.ROOK -> "R$captureStr$toSquare"
-        PieceType.QUEEN -> "Q$captureStr$toSquare"
-        PieceType.KING -> when {
-            move.from.value()[0] == 'E' && move.to.value()[0] == 'G' -> "O-O"
-            move.from.value()[0] == 'E' && move.to.value()[0] == 'C' -> "O-O-O"
-            else -> "K$captureStr$toSquare"
-        }
-        else -> toSquare
-    }
-
-    board.doMove(move)
-    val suffix = when {
-        board.legalMoves().isEmpty() && board.isKingAttacked -> "#"
-        board.isKingAttacked -> "+"
-        else -> ""
-    }
-    return "$base$suffix"
-}
 
 @Composable
 fun GameEditorScreenContainer(
@@ -147,14 +101,15 @@ fun GameEditorScreenContainer(
         moveLabels = moveLabels,
         isLoading = isLoading,
         onBackClick = onBackClick,
-        onSave = {
+        onSave = { name, eco ->
             val idx = gameController.currentMoveIndex
             val pgn = gameController.generatePgn(
-                event = game.event ?: "Opening",
+                event = name.ifBlank { "Opening" },
                 upToIndex = idx
             )
             (activity as? LifecycleOwner)?.lifecycleScope?.launch(Dispatchers.IO) {
                 dbProvider.updateGamePgn(game.id, pgn)
+                dbProvider.updateGameMeta(game.id, name.ifBlank { null }, eco.ifBlank { null })
                 withContext(Dispatchers.Main) { onBackClick() }
             }
         },
@@ -176,12 +131,14 @@ fun GameEditorScreen(
     moveLabels: List<String>,
     isLoading: Boolean,
     onBackClick: () -> Unit = {},
-    onSave: () -> Unit = {},
+    onSave: (name: String, eco: String) -> Unit = { _, _ -> },
     onDelete: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val currentPly = gameController.currentMoveIndex
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var editedName by remember(game.id) { mutableStateOf(game.event ?: "") }
+    var editedEco by remember(game.id) { mutableStateOf(game.eco ?: "") }
 
     if (showDeleteDialog) {
         AlertDialog(
@@ -228,8 +185,13 @@ fun GameEditorScreen(
                 },
                 title = {
                     Column {
-                        Text(game.event ?: "Opening", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TrainingTextPrimary)
-                        if (!game.eco.isNullOrBlank()) Text(game.eco, fontSize = 12.sp, color = TrainingTextSecondary)
+                        Text(
+                            text = editedName.ifBlank { "Opening" },
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TrainingTextPrimary
+                        )
+                        if (editedEco.isNotBlank()) Text(editedEco, fontSize = 12.sp, color = TrainingTextSecondary)
                     }
                 },
                 actions = {
@@ -237,7 +199,7 @@ fun GameEditorScreen(
                         Icon(Icons.Default.Delete, contentDescription = "Delete", tint = TrainingErrorRed)
                     }
                     Button(
-                        onClick = onSave,
+                        onClick = { onSave(editedName, editedEco) },
                         modifier = Modifier.padding(end = 12.dp),
                         shape = RoundedCornerShape(10.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = TrainingAccentTeal),
@@ -249,12 +211,17 @@ fun GameEditorScreen(
             )
         }
     ) { paddingValues ->
-        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            if (isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = TrainingAccentTeal)
-                }
-            } else {
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = TrainingAccentTeal)
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .verticalScroll(rememberScrollState())
+            ) {
                 ChessBoardSection(gameController = gameController, modifier = Modifier.fillMaxWidth())
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -298,7 +265,7 @@ fun GameEditorScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -323,26 +290,35 @@ fun GameEditorScreen(
                         )
                     }
                 }
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    color = TrainingDividerColor
+                )
+
+                DarkInputField(
+                    value = editedName,
+                    onValueChange = { editedName = it },
+                    label = "Opening Name",
+                    placeholder = "e.g., Sicilian Defense",
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                DarkInputField(
+                    value = editedEco,
+                    onValueChange = { editedEco = it },
+                    label = "ECO Code",
+                    placeholder = "e.g., B20",
+                    modifier = Modifier
+                        .fillMaxWidth(0.5f)
+                        .padding(start = 16.dp)
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
 }
 
-@Composable
-private fun MoveChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(if (isSelected) TrainingAccentTeal else TrainingSurfaceDark)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = label,
-            fontSize = 13.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = if (isSelected) Color.White else TrainingTextSecondary
-        )
-    }
-}

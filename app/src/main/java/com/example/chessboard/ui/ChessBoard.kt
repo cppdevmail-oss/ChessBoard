@@ -2,189 +2,223 @@ package com.example.chessboard.ui
 
 import android.graphics.Paint
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
-
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.gestures.detectTapGestures
-
-import androidx.compose.ui.Alignment
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-
 import com.example.chessboard.R
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.ui.theme.ChessDark
 import com.example.chessboard.ui.theme.ChessLight
 import com.example.chessboard.ui.theme.ChessPieceDark
 
-enum class BoardOrientation {
-    WHITE,
-    BLACK
-}
+enum class BoardOrientation { WHITE, BLACK }
 
 private const val CellCount = 8
 
-private fun getColor(row : Int, col : Int) : Color {
+// ──────────────────────────────────────────────────────────────────────────────
+// Pure coordinate helpers
+// ──────────────────────────────────────────────────────────────────────────────
+
+private fun getColor(row: Int, col: Int): Color {
     val isLight = (row + col) % 2 == 0
     return if (isLight) ChessLight else ChessDark
 }
 
-private fun getRowOrColumn(orientation: BoardOrientation, rowCol : Int ) : Int {
-    if (orientation == BoardOrientation.WHITE) return rowCol
-    return 7 - rowCol
-}
+private fun getRowOrColumn(orientation: BoardOrientation, rowCol: Int): Int =
+    if (orientation == BoardOrientation.WHITE) rowCol else 7 - rowCol
 
+/** Converts a canvas offset to a chess square name (e.g. "e4"). Returns null when off-board. */
 private fun getSquareFromOffset(
     offset: Offset,
     squareSizePx: Float,
     orientation: BoardOrientation
-): String {
+): String? {
     val col = (offset.x / squareSizePx).toInt()
     val row = (offset.y / squareSizePx).toInt()
+    if (col !in 0..7 || row !in 0..7) return null
 
     val realRow = getRowOrColumn(orientation, row)
     val realCol = getRowOrColumn(orientation, col)
-
-    val file = 'a' + realCol
-    val rank = 8 - realRow
-
-    return "$file$rank"
+    return "${'a' + realCol}${8 - realRow}"
 }
 
 private fun squareToBoardCoords(
     square: String,
     orientation: BoardOrientation
 ): Pair<Int, Int> {
-    // проверка входных данных
-    if (
-        square.length != 2 ||
-        square[0] !in 'a'..'h' ||
-        square[1] !in '1'..'8'
-    ) {
+    if (square.length != 2 || square[0] !in 'a'..'h' || square[1] !in '1'..'8')
         return squareToBoardCoords("a1", orientation)
-    }
 
     val file = square[0] - 'a'
     val rank = square[1].digitToInt()
-
     val row = CellCount - rank
     val col = file
-
-    if (orientation == BoardOrientation.WHITE) {
-        return Pair(row, col)
-    }
-    return Pair(7 - row, 7 - col)
+    return if (orientation == BoardOrientation.WHITE) row to col else (7 - row) to (7 - col)
 }
 
-private fun DrawScope.drawSquare(
-    selectedSquare: String?,
+// ──────────────────────────────────────────────────────────────────────────────
+// Draw helpers
+// ──────────────────────────────────────────────────────────────────────────────
+
+private fun DrawScope.drawHighlight(
+    square: String?,
     orientation: BoardOrientation,
     squareSizePx: Float,
-    color : Color
+    color: Color
 ) {
-    selectedSquare?.let {
-        val (row, col) = squareToBoardCoords(it, orientation)
+    square ?: return
+    val (row, col) = squareToBoardCoords(square, orientation)
+    drawRect(
+        color = color,
+        topLeft = Offset(col * squareSizePx, row * squareSizePx),
+        size = Size(squareSizePx, squareSizePx)
+    )
+}
 
-        drawRect(
-            color,
-            topLeft = Offset(col * squareSizePx, row * squareSizePx),
-            size = Size(squareSizePx, squareSizePx)
+/** Draws a piece at its normal board square. */
+private fun DrawScope.drawFigure(
+    letter: Char,
+    fieldName: String,
+    squareSize: Float,
+    orientation: BoardOrientation,
+    painters: Map<Char, Painter>
+) {
+    fun fieldToBoardCoords(field: String): Pair<Int, Int> {
+        val col = field[0] - 'a'
+        val row = CellCount - (field[1] - '0')
+        return row to col
+    }
+
+    val (row, col) = fieldToBoardCoords(fieldName)
+    val displayRow = if (orientation == BoardOrientation.WHITE) row else 7 - row
+    val displayCol = if (orientation == BoardOrientation.WHITE) col else 7 - col
+
+    drawPieceAt(
+        letter = letter,
+        left = displayCol * squareSize,
+        top = displayRow * squareSize,
+        squareSize = squareSize,
+        painters = painters
+    )
+}
+
+/** Draws a piece centered on [centerOffset] – used for the piece being dragged. */
+private fun DrawScope.drawFigureDragged(
+    letter: Char,
+    centerOffset: Offset,
+    squareSize: Float,
+    painters: Map<Char, Painter>
+) {
+    val pieceSize = squareSize * 0.770f
+    drawPieceAt(
+        letter = letter,
+        left = centerOffset.x - pieceSize / 2,
+        top = centerOffset.y - pieceSize / 2,
+        squareSize = squareSize,
+        painters = painters
+    )
+}
+
+private fun DrawScope.drawPieceAt(
+    letter: Char,
+    left: Float,
+    top: Float,
+    squareSize: Float,
+    painters: Map<Char, Painter>
+) {
+    val lowerLetter = letter.lowercaseChar()
+    val painter = painters[lowerLetter]
+
+    if (painter != null) {
+        val pieceColor = if (letter.isUpperCase()) Color.White else ChessPieceDark
+        val outlineColor = if (letter.isUpperCase()) Color.Black else Color.White
+        val pieceSize = squareSize * 0.770f
+        val piecePadding = (squareSize - pieceSize) / 2
+
+        translate(left = left + piecePadding, top = top + piecePadding) {
+            val strokeWidth = 1.dp.toPx()
+            listOf(
+                Offset(-strokeWidth, 0f),
+                Offset(strokeWidth, 0f),
+                Offset(0f, -strokeWidth),
+                Offset(0f, strokeWidth)
+            ).forEach { o ->
+                translate(o.x, o.y) {
+                    with(painter) {
+                        draw(Size(pieceSize, pieceSize), colorFilter = ColorFilter.tint(outlineColor))
+                    }
+                }
+            }
+            with(painter) {
+                draw(Size(pieceSize, pieceSize), colorFilter = ColorFilter.tint(pieceColor))
+            }
+        }
+    } else {
+        // Fallback: draw letter text
+        val squareCenter = squareSize / 2
+        drawContext.canvas.nativeCanvas.drawText(
+            letter.toString(),
+            left + squareCenter,
+            top + squareCenter + squareSize / 4,
+            Paint().apply {
+                textAlign = Paint.Align.CENTER
+                textSize = squareSize * 0.6f
+                isAntiAlias = true
+            }
         )
     }
 }
 
-private fun DrawScope.drawStartSqueare(
-    selectedSquare: String?,
-    orientation: BoardOrientation,
-    squareSizePx: Float,
-) {
-    val color = Color.Yellow.copy(alpha = 0.4f)
-    drawSquare(selectedSquare, orientation, squareSizePx, color)
-}
+// ──────────────────────────────────────────────────────────────────────────────
+// ChessBoard – pure renderer, no gesture logic
+// ──────────────────────────────────────────────────────────────────────────────
 
-private fun DrawScope.SelectStartSquareOrDoMove(
-    gameController: GameController,
-    selectedSquare: String?,
-    squareSizePx : Float
-) {
-    val orientation = gameController.getSide()
-
-    if (gameController.getStartSquare() != null) {
-        if (gameController.setDestinationSquareAndTryMove(selectedSquare)) {
-            return
-        }
-    }
-    if (gameController.setStartSquare(selectedSquare)) {
-        drawStartSqueare(selectedSquare, orientation, squareSizePx)
-    }
-}
-
-
-@Composable
-private fun dpToPixel(pixels : Float): Float {
-    val density = LocalDensity.current
-    return with(density) { pixels.dp.toPx() }
-}
-
-@Composable
-private fun minScreenSizeDp(k : Float): Float {
-    val configuration = LocalConfiguration.current
-
-    val screenWidthDp = configuration.screenWidthDp
-    val screenHeightDp = configuration.screenHeightDp
-
-    return minOf(screenWidthDp, screenHeightDp) * k
-}
-@Composable
-private fun minScreenSizePx(k: Float): Float {
-    val tmp = minScreenSizeDp(k)
-    return dpToPixel(tmp)
-}
 @Composable
 fun ChessBoard(
     gameController: GameController,
-    squareSizePx : Float,
+    squareSizePx: Float,
     selectedSquare: String?,
-    onSquareClick: (String) -> Unit,
+    dragFromSquare: String?,
+    dragOffset: Offset,
     modifier: Modifier = Modifier
 ) {
     val orientation = gameController.getSide()
-    val rookPainter = painterResource(id = R.drawable.ic_rook)
-    val pawnPainter = painterResource(id = R.drawable.ic_pawn)
-    val knightPainter = painterResource(id = R.drawable.ic_knight)
-    val bishopPainter = painterResource(id = R.drawable.ic_bishop)
-    val kingPainter = painterResource(id = R.drawable.ic_king)
-    val queenPainter = painterResource(id = R.drawable.ic_queen)
 
-    Canvas(
-        modifier = modifier
-            .aspectRatio(1f)
-            .pointerInput(Unit) {
-                detectTapGestures { offset ->
-                    val square = getSquareFromOffset(offset, squareSizePx, orientation)
-                    onSquareClick(square)
-                }
-            }
-    ) {
+    val painters = mapOf(
+        'r' to painterResource(R.drawable.ic_rook),
+        'p' to painterResource(R.drawable.ic_pawn),
+        'n' to painterResource(R.drawable.ic_knight),
+        'b' to painterResource(R.drawable.ic_bishop),
+        'k' to painterResource(R.drawable.ic_king),
+        'q' to painterResource(R.drawable.ic_queen),
+    )
+
+    Canvas(modifier = modifier.aspectRatio(1f)) {
+        // 1. Board squares
         for (row in 0 until CellCount) {
             for (col in 0 until CellCount) {
                 drawRect(
@@ -195,21 +229,21 @@ fun ChessBoard(
             }
         }
 
-        // Draw row and column labels
-        var ranks: IntProgression = 1..CellCount
-        var files = listOf("h", "g", "f", "e", "d", "c", "b", "a")
+        // 2. Coordinate labels
+        val ranks: IntProgression
+        val files: List<String>
         if (orientation == BoardOrientation.WHITE) {
             ranks = CellCount downTo 1
             files = listOf("a", "b", "c", "d", "e", "f", "g", "h")
+        } else {
+            ranks = 1..CellCount
+            files = listOf("h", "g", "f", "e", "d", "c", "b", "a")
         }
-
-        // Draw rank numbers on the left side (vertical, top-left corner)
         for (i in ranks) {
-            val yPos = if (orientation == BoardOrientation.WHITE) {
+            val yPos = if (orientation == BoardOrientation.WHITE)
                 ((CellCount - i) * squareSizePx) + squareSizePx * 0.3f
-            } else {
+            else
                 (i * squareSizePx) + squareSizePx * 0.3f
-            }
             drawContext.canvas.nativeCanvas.drawText(
                 i.toString(),
                 squareSizePx * 0.1f,
@@ -222,8 +256,6 @@ fun ChessBoard(
                 }
             )
         }
-
-        // Draw file letters on the bottom right (horizontal)
         for ((index, file) in files.withIndex()) {
             drawContext.canvas.nativeCanvas.drawText(
                 file,
@@ -238,134 +270,152 @@ fun ChessBoard(
             )
         }
 
-        SelectStartSquareOrDoMove(gameController, selectedSquare, squareSizePx)
+        // 3. Highlights
+        val highlightColor = Color.Yellow.copy(alpha = 0.4f)
+        drawHighlight(selectedSquare, orientation, squareSizePx, highlightColor)
+        drawHighlight(dragFromSquare, orientation, squareSizePx, highlightColor)
 
+        // 4. Pieces — skip the one being dragged (drawn separately on top)
         val position = gameController.getBoardPosition()
         position.pieces.forEach { piece ->
-            drawFigure(
-                piece.letter,
-                piece.field,
-                squareSizePx,
-                orientation,
-                mapOf(
-                    'r' to rookPainter,
-                    'p' to pawnPainter,
-                    'n' to knightPainter,
-                    'b' to bishopPainter,
-                    'k' to kingPainter,
-                    'q' to queenPainter
-                )
-            )
+            if (piece.field == dragFromSquare) return@forEach
+            drawFigure(piece.letter, piece.field, squareSizePx, orientation, painters)
+        }
+
+        // 5. Dragged piece on top, centered on finger
+        if (dragFromSquare != null) {
+            val draggedPiece = position.pieces.find { it.field == dragFromSquare }
+            draggedPiece?.let {
+                drawFigureDragged(it.letter, dragOffset, squareSizePx, painters)
+            }
         }
     }
 }
+
+// ──────────────────────────────────────────────────────────────────────────────
+// ChessBoardWithCoordinates – state + gesture owner
+// ──────────────────────────────────────────────────────────────────────────────
 
 @Composable
 fun ChessBoardWithCoordinates(
     gameController: GameController,
     modifier: Modifier = Modifier,
 ) {
-    // Observe board state changes to trigger recomposition
+    // Observe board changes so this composable (and ChessBoard) redraws on moves
+    @Suppress("UNUSED_VARIABLE")
     val boardState = gameController.boardState
 
     val orientation = gameController.getSide()
     val squareSizeDp = minScreenSizeDp(0.8f)
     val squareSizePx = minScreenSizePx(0.8f) / CellCount
 
+    // Tap selection state
     var selectedSquare by remember { mutableStateOf<String?>(null) }
+
+    // Drag state
+    var dragFromSquare by remember { mutableStateOf<String?>(null) }
+    var dragOffset by remember { mutableStateOf(Offset.Zero) }
 
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        key(boardState) {
-            ChessBoard(
-                gameController,
-                squareSizePx,
-                selectedSquare = selectedSquare,
-                onSquareClick = { square ->
-                    println("Clicked: $square")
-                    selectedSquare = square
-                },
-                modifier = Modifier.size(squareSizeDp.dp) // фиксированный размер
-            )
-        }
-    }
-}
+        Box(
+            modifier = Modifier
+                .size(squareSizeDp.dp)
+                .pointerInput(squareSizePx) {
+                    awaitEachGesture {
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        val startPos = down.position
+                        val touchSlop = viewConfiguration.touchSlop
 
-private fun DrawScope.drawFigure(
-    letter: Char,
-    fieldName: String,
-    squareSize: Float,
-    orientation: BoardOrientation,
-    painters: Map<Char, Painter>
-) {
-    fun fieldToBoardCoords(field: String): Pair<Int, Int> {
-        val file = field[0]          // 'a'..'h'
-        val rank = field[1]          // '1'..'8'
+                        var latestPos = startPos
+                        var isDragging = false
 
-        val col = file - 'a'
-        val row = CellCount - (rank - '0')
+                        // Determine what square was touched
+                        val startSquare = getSquareFromOffset(startPos, squareSizePx, orientation)
+                        val canDrag = startSquare != null && gameController.canSelectSquare(startSquare)
 
-        return row to col
-    }
+                        // Track pointer until release
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val change = event.changes.firstOrNull() ?: break
+                            latestPos = change.position
 
-    val (row, col) = fieldToBoardCoords(fieldName)
+                            if (!change.pressed) break  // finger lifted
 
-    val displayRow = if (orientation == BoardOrientation.WHITE) row else 7 - row
-    val displayCol = if (orientation == BoardOrientation.WHITE) col else 7 - col
+                            val moved = (latestPos - startPos).getDistance()
 
-    val lowerLetter = letter.lowercaseChar()
-    val painter = painters[lowerLetter]
+                            if (!isDragging && canDrag && moved > touchSlop) {
+                                // Transition to drag mode
+                                isDragging = true
+                                dragFromSquare = startSquare
+                                dragOffset = latestPos
+                                selectedSquare = null
+                                change.consume()
+                            } else if (isDragging) {
+                                dragOffset = latestPos
+                                change.consume()
+                            }
+                        }
 
-    if (painter != null) {
-        val pieceColor = if (letter.isUpperCase()) Color.White else ChessPieceDark
-        val outlineColor = if (letter.isUpperCase()) Color.Black else Color.White
-        val pieceSize = squareSize * 0.770f
-        val piecePadding = (squareSize - pieceSize) / 2
+                        // ── Finger lifted ──
+                        if (isDragging) {
+                            // Validate target is on the board, then attempt move
+                            val targetSquare = getSquareFromOffset(latestPos, squareSizePx, orientation)
+                            if (targetSquare != null && dragFromSquare != null) {
+                                gameController.setStartSquare(dragFromSquare)
+                                gameController.setDestinationSquareAndTryMove(targetSquare)
+                            }
+                            dragFromSquare = null
+                        } else {
+                            // Tap: two-tap select-then-move flow
+                            if (startSquare == null) return@awaitEachGesture
 
-        translate(left = displayCol * squareSize + piecePadding, top = displayRow * squareSize + piecePadding) {
-            // Draw outline (slight shadow/border effect)
-            val strokeWidth = 1.dp.toPx()
-            val offsets = listOf(
-                Offset(-strokeWidth, 0f),
-                Offset(strokeWidth, 0f),
-                Offset(0f, -strokeWidth),
-                Offset(0f, strokeWidth)
-            )
-
-            offsets.forEach { offset ->
-                translate(offset.x, offset.y) {
-                    with(painter) {
-                        draw(
-                            size = Size(pieceSize, pieceSize),
-                            colorFilter = ColorFilter.tint(outlineColor)
-                        )
+                            if (gameController.getStartSquare() != null) {
+                                // A piece is already selected — try moving to tapped square
+                                val moved = gameController.setDestinationSquareAndTryMove(startSquare)
+                                if (moved) {
+                                    selectedSquare = null
+                                } else {
+                                    // Not a valid destination — try selecting a new piece instead
+                                    selectedSquare = if (gameController.setStartSquare(startSquare)) startSquare else null
+                                }
+                            } else {
+                                // Nothing selected yet — try selecting the tapped piece
+                                selectedSquare = if (gameController.setStartSquare(startSquare)) startSquare else null
+                            }
+                        }
                     }
                 }
-            }
-
-            // Draw main body
-            with(painter) {
-                draw(
-                    size = Size(pieceSize, pieceSize),
-                    colorFilter = ColorFilter.tint(pieceColor)
-                )
-            }
+        ) {
+            ChessBoard(
+                gameController = gameController,
+                squareSizePx = squareSizePx,
+                selectedSquare = selectedSquare,
+                dragFromSquare = dragFromSquare,
+                dragOffset = dragOffset,
+                modifier = Modifier.fillMaxSize()
+            )
         }
-    } else {
-        val x = displayCol * squareSize + squareSize / 2
-        val y = displayRow * squareSize + squareSize / 2
-
-        drawContext.canvas.nativeCanvas.drawText(
-            letter.toString(),
-            x,
-            y + squareSize / 4,
-            Paint().apply {
-                textAlign = Paint.Align.CENTER
-                textSize = squareSize * 0.6f
-                isAntiAlias = true
-            }
-        )
     }
 }
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Utilities
+// ──────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun dpToPixel(pixels: Float): Float {
+    val density = LocalDensity.current
+    return with(density) { pixels.dp.toPx() }
+}
+
+@Composable
+private fun minScreenSizeDp(k: Float): Float {
+    val configuration = LocalConfiguration.current
+    return minOf(configuration.screenWidthDp, configuration.screenHeightDp) * k
+}
+
+@Composable
+private fun minScreenSizePx(k: Float): Float = dpToPixel(minScreenSizeDp(k))

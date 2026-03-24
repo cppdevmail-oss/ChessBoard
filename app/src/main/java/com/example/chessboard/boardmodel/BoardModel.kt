@@ -1,5 +1,7 @@
 package com.example.chessboard.boardmodel
 
+enum class PromotionPiece { QUEEN, ROOK, BISHOP, KNIGHT }
+
 data class BoardPiece(
     val letter: Char,
     val field: String
