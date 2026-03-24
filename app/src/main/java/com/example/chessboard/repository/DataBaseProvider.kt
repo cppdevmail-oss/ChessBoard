@@ -10,8 +10,8 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.entity.GamePositionEntity
 import com.example.chessboard.entity.PositionEntity
-import com.example.chessboard.entity.TrainingTemplateEntity
 import com.example.chessboard.entity.TrainingEntity
+import com.example.chessboard.entity.TrainingTemplateEntity
 import com.example.chessboard.service.GameSaver
 import com.github.bhlangonijr.chesslib.move.Move
 
@@ -83,6 +83,18 @@ class DatabaseProvider private constructor(
 
     suspend fun clearAllData() {
         database.clearAllTables()
+    }
+
+    suspend fun getAllGames(): List<GameEntity> {
+        return database.gameDao().getAllGames()
+    }
+
+    suspend fun updateGamePgn(id: Long, pgn: String) {
+        database.gameDao().updatePgn(id, pgn)
+    }
+
+    suspend fun deleteGame(id: Long) {
+        database.gameDao().deleteById(id)
     }
 
     companion object {

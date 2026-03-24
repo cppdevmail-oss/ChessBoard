@@ -19,4 +19,10 @@ interface GameDao {
 
     @Query("SELECT COUNT(*) FROM games")
     suspend fun getCount(): Int
+
+    @Query("SELECT * FROM games ORDER BY id DESC")
+    suspend fun getAllGames(): List<GameEntity>
+
+    @Query("UPDATE games SET pgn = :pgn WHERE id = :id")
+    suspend fun updatePgn(id: Long, pgn: String)
 }

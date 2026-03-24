@@ -40,7 +40,6 @@ class GameSaver(
 
         return database.withTransaction {
 
-            println("Moves count ${moves.count()} on trySaveGame")
             val isUnique = uniquenessChecker.hasUniquePosition(
                 game.initialFen,
                 moves, sideMask
@@ -69,10 +68,6 @@ class GameSaver(
                 ply++
                 savePositionAndLink(gameId, board, ply, sideMask)
             }
-
-            println("Count games ${gameDao.getCount()}")
-            println("Count positions ${positionDao.getCount()}")
-            println("Count positions to game ${gamePositionDao.getCount()}")
 
             true
         }
@@ -122,7 +117,6 @@ class GameSaver(
         fen: String,
         sideMask: Int
     ): Long {
-        println("try save fen $fen")
         val existingIdAndSide = positionDao.getIdAndSideByHashAndFen(hash, fen)
 
         if (existingIdAndSide == null) {

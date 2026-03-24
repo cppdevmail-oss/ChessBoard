@@ -45,8 +45,6 @@ fun TrainingScreenContainer(
     var isDatabaseBusy by remember { mutableStateOf(false) }
 
     val saveGame: () -> Unit = {
-        println("Save game clicked")
-
         if (!isDatabaseBusy) {
             isDatabaseBusy = true
 

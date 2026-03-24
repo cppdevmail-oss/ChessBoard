@@ -15,7 +15,8 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
     private var board = Board()
     private var side = inOrientation
     private val moves = mutableListOf<Move>()
-    private var currentMoveIndex = 0
+    var currentMoveIndex by mutableIntStateOf(0)
+        private set
     private var startSquare : String? = null
     var boardState by mutableIntStateOf(0)
         private set
@@ -36,17 +37,17 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
         boardState++
     }
 
-    private fun tryMove(move : Move) : Boolean {
+    private fun tryMove(move: Move): Boolean {
         if (!board.legalMoves().contains(move)) { return false }
 
-        println("Move ${move} is fucking legal")
-        this.board.doMove(move)
-        moves.add(move)
-
-        // If in middle game - need delete tails moves
+        // Trim future moves when branching from the middle of the game
         if (currentMoveIndex < moves.size) {
             moves.subList(currentMoveIndex, moves.size).clear()
         }
+
+        board.doMove(move)
+        moves.add(move)
+        currentMoveIndex++
         updateState()
         boardState++
 
@@ -55,17 +56,13 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
 
     fun tryMove(from: String, to: String): Boolean {
         return try {
-            println("try move from ${from} to ${to}")
             val move = Move(
                 Square.fromValue(from.uppercase()),
                 Square.fromValue(to.uppercase())
             )
-
-            currentMoveIndex++
             tryMove(move)
         } catch (e: Exception) {
-            println("Error on try move. Err ${e}")
-            return false
+            false
         }
     }
 
@@ -91,14 +88,20 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
         return true
     }
 
-    fun goToMove(index: Int) : Boolean {
-        if (index < 0 || index > moves.size) { return false }
+    fun goToMove(index: Int): Boolean {
+        if (index < 0 || index > moves.size) return false
 
+        val snapshot = moves.toList()
         board = Board()
+        moves.clear()
+        currentMoveIndex = 0
         for (i in 0 until index) {
-            tryMove(moves[i])
+            board.doMove(snapshot[i])
+            moves.add(snapshot[i])
+            currentMoveIndex++
         }
-
+        updateState()
+        boardState++
         return true
     }
 
@@ -125,7 +128,8 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
     fun generatePgn(
         whiteName: String = "White",
         blackName: String = "Black",
-        event: String = "Casual Game"
+        event: String = "Casual Game",
+        upToIndex: Int = -1
     ): String {
         val sb = StringBuilder()
 
@@ -135,10 +139,12 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
         sb.append("[Black \"$blackName\"]\n")
         sb.append("[Result \"*\"]\n\n")
 
-        moves.forEachIndexed { index, move ->
+        val count = if (upToIndex < 0) moves.size else upToIndex
+        moves.take(count).forEachIndexed { index, move ->
             if (index % 2 == 0) {
                 sb.append("${index / 2 + 1}. ")
             }
+            sb.append("${move.from.value().lowercase()}${move.to.value().lowercase()} ")
         }
 
         sb.append("*")
