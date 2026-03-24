@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.ui.ChessBoardWithCoordinates
+import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.theme.*
 import com.github.bhlangonijr.chesslib.Board
 import com.github.bhlangonijr.chesslib.Piece
@@ -206,37 +207,8 @@ fun TrainingActionButtons(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Button(
-                onClick = onSaveGame,
-                modifier = Modifier.weight(1f).height(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = TrainingAccentTeal,
-                    contentColor = Color.White
-                ),
-                elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = 2.dp,
-                    pressedElevation = 4.dp
-                )
-            ) {
-                Text(text = "Save game", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-            }
-
-            Button(
-                onClick = onDatabaseClear,
-                modifier = Modifier.weight(1f).height(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = TrainingSurfaceDark,
-                    contentColor = TrainingTextPrimary
-                ),
-                elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = 2.dp,
-                    pressedElevation = 4.dp
-                )
-            ) {
-                Text(text = "Clear database", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-            }
+            PrimaryButton("Save game", onClick = onSaveGame)
+            PrimaryButton("Clear database", onClick = onDatabaseClear)
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -246,59 +218,9 @@ fun TrainingActionButtons(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Button(
-                onClick = { gameController.undoMove() },
-                enabled = gameController.canUndo,
-                modifier = Modifier.weight(1f).height(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = TrainingSurfaceDark,
-                    contentColor = TrainingTextPrimary,
-                    disabledContainerColor = TrainingCardDark,
-                    disabledContentColor = TrainingTextSecondary
-                ),
-                elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = 2.dp,
-                    pressedElevation = 4.dp
-                )
-            ) {
-                Text(text = "Back", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-            }
-
-            Button(
-                onClick = { gameController.redoMove() },
-                enabled = gameController.canRedo,
-                modifier = Modifier.weight(1f).height(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = TrainingSurfaceDark,
-                    contentColor = TrainingTextPrimary,
-                    disabledContainerColor = TrainingCardDark,
-                    disabledContentColor = TrainingTextSecondary
-                ),
-                elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = 2.dp,
-                    pressedElevation = 4.dp
-                )
-            ) {
-                Text(text = "Forward", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-            }
-
-            Button(
-                onClick = { gameController.resetToStartPosition() },
-                modifier = Modifier.weight(1f).height(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = TrainingSurfaceDark,
-                    contentColor = TrainingTextPrimary
-                ),
-                elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = 2.dp,
-                    pressedElevation = 4.dp
-                )
-            ) {
-                Text(text = "Reset", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-            }
+            PrimaryButton("Back", onClick = { gameController.undoMove() })
+            PrimaryButton("Forward", onClick = { gameController.redoMove() })
+            PrimaryButton("Reset", onClick = { gameController.resetToStartPosition() })
         }
     }
 }

@@ -4,7 +4,6 @@ import android.app.Activity
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -15,7 +14,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,6 +22,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.repository.DatabaseProvider
+import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.theme.*
 import com.github.bhlangonijr.chesslib.Square
 import com.github.bhlangonijr.chesslib.move.Move
@@ -152,10 +151,7 @@ fun GameEditorScreen(
                 )
             },
             confirmButton = {
-                Button(
-                    onClick = { showDeleteDialog = false; onDelete() },
-                    colors = ButtonDefaults.buttonColors(containerColor = TrainingErrorRed)
-                ) { Text("Delete", color = Color.White) }
+                PrimaryButton("Delete", onClick = { showDeleteDialog = false; onDelete() })
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
@@ -198,15 +194,7 @@ fun GameEditorScreen(
                     IconButton(onClick = { showDeleteDialog = true }) {
                         Icon(Icons.Default.Delete, contentDescription = "Delete", tint = TrainingErrorRed)
                     }
-                    Button(
-                        onClick = { onSave(editedName, editedEco) },
-                        modifier = Modifier.padding(end = 12.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = TrainingAccentTeal),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                    ) {
-                        Text("Save", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = Color.White)
-                    }
+                    PrimaryButton("Save", onClick = { onSave(editedName, editedEco) })
                 }
             )
         }
