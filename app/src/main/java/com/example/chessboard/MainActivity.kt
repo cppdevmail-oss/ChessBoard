@@ -29,8 +29,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             ChessBoardTheme {
                 println("Setup first screen")
-                // var currentScreen by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
-                var currentScreen by remember { mutableStateOf<ScreenType>(ScreenType.TrainingTemplate) }
+                var currentScreen by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
+                // var currentScreen by remember { mutableStateOf<ScreenType>(ScreenType.TrainingTemplate) }
                 var selectedGame by remember { mutableStateOf<GameEntity?>(null) }
 
                 when (currentScreen) {
