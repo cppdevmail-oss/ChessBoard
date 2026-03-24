@@ -32,7 +32,6 @@ import kotlinx.coroutines.withContext
 import android.app.Activity
 import androidx.lifecycle.LifecycleOwner
 
-// TrainingScreenContainer - Manages all backend logic
 @Composable
 fun TrainingScreenContainer(
     activity: Activity,
