@@ -19,6 +19,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.repository.DatabaseProvider
+import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.theme.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -106,26 +107,14 @@ fun CreateOpeningScreen(
                     }
                 },
                 actions = {
-                    Button(
+                    PrimaryButton("Save",
                         onClick = {
                             if (openingName.isBlank()) {
                                 nameError = true
-                            } else {
-                                onSave(openingName, ecoCode)
+                                return@PrimaryButton
                             }
-                        },
-                        modifier = Modifier.padding(end = 12.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = TrainingAccentTeal),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                    ) {
-                        Text(
-                            text = "Save",
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp,
-                            color = Color.White
-                        )
-                    }
+                            onSave(openingName, ecoCode)
+                        })
                 }
             )
         }
