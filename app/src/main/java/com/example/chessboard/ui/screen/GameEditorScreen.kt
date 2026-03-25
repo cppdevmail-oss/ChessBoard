@@ -16,13 +16,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.repository.DatabaseProvider
+import com.example.chessboard.ui.components.BodySecondaryText
+import com.example.chessboard.ui.components.CaptionText
 import com.example.chessboard.ui.components.PrimaryButton
+import com.example.chessboard.ui.components.ScreenTitleText
+import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.theme.*
 import com.github.bhlangonijr.chesslib.Square
 import com.github.bhlangonijr.chesslib.move.Move
@@ -143,9 +146,9 @@ fun GameEditorScreen(
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             containerColor = TrainingCardDark,
-            title = { Text("Delete Opening", color = TrainingTextPrimary, fontWeight = FontWeight.Bold) },
+            title = { ScreenTitleText("Delete Opening", color = TrainingTextPrimary) },
             text = {
-                Text(
+                BodySecondaryText(
                     "Delete \"${game.event ?: "this opening"}\"? This cannot be undone.",
                     color = TrainingTextSecondary
                 )
@@ -155,7 +158,7 @@ fun GameEditorScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel", color = TrainingTextSecondary)
+                    CaptionText("Cancel", color = TrainingTextSecondary)
                 }
             }
         )
@@ -186,13 +189,16 @@ fun GameEditorScreen(
                 },
                 title = {
                     Column {
-                        Text(
+                        ScreenTitleText(
                             text = editedName.ifBlank { "Opening" },
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
                             color = TrainingTextPrimary
                         )
-                        if (editedEco.isNotBlank()) Text(editedEco, fontSize = 12.sp, color = TrainingTextSecondary)
+                        if (editedEco.isNotBlank()) {
+                            CaptionText(
+                                text = editedEco,
+                                color = TrainingTextSecondary
+                            )
+                        }
                     }
                 },
                 actions = {
@@ -227,9 +233,9 @@ fun GameEditorScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("🔒", fontSize = 14.sp)
                         Spacer(modifier = Modifier.width(AppDimens.radiusXs))
-                        Text("Move Sequence", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TrainingTextSecondary)
+                        SectionTitleText("Move Sequence", color = TrainingTextSecondary)
                     }
-                    Text("Move $currentPly", fontSize = 12.sp, color = TrainingTextSecondary)
+                    CaptionText("Move $currentPly", color = TrainingTextSecondary)
                 }
 
                 Spacer(modifier = Modifier.height(AppDimens.spaceSm))
@@ -273,7 +279,7 @@ fun GameEditorScreen(
                         )
                     }
                     TextButton(onClick = { repeat(currentPly) { gameController.undoMove() } }) {
-                        Text("Reset", color = TrainingTextSecondary, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                        CaptionText("Reset", color = TrainingTextSecondary, fontWeight = FontWeight.Medium)
                     }
                     IconButton(onClick = { gameController.redoMove() }, enabled = gameController.canRedo) {
                         Icon(
