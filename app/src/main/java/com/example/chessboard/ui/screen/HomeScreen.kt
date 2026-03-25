@@ -43,11 +43,13 @@ import com.example.chessboard.ui.theme.TrainingIconInactive
 import com.example.chessboard.ui.theme.TrainingTextPrimary
 import com.example.chessboard.ui.theme.TrainingTextSecondary
 import com.example.chessboard.ui.theme.TrainingSurfaceDark
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private enum class FilterTab { ALL, AS_WHITE, AS_BLACK }
+private const val FULL_TRAINING_NAME = "FullTraining"
 
 private data class NavItem(val label: ScreenType, val outlinedIcon: ImageVector, val filledIcon: ImageVector)
 private data class TrainingCreationSuccess(
@@ -94,27 +96,42 @@ fun HomeScreenContainer(
         onNavigate = onNavigate,
         onOpenGame = onOpenGame,
         onCreateTrainingClick = {
-            onCreateTrainingClick()
-            scope.launch {
-                val gamesCount = games.size
-                val trainingName = "FullTraining"
-                val trainingId = withContext(Dispatchers.IO) {
-                    dbProvider.createTrainingFromAllGames(name = trainingName)
-                }
-
-                if (trainingId == null) {
-                    showNoGamesError = true
-                } else {
-                    trainingCreationSuccess = TrainingCreationSuccess(
-                        trainingId = trainingId,
-                        trainingName = trainingName,
-                        gamesCount = gamesCount
-                    )
-                }
-            }
+            handleCreateTrainingClick(
+                scope = scope,
+                dbProvider = dbProvider,
+                gamesCount = games.size,
+                onBeforeCreate = onCreateTrainingClick,
+                onEmptyGames = { showNoGamesError = true },
+                onTrainingCreated = { trainingCreationSuccess = it }
+            )
         },
         modifier = modifier
     )
+}
+
+private fun handleCreateTrainingClick(
+    scope: CoroutineScope,
+    dbProvider: DatabaseProvider,
+    gamesCount: Int,
+    onBeforeCreate: () -> Unit,
+    onEmptyGames: () -> Unit,
+    onTrainingCreated: (TrainingCreationSuccess) -> Unit
+) {
+    onBeforeCreate()
+    scope.launch {
+        val success = withContext(Dispatchers.IO) {
+            createFullTraining(
+                dbProvider = dbProvider,
+                gamesCount = gamesCount
+            )
+        }
+
+        if (success == null) {
+            onEmptyGames()
+        } else {
+            onTrainingCreated(success)
+        }
+    }
 }
 
 @Composable
@@ -262,6 +279,19 @@ fun HomeScreen(
             }
         }
     }
+}
+
+private suspend fun createFullTraining(
+    dbProvider: DatabaseProvider,
+    gamesCount: Int
+): TrainingCreationSuccess? {
+    val trainingId = dbProvider.createTrainingFromAllGames(name = FULL_TRAINING_NAME) ?: return null
+
+    return TrainingCreationSuccess(
+        trainingId = trainingId,
+        trainingName = FULL_TRAINING_NAME,
+        gamesCount = gamesCount
+    )
 }
 
 @Composable
