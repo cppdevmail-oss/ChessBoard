@@ -6,11 +6,17 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,6 +29,7 @@ import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.ui.components.AppDivider
+import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.CardMetaText
 import com.example.chessboard.ui.components.PrimaryButton
@@ -178,39 +185,10 @@ fun GameEditorScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = TrainingBackgroundDark,
         topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = TrainingBackgroundDark,
-                    navigationIconContentColor = TrainingTextPrimary,
-                    titleContentColor = TrainingTextPrimary
-                ),
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBackClick,
-                        modifier = Modifier
-                            .padding(start = AppDimens.spaceSm)
-                            .size(AppDimens.iconButtonSize)
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back",
-                            tint = TrainingTextPrimary, modifier = Modifier.size(20.dp)
-                        )
-                    }
-                },
-                title = {
-                    Column {
-                        ScreenTitleText(
-                            text = editedName.ifBlank { "Opening" },
-                            color = TrainingTextPrimary
-                        )
-                        if (editedEco.isNotBlank()) {
-                            CardMetaText(
-                                text = editedEco,
-                                color = TrainingTextSecondary
-                            )
-                        }
-                    }
-                },
+            AppTopBar(
+                title = editedName.ifBlank { "Opening" },
+                subtitle = editedEco.ifBlank { null },
+                onBackClick = onBackClick,
                 actions = {
                     IconButton(onClick = { showDeleteDialog = true }) {
                         Icon(Icons.Default.Delete, contentDescription = "Delete", tint = TrainingErrorRed)
