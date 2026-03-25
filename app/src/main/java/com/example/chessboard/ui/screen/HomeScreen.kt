@@ -44,6 +44,7 @@ import com.example.chessboard.ui.theme.TrainingTextPrimary
 import com.example.chessboard.ui.theme.TrainingTextSecondary
 import com.example.chessboard.ui.theme.TrainingSurfaceDark
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private enum class FilterTab { ALL, AS_WHITE, AS_BLACK }
@@ -61,6 +62,7 @@ fun HomeScreenContainer(
 ) {
     val dbProvider = inDbProvider
     var games by remember { mutableStateOf<List<GameEntity>>(emptyList()) }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         val loaded = withContext(Dispatchers.IO) { dbProvider.getAllGames() }
@@ -71,7 +73,12 @@ fun HomeScreenContainer(
         games = games,
         onNavigate = onNavigate,
         onOpenGame = onOpenGame,
-        onCreateTrainingClick = onCreateTrainingClick,
+        onCreateTrainingClick = {
+            onCreateTrainingClick()
+            scope.launch(Dispatchers.IO) {
+                dbProvider.createTrainingFromAllGames()
+            }
+        },
         modifier = modifier
     )
 }
