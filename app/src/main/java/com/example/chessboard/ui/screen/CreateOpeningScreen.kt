@@ -3,23 +3,22 @@ package com.example.chessboard.ui.screen
 import android.app.Activity
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.repository.DatabaseProvider
+import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.PrimaryButton
+import com.example.chessboard.ui.components.ScreenTitleText
+import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.theme.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -93,15 +92,12 @@ fun CreateOpeningScreen(
                 },
                 title = {
                     Column {
-                        Text(
+                        ScreenTitleText(
                             text = "Create Opening",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
                             color = TrainingTextPrimary
                         )
-                        Text(
+                        BodySecondaryText(
                             text = "Build your custom opening",
-                            fontSize = 12.sp,
                             color = TrainingTextSecondary
                         )
                     }
@@ -145,10 +141,8 @@ fun CreateOpeningScreen(
                 modifier = Modifier.fillMaxWidth(0.5f)
             )
 
-            Text(
+            SectionTitleText(
                 text = "Drag pieces to add moves",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
                 color = TrainingTextSecondary
             )
 

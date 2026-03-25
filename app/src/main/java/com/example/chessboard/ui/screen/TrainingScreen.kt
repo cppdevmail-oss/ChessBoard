@@ -35,6 +35,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -56,9 +57,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.repository.DatabaseProvider
+import com.example.chessboard.ui.components.BodySecondaryText
+import com.example.chessboard.ui.components.CaptionText
+import com.example.chessboard.ui.components.ScreenTitleText
+import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.ChessBoardTheme
 import com.example.chessboard.ui.theme.TrainingAccentTeal
@@ -180,10 +184,9 @@ fun TrainingScreen(
                             .height(120.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
+                        BodySecondaryText(
                             text = "No saved games.\nGo to Home to create openings.",
                             color = TrainingTextSecondary,
-                            fontSize = 14.sp,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -245,23 +248,19 @@ private fun GameBlock(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
+                    SectionTitleText(
                         text = parsedGame.game.event ?: "Opening",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
                         color = TrainingTextPrimary
                     )
                     if (!parsedGame.game.eco.isNullOrBlank()) {
-                        Text(
+                        CaptionText(
                             text = parsedGame.game.eco,
-                            fontSize = 11.sp,
                             color = TrainingTextSecondary
                         )
                     }
                 }
-                Text(
+                CaptionText(
                     text = "${parsedGame.moveLabels.size} moves",
-                    fontSize = 11.sp,
                     color = TrainingTextSecondary
                 )
             }
@@ -270,9 +269,8 @@ private fun GameBlock(
 
             // Move sequence chips
             if (parsedGame.moveLabels.isEmpty()) {
-                Text(
+                BodySecondaryText(
                     text = "No moves recorded",
-                    fontSize = 12.sp,
                     color = TrainingTextSecondary
                 )
             } else {
@@ -313,10 +311,9 @@ private fun GameBlock(
                         )
                     }
                     TextButton(onClick = onResetClick) {
-                        Text(
+                        CaptionText(
                             text = "Reset",
                             color = TrainingTextSecondary,
-                            fontSize = 14.sp,
                             fontWeight = FontWeight.Medium
                         )
                     }
@@ -368,10 +365,8 @@ private fun TrainingTopBar(
             }
         },
         title = {
-            Text(
+            ScreenTitleText(
                 text = "Training",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
                 color = TrainingTextPrimary
             )
         }
@@ -449,7 +444,7 @@ private fun BottomNavItemView(
         Spacer(modifier = Modifier.height(AppDimens.spaceXs))
         Text(
             text = item.label.toString(),
-            fontSize = 11.sp,
+            style = MaterialTheme.typography.labelSmall,
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
             color = color,
             textAlign = TextAlign.Center
