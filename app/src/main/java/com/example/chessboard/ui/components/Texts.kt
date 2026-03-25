@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import com.example.chessboard.ui.theme.TrainingTextPrimary
 import com.example.chessboard.ui.theme.TrainingTextSecondary
 
@@ -55,13 +56,15 @@ fun BodyPrimaryText(
 fun BodySecondaryText(
     text: String,
     modifier: Modifier = Modifier,
-    color: Color = TrainingTextSecondary
+    color: Color = TrainingTextSecondary,
+    textAlign: TextAlign? = null
 ) {
     Text(
         text = text,
         modifier = modifier,
         style = MaterialTheme.typography.bodyMedium,
-        color = color
+        color = color,
+        textAlign = textAlign
     )
 }
 
