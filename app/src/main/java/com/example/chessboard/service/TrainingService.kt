@@ -16,13 +16,13 @@ class TrainingService(
     suspend fun addGameToTraining(trainingId: Long, gameId: Long, weight: Int = 1): Boolean {
         val training = dao.getById(trainingId) ?: return false
 
-        val games = JsonParser.fromJson(training.gamesJson).toMutableList()
+        val games = OneGameTrainingData.fromJson(training.gamesJson).toMutableList()
         val index = games.indexOfFirst { it.gameId == gameId }
 
         if (index >= 0) { return false }
 
-        games.add(JsonParser(gameId, weight))
-        dao.update(training.copy(gamesJson = JsonParser.toJson(games)))
+        games.add(OneGameTrainingData(gameId, weight))
+        dao.update(training.copy(gamesJson = OneGameTrainingData.toJson(games)))
         return true
     }
 
@@ -39,7 +39,7 @@ class TrainingService(
     suspend fun decreaseLineWeight(trainingId: Long, gameId: Long): Boolean { //todo why its return boolean?
         val training = dao.getById(trainingId) ?: return false
 
-        val games = JsonParser.fromJson(training.gamesJson).toMutableList()
+        val games = OneGameTrainingData.fromJson(training.gamesJson).toMutableList()
         val index = games.indexOfFirst { it.gameId == gameId }
 
         if (index < 0) return false // todo mb index < 1?
@@ -57,21 +57,21 @@ class TrainingService(
             return true
         }
 
-        dao.update(training.copy(gamesJson = JsonParser.toJson(games)))
+        dao.update(training.copy(gamesJson = OneGameTrainingData.toJson(games)))
         return true
     }
 
     suspend fun increaseLineWeight(trainingId: Long, gameId: Long, delta: Int = 1): Boolean {
         val training = dao.getById(trainingId) ?: return false
 
-        val games = JsonParser.fromJson(training.gamesJson).toMutableList()
+        val games = OneGameTrainingData.fromJson(training.gamesJson).toMutableList()
         val index = games.indexOfFirst { it.gameId == gameId }
 
         if (index < 0) return false
 
         games[index] = games[index].copy(weight = games[index].weight + delta)
 
-        dao.update(training.copy(gamesJson = JsonParser.toJson(games)))
+        dao.update(training.copy(gamesJson = OneGameTrainingData.toJson(games)))
         return true
     }
 }
