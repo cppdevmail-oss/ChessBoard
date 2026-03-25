@@ -19,14 +19,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.entity.SideMask
 import com.example.chessboard.repository.DatabaseProvider
+import com.example.chessboard.ui.components.BodySecondaryText
+import com.example.chessboard.ui.components.CaptionText
+import com.example.chessboard.ui.components.CardTitleText
+import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.theme.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -106,14 +110,12 @@ fun HomeScreen(
                             Spacer(modifier = Modifier.width(AppDimens.spaceSm))
                             Text(
                                 text = "Chess Openings",
-                                fontSize = 26.sp,
-                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.displaySmall,
                                 color = TrainingTextPrimary
                             )
                         }
-                        Text(
+                        SectionTitleText(
                             text = "${games.size} opening${if (games.size == 1) "" else "s"}",
-                            fontSize = 14.sp,
                             color = TrainingTextSecondary
                         )
                     }
@@ -162,10 +164,9 @@ fun HomeScreen(
                             singleLine = true,
                             decorationBox = { innerTextField ->
                                 if (searchQuery.isEmpty()) {
-                                    Text(
+                                    BodySecondaryText(
                                         text = "Search openings...",
-                                        color = TrainingTextSecondary,
-                                        fontSize = 15.sp
+                                        color = TrainingTextSecondary
                                     )
                                 }
                                 innerTextField()
@@ -225,10 +226,9 @@ fun HomeScreen(
                             .padding(vertical = 48.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
+                        BodySecondaryText(
                             text = if (games.isEmpty()) "No openings yet.\nTap + to create one." else "No results found.",
                             color = TrainingTextSecondary,
-                            fontSize = 15.sp,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -255,10 +255,8 @@ private fun GameEntityCard(game: GameEntity, modifier: Modifier = Modifier, onCl
         color = TrainingCardDark
     ) {
         Column(modifier = Modifier.padding(AppDimens.spaceLg)) {
-            Text(
+            CardTitleText(
                 text = game.event ?: "Unnamed Opening",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
                 color = TrainingTextPrimary
             )
             if (!game.eco.isNullOrBlank()) {
@@ -267,11 +265,10 @@ private fun GameEntityCard(game: GameEntity, modifier: Modifier = Modifier, onCl
                     shape = RoundedCornerShape(AppDimens.radiusXs),
                     color = TrainingBackgroundDark
                 ) {
-                    Text(
+                    CaptionText(
                         text = game.eco,
                         modifier = Modifier.padding(horizontal = AppDimens.spaceSm, vertical = AppDimens.spaceXs),
                         color = TrainingTextSecondary,
-                        fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -297,10 +294,10 @@ private fun FilterTabOption(
     ) {
         Text(
             text = label,
+            style = MaterialTheme.typography.labelLarge,
             color = if (isSelected) Color.Black else TrainingTextSecondary,
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
             textAlign = TextAlign.Center,
-            fontSize = 14.sp
         )
     }
 }
@@ -348,7 +345,7 @@ private fun HomeBottomNavigation(
                         Spacer(modifier = Modifier.height(AppDimens.spaceXs))
                         Text(
                             text = item.label.toString(),
-                            fontSize = 11.sp,
+                            style = MaterialTheme.typography.labelSmall,
                             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                             color = color,
                             textAlign = TextAlign.Center
