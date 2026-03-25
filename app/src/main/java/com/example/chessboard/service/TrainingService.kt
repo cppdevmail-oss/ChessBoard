@@ -9,6 +9,23 @@ class TrainingService(
     private val templateDao: TrainingTemplateDao
 ) {
 
+    suspend fun createEmptyTraining(name: String = "FullTraining"): Long {
+        return dao.insert(TrainingEntity(name = name))
+    }
+
+    suspend fun addGameToTraining(trainingId: Long, gameId: Long, weight: Int = 1): Boolean {
+        val training = dao.getById(trainingId) ?: return false
+
+        val games = JsonParser.fromJson(training.gamesJson).toMutableList()
+        val index = games.indexOfFirst { it.gameId == gameId }
+
+        if (index >= 0) { return false }
+
+        games.add(JsonParser(gameId, weight))
+        dao.update(training.copy(gamesJson = JsonParser.toJson(games)))
+        return true
+    }
+
     suspend fun createFromTemplate(templateId: Long): Long {
         val template = templateDao.getById(templateId) ?: return -1 //todo throw exception or return template what is -1?
         return dao.insert(
