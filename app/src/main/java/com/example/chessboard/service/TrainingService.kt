@@ -26,6 +26,32 @@ class TrainingService(
         return true
     }
 
+    suspend fun addGamesToTraining(
+        trainingId: Long,
+        gamesForTraining: List<OneGameTrainingData>
+    ): Boolean {
+        val training = dao.getById(trainingId) ?: return false
+        if (gamesForTraining.isEmpty()) return true
+
+        val existingGames = OneGameTrainingData.fromJson(training.gamesJson).toMutableList()
+        val existingGameIds = existingGames.map { it.gameId }.toHashSet()
+        val filteredGames = mutableListOf<OneGameTrainingData>()
+        val newGameIds = mutableSetOf<Long>()
+
+        for (game in gamesForTraining) {
+            if (!newGameIds.add(game.gameId)) return false
+            if (game.gameId !in existingGameIds) {
+                filteredGames.add(game)
+            }
+        }
+
+        if (filteredGames.isEmpty()) return true
+
+        existingGames.addAll(filteredGames)
+        dao.update(training.copy(gamesJson = OneGameTrainingData.toJson(existingGames)))
+        return true
+    }
+
     suspend fun createFromTemplate(templateId: Long): Long {
         val template = templateDao.getById(templateId) ?: return -1 //todo throw exception or return template what is -1?
         return dao.insert(
