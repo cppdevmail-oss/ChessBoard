@@ -4,8 +4,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,7 +27,7 @@ fun CardSurface(
     color: Color = TrainingCardDark,
     contentPadding: PaddingValues = PaddingValues(AppDimens.spaceLg),
     onClick: (() -> Unit)? = null,
-    content: @Composable () -> Unit
+    content: @Composable ColumnScope.() -> Unit
 ) {
     val clickableModifier = if (onClick == null) {
         modifier
@@ -51,7 +53,7 @@ fun PanelSurface(
     modifier: Modifier = Modifier,
     color: Color = TrainingSurfaceDark,
     contentPadding: PaddingValues = PaddingValues(AppDimens.spaceLg),
-    content: @Composable () -> Unit
+    content: @Composable ColumnScope.() -> Unit
 ) {
     Surface(
         modifier = modifier,
@@ -74,7 +76,7 @@ fun PillSurface(
         horizontal = AppDimens.spaceLg,
         vertical = AppDimens.spaceMd
     ),
-    content: @Composable () -> Unit
+    content: @Composable RowScope.() -> Unit
 ) {
     Surface(
         modifier = modifier,
