@@ -50,6 +50,11 @@ import kotlinx.coroutines.withContext
 private enum class FilterTab { ALL, AS_WHITE, AS_BLACK }
 
 private data class NavItem(val label: ScreenType, val outlinedIcon: ImageVector, val filledIcon: ImageVector)
+private data class TrainingCreationSuccess(
+    val trainingId: Long,
+    val trainingName: String,
+    val gamesCount: Int
+)
 
 @Composable
 fun HomeScreenContainer(
@@ -62,11 +67,26 @@ fun HomeScreenContainer(
 ) {
     val dbProvider = inDbProvider
     var games by remember { mutableStateOf<List<GameEntity>>(emptyList()) }
+    var showNoGamesError by remember { mutableStateOf(false) }
+    var trainingCreationSuccess by remember { mutableStateOf<TrainingCreationSuccess?>(null) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         val loaded = withContext(Dispatchers.IO) { dbProvider.getAllGames() }
         games = loaded
+    }
+
+    if (showNoGamesError) {
+        TrainingCreationErrorDialog(
+            onDismiss = { showNoGamesError = false }
+        )
+    }
+
+    trainingCreationSuccess?.let { success ->
+        TrainingCreationSuccessDialog(
+            success = success,
+            onDismiss = { trainingCreationSuccess = null }
+        )
     }
 
     HomeScreen(
@@ -75,8 +95,22 @@ fun HomeScreenContainer(
         onOpenGame = onOpenGame,
         onCreateTrainingClick = {
             onCreateTrainingClick()
-            scope.launch(Dispatchers.IO) {
-                dbProvider.createTrainingFromAllGames()
+            scope.launch {
+                val gamesCount = games.size
+                val trainingName = "FullTraining"
+                val trainingId = withContext(Dispatchers.IO) {
+                    dbProvider.createTrainingFromAllGames(name = trainingName)
+                }
+
+                if (trainingId == null) {
+                    showNoGamesError = true
+                } else {
+                    trainingCreationSuccess = TrainingCreationSuccess(
+                        trainingId = trainingId,
+                        trainingName = trainingName,
+                        gamesCount = gamesCount
+                    )
+                }
             }
         },
         modifier = modifier
@@ -228,6 +262,77 @@ fun HomeScreen(
             }
         }
     }
+}
+
+@Composable
+private fun TrainingCreationErrorDialog(
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = TrainingBackgroundDark,
+        title = {
+            ScreenTitleText(
+                text = "Training Creation Failed",
+                color = TrainingTextPrimary
+            )
+        },
+        text = {
+            BodySecondaryText(
+                text = "There are no games available to create a training.",
+                color = TrainingTextSecondary
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                CardMetaText(
+                    text = "OK",
+                    color = TrainingAccentTeal
+                )
+            }
+        }
+    )
+}
+
+@Composable
+private fun TrainingCreationSuccessDialog(
+    success: TrainingCreationSuccess,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = TrainingBackgroundDark,
+        title = {
+            ScreenTitleText(
+                text = "Training Created",
+                color = TrainingTextPrimary
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(AppDimens.spaceXs)) {
+                BodySecondaryText(
+                    text = "ID: ${success.trainingId}",
+                    color = TrainingTextSecondary
+                )
+                BodySecondaryText(
+                    text = "Name: ${success.trainingName}",
+                    color = TrainingTextSecondary
+                )
+                BodySecondaryText(
+                    text = "Games added: ${success.gamesCount}",
+                    color = TrainingTextSecondary
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                CardMetaText(
+                    text = "OK",
+                    color = TrainingAccentTeal
+                )
+            }
+        }
+    )
 }
 
 @Composable
