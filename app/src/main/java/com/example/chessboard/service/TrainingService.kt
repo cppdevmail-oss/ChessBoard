@@ -1,5 +1,6 @@
 package com.example.chessboard.service
 
+import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.entity.TrainingEntity
 import com.example.chessboard.repository.TrainingDao
 import com.example.chessboard.repository.TrainingTemplateDao
@@ -11,6 +12,30 @@ class TrainingService(
 
     suspend fun createEmptyTraining(name: String = "FullTraining"): Long {
         return dao.insert(TrainingEntity(name = name))
+    }
+
+    suspend fun createTrainingFromAllGames(
+        games: List<GameEntity>,
+        name: String = "FullTraining",
+        initialWeight: Int = 1
+    ): Long? {
+        if (games.isEmpty()) return null
+
+        val gamesJson = OneGameTrainingData.toJson(
+            games.map { game ->
+                OneGameTrainingData(
+                    gameId = game.id,
+                    weight = initialWeight
+                )
+            }
+        )
+
+        return dao.insert(
+            TrainingEntity(
+                name = name,
+                gamesJson = gamesJson
+            )
+        )
     }
 
     suspend fun addGameToTraining(trainingId: Long, gameId: Long, weight: Int = 1): Boolean {
