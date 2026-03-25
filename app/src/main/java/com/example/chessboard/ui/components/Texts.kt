@@ -39,15 +39,15 @@ fun SectionTitleText(
 }
 
 @Composable
-fun BodyPrimaryText(
+fun FieldLabelText(
     text: String,
     modifier: Modifier = Modifier,
-    color: Color = TrainingTextPrimary
+    color: Color = TrainingTextSecondary
 ) {
     Text(
         text = text,
         modifier = modifier,
-        style = MaterialTheme.typography.bodyMedium,
+        style = MaterialTheme.typography.labelMedium,
         color = color
     )
 }
@@ -69,7 +69,7 @@ fun BodySecondaryText(
 }
 
 @Composable
-fun CaptionText(
+fun CardMetaText(
     text: String,
     modifier: Modifier = Modifier,
     color: Color = TrainingTextSecondary,
@@ -78,22 +78,26 @@ fun CaptionText(
     Text(
         text = text,
         modifier = modifier,
-        style = MaterialTheme.typography.labelSmall,
+        style = MaterialTheme.typography.bodySmall,
         color = color,
         fontWeight = fontWeight
     )
 }
 
 @Composable
-fun CardTitleText(
+fun NavLabelText(
     text: String,
     modifier: Modifier = Modifier,
-    color: Color = TrainingTextPrimary
+    color: Color = TrainingTextSecondary,
+    fontWeight: FontWeight = FontWeight.Medium,
+    textAlign: TextAlign? = null
 ) {
     Text(
         text = text,
         modifier = modifier,
-        style = MaterialTheme.typography.titleLarge,
-        color = color
+        style = MaterialTheme.typography.labelSmall,
+        color = color,
+        fontWeight = fontWeight,
+        textAlign = textAlign
     )
 }

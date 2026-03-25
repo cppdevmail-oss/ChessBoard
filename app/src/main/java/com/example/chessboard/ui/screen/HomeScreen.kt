@@ -6,8 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
@@ -17,21 +15,33 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.entity.SideMask
 import com.example.chessboard.repository.DatabaseProvider
+import com.example.chessboard.ui.components.AppDivider
+import com.example.chessboard.ui.components.AppSearchField
 import com.example.chessboard.ui.components.BodySecondaryText
-import com.example.chessboard.ui.components.CaptionText
-import com.example.chessboard.ui.components.CardTitleText
+import com.example.chessboard.ui.components.CardSurface
+import com.example.chessboard.ui.components.CardMetaText
+import com.example.chessboard.ui.components.NavLabelText
+import com.example.chessboard.ui.components.PillSurface
+import com.example.chessboard.ui.components.ScreenSection
+import com.example.chessboard.ui.components.ScreenTitleText
 import com.example.chessboard.ui.components.SectionTitleText
-import com.example.chessboard.ui.theme.*
+import com.example.chessboard.ui.theme.AppDimens
+
+import com.example.chessboard.ui.theme.TrainingAccentTeal
+import com.example.chessboard.ui.theme.TrainingBackgroundDark
+import com.example.chessboard.ui.theme.TrainingDividerColor
+import com.example.chessboard.ui.theme.TrainingIconInactive
+import com.example.chessboard.ui.theme.TrainingTextPrimary
+import com.example.chessboard.ui.theme.TrainingTextSecondary
+import com.example.chessboard.ui.theme.TrainingSurfaceDark
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -122,7 +132,7 @@ fun HomeScreen(
                     Button(
                         onClick = { onNavigate(ScreenType.CreateOpening) },
                         modifier = Modifier.size(AppDimens.buttonHeight),
-                        shape = RoundedCornerShape(AppDimens.radiusLg),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(AppDimens.radiusLg),
                         colors = ButtonDefaults.buttonColors(containerColor = TrainingAccentTeal),
                         contentPadding = PaddingValues(0.dp)
                     ) {
@@ -137,56 +147,24 @@ fun HomeScreen(
             }
 
             item {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = AppDimens.spaceLg),
-                    shape = RoundedCornerShape(AppDimens.radiusPill),
-                    color = TrainingSurfaceDark
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = AppDimens.spaceLg, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = null,
-                            tint = TrainingTextSecondary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(AppDimens.spaceMd))
-                        BasicTextField(
-                            value = searchQuery,
-                            onValueChange = { searchQuery = it },
-                            modifier = Modifier.fillMaxWidth(),
-                            textStyle = TextStyle(color = TrainingTextPrimary, fontSize = 15.sp),
-                            cursorBrush = SolidColor(TrainingAccentTeal),
-                            singleLine = true,
-                            decorationBox = { innerTextField ->
-                                if (searchQuery.isEmpty()) {
-                                    BodySecondaryText(
-                                        text = "Search openings...",
-                                        color = TrainingTextSecondary
-                                    )
-                                }
-                                innerTextField()
-                            }
-                        )
-                    }
+                ScreenSection {
+                    AppSearchField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = "Search openings...",
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
 
             item { Spacer(modifier = Modifier.height(AppDimens.spaceLg)) }
 
             item {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = AppDimens.spaceLg),
-                    shape = RoundedCornerShape(AppDimens.radiusPill),
-                    color = TrainingSurfaceDark
-                ) {
-                    Row(modifier = Modifier.padding(AppDimens.spaceXs)) {
+                ScreenSection {
+                    PillSurface(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(AppDimens.spaceXs)
+                    ) {
                         FilterTabOption(
                             label = "All",
                             isSelected = selectedFilter == FilterTab.ALL,
@@ -210,11 +188,7 @@ fun HomeScreen(
             }
 
             item {
-                HorizontalDivider(
-                    modifier = Modifier.padding(top = AppDimens.spaceLg),
-                    thickness = AppDimens.dividerThickness,
-                    color = TrainingDividerColor
-                )
+                AppDivider(modifier = Modifier.padding(top = AppDimens.spaceLg), color = TrainingDividerColor)
                 Spacer(modifier = Modifier.height(AppDimens.spaceLg))
             }
 
@@ -249,29 +223,26 @@ fun HomeScreen(
 
 @Composable
 private fun GameEntityCard(game: GameEntity, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
-    Surface(
-        modifier = modifier.fillMaxWidth().clickable(onClick = onClick),
-        shape = RoundedCornerShape(AppDimens.radiusXl),
-        color = TrainingCardDark
+    CardSurface(
+        modifier = modifier.fillMaxWidth(),
+        onClick = onClick
     ) {
-        Column(modifier = Modifier.padding(AppDimens.spaceLg)) {
-            CardTitleText(
-                text = game.event ?: "Unnamed Opening",
-                color = TrainingTextPrimary
-            )
-            if (!game.eco.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(AppDimens.spaceSm))
-                Surface(
-                    shape = RoundedCornerShape(AppDimens.radiusXs),
-                    color = TrainingBackgroundDark
-                ) {
-                    CaptionText(
-                        text = game.eco,
-                        modifier = Modifier.padding(horizontal = AppDimens.spaceSm, vertical = AppDimens.spaceXs),
-                        color = TrainingTextSecondary,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
+        ScreenTitleText(
+            text = game.event ?: "Unnamed Opening",
+            color = TrainingTextPrimary
+        )
+        if (!game.eco.isNullOrBlank()) {
+            Spacer(modifier = Modifier.height(AppDimens.spaceSm))
+            Surface(
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(AppDimens.radiusXs),
+                color = TrainingBackgroundDark
+            ) {
+                CardMetaText(
+                    text = game.eco,
+                    modifier = Modifier.padding(horizontal = AppDimens.spaceSm, vertical = AppDimens.spaceXs),
+                    color = TrainingTextSecondary,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
     }
@@ -286,7 +257,7 @@ private fun FilterTabOption(
 ) {
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(AppDimens.radiusPill))
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(AppDimens.radiusPill))
             .background(if (isSelected) Color.White else Color.Transparent)
             .clickable(onClick = onClick)
             .padding(vertical = AppDimens.radiusMd),
@@ -343,9 +314,8 @@ private fun HomeBottomNavigation(
                             modifier = Modifier.size(AppDimens.navIconSize)
                         )
                         Spacer(modifier = Modifier.height(AppDimens.spaceXs))
-                        Text(
+                        NavLabelText(
                             text = item.label.toString(),
-                            style = MaterialTheme.typography.labelSmall,
                             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                             color = color,
                             textAlign = TextAlign.Center
