@@ -25,7 +25,7 @@ import com.github.bhlangonijr.chesslib.move.Move
         TrainingTemplateEntity::class,
         TrainingEntity::class
     ],
-    version = 4
+    version = 5
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun gameDao(): GameDao
@@ -36,6 +36,11 @@ abstract class AppDatabase : RoomDatabase() {
 }
 
 // ########################################################
+
+data class FirstTrainingGameLaunchData(
+    val trainingId: Long,
+    val gameId: Long
+)
 
 class DatabaseProvider private constructor(
     private val context: Context
@@ -91,6 +96,10 @@ class DatabaseProvider private constructor(
         return database.gameDao().getAllGames()
     }
 
+    suspend fun getGameById(id: Long): GameEntity? {
+        return database.gameDao().getById(id)
+    }
+
     suspend fun updateGamePgn(id: Long, pgn: String) {
         database.gameDao().updatePgn(id, pgn)
     }
@@ -113,6 +122,25 @@ class DatabaseProvider private constructor(
         )
 
         return trainingService.createTrainingFromGames(name = name, games = games)
+    }
+
+    suspend fun decreaseLineWeight(trainingId: Long, gameId: Long): Boolean {
+        val trainingService = TrainingService(
+            dao = database.trainingDao(),
+            templateDao = database.trainingTemplateDao()
+        )
+
+        return trainingService.decreaseLineWeight(trainingId = trainingId, gameId = gameId)
+    }
+
+    suspend fun getFirstTrainingGameLaunchData(): FirstTrainingGameLaunchData? {
+        val training = database.trainingDao().getFirst() ?: return null
+        val firstGame = OneGameTrainingData.fromJson(training.gamesJson).firstOrNull() ?: return null
+
+        return FirstTrainingGameLaunchData(
+            trainingId = training.id,
+            gameId = firstGame.gameId
+        )
     }
 
     companion object {

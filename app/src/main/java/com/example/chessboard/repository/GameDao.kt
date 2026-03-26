@@ -23,6 +23,9 @@ interface GameDao {
     @Query("SELECT * FROM games ORDER BY id DESC")
     suspend fun getAllGames(): List<GameEntity>
 
+    @Query("SELECT * FROM games WHERE id = :id")
+    suspend fun getById(id: Long): GameEntity?
+
     @Query("SELECT id FROM games ORDER BY id DESC")
     suspend fun getAllGameIds(): List<Long>
 
