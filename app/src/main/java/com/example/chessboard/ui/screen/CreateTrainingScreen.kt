@@ -87,14 +87,20 @@ fun CreateTrainingScreenContainer(
 
     if (showNoGamesError) {
         TrainingSaveErrorDialog(
-            onDismiss = { showNoGamesError = false }
+            onDismiss = {
+                showNoGamesError = false
+                onNavigate(ScreenType.Home)
+            }
         )
     }
 
     trainingSaveSuccess?.let { success ->
         TrainingSaveSuccessDialog(
             success = success,
-            onDismiss = { trainingSaveSuccess = null }
+            onDismiss = {
+                trainingSaveSuccess = null
+                onNavigate(ScreenType.Home)
+            }
         )
     }
 
