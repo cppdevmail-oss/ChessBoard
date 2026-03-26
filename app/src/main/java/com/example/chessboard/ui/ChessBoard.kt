@@ -1,5 +1,6 @@
 package com.example.chessboard.ui
 
+import android.util.Log
 import android.graphics.Paint
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -9,7 +10,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,6 +41,7 @@ import com.example.chessboard.ui.theme.ChessPieceDark
 enum class BoardOrientation { WHITE, BLACK }
 
 private const val CellCount = 8
+private const val ChessBoardLogTag = "ChessBoard"
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Pure coordinate helpers
@@ -200,6 +204,7 @@ private fun DrawScope.drawPieceAt(
 @Composable
 fun ChessBoard(
     gameController: GameController,
+    boardState: Int,
     squareSizePx: Float,
     selectedSquare: String?,
     dragFromSquare: String?,
@@ -207,6 +212,16 @@ fun ChessBoard(
     modifier: Modifier = Modifier
 ) {
     val orientation = gameController.getSide()
+
+    SideEffect {
+        Log.d(
+            ChessBoardLogTag,
+                "draw controller=${System.identityHashCode(gameController)} " +
+                "boardState=$boardState " +
+                "moveIndex=${gameController.currentMoveIndex} " +
+                "fen=${gameController.getFen()}"
+        )
+    }
 
     val painters = mapOf(
         'r' to painterResource(R.drawable.ic_rook),
@@ -305,6 +320,16 @@ fun ChessBoardWithCoordinates(
     @Suppress("UNUSED_VARIABLE")
     val boardState = gameController.boardState
 
+    LaunchedEffect(boardState) {
+        Log.d(
+            ChessBoardLogTag,
+            "boardState changed controller=${System.identityHashCode(gameController)} " +
+                "boardState=$boardState " +
+                "moveIndex=${gameController.currentMoveIndex} " +
+                "fen=${gameController.getFen()}"
+        )
+    }
+
     val orientation = gameController.getSide()
     val squareSizeDp = minScreenSizeDp(0.8f)
     val squareSizePx = minScreenSizePx(0.8f) / CellCount
@@ -391,6 +416,7 @@ fun ChessBoardWithCoordinates(
         ) {
             ChessBoard(
                 gameController = gameController,
+                boardState = boardState,
                 squareSizePx = squareSizePx,
                 selectedSquare = selectedSquare,
                 dragFromSquare = dragFromSquare,

@@ -1,6 +1,7 @@
 package com.example.chessboard.ui.screen
 
 import android.app.Activity
+import android.util.Log
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,11 +13,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,6 +28,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
+
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.entity.SideMask
 import com.example.chessboard.entity.GameEntity
@@ -60,6 +65,7 @@ data class TrainSingleGameResult(
 )
 
 private const val ShowLineMoveDelayMs = 500L
+private const val TrainSingleGameLogTag = "TrainSingleGame"
 
 private enum class TrainSingleGamePhase {
     Idle,
@@ -154,6 +160,7 @@ private fun TrainSingleGameScreen(
     var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
     // Stores the full mutable training session state for the current screen.
     var uiState by remember(trainingGameData?.game?.id) { mutableStateOf(TrainSingleGameUiState()) }
+    val scope = rememberCoroutineScope()
     // Resolves the ordered list of sides that must be trained for the current game.
     val trainingSides = remember(trainingGameData?.game?.sideMask) {
         trainingGameData?.game?.sideMask?.let(::resolveTrainingOrientations).orEmpty()
@@ -168,11 +175,13 @@ private fun TrainSingleGameScreen(
         uiState = resetSessionState(uiState)
     }
 
-    LaunchedEffect(uiState.phase, trainingGameData?.uciMoves, gameController) {
-        uiState = runShowLine(
-            uiState = uiState,
-            gameController = gameController,
-            uciMoves = trainingGameData?.uciMoves.orEmpty()
+    SideEffect {
+        gameController.setAllowedMoveUci(
+            resolveAllowedUserMoveUci(
+                uiState = uiState,
+                currentOrientation = currentOrientation,
+                uciMoves = trainingGameData?.uciMoves.orEmpty()
+            )
         )
     }
 
@@ -232,6 +241,7 @@ private fun TrainSingleGameScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
         ) {
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
             TrainSingleGameContent(
@@ -245,18 +255,43 @@ private fun TrainSingleGameScreen(
                 phase = uiState.phase,
                 mistakesCount = uiState.mistakesCount,
                 onShowLineClick = {
+                    val localUciMoves = trainingGameData?.uciMoves.orEmpty()
+                    Log.d(
+                        TrainSingleGameLogTag,
+                        "Show line clicked. gameId=$gameId trainingId=$trainingId boardState=${gameController.boardState} moves=$localUciMoves"
+                    )
+
                     gameController.resetToStartPosition()
                     uiState = buildShowLineState(uiState)
+                    scope.launch {
+                        Log.d(
+                            TrainSingleGameLogTag,
+                            "Starting runShowLine coroutine. boardState=${gameController.boardState} movesCount=${localUciMoves.size}"
+                        )
+                        uiState = runShowLine(
+                            uiState = uiState,
+                            gameController = gameController,
+                            uciMoves = localUciMoves
+                        )
+                    }
                 },
                 onStartTrainingClick = {
                     gameController.resetToStartPosition()
-                    uiState = buildStartTrainingState(uiState)
+                    uiState = advanceProgramMoves(
+                        uiState = buildStartTrainingState(uiState),
+                        gameController = gameController,
+                        uciMoves = trainingGameData?.uciMoves.orEmpty(),
+                        currentOrientation = currentOrientation,
+                        sidesCount = trainingSides.size
+                    )
                 },
                 onMakeCorrectMoveClick = {
                     uiState = handleCorrectMove(
                         uiState = uiState,
                         gameController = gameController,
-                        uciMoves = trainingGameData?.uciMoves.orEmpty()
+                        uciMoves = trainingGameData?.uciMoves.orEmpty(),
+                        currentOrientation = currentOrientation,
+                        sidesCount = trainingSides.size
                     )
                 }
             )
@@ -558,16 +593,40 @@ private suspend fun runShowLine(
     uciMoves: List<String>
 ): TrainSingleGameUiState {
     if (uiState.phase != TrainSingleGamePhase.ShowingLine) {
+        Log.d(
+            TrainSingleGameLogTag,
+            "runShowLine skipped because phase=${uiState.phase} boardState=${gameController.boardState}"
+        )
         return uiState
     }
 
-    gameController.resetToStartPosition()
+    Log.d(
+        TrainSingleGameLogTag,
+        "runShowLine started. boardState=${gameController.boardState} movesCount=${uciMoves.size}"
+    )
+    gameController.loadFromUciMoves(uciMoves, 0)
+    Log.d(
+        TrainSingleGameLogTag,
+        "runShowLine loaded start position. boardState=${gameController.boardState}"
+    )
 
     for (ply in 1..uciMoves.size) {
+        Log.d(
+            TrainSingleGameLogTag,
+            "runShowLine step. ply=$ply move=${uciMoves[ply - 1]} boardStateBefore=${gameController.boardState}"
+        )
         delay(ShowLineMoveDelayMs)
-        gameController.loadFromUciMoves(uciMoves, ply)
+        gameController.redoMove()
+        Log.d(
+            TrainSingleGameLogTag,
+            "runShowLine step applied. ply=$ply boardStateAfter=${gameController.boardState}"
+        )
     }
 
+    Log.d(
+        TrainSingleGameLogTag,
+        "runShowLine finished. boardState=${gameController.boardState}"
+    )
     return uiState.copy(phase = TrainSingleGamePhase.Idle)
 }
 
@@ -613,7 +672,13 @@ private fun handleTrainingProgress(
         ?: return uiState
 
     if (lastMoveUci == uciMoves[uiState.expectedPly]) {
-        return uiState.copy(expectedPly = uiState.expectedPly + 1)
+        return advanceProgramMoves(
+            uiState = uiState.copy(expectedPly = uiState.expectedPly + 1),
+            gameController = gameController,
+            uciMoves = uciMoves,
+            currentOrientation = currentOrientation,
+            sidesCount = sidesCount
+        )
     }
 
     gameController.loadFromUciMoves(uciMoves, uiState.expectedPly)
@@ -627,16 +692,60 @@ private fun handleTrainingProgress(
 private fun handleCorrectMove(
     uiState: TrainSingleGameUiState,
     gameController: GameController,
-    uciMoves: List<String>
+    uciMoves: List<String>,
+    currentOrientation: BoardOrientation,
+    sidesCount: Int
 ): TrainSingleGameUiState {
     if (uiState.expectedPly >= uciMoves.size) {
         return uiState.copy(phase = TrainSingleGamePhase.Idle)
     }
 
     gameController.loadFromUciMoves(uciMoves, uiState.expectedPly + 1)
-    return uiState.copy(
-        expectedPly = uiState.expectedPly + 1,
-        phase = TrainSingleGamePhase.Training
+    return advanceProgramMoves(
+        uiState = uiState.copy(
+            expectedPly = uiState.expectedPly + 1,
+            phase = TrainSingleGamePhase.Training
+        ),
+        gameController = gameController,
+        uciMoves = uciMoves,
+        currentOrientation = currentOrientation,
+        sidesCount = sidesCount
+    )
+}
+
+private fun advanceProgramMoves(
+    uiState: TrainSingleGameUiState,
+    gameController: GameController,
+    uciMoves: List<String>,
+    currentOrientation: BoardOrientation,
+    sidesCount: Int
+): TrainSingleGameUiState {
+    if (uiState.phase != TrainSingleGamePhase.Training) {
+        return uiState
+    }
+
+    if (uciMoves.isEmpty()) {
+        return uiState
+    }
+
+    var nextState = uiState
+
+    while (nextState.expectedPly < uciMoves.size && !isUserTurn(nextState.expectedPly, currentOrientation)) {
+        gameController.loadFromUciMoves(uciMoves, nextState.expectedPly + 1)
+        nextState = nextState.copy(expectedPly = nextState.expectedPly + 1)
+    }
+
+    if (nextState.expectedPly < uciMoves.size) {
+        return nextState
+    }
+
+    return nextState.copy(
+        phase = TrainSingleGamePhase.Idle,
+        completionDialog = buildCompletionDialog(
+            currentSideIndex = nextState.currentSideIndex,
+            sidesCount = sidesCount,
+            currentOrientation = currentOrientation
+        )
     )
 }
 
@@ -664,6 +773,27 @@ private fun handleCompletionFinish(
         )
     )
     return clearedDialogState
+}
+
+// Resolves the single user move that should be allowed on the board right now.
+private fun resolveAllowedUserMoveUci(
+    uiState: TrainSingleGameUiState,
+    currentOrientation: BoardOrientation,
+    uciMoves: List<String>
+): String? {
+    if (uiState.phase != TrainSingleGamePhase.Training) {
+        return null
+    }
+
+    if (uiState.expectedPly >= uciMoves.size) {
+        return null
+    }
+
+    if (!isUserTurn(uiState.expectedPly, currentOrientation)) {
+        return null
+    }
+
+    return uciMoves[uiState.expectedPly]
 }
 
 private data class TrainSingleGameCompletionState(

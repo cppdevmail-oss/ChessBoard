@@ -15,6 +15,7 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
     private var board = Board()
     private var side = inOrientation
     private val moves = mutableListOf<Move>()
+    private var allowedMoveUci: String? = null
     var currentMoveIndex by mutableIntStateOf(0)
         private set
     private var startSquare : String? = null
@@ -30,6 +31,7 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
     fun resetToStartPosition() {
         canUndo = false
         canRedo = false
+        allowedMoveUci = null
         startSquare = null
         currentMoveIndex = 0
         board = Board()
@@ -39,6 +41,7 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
 
     private fun tryMove(move: Move): Boolean {
         if (!board.legalMoves().contains(move)) { return false }
+        if (!isMoveAllowed(move)) { return false }
 
         // Trim future moves when branching from the middle of the game
         if (currentMoveIndex < moves.size) {
@@ -121,7 +124,7 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
             val toRank = to[1]
             if (piece == Piece.WHITE_PAWN && toRank != '8') return false
             if (piece == Piece.BLACK_PAWN && toRank != '1') return false
-            board.legalMoves().any { it.from == fromSq && it.to == toSq }
+            board.legalMoves().any { it.from == fromSq && it.to == toSq && isMoveAllowed(it) }
         } catch (_: Exception) { false }
     }
 
@@ -149,6 +152,12 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
 
     /** Cancels the current start-square selection without triggering a board redraw. */
     fun cancelStartSquare() {
+        startSquare = null
+    }
+
+    /** Limits user interaction to a single expected UCI move. Pass null to remove the restriction. */
+    fun setAllowedMoveUci(uci: String?) {
+        allowedMoveUci = uci?.lowercase()
         startSquare = null
     }
 
@@ -248,7 +257,7 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
         if (piece == null) { return false }
 
         val moves = board.legalMoves()
-        return moves.any { it.from == sq }
+        return moves.any { it.from == sq && isMoveAllowed(it) }
     }
 
     fun setStartSquare(square: String?) : Boolean {
@@ -275,6 +284,7 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
 
     private fun getPieceWithLegalMovesFromSquare(square: String?) : Piece? {
         if (square == null) { return null }
+        if (!isSquareAllowed(square)) { return null }
 
         val sq = Square.fromValue(square.uppercase())
         val piece = board.getPiece(sq)
@@ -286,5 +296,30 @@ class GameController (val inOrientation : BoardOrientation = BoardOrientation.WH
         }
 
         return piece
+    }
+
+    private fun isMoveAllowed(move: Move): Boolean {
+        val expectedMove = allowedMoveUci ?: return true
+        return moveToUci(move) == expectedMove
+    }
+
+    private fun isSquareAllowed(square: String): Boolean {
+        val expectedMove = allowedMoveUci ?: return true
+        return square.lowercase() == expectedMove.take(2)
+    }
+
+    private fun moveToUci(move: Move): String {
+        val promotion = move.promotion
+        val promotionSuffix = if (promotion == Piece.NONE) {
+            ""
+        } else {
+            promotion.pieceType.name.first().lowercaseChar().toString()
+        }
+
+        return buildString {
+            append(move.from.value().lowercase())
+            append(move.to.value().lowercase())
+            append(promotionSuffix)
+        }
     }
 }
