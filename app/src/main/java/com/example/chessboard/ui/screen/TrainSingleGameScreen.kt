@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,6 +52,12 @@ private data class TrainSingleGameData(
     val uciMoves: List<String>
 )
 
+data class TrainSingleGameResult(
+    val gameId: Long,
+    val trainingId: Long,
+    val mistakesCount: Int
+)
+
 private const val ShowLineMoveDelayMs = 500L
 
 private enum class TrainSingleGamePhase {
@@ -64,6 +72,7 @@ fun TrainSingleGameScreenContainer(
     activity: Activity,
     gameId: Long,
     trainingId: Long,
+    onTrainingFinished: (TrainSingleGameResult) -> Unit = {},
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
     modifier: Modifier = Modifier,
@@ -85,6 +94,7 @@ fun TrainSingleGameScreenContainer(
         gameId = gameId,
         trainingId = trainingId,
         trainingGameData = trainingGameData,
+        onTrainingFinished = onTrainingFinished,
         onBackClick = onBackClick,
         onNavigate = onNavigate,
         modifier = modifier
@@ -96,6 +106,7 @@ private fun TrainSingleGameScreen(
     gameId: Long,
     trainingId: Long,
     trainingGameData: TrainSingleGameData? = null,
+    onTrainingFinished: (TrainSingleGameResult) -> Unit = {},
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
     modifier: Modifier = Modifier
@@ -108,13 +119,18 @@ private fun TrainSingleGameScreen(
     }
     val currentOrientation = trainingSides.getOrNull(currentSideIndex) ?: BoardOrientation.WHITE
     var expectedPly by remember(trainingGameData?.game?.id, currentOrientation) { mutableIntStateOf(0) }
-    var mistakesCount by remember(trainingGameData?.game?.id, currentOrientation) { mutableIntStateOf(0) }
+    var mistakesCount by remember(trainingGameData?.game?.id) { mutableIntStateOf(0) }
+    var completionDialog by remember { mutableStateOf<TrainSingleGameCompletionState?>(null) }
     val gameController = remember(currentOrientation) { GameController(currentOrientation) }
 
     LaunchedEffect(gameController, trainingGameData?.game?.id) {
         gameController.resetToStartPosition()
         phase = TrainSingleGamePhase.Idle
         expectedPly = 0
+        completionDialog = null
+    }
+
+    LaunchedEffect(trainingGameData?.game?.id) {
         mistakesCount = 0
     }
 
@@ -146,6 +162,11 @@ private fun TrainSingleGameScreen(
 
         if (expectedPly >= uciMoves.size) {
             phase = TrainSingleGamePhase.Idle
+            completionDialog = buildCompletionDialog(
+                currentSideIndex = currentSideIndex,
+                sidesCount = trainingSides.size,
+                currentOrientation = currentOrientation
+            )
             return@LaunchedEffect
         }
 
@@ -194,6 +215,33 @@ private fun TrainSingleGameScreen(
             )
         }
     ) { paddingValues ->
+        completionDialog?.let { dialogState ->
+            TrainSingleGameCompletionDialog(
+                dialogState = dialogState,
+                onRepeatClick = {
+                    completionDialog = null
+                    gameController.resetToStartPosition()
+                    expectedPly = 0
+                    phase = TrainSingleGamePhase.Training
+                },
+                onFinishClick = {
+                    completionDialog = null
+
+                    if (dialogState.hasNextSide) {
+                        currentSideIndex += 1
+                    } else {
+                        onTrainingFinished(
+                            TrainSingleGameResult(
+                                gameId = gameId,
+                                trainingId = trainingId,
+                                mistakesCount = mistakesCount
+                            )
+                        )
+                    }
+                }
+            )
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -211,11 +259,13 @@ private fun TrainSingleGameScreen(
                 phase = phase,
                 mistakesCount = mistakesCount,
                 onShowLineClick = {
+                    completionDialog = null
                     gameController.resetToStartPosition()
                     expectedPly = 0
                     phase = TrainSingleGamePhase.ShowingLine
                 },
                 onStartTrainingClick = {
+                    completionDialog = null
                     gameController.resetToStartPosition()
                     expectedPly = 0
                     phase = TrainSingleGamePhase.Training
@@ -371,6 +421,33 @@ private fun TrainingBoardSection(
     }
 }
 
+@Composable
+private fun TrainSingleGameCompletionDialog(
+    dialogState: TrainSingleGameCompletionState,
+    onRepeatClick: () -> Unit,
+    onFinishClick: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onFinishClick,
+        title = {
+            SectionTitleText(text = dialogState.title, color = TrainingTextPrimary)
+        },
+        text = {
+            BodySecondaryText(text = dialogState.message, color = TrainingTextSecondary)
+        },
+        confirmButton = {
+            TextButton(onClick = onRepeatClick) {
+                BodySecondaryText(text = "Repeat variation", color = TrainingTextPrimary)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onFinishClick) {
+                BodySecondaryText(text = dialogState.finishLabel, color = TrainingTextPrimary)
+            }
+        }
+    )
+}
+
 private fun resolveTrainingOrientations(sideMask: Int): List<BoardOrientation> {
     if (sideMask == SideMask.WHITE) {
         return listOf(BoardOrientation.WHITE)
@@ -401,3 +478,32 @@ private fun isUserTurn(expectedPly: Int, orientation: BoardOrientation): Boolean
 
 private fun moveToUci(move: com.github.bhlangonijr.chesslib.move.Move): String =
     "${move.from.value().lowercase()}${move.to.value().lowercase()}"
+
+private data class TrainSingleGameCompletionState(
+    val title: String,
+    val message: String,
+    val finishLabel: String,
+    val hasNextSide: Boolean
+)
+
+private fun buildCompletionDialog(
+    currentSideIndex: Int,
+    sidesCount: Int,
+    currentOrientation: BoardOrientation
+): TrainSingleGameCompletionState {
+    if (currentSideIndex + 1 < sidesCount) {
+        return TrainSingleGameCompletionState(
+            title = "Variation completed",
+            message = "The ${orientationLabel(currentOrientation).lowercase()} side is completed. Continue with the next side or repeat this variation.",
+            finishLabel = "Next side",
+            hasNextSide = true
+        )
+    }
+
+    return TrainSingleGameCompletionState(
+        title = "Variation completed",
+        message = "You reached the end of the game. Repeat the variation or finish this training.",
+        finishLabel = "Finish variation",
+        hasNextSide = false
+    )
+}
