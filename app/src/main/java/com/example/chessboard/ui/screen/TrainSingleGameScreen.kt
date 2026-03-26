@@ -69,6 +69,19 @@ private enum class TrainSingleGamePhase {
     Mistake
 }
 
+/**
+ * Loads the selected game, runs the single-game training flow and updates the training entry
+ * before returning the session result.
+ *
+ * @param activity Host activity used by the screen container.
+ * @param gameId Identifier of the game being trained.
+ * @param trainingId Identifier of the training that owns the game.
+ * @param onTrainingFinished Called after the training is updated in the database.
+ * @param onBackClick Called when the user presses the top bar back button.
+ * @param onNavigate Called when the user selects an item in the bottom navigation.
+ * @param modifier Modifier for the root container.
+ * @param inDbProvider Database access used to load the game and update the training.
+ */
 @Composable
 fun TrainSingleGameScreenContainer(
     activity: Activity,
@@ -115,6 +128,7 @@ fun TrainSingleGameScreenContainer(
 }
 
 @Composable
+// Hosts the single-game training session state and coordinates training flow.
 private fun TrainSingleGameScreen(
     gameId: Long,
     trainingId: Long,
@@ -299,6 +313,7 @@ private fun TrainSingleGameScreen(
 }
 
 @Composable
+// Renders the central training content for the selected game and side.
 private fun TrainSingleGameContent(
     gameId: Long,
     trainingId: Long,
@@ -375,6 +390,7 @@ private fun TrainSingleGameContent(
 }
 
 @Composable
+// Displays the session action buttons and the corrective move action after mistakes.
 private fun TrainingSingleGameActions(
     onShowLineClick: () -> Unit,
     onStartTrainingClick: () -> Unit,
@@ -413,6 +429,7 @@ private fun TrainingSingleGameActions(
 }
 
 @Composable
+// Renders the interactive chess board used by the training session.
 private fun TrainingBoardSection(
     gameController: GameController,
     modifier: Modifier = Modifier
@@ -435,6 +452,7 @@ private fun TrainingBoardSection(
 }
 
 @Composable
+// Shows the completion dialog for repeating the variation or finishing the side/session.
 private fun TrainSingleGameCompletionDialog(
     dialogState: TrainSingleGameCompletionState,
     onRepeatClick: () -> Unit,
@@ -461,6 +479,7 @@ private fun TrainSingleGameCompletionDialog(
     )
 }
 
+// Resolves the ordered list of training orientations from the stored side mask.
 private fun resolveTrainingOrientations(sideMask: Int): List<BoardOrientation> {
     if (sideMask == SideMask.WHITE) {
         return listOf(BoardOrientation.WHITE)
@@ -477,18 +496,21 @@ private fun resolveTrainingOrientations(sideMask: Int): List<BoardOrientation> {
     return listOf(BoardOrientation.WHITE)
 }
 
+// Returns the human-readable label for the active training orientation.
 private fun orientationLabel(orientation: BoardOrientation): String =
     when (orientation) {
         BoardOrientation.WHITE -> "White"
         BoardOrientation.BLACK -> "Black"
     }
 
+// Determines whether the current ply should be played by the user for the active side.
 private fun isUserTurn(expectedPly: Int, orientation: BoardOrientation): Boolean =
     when (orientation) {
         BoardOrientation.WHITE -> expectedPly % 2 == 0
         BoardOrientation.BLACK -> expectedPly % 2 == 1
     }
 
+// Converts a chesslib move into the stored UCI move format.
 private fun moveToUci(move: com.github.bhlangonijr.chesslib.move.Move): String =
     "${move.from.value().lowercase()}${move.to.value().lowercase()}"
 
@@ -499,6 +521,7 @@ private data class TrainSingleGameCompletionState(
     val hasNextSide: Boolean
 )
 
+// Builds the completion dialog state for either the next side or final finish.
 private fun buildCompletionDialog(
     currentSideIndex: Int,
     sidesCount: Int,

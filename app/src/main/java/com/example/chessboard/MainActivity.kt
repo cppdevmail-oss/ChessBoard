@@ -71,6 +71,9 @@ class MainActivity : ComponentActivity() {
                                 activity = this@MainActivity,
                                 gameId = gameId,
                                 trainingId = trainingId,
+                                onTrainingFinished = {
+                                    currentScreen = ScreenType.Home
+                                },
                                 onBackClick = { currentScreen = ScreenType.Home },
                                 onNavigate = { currentScreen = it },
                                 inDbProvider = dbProvider,
