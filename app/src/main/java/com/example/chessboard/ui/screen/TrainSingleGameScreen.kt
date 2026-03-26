@@ -265,6 +265,7 @@ private fun TrainSingleGameScreen(
 }
 
 @Composable
+// Renders the completion dialog only when the session has a completion state.
 private fun RenderCompletionDialog(
     dialogState: TrainSingleGameCompletionState?,
     onRepeatClick: () -> Unit,
@@ -518,6 +519,7 @@ private fun isUserTurn(expectedPly: Int, orientation: BoardOrientation): Boolean
 private fun moveToUci(move: com.github.bhlangonijr.chesslib.move.Move): String =
     "${move.from.value().lowercase()}${move.to.value().lowercase()}"
 
+// Builds the reset state used before replaying the current variation.
 private fun resetSessionState(uiState: TrainSingleGameUiState): TrainSingleGameUiState =
     uiState.copy(
         phase = TrainSingleGamePhase.Idle,
@@ -525,6 +527,7 @@ private fun resetSessionState(uiState: TrainSingleGameUiState): TrainSingleGameU
         completionDialog = null
     )
 
+// Builds the state used when automatic line playback starts from the beginning.
 private fun buildShowLineState(uiState: TrainSingleGameUiState): TrainSingleGameUiState =
     uiState.copy(
         completionDialog = null,
@@ -532,6 +535,7 @@ private fun buildShowLineState(uiState: TrainSingleGameUiState): TrainSingleGame
         phase = TrainSingleGamePhase.ShowingLine
     )
 
+// Builds the state used when interactive training starts from the beginning.
 private fun buildStartTrainingState(uiState: TrainSingleGameUiState): TrainSingleGameUiState =
     uiState.copy(
         completionDialog = null,
@@ -539,6 +543,7 @@ private fun buildStartTrainingState(uiState: TrainSingleGameUiState): TrainSingl
         phase = TrainSingleGamePhase.Training
     )
 
+// Builds the state used when the user chooses to replay the current variation.
 private fun buildRepeatVariationState(uiState: TrainSingleGameUiState): TrainSingleGameUiState =
     uiState.copy(
         completionDialog = null,
@@ -546,6 +551,7 @@ private fun buildRepeatVariationState(uiState: TrainSingleGameUiState): TrainSin
         phase = TrainSingleGamePhase.Training
     )
 
+// Replays the full variation from the start with a fixed delay between moves.
 private suspend fun runShowLine(
     uiState: TrainSingleGameUiState,
     gameController: GameController,
@@ -565,6 +571,7 @@ private suspend fun runShowLine(
     return uiState.copy(phase = TrainSingleGamePhase.Idle)
 }
 
+// Advances the training state after either a program move or a user move attempt.
 private fun handleTrainingProgress(
     uiState: TrainSingleGameUiState,
     gameController: GameController,
@@ -616,6 +623,7 @@ private fun handleTrainingProgress(
     )
 }
 
+// Applies the expected move after a mistake and returns to training mode.
 private fun handleCorrectMove(
     uiState: TrainSingleGameUiState,
     gameController: GameController,
@@ -632,6 +640,7 @@ private fun handleCorrectMove(
     )
 }
 
+// Finishes the current variation by moving to the next side or completing the session.
 private fun handleCompletionFinish(
     uiState: TrainSingleGameUiState,
     gameId: Long,
