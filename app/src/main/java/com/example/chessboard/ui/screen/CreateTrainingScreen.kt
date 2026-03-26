@@ -28,8 +28,8 @@ import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.CardMetaText
 import com.example.chessboard.ui.components.CardSurface
-import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.ScreenSection
+import com.example.chessboard.ui.components.SecondaryButton
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.theme.AppDimens
@@ -261,13 +261,13 @@ private fun TrainingGamesPage(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceSm)
         ) {
-            PrimaryButton(
+            SecondaryButton(
                 text = "Previous",
                 onClick = onPreviousPageClick,
                 enabled = canGoPrevious,
                 modifier = Modifier.weight(1f)
             )
-            PrimaryButton(
+            SecondaryButton(
                 text = "Next",
                 onClick = onNextPageClick,
                 enabled = canGoNext,
@@ -312,12 +312,12 @@ private fun TrainingGamePageRow(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceSm)
             ) {
-                PrimaryButton(
+                SecondaryButton(
                     text = "-",
                     onClick = onDecreaseWeightClick,
                     modifier = Modifier.width(56.dp)
                 )
-                PrimaryButton(
+                SecondaryButton(
                     text = "+",
                     onClick = onIncreaseWeightClick,
                     modifier = Modifier.width(56.dp)
