@@ -14,6 +14,7 @@ import com.example.chessboard.ui.screen.CreateTrainingScreenContainer
 import com.example.chessboard.ui.screen.GameEditorScreenContainer
 import com.example.chessboard.ui.screen.HomeScreenContainer
 import com.example.chessboard.ui.screen.ScreenType
+import com.example.chessboard.ui.screen.TrainSingleGameScreenContainer
 import com.example.chessboard.ui.screen.TrainingScreenContainer
 
 
@@ -31,6 +32,11 @@ class MainActivity : ComponentActivity() {
 
                 var currentScreen by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
                 var selectedGame by remember { mutableStateOf<GameEntity?>(null) }
+
+                // Data for start one game training
+                // TODO look like this is wrong place for this data
+                var selectedTrainingGameId by remember { mutableStateOf<Long?>(null) }
+                var selectedTrainingId by remember { mutableStateOf<Long?>(null) }
 
                 when (currentScreen) {
 
@@ -53,6 +59,24 @@ class MainActivity : ComponentActivity() {
                         onNavigate = { currentScreen = it },
                         inDbProvider = dbProvider,
                     )
+
+                    ScreenType.TrainSingleGame -> {
+                        val gameId = selectedTrainingGameId
+                        val trainingId = selectedTrainingId
+
+                        if (gameId == null || trainingId == null) {
+                            currentScreen = ScreenType.Home
+                        } else {
+                            TrainSingleGameScreenContainer(
+                                activity = this@MainActivity,
+                                gameId = gameId,
+                                trainingId = trainingId,
+                                onBackClick = { currentScreen = ScreenType.Home },
+                                onNavigate = { currentScreen = it },
+                                inDbProvider = dbProvider,
+                            )
+                        }
+                    }
 
                     ScreenType.GameEditor -> selectedGame?.let { game ->
                         GameEditorScreenContainer(
