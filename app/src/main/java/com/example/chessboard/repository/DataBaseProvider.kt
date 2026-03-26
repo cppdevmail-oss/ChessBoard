@@ -13,6 +13,7 @@ import com.example.chessboard.entity.PositionEntity
 import com.example.chessboard.entity.TrainingEntity
 import com.example.chessboard.entity.TrainingTemplateEntity
 import com.example.chessboard.service.GameSaver
+import com.example.chessboard.service.OneGameTrainingData
 import com.example.chessboard.service.TrainingService
 import com.github.bhlangonijr.chesslib.move.Move
 
@@ -90,6 +91,10 @@ class DatabaseProvider private constructor(
         return database.gameDao().getAllGames()
     }
 
+    suspend fun getGameById(id: Long): GameEntity? {
+        return database.gameDao().getById(id)
+    }
+
     suspend fun updateGamePgn(id: Long, pgn: String) {
         database.gameDao().updatePgn(id, pgn)
     }
@@ -102,20 +107,16 @@ class DatabaseProvider private constructor(
         database.gameDao().deleteById(id)
     }
 
-    suspend fun createTrainingFromAllGames(
+    suspend fun createTrainingFromGames(
         name: String = "FullTraining",
-        initialWeight: Int = 1
+        games: List<OneGameTrainingData>
     ): Long? {
         val trainingService = TrainingService(
             dao = database.trainingDao(),
             templateDao = database.trainingTemplateDao()
         )
 
-        return trainingService.createTrainingFromAllGames(
-            gameIds = database.gameDao().getAllGameIds(),
-            name = name,
-            initialWeight = initialWeight
-        )
+        return trainingService.createTrainingFromGames(name = name, games = games)
     }
 
     companion object {
