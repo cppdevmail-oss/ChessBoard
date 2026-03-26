@@ -40,50 +40,57 @@ fun <T> AppBottomNavigation(
     selectedItem: T,
     onItemSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
-    maxVisibleItems: Int = 4
+    maxVisibleItems: Int = 4,
+    showTopDivider: Boolean = true,
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = TrainingSurfaceDark,
         tonalElevation = 8.dp
     ) {
-        BoxWithConstraints {
-            val normalizedMaxVisibleItems = maxVisibleItems.coerceAtLeast(1)
-            val itemsCount = items.size.coerceAtLeast(1)
-            val visibleItemsCount = itemsCount.coerceAtMost(normalizedMaxVisibleItems)
-            val itemWidth = maxWidth / visibleItemsCount
+        Column {
+            if (showTopDivider) {
+                AppDivider()
+            }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    .padding(vertical = AppDimens.spaceSm),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                items.forEach { item ->
-                    val isSelected = selectedItem == item.value
-                    val color = if (isSelected) TrainingAccentTeal else TrainingIconInactive
+            BoxWithConstraints {
+                val normalizedMaxVisibleItems = maxVisibleItems.coerceAtLeast(1)
+                val itemsCount = items.size.coerceAtLeast(1)
+                val visibleItemsCount = itemsCount.coerceAtMost(normalizedMaxVisibleItems)
+                val itemWidth = maxWidth / visibleItemsCount
 
-                    Column(
-                        modifier = Modifier
-                            .width(itemWidth)
-                            .clickable { onItemSelected(item.value) }
-                            .padding(AppDimens.spaceSm),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            imageVector = if (isSelected) item.iconSelected else item.iconUnselected,
-                            contentDescription = item.label,
-                            tint = color,
-                            modifier = Modifier.size(AppDimens.navIconSize)
-                        )
-                        Spacer(modifier = Modifier.height(AppDimens.spaceXs))
-                        NavLabelText(
-                            text = item.label,
-                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                            color = color,
-                            textAlign = TextAlign.Center
-                        )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(vertical = AppDimens.spaceSm),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    items.forEach { item ->
+                        val isSelected = selectedItem == item.value
+                        val color = if (isSelected) TrainingAccentTeal else TrainingIconInactive
+
+                        Column(
+                            modifier = Modifier
+                                .width(itemWidth)
+                                .clickable { onItemSelected(item.value) }
+                                .padding(AppDimens.spaceSm),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = if (isSelected) item.iconSelected else item.iconUnselected,
+                                contentDescription = item.label,
+                                tint = color,
+                                modifier = Modifier.size(AppDimens.navIconSize)
+                            )
+                            Spacer(modifier = Modifier.height(AppDimens.spaceXs))
+                            NavLabelText(
+                                text = item.label,
+                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                color = color,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
                 }
             }

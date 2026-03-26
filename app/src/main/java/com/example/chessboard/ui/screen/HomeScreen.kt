@@ -15,7 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -23,12 +22,13 @@ import androidx.compose.ui.unit.sp
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.entity.SideMask
 import com.example.chessboard.repository.DatabaseProvider
+import com.example.chessboard.ui.components.AppBottomNavigation
+import com.example.chessboard.ui.components.AppBottomNavigationItem
 import com.example.chessboard.ui.components.AppDivider
 import com.example.chessboard.ui.components.AppSearchField
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.CardSurface
 import com.example.chessboard.ui.components.CardMetaText
-import com.example.chessboard.ui.components.NavLabelText
 import com.example.chessboard.ui.components.PillSurface
 import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.ScreenSection
@@ -39,10 +39,8 @@ import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import com.example.chessboard.ui.theme.TrainingBackgroundDark
 import com.example.chessboard.ui.theme.TrainingDividerColor
-import com.example.chessboard.ui.theme.TrainingIconInactive
 import com.example.chessboard.ui.theme.TrainingTextPrimary
 import com.example.chessboard.ui.theme.TrainingTextSecondary
-import com.example.chessboard.ui.theme.TrainingSurfaceDark
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -51,7 +49,6 @@ import kotlinx.coroutines.withContext
 private enum class FilterTab { ALL, AS_WHITE, AS_BLACK }
 private const val FULL_TRAINING_NAME = "FullTraining"
 
-private data class NavItem(val label: ScreenType, val outlinedIcon: ImageVector, val filledIcon: ImageVector)
 private data class TrainingCreationSuccess(
     val trainingId: Long,
     val trainingName: String,
@@ -443,51 +440,21 @@ private fun HomeBottomNavigation(
     onItemSelected: (ScreenType) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val items = listOf(
-        NavItem(ScreenType.Home, Icons.Outlined.Home, Icons.Filled.Home),
-        NavItem(ScreenType.Training, Icons.Outlined.AccountBox, Icons.Filled.AccountBox),
-        NavItem(ScreenType.Stats , Icons.Outlined.Info, Icons.Filled.Info),
-        NavItem(ScreenType.Profile, Icons.Outlined.Person, Icons.Filled.Person),
+    val items : List<AppBottomNavigationItem<ScreenType>> = listOf(
+        AppBottomNavigationItem(ScreenType.Home,
+            ScreenType.Home.toString(), Icons.Outlined.Home, Icons.Filled.Home),
+        AppBottomNavigationItem(ScreenType.Training,
+            ScreenType.Training.toString(), Icons.Outlined.AccountBox, Icons.Filled.AccountBox),
+        AppBottomNavigationItem(ScreenType.Stats,
+            ScreenType.Stats.toString(), Icons.Outlined.Info, Icons.Filled.Info),
+        AppBottomNavigationItem(ScreenType.Profile,
+            ScreenType.Profile.toString(), Icons.Outlined.Person, Icons.Filled.Person),
     )
 
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = TrainingSurfaceDark,
-        tonalElevation = 8.dp
-    ) {
-        Column {
-            HorizontalDivider(thickness = AppDimens.dividerThickness, color = TrainingDividerColor)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = AppDimens.spaceSm),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                items.forEach { item ->
-                    val isSelected = item.label == ScreenType.Home
-                    val color = if (isSelected) TrainingAccentTeal else TrainingIconInactive
-                    Column(
-                        modifier = Modifier
-                            .clickable { onItemSelected(item.label) }
-                            .padding(AppDimens.spaceSm),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            imageVector = if (isSelected) item.filledIcon else item.outlinedIcon,
-                            contentDescription = item.label.toString(),
-                            tint = color,
-                            modifier = Modifier.size(AppDimens.navIconSize)
-                        )
-                        Spacer(modifier = Modifier.height(AppDimens.spaceXs))
-                        NavLabelText(
-                            text = item.label.toString(),
-                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                            color = color,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
-            }
-        }
-    }
+    AppBottomNavigation(
+        items = items,
+        selectedItem = ScreenType.Home,
+        onItemSelected = onItemSelected,
+        modifier = modifier
+    )
 }
