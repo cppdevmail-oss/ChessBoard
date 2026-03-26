@@ -55,7 +55,8 @@ private const val ShowLineMoveDelayMs = 500L
 private enum class TrainSingleGamePhase {
     Idle,
     ShowingLine,
-    Training
+    Training,
+    Mistake
 }
 
 @Composable
@@ -106,11 +107,15 @@ private fun TrainSingleGameScreen(
         trainingGameData?.game?.sideMask?.let(::resolveTrainingOrientations).orEmpty()
     }
     val currentOrientation = trainingSides.getOrNull(currentSideIndex) ?: BoardOrientation.WHITE
+    var expectedPly by remember(trainingGameData?.game?.id, currentOrientation) { mutableIntStateOf(0) }
+    var mistakesCount by remember(trainingGameData?.game?.id, currentOrientation) { mutableIntStateOf(0) }
     val gameController = remember(currentOrientation) { GameController(currentOrientation) }
 
     LaunchedEffect(gameController, trainingGameData?.game?.id) {
         gameController.resetToStartPosition()
         phase = TrainSingleGamePhase.Idle
+        expectedPly = 0
+        mistakesCount = 0
     }
 
     LaunchedEffect(phase, trainingGameData?.uciMoves, gameController) {
@@ -127,6 +132,46 @@ private fun TrainSingleGameScreen(
         }
 
         phase = TrainSingleGamePhase.Idle
+    }
+
+    LaunchedEffect(phase, gameController.boardState, expectedPly, currentOrientation, trainingGameData?.uciMoves) {
+        if (phase != TrainSingleGamePhase.Training) {
+            return@LaunchedEffect
+        }
+
+        val uciMoves = trainingGameData?.uciMoves.orEmpty()
+        if (uciMoves.isEmpty()) {
+            return@LaunchedEffect
+        }
+
+        if (expectedPly >= uciMoves.size) {
+            phase = TrainSingleGamePhase.Idle
+            return@LaunchedEffect
+        }
+
+        if (!isUserTurn(expectedPly, currentOrientation)) {
+            gameController.loadFromUciMoves(uciMoves, expectedPly + 1)
+            expectedPly += 1
+            return@LaunchedEffect
+        }
+
+        if (gameController.currentMoveIndex <= expectedPly) {
+            return@LaunchedEffect
+        }
+
+        val lastMoveUci = gameController.getMovesCopy()
+            .getOrNull(gameController.currentMoveIndex - 1)
+            ?.let(::moveToUci)
+            ?: return@LaunchedEffect
+
+        if (lastMoveUci == uciMoves[expectedPly]) {
+            expectedPly += 1
+            return@LaunchedEffect
+        }
+
+        mistakesCount += 1
+        gameController.loadFromUciMoves(uciMoves, expectedPly)
+        phase = TrainSingleGamePhase.Mistake
     }
 
     Scaffold(
@@ -164,13 +209,26 @@ private fun TrainSingleGameScreen(
                 currentSideIndex = currentSideIndex,
                 sidesCount = trainingSides.size,
                 phase = phase,
+                mistakesCount = mistakesCount,
                 onShowLineClick = {
                     gameController.resetToStartPosition()
+                    expectedPly = 0
                     phase = TrainSingleGamePhase.ShowingLine
                 },
                 onStartTrainingClick = {
                     gameController.resetToStartPosition()
+                    expectedPly = 0
                     phase = TrainSingleGamePhase.Training
+                },
+                onMakeCorrectMoveClick = {
+                    val uciMoves = trainingGameData?.uciMoves.orEmpty()
+                    if (expectedPly >= uciMoves.size) {
+                        phase = TrainSingleGamePhase.Idle
+                    } else {
+                        gameController.loadFromUciMoves(uciMoves, expectedPly + 1)
+                        expectedPly += 1
+                        phase = TrainSingleGamePhase.Training
+                    }
                 }
             )
         }
@@ -187,8 +245,10 @@ private fun TrainSingleGameContent(
     currentSideIndex: Int,
     sidesCount: Int,
     phase: TrainSingleGamePhase,
+    mistakesCount: Int,
     onShowLineClick: () -> Unit,
     onStartTrainingClick: () -> Unit,
+    onMakeCorrectMoveClick: () -> Unit,
 ) {
     ScreenSection {
         if (trainingGameData == null) {
@@ -210,7 +270,10 @@ private fun TrainSingleGameContent(
             TrainingSingleGameActions(
                 onShowLineClick = onShowLineClick,
                 onStartTrainingClick = onStartTrainingClick,
+                onMakeCorrectMoveClick = onMakeCorrectMoveClick,
                 isShowingLine = phase == TrainSingleGamePhase.ShowingLine,
+                isTraining = phase == TrainSingleGamePhase.Training,
+                showCorrectMove = phase == TrainSingleGamePhase.Mistake,
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
@@ -240,6 +303,10 @@ private fun TrainSingleGameContent(
                 text = "Session state: ${phase.name}",
                 color = TrainingTextSecondary
             )
+            BodySecondaryText(
+                text = "Mistakes: $mistakesCount",
+                color = TrainingTextSecondary
+            )
         }
     }
 }
@@ -248,23 +315,37 @@ private fun TrainSingleGameContent(
 private fun TrainingSingleGameActions(
     onShowLineClick: () -> Unit,
     onStartTrainingClick: () -> Unit,
+    onMakeCorrectMoveClick: () -> Unit,
     isShowingLine: Boolean,
+    isTraining: Boolean,
+    showCorrectMove: Boolean,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)
-    ) {
-        PrimaryButton(
-            text = "Show line",
-            onClick = onShowLineClick,
-            enabled = !isShowingLine
-        )
-        PrimaryButton(
-            text = "Start training",
-            onClick = onStartTrainingClick,
-            enabled = !isShowingLine
-        )
+    Column(modifier = modifier) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)
+        ) {
+            PrimaryButton(
+                text = "Show line",
+                onClick = onShowLineClick,
+                enabled = !isShowingLine && !isTraining
+            )
+            PrimaryButton(
+                text = "Start training",
+                onClick = onStartTrainingClick,
+                enabled = !isShowingLine && !isTraining
+            )
+        }
+
+        if (showCorrectMove) {
+            Spacer(modifier = Modifier.height(AppDimens.spaceMd))
+            PrimaryButton(
+                text = "Make correct move",
+                onClick = onMakeCorrectMoveClick,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
 
@@ -311,3 +392,12 @@ private fun orientationLabel(orientation: BoardOrientation): String =
         BoardOrientation.WHITE -> "White"
         BoardOrientation.BLACK -> "Black"
     }
+
+private fun isUserTurn(expectedPly: Int, orientation: BoardOrientation): Boolean =
+    when (orientation) {
+        BoardOrientation.WHITE -> expectedPly % 2 == 0
+        BoardOrientation.BLACK -> expectedPly % 2 == 1
+    }
+
+private fun moveToUci(move: com.github.bhlangonijr.chesslib.move.Move): String =
+    "${move.from.value().lowercase()}${move.to.value().lowercase()}"
