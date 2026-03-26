@@ -43,6 +43,7 @@ private const val DEFAULT_TRAINING_NAME = "FullTraining"
 private val TrainingGameRowHeight = 92.dp
 private val TrainingGamesHeaderHeight = 88.dp
 private val TrainingGamesNavigationHeight = 64.dp
+private val TrainingGameRowSpacing = AppDimens.spaceMd
 
 data class TrainingGameEditorItem(
     val gameId: Long,
@@ -143,11 +144,14 @@ fun CreateTrainingScreen(
                 val availableHeightForRows =
                     (maxHeight - TrainingGamesHeaderHeight - TrainingGamesNavigationHeight)
                         .coerceAtLeast(TrainingGameRowHeight)
-                val pageSize = (availableHeightForRows / TrainingGameRowHeight)
+                val trainingGameSlotHeight = TrainingGameRowHeight + TrainingGameRowSpacing
+                val pageSize = (availableHeightForRows / trainingGameSlotHeight)
                     .toInt()
                     .coerceAtLeast(1)
                 val totalPages = ((editableGamesForTraining.size + pageSize - 1) / pageSize).coerceAtLeast(1)
                 val safeCurrentPage = currentPage.coerceIn(0, totalPages - 1)
+                val canGoPrevious = safeCurrentPage > 0
+                val canGoNext = safeCurrentPage + 1 < totalPages
                 val currentPageItems = editableGamesForTraining
                     .drop(safeCurrentPage * pageSize)
                     .take(pageSize)
@@ -161,6 +165,8 @@ fun CreateTrainingScreen(
                         games = currentPageItems,
                         currentPage = safeCurrentPage,
                         totalPages = totalPages,
+                        canGoPrevious = canGoPrevious,
+                        canGoNext = canGoNext,
                         onDecreaseWeightClick = { gameId ->
                             editableGamesForTraining = editableGamesForTraining.map { game ->
                                 if (game.gameId == gameId) {
@@ -180,12 +186,12 @@ fun CreateTrainingScreen(
                             }
                         },
                         onPreviousPageClick = {
-                            if (safeCurrentPage > 0) {
+                            if (canGoPrevious) {
                                 currentPage = safeCurrentPage - 1
                             }
                         },
                         onNextPageClick = {
-                            if (safeCurrentPage + 1 < totalPages) {
+                            if (canGoNext) {
                                 currentPage = safeCurrentPage + 1
                             }
                         }
@@ -209,6 +215,8 @@ private fun TrainingGamesPage(
     games: List<TrainingGameEditorItem>,
     currentPage: Int,
     totalPages: Int,
+    canGoPrevious: Boolean,
+    canGoNext: Boolean,
     onDecreaseWeightClick: (Long) -> Unit,
     onIncreaseWeightClick: (Long) -> Unit,
     onPreviousPageClick: () -> Unit,
@@ -235,13 +243,15 @@ private fun TrainingGamesPage(
                 color = TrainingTextSecondary
             )
         } else {
-            games.forEach { game ->
+            games.forEachIndexed { index, game ->
                 TrainingGamePageRow(
                     game = game,
                     onDecreaseWeightClick = { onDecreaseWeightClick(game.gameId) },
                     onIncreaseWeightClick = { onIncreaseWeightClick(game.gameId) }
                 )
-                Spacer(modifier = Modifier.height(AppDimens.spaceMd))
+                if (index + 1 < games.size) {
+                    Spacer(modifier = Modifier.height(TrainingGameRowSpacing))
+                }
             }
         }
 
@@ -254,13 +264,13 @@ private fun TrainingGamesPage(
             PrimaryButton(
                 text = "Previous",
                 onClick = onPreviousPageClick,
-                enabled = currentPage > 0,
+                enabled = canGoPrevious,
                 modifier = Modifier.weight(1f)
             )
             PrimaryButton(
                 text = "Next",
                 onClick = onNextPageClick,
-                enabled = currentPage + 1 < totalPages,
+                enabled = canGoNext,
                 modifier = Modifier.weight(1f)
             )
         }
