@@ -106,10 +106,12 @@ fun CreateTrainingScreenContainer(
 ) {
     var gamesForTraining by remember { mutableStateOf<List<TrainingGameEditorItem>>(emptyList()) }
     var trainingName by remember { mutableStateOf(DEFAULT_TRAINING_NAME) }
+    var trainingLoadFailed by remember { mutableStateOf(false) }
     var trainingSaveSuccess by remember { mutableStateOf<TrainingSaveSuccess?>(null) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(trainingId) {
+        trainingLoadFailed = false
         val allGames = withContext(Dispatchers.IO) {
             inDbProvider.getAllGames()
         }
@@ -128,9 +130,8 @@ fun CreateTrainingScreenContainer(
 
         if (training == null) {
             trainingName = DEFAULT_TRAINING_NAME
-            gamesForTraining = allGames.map { game ->
-                game.toTrainingGameEditorItem()
-            }
+            gamesForTraining = emptyList()
+            trainingLoadFailed = true
             return@LaunchedEffect
         }
 
@@ -138,6 +139,15 @@ fun CreateTrainingScreenContainer(
         gamesForTraining = buildTrainingEditorItems(
             allGames = allGames,
             trainingGames = OneGameTrainingData.fromJson(training.gamesJson)
+        )
+    }
+
+    if (trainingLoadFailed) {
+        MissingTrainingDialog(
+            onDismiss = {
+                trainingLoadFailed = false
+                onNavigate(ScreenType.Training)
+            }
         )
     }
 
@@ -456,6 +466,18 @@ private fun TrainingGamePageRow(
         }
     }
 }
+
+@Composable
+private fun MissingTrainingDialog(
+    onDismiss: () -> Unit
+) {
+    AppMessageDialog(
+        title = "Training Not Found",
+        message = "The selected training is unavailable.",
+        onDismiss = onDismiss
+    )
+}
+
 
 @Composable
 private fun TrainingSaveSuccessDialog(
