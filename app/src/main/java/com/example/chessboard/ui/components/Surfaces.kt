@@ -18,15 +18,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.example.chessboard.ui.theme.AppDimens
-import com.example.chessboard.ui.theme.TrainingCardDark
+import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TrainingDividerColor
-import com.example.chessboard.ui.theme.TrainingSurfaceDark
 
 /** Wraps content in the app's default card container used for standalone content blocks. */
 @Composable
 fun CardSurface(
     modifier: Modifier = Modifier,
-    color: Color = TrainingCardDark,
+    color: Color = Background.CardDark,
     border: BorderStroke? = null,
     contentPadding: PaddingValues = PaddingValues(AppDimens.spaceLg),
     onClick: (() -> Unit)? = null,
@@ -56,7 +55,7 @@ fun CardSurface(
 @Composable
 fun PillSurface(
     modifier: Modifier = Modifier,
-    color: Color = TrainingSurfaceDark,
+    color: Color = Background.SurfaceDark,
     contentPadding: PaddingValues = PaddingValues(
         horizontal = AppDimens.spaceLg,
         vertical = AppDimens.spaceMd

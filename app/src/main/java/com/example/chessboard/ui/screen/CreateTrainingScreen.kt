@@ -12,9 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,6 +25,8 @@ import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.service.OneGameTrainingData
 import com.example.chessboard.ui.components.AppBottomNavigation
+import com.example.chessboard.ui.components.AppMessageDialog
+import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTextField
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.BodySecondaryText
@@ -39,10 +38,7 @@ import com.example.chessboard.ui.components.SecondaryButton
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.theme.AppDimens
-import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingBackgroundDark
-import com.example.chessboard.ui.theme.TrainingTextPrimary
-import com.example.chessboard.ui.theme.TrainingTextSecondary
+import com.example.chessboard.ui.theme.TextColor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -142,9 +138,8 @@ fun CreateTrainingScreen(
         editableGamesForTraining = gamesForTraining
     }
 
-    Scaffold(
+    AppScreenScaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = TrainingBackgroundDark,
         topBar = {
             AppTopBar(
                 title = "Create Training",
@@ -185,10 +180,7 @@ fun CreateTrainingScreen(
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
 
             ScreenSection {
-                BodySecondaryText(
-                    text = "Games loaded for training: ${editableGamesForTraining.size}",
-                    color = TrainingTextSecondary
-                )
+                BodySecondaryText(text = "Games loaded for training: ${editableGamesForTraining.size}")
             }
 
             BoxWithConstraints(
@@ -279,24 +271,19 @@ private fun TrainingGamesPage(
 ) {
     CardSurface(modifier = Modifier.fillMaxWidth()) {
         SectionTitleText(
-            text = "Games in Training",
-            color = TrainingTextPrimary
+            text = "Games in Training"
         )
 
         Spacer(modifier = Modifier.height(AppDimens.spaceSm))
 
         CardMetaText(
             text = "Page ${currentPage + 1} of $totalPages",
-            color = TrainingTextSecondary
         )
 
         Spacer(modifier = Modifier.height(AppDimens.spaceLg))
 
         if (games.isEmpty()) {
-            BodySecondaryText(
-                text = "No games available.",
-                color = TrainingTextSecondary
-            )
+            BodySecondaryText(text = "No games available.")
         } else {
             games.forEachIndexed { index, game ->
                 TrainingGamePageRow(
@@ -351,16 +338,13 @@ private fun TrainingGamePageRow(
             ) {
                 SectionTitleText(
                     text = game.title,
-                    color = TrainingTextPrimary
                 )
                 Spacer(modifier = Modifier.height(AppDimens.spaceXs))
                 CardMetaText(
-                    text = "ID: ${game.gameId}",
-                    color = TrainingTextSecondary
+                    text = "ID: ${game.gameId}"
                 )
                 CardMetaText(
-                    text = "Weight: ${game.weight}",
-                    color = TrainingTextSecondary
+                    text = "Weight: ${game.weight}"
                 )
             }
 
@@ -387,40 +371,21 @@ private fun TrainingSaveSuccessDialog(
     success: TrainingSaveSuccess,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = TrainingBackgroundDark,
-        title = {
-            SectionTitleText(
-                text = "Training Created",
-                color = TrainingTextPrimary
-            )
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(AppDimens.spaceXs)) {
-                BodySecondaryText(
-                    text = "ID: ${success.trainingId}",
-                    color = TrainingTextSecondary
-                )
-                BodySecondaryText(
-                    text = "Name: ${success.trainingName}",
-                    color = TrainingTextSecondary
-                )
-                BodySecondaryText(
-                    text = "Games added: ${success.gamesCount}",
-                    color = TrainingTextSecondary
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                CardMetaText(
-                    text = "OK",
-                    color = TrainingAccentTeal
-                )
-            }
-        }
+    AppMessageDialog(
+        title = "Training Created",
+        message = buildTrainingSaveSuccessMessage(success),
+        onDismiss = onDismiss
     )
+}
+
+private fun buildTrainingSaveSuccessMessage(
+    success: TrainingSaveSuccess
+): String {
+    return buildString {
+        appendLine("ID: ${success.trainingId}")
+        appendLine("Name: ${success.trainingName}")
+        append("Games added: ${success.gamesCount}")
+    }
 }
 
 @Composable

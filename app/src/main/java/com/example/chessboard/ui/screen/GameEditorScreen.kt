@@ -9,18 +9,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.LifecycleOwner
@@ -28,22 +25,19 @@ import androidx.lifecycle.lifecycleScope
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.repository.DatabaseProvider
+import com.example.chessboard.ui.components.AppConfirmDialog
 import com.example.chessboard.ui.components.AppDivider
+import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
-import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.CardMetaText
 import com.example.chessboard.ui.components.PrimaryButton
-import com.example.chessboard.ui.components.ScreenTitleText
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.theme.AppDimens
+import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingBackgroundDark
-import com.example.chessboard.ui.theme.TrainingCardDark
-import com.example.chessboard.ui.theme.TrainingDividerColor
 import com.example.chessboard.ui.theme.TrainingErrorRed
 import com.example.chessboard.ui.theme.TrainingIconInactive
 import com.example.chessboard.ui.theme.TrainingTextPrimary
-import com.example.chessboard.ui.theme.TrainingTextSecondary
 import com.github.bhlangonijr.chesslib.Square
 import com.github.bhlangonijr.chesslib.move.Move
 import kotlinx.coroutines.Dispatchers
@@ -160,30 +154,21 @@ fun GameEditorScreen(
     var editedEco by remember(game.id) { mutableStateOf(game.eco ?: "") }
 
     if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            containerColor = TrainingCardDark,
-            title = { ScreenTitleText("Delete Opening", color = TrainingTextPrimary) },
-            text = {
-                BodySecondaryText(
-                    "Delete \"${game.event ?: "this opening"}\"? This cannot be undone.",
-                    color = TrainingTextSecondary
-                )
+        AppConfirmDialog(
+            title = "Delete Opening",
+            message = "Delete \"${game.event ?: "this opening"}\"? This cannot be undone.",
+            onDismiss = { showDeleteDialog = false },
+            onConfirm = {
+                showDeleteDialog = false
+                onDelete()
             },
-            confirmButton = {
-                PrimaryButton("Delete", onClick = { showDeleteDialog = false; onDelete() })
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    CardMetaText("Cancel", color = TrainingTextSecondary)
-                }
-            }
+            confirmText = "Delete",
+            isDestructive = true
         )
     }
 
-    Scaffold(
+    AppScreenScaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = TrainingBackgroundDark,
         topBar = {
             AppTopBar(
                 title = editedName.ifBlank { "Opening" },
@@ -221,9 +206,9 @@ fun GameEditorScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("🔒", fontSize = 14.sp)
                         Spacer(modifier = Modifier.width(AppDimens.radiusXs))
-                        SectionTitleText("Move Sequence", color = TrainingTextSecondary)
+                        SectionTitleText("Move Sequence", color = TextColor.Secondary)
                     }
-                    CardMetaText("Move $currentPly", color = TrainingTextSecondary)
+                    CardMetaText("Move $currentPly")
                 }
 
                 Spacer(modifier = Modifier.height(AppDimens.spaceSm))
@@ -267,7 +252,7 @@ fun GameEditorScreen(
                         )
                     }
                     TextButton(onClick = { repeat(currentPly) { gameController.undoMove() } }) {
-                        CardMetaText("Reset", color = TrainingTextSecondary, fontWeight = FontWeight.Medium)
+                        CardMetaText("Reset")
                     }
                     IconButton(onClick = { gameController.redoMove() }, enabled = gameController.canRedo) {
                         Icon(
@@ -279,8 +264,7 @@ fun GameEditorScreen(
                 }
 
                 AppDivider(
-                    modifier = Modifier.padding(horizontal = AppDimens.spaceLg, vertical = AppDimens.spaceMd),
-                    color = TrainingDividerColor
+                    modifier = Modifier.padding(horizontal = AppDimens.spaceLg, vertical = AppDimens.spaceMd)
                 )
 
                 DarkInputField(

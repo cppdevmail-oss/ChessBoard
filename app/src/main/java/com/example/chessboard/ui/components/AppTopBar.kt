@@ -17,10 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.ui.theme.AppDimens
-import com.example.chessboard.ui.theme.TrainingBackgroundDark
-import com.example.chessboard.ui.theme.TrainingSurfaceDark
+import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TrainingTextPrimary
-import com.example.chessboard.ui.theme.TrainingTextSecondary
 
 /** Displays the app's standard top bar with an optional subtitle, back action, and action slot. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,7 +34,7 @@ fun AppTopBar(
     TopAppBar(
         modifier = modifier,
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = TrainingBackgroundDark,
+            containerColor = Background.ScreenDark,
             navigationIconContentColor = TrainingTextPrimary,
             titleContentColor = TrainingTextPrimary
         ),
@@ -48,7 +46,7 @@ fun AppTopBar(
                         .padding(start = AppDimens.spaceSm)
                         .size(AppDimens.iconButtonSize)
                         .background(
-                            color = if (filledBackButton) TrainingSurfaceDark else Color.Transparent,
+                            color = if (filledBackButton) Background.SurfaceDark else Color.Transparent,
                             shape = RoundedCornerShape(AppDimens.radiusMd)
                         )
                 ) {
@@ -63,15 +61,9 @@ fun AppTopBar(
         },
         title = {
             Column {
-                ScreenTitleText(
-                    text = title,
-                    color = TrainingTextPrimary
-                )
+                ScreenTitleText(text = title)
                 if (!subtitle.isNullOrBlank()) {
-                    BodySecondaryText(
-                        text = subtitle,
-                        color = TrainingTextSecondary
-                    )
+                    BodySecondaryText(text = subtitle)
                 }
             }
         },

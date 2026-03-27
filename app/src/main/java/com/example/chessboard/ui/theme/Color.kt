@@ -18,14 +18,28 @@ val ChessDark = Color(0xFFB58863)
 val ChessPieceDark = Color(0xFF312E2B)
 
 // Training Colors
-val TrainingBackgroundDark = Color(0xFF0D0D0D)
-val TrainingSurfaceDark = Color(0xFF1A1A1A)
-val TrainingCardDark = Color(0xFF252525)
-val TrainingTextPrimary = Color(0xFFFFFFFF)
-val TrainingTextSecondary = Color(0xFF9E9E9E)
-val TrainingAccentTeal = Color(0xFF1DB584)
+object Background {
+    val ScreenDark = Color(0xFF0D0D0D)
+    val SurfaceDark = Color(0xFF1A1A1A)
+    val CardDark = Color(0xFF252525)
+}
+
+object TextColor {
+    val Primary = Color(0xFFFFFFFF)
+    val Secondary = Color(0xFF9E9E9E)
+}
+
+object ButtonColor {
+    val PrimaryContainer = Color(0xFF1DB584)
+    val DestructiveContainer = Color(0xFFF44336)
+    val Content = Color(0xFFFFFFFF)
+}
+
+val TrainingTextPrimary = TextColor.Primary
+val TrainingTextSecondary = TextColor.Secondary
+val TrainingAccentTeal = ButtonColor.PrimaryContainer
 val TrainingSuccessGreen = Color(0xFF4CAF50)
-val TrainingErrorRed = Color(0xFFF44336)
+val TrainingErrorRed = ButtonColor.DestructiveContainer
 val TrainingWarningOrange = Color(0xFFFF9800)
 val TrainingIconInactive = Color(0xFF666666)
 val TrainingDividerColor = Color(0xFF2A2A2A)

@@ -8,7 +8,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,6 +28,7 @@ import com.example.chessboard.entity.SideMask
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.ui.components.AppBottomNavigation
 import com.example.chessboard.ui.components.AppDivider
+import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppSearchField
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.CardSurface
@@ -34,12 +40,10 @@ import com.example.chessboard.ui.components.ScreenTitleText
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.theme.AppDimens
-
+import com.example.chessboard.ui.theme.Background
+import com.example.chessboard.ui.theme.ButtonColor
+import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingBackgroundDark
-import com.example.chessboard.ui.theme.TrainingDividerColor
-import com.example.chessboard.ui.theme.TrainingTextPrimary
-import com.example.chessboard.ui.theme.TrainingTextSecondary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -96,9 +100,8 @@ fun HomeScreen(
         matchesSearch && matchesFilter
     }
 
-    Scaffold(
+    AppScreenScaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = TrainingBackgroundDark,
         bottomBar = {
             HomeBottomNavigation(onItemSelected = onNavigate)
         }
@@ -123,12 +126,12 @@ fun HomeScreen(
                             Text(
                                 text = "Chess Openings",
                                 style = MaterialTheme.typography.displaySmall,
-                                color = TrainingTextPrimary
+                                color = TextColor.Primary
                             )
                         }
                         SectionTitleText(
                             text = "${games.size} opening${if (games.size == 1) "" else "s"}",
-                            color = TrainingTextSecondary
+                            color = TextColor.Secondary
                         )
                     }
                     Row(
@@ -192,7 +195,7 @@ fun HomeScreen(
             }
 
             item {
-                AppDivider(modifier = Modifier.padding(top = AppDimens.spaceLg), color = TrainingDividerColor)
+                AppDivider(modifier = Modifier.padding(top = AppDimens.spaceLg))
                 Spacer(modifier = Modifier.height(AppDimens.spaceLg))
             }
 
@@ -206,7 +209,7 @@ fun HomeScreen(
                     ) {
                         BodySecondaryText(
                             text = if (games.isEmpty()) "No openings yet.\nTap + to create one." else "No results found.",
-                            color = TrainingTextSecondary,
+                            color = TextColor.Secondary,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -234,13 +237,13 @@ private fun AddOpeningButton(
         onClick = onClick,
         modifier = modifier.size(AppDimens.buttonHeight),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(AppDimens.radiusLg),
-        colors = ButtonDefaults.buttonColors(containerColor = TrainingAccentTeal),
+        colors = ButtonDefaults.buttonColors(containerColor = ButtonColor.PrimaryContainer),
         contentPadding = PaddingValues(0.dp)
     ) {
         Icon(
             imageVector = Icons.Default.Add,
             contentDescription = "Add opening",
-            tint = Color.White,
+            tint = ButtonColor.Content,
             modifier = Modifier.size(AppDimens.navIconSize)
         )
     }
@@ -253,20 +256,18 @@ private fun GameEntityCard(game: GameEntity, modifier: Modifier = Modifier, onCl
         onClick = onClick
     ) {
         ScreenTitleText(
-            text = game.event ?: "Unnamed Opening",
-            color = TrainingTextPrimary
+            text = game.event ?: "Unnamed Opening"
         )
         if (!game.eco.isNullOrBlank()) {
             Spacer(modifier = Modifier.height(AppDimens.spaceSm))
             Surface(
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(AppDimens.radiusXs),
-                color = TrainingBackgroundDark
+                color = Background.ScreenDark
             ) {
                 CardMetaText(
                     text = game.eco,
                     modifier = Modifier.padding(horizontal = AppDimens.spaceSm, vertical = AppDimens.spaceXs),
-                    color = TrainingTextSecondary,
-                    fontWeight = FontWeight.Medium
+                    color = TextColor.Secondary
                 )
             }
         }
@@ -291,7 +292,7 @@ private fun FilterTabOption(
         Text(
             text = label,
             style = MaterialTheme.typography.labelLarge,
-            color = if (isSelected) Color.Black else TrainingTextSecondary,
+            color = if (isSelected) Color.Black else TextColor.Secondary,
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
             textAlign = TextAlign.Center,
         )

@@ -21,10 +21,10 @@ import com.example.chessboard.ui.components.AppTextField
 import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.theme.AppDimens
+import com.example.chessboard.ui.theme.Background
+import com.example.chessboard.ui.theme.ButtonColor
+import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingSurfaceDark
-import com.example.chessboard.ui.theme.TrainingTextPrimary
-import com.example.chessboard.ui.theme.TrainingTextSecondary
 import com.github.bhlangonijr.chesslib.Board
 import com.github.bhlangonijr.chesslib.Piece
 import com.github.bhlangonijr.chesslib.PieceType
@@ -136,7 +136,7 @@ fun MoveChip(
     label: String,
     isSelected: Boolean,
     onClick: () -> Unit,
-    unselectedBackground: Color = TrainingSurfaceDark,
+    unselectedBackground: Color = Background.SurfaceDark,
 ) {
     Box(
         modifier = Modifier
@@ -150,7 +150,7 @@ fun MoveChip(
             text = label,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = if (isSelected) Color.White else TrainingTextSecondary
+            color = if (isSelected) Color.White else TextColor.Secondary
         )
     }
 }
@@ -214,8 +214,8 @@ fun ResetTrainingButton(
         modifier = modifier.fillMaxWidth().height(56.dp),
         shape = RoundedCornerShape(AppDimens.radiusLg),
         colors = ButtonDefaults.buttonColors(
-            containerColor = TrainingSurfaceDark,
-            contentColor = TrainingTextPrimary
+            containerColor = Background.SurfaceDark,
+            contentColor = ButtonColor.Content
         ),
         elevation = ButtonDefaults.buttonElevation(
             defaultElevation = 0.dp,
@@ -228,6 +228,6 @@ fun ResetTrainingButton(
             modifier = Modifier.size(20.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
-        SectionTitleText(text = "Reset Training", color = TrainingTextPrimary)
+        SectionTitleText(text = "Reset Training", color = TextColor.Primary)
     }
 }
