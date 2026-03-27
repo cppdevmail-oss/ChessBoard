@@ -57,7 +57,8 @@ data class TrainingGameEditorItem(
 private data class TrainingSaveSuccess(
     val trainingId: Long,
     val trainingName: String,
-    val gamesCount: Int
+    val gamesCount: Int,
+    val wasUpdated: Boolean
 )
 
 private fun resolveCreateTrainingTitle(isEditMode: Boolean): String {
@@ -66,6 +67,31 @@ private fun resolveCreateTrainingTitle(isEditMode: Boolean): String {
     }
 
     return "Create Training"
+}
+
+private suspend fun saveTraining(
+    dbProvider: DatabaseProvider,
+    trainingId: Long?,
+    normalizedName: String,
+    trainingGames: List<OneGameTrainingData>
+): Long? {
+    if (trainingId == null) {
+        return dbProvider.createTrainingFromGames(
+            name = normalizedName,
+            games = trainingGames
+        )
+    }
+
+    val wasUpdated = dbProvider.updateTrainingFromGames(
+        trainingId = trainingId,
+        name = normalizedName,
+        games = trainingGames
+    )
+    if (!wasUpdated) {
+        return null
+    }
+
+    return trainingId
 }
 
 
@@ -134,22 +160,27 @@ fun CreateTrainingScreenContainer(
         onSaveTraining = { trainingName, editableGames ->
             scope.launch {
                 val normalizedName = trainingName.ifBlank { DEFAULT_TRAINING_NAME }
-                val trainingId = withContext(Dispatchers.IO) {
-                    inDbProvider.createTrainingFromGames(
-                        name = normalizedName,
-                        games = editableGames.map { game ->
-                            OneGameTrainingData(
-                                gameId = game.gameId,
-                                weight = game.weight
-                            )
-                        }
+                val trainingGames = editableGames.map { game ->
+                    OneGameTrainingData(
+                        gameId = game.gameId,
+                        weight = game.weight
+                    )
+                }
+
+                val savedTrainingId = withContext(Dispatchers.IO) {
+                    saveTraining(
+                        dbProvider = inDbProvider,
+                        trainingId = trainingId,
+                        normalizedName = normalizedName,
+                        trainingGames = trainingGames
                     )
                 }
 
                 trainingSaveSuccess = TrainingSaveSuccess(
-                    trainingId = trainingId ?: return@launch,
+                    trainingId = savedTrainingId ?: return@launch,
                     trainingName = normalizedName,
-                    gamesCount = editableGames.size
+                    gamesCount = editableGames.size,
+                    wasUpdated = trainingId != null
                 )
             }
         },
@@ -432,7 +463,7 @@ private fun TrainingSaveSuccessDialog(
     onDismiss: () -> Unit
 ) {
     AppMessageDialog(
-        title = "Training Created",
+        title = if (success.wasUpdated) "Training Updated" else "Training Created",
         message = buildTrainingSaveSuccessMessage(success),
         onDismiss = onDismiss
     )
@@ -444,7 +475,8 @@ private fun buildTrainingSaveSuccessMessage(
     return buildString {
         appendLine("ID: ${success.trainingId}")
         appendLine("Name: ${success.trainingName}")
-        append("Games added: ${success.gamesCount}")
+        append(if (success.wasUpdated) "Games in training: " else "Games added: ")
+        append(success.gamesCount)
     }
 }
 

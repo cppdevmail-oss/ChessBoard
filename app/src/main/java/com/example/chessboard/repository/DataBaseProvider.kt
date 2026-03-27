@@ -103,6 +103,19 @@ class DatabaseProvider private constructor(
         return trainingService.createTrainingFromGames(name = name, games = games)
     }
 
+    suspend fun updateTrainingFromGames(
+        trainingId: Long,
+        name: String = "FullTraining",
+        games: List<OneGameTrainingData>
+    ): Boolean {
+        val trainingService = createTrainingService()
+        return trainingService.updateTrainingFromGames(
+            trainingId = trainingId,
+            name = name,
+            games = games
+        )
+    }
+
     suspend fun getAllTrainings(): List<TrainingEntity> {
         val trainingService = createTrainingService()
         return trainingService.getAllTrainings()

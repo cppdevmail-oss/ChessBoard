@@ -14,6 +14,17 @@ class TrainingService(
     private val templateDao: TrainingTemplateDao
 ) {
 
+    private data class TrainingGamesContext(
+        val training: TrainingEntity,
+        val games: MutableList<OneGameTrainingData>
+    )
+
+    private data class TrainingGameContext(
+        val training: TrainingEntity,
+        val games: MutableList<OneGameTrainingData>,
+        val index: Int
+    )
+
     suspend fun getAllTrainings(): List<TrainingEntity> {
         return dao.getAll()
     }
@@ -41,18 +52,29 @@ class TrainingService(
         )
     }
 
+    suspend fun updateTrainingFromGames(
+        trainingId: Long,
+        games: List<OneGameTrainingData>,
+        name: String = "FullTraining"
+    ): Boolean {
+        if (games.isEmpty()) return false
+
+        val training = validateTraining(trainingId) ?: return false
+        dao.update(
+            training.copy(
+                name = name,
+                gamesJson = OneGameTrainingData.toJson(games)
+            )
+        )
+        return true
+    }
+
     suspend fun addGameToTraining(trainingId: Long, gameId: Long, weight: Int = 1): Boolean {
-        val training = dao.getById(trainingId) ?: return false
+        val context = loadTrainingGames(trainingId) ?: return false
+        if (context.games.any { it.gameId == gameId }) return false
 
-        val games = OneGameTrainingData.fromJson(training.gamesJson).toMutableList()
-        val index = games.indexOfFirst { it.gameId == gameId }
-
-        if (index >= 0) {
-            return false
-        }
-
-        games.add(OneGameTrainingData(gameId, weight))
-        dao.update(training.copy(gamesJson = OneGameTrainingData.toJson(games)))
+        context.games.add(OneGameTrainingData(gameId, weight))
+        dao.update(context.training.copy(gamesJson = OneGameTrainingData.toJson(context.games)))
         return true
     }
 
@@ -125,41 +147,49 @@ class TrainingService(
     }
 
     suspend fun decreaseLineWeight(trainingId: Long, gameId: Long): Boolean {
-        val training = dao.getById(trainingId) ?: return false
-
-        val games = OneGameTrainingData.fromJson(training.gamesJson).toMutableList()
-        val index = games.indexOfFirst { it.gameId == gameId }
-
-        if (index < 0) return false
-
-        val newWeight = games[index].weight - 1
+        val context = findTrainingGame(trainingId, gameId) ?: return false
+        val newWeight = context.games[context.index].weight - 1
 
         if (newWeight <= 0) {
-            games.removeAt(index)
+            context.games.removeAt(context.index)
         } else {
-            games[index] = games[index].copy(weight = newWeight)
+            context.games[context.index] = context.games[context.index].copy(weight = newWeight)
         }
 
-        if (games.isEmpty()) {
+        if (context.games.isEmpty()) {
             dao.deleteById(trainingId)
             return true
         }
 
-        dao.update(training.copy(gamesJson = OneGameTrainingData.toJson(games)))
+        dao.update(context.training.copy(gamesJson = OneGameTrainingData.toJson(context.games)))
         return true
     }
 
-    suspend fun increaseLineWeight(trainingId: Long, gameId: Long, delta: Int = 1): Boolean {
-        val training = dao.getById(trainingId) ?: return false
-
+    private suspend fun loadTrainingGames(trainingId: Long): TrainingGamesContext? {
+        val training = dao.getById(trainingId) ?: return null
         val games = OneGameTrainingData.fromJson(training.gamesJson).toMutableList()
-        val index = games.indexOfFirst { it.gameId == gameId }
+        return TrainingGamesContext(training = training, games = games)
+    }
 
-        if (index < 0) return false
+    private suspend fun findTrainingGame(trainingId: Long, gameId: Long): TrainingGameContext? {
+        val context = loadTrainingGames(trainingId) ?: return null
+        val index = context.games.indexOfFirst { it.gameId == gameId }
+        if (index < 0) return null
 
-        games[index] = games[index].copy(weight = games[index].weight + delta)
+        return TrainingGameContext(
+            training = context.training,
+            games = context.games,
+            index = index
+        )
+    }
 
-        dao.update(training.copy(gamesJson = OneGameTrainingData.toJson(games)))
+    suspend fun increaseLineWeight(trainingId: Long, gameId: Long, delta: Int = 1): Boolean {
+        val context = findTrainingGame(trainingId, gameId) ?: return false
+        context.games[context.index] = context.games[context.index].copy(
+            weight = context.games[context.index].weight + delta
+        )
+
+        dao.update(context.training.copy(gamesJson = OneGameTrainingData.toJson(context.games)))
         return true
     }
 }
