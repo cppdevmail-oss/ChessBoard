@@ -13,11 +13,11 @@ import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.ui.theme.ChessBoardTheme
 import com.example.chessboard.ui.screen.CreateOpeningScreenContainer
-import com.example.chessboard.ui.screen.CreateTrainingScreenContainer
+import com.example.chessboard.ui.screen.trainSingleGame.CreateTrainingScreenContainer
 import com.example.chessboard.ui.screen.GameEditorScreenContainer
 import com.example.chessboard.ui.screen.HomeScreenContainer
 import com.example.chessboard.ui.screen.ScreenType
-import com.example.chessboard.ui.screen.TrainSingleGameScreenContainer
+import com.example.chessboard.ui.screen.trainSingleGame.TrainSingleGameScreenContainer
 import com.example.chessboard.ui.screen.TrainingScreenContainer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -75,7 +75,6 @@ class MainActivity : ComponentActivity() {
                             currentScreen = ScreenType.Home
                         } else {
                             TrainSingleGameScreenContainer(
-                                activity = this@MainActivity,
                                 gameId = gameId,
                                 trainingId = trainingId,
                                 onTrainingFinished = {

@@ -1,4 +1,4 @@
-package com.example.chessboard.ui.screen
+package com.example.chessboard.ui.screen.trainSingleGame
 
 import android.app.Activity
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Scaffold
@@ -37,6 +38,7 @@ import com.example.chessboard.ui.components.ScreenSection
 import com.example.chessboard.ui.components.SecondaryButton
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
+import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import com.example.chessboard.ui.theme.TrainingBackgroundDark
@@ -353,7 +355,7 @@ private fun TrainingGamePageRow(
 ) {
     CardSurface(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(AppDimens.spaceMd)
+        contentPadding = PaddingValues(AppDimens.spaceMd)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
