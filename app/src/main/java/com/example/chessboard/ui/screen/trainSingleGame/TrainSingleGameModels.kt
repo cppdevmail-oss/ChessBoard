@@ -5,11 +5,19 @@ import com.example.chessboard.entity.SideMask
 import com.example.chessboard.ui.BoardOrientation
 import com.github.bhlangonijr.chesslib.move.Move
 
+//__________________________________________________________________________________________
+// Shared models and small pure helpers used by the single-game training screen:
+// loaded game data, session state, completion dialog data, and side/turn mapping.
+//__________________________________________________________________________________________
+
+// Holds the loaded game and parsed move list that the container passes into the screen
+// for rendering the board, autoplaying the line, and validating user moves.
 internal data class TrainSingleGameData(
     val game: GameEntity,
     val uciMoves: List<String>
 )
 
+// Carries the final result of a single-game training session back to the caller.
 data class TrainSingleGameResult(
     val gameId: Long,
     val trainingId: Long,
@@ -19,6 +27,7 @@ data class TrainSingleGameResult(
 internal const val ShowLineMoveDelayMs = 500L
 internal const val TrainSingleGameLogTag = "TrainSingleGame"
 
+// Describes the current stage of the single-game training session.
 internal enum class TrainSingleGamePhase {
     Idle,
     ShowingLine,
@@ -39,6 +48,7 @@ internal data class TrainSingleGameUiState(
     val completionDialog: TrainSingleGameCompletionState? = null
 )
 
+// Stores the data needed to render the variation completion dialog.
 internal data class TrainSingleGameCompletionState(
     val title: String,
     val message: String,

@@ -101,19 +101,21 @@ private fun TrainSingleGameScreen(
 ) {
     // Keeps the parent navigation section highlighted while the training screen is open.
     var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
+    val loadedGame = trainingGameData?.game
+    val uciMoves = trainingGameData?.uciMoves.orEmpty()
     // Stores the full mutable training session state for the current screen.
-    var uiState by remember(trainingGameData?.game?.id) { mutableStateOf(TrainSingleGameUiState()) }
+    var uiState by remember(loadedGame?.id) { mutableStateOf(TrainSingleGameUiState()) }
     val scope = rememberCoroutineScope()
     // Resolves the ordered list of sides that must be trained for the current game.
-    val trainingSides = remember(trainingGameData?.game?.sideMask) {
-        trainingGameData?.game?.sideMask?.let(::resolveTrainingOrientations).orEmpty()
+    val trainingSides = remember(loadedGame?.sideMask) {
+        loadedGame?.let { resolveTrainingOrientations(it.sideMask) }.orEmpty()
     }
     // Selects the active board orientation for the current training side.
     val currentOrientation = trainingSides.getOrNull(uiState.currentSideIndex) ?: BoardOrientation.WHITE
     // Owns the interactive board state for the currently trained side.
     val gameController = remember(currentOrientation) { GameController(currentOrientation) }
 
-    LaunchedEffect(gameController, trainingGameData?.game?.id) {
+    LaunchedEffect(gameController, loadedGame?.id) {
         gameController.resetToStartPosition()
         uiState = resetSessionState(uiState)
     }
@@ -123,7 +125,7 @@ private fun TrainSingleGameScreen(
             resolveAllowedUserMoveUci(
                 uiState = uiState,
                 currentOrientation = currentOrientation,
-                uciMoves = trainingGameData?.uciMoves.orEmpty()
+                uciMoves = uciMoves
             )
         )
     }
@@ -133,12 +135,12 @@ private fun TrainSingleGameScreen(
         gameController.boardState,
         uiState.expectedPly,
         currentOrientation,
-        trainingGameData?.uciMoves
+        uciMoves
     ) {
         uiState = handleTrainingProgress(
             uiState = uiState,
             gameController = gameController,
-            uciMoves = trainingGameData?.uciMoves.orEmpty(),
+            uciMoves = uciMoves,
             currentOrientation = currentOrientation,
             sidesCount = trainingSides.size
         )
@@ -198,10 +200,9 @@ private fun TrainSingleGameScreen(
                 phase = uiState.phase,
                 mistakesCount = uiState.mistakesCount,
                 onShowLineClick = {
-                    val localUciMoves = trainingGameData?.uciMoves.orEmpty()
                     Log.d(
                         TrainSingleGameLogTag,
-                        "Show line clicked. gameId=$gameId trainingId=$trainingId boardState=${gameController.boardState} moves=$localUciMoves"
+                        "Show line clicked. gameId=$gameId trainingId=$trainingId boardState=${gameController.boardState} moves=$uciMoves"
                     )
 
                     gameController.resetToStartPosition()
@@ -209,12 +210,12 @@ private fun TrainSingleGameScreen(
                     scope.launch {
                         Log.d(
                             TrainSingleGameLogTag,
-                            "Starting runShowLine coroutine. boardState=${gameController.boardState} movesCount=${localUciMoves.size}"
+                            "Starting runShowLine coroutine. boardState=${gameController.boardState} movesCount=${uciMoves.size}"
                         )
                         uiState = runShowLine(
                             uiState = uiState,
                             gameController = gameController,
-                            uciMoves = localUciMoves
+                            uciMoves = uciMoves
                         )
                     }
                 },
@@ -223,7 +224,7 @@ private fun TrainSingleGameScreen(
                     uiState = advanceProgramMoves(
                         uiState = buildStartTrainingState(uiState),
                         gameController = gameController,
-                        uciMoves = trainingGameData?.uciMoves.orEmpty(),
+                        uciMoves = uciMoves,
                         currentOrientation = currentOrientation,
                         sidesCount = trainingSides.size
                     )
@@ -232,7 +233,7 @@ private fun TrainSingleGameScreen(
                     uiState = handleCorrectMove(
                         uiState = uiState,
                         gameController = gameController,
-                        uciMoves = trainingGameData?.uciMoves.orEmpty(),
+                        uciMoves = uciMoves,
                         currentOrientation = currentOrientation,
                         sidesCount = trainingSides.size
                     )
