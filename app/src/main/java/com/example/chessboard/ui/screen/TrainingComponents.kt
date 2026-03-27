@@ -22,6 +22,7 @@ import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.Background
+import com.example.chessboard.ui.theme.ButtonColor
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import com.github.bhlangonijr.chesslib.Board
@@ -214,7 +215,7 @@ fun ResetTrainingButton(
         shape = RoundedCornerShape(AppDimens.radiusLg),
         colors = ButtonDefaults.buttonColors(
             containerColor = Background.SurfaceDark,
-            contentColor = TextColor.Primary
+            contentColor = ButtonColor.Content
         ),
         elevation = ButtonDefaults.buttonElevation(
             defaultElevation = 0.dp,

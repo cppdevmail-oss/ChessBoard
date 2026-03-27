@@ -5,9 +5,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.example.chessboard.ui.theme.Background
+import com.example.chessboard.ui.theme.ButtonColor
 import com.example.chessboard.ui.theme.TextColor
-import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingErrorRed
 
 /** Displays a standard app dialog for informational messages and simple actions. */
 @Composable
@@ -142,8 +141,8 @@ private fun resolveConfirmDialogContainerColor(
     isDestructive: Boolean
 ): androidx.compose.ui.graphics.Color {
     if (isDestructive) {
-        return TrainingErrorRed
+        return ButtonColor.DestructiveContainer
     }
 
-    return TrainingAccentTeal
+    return ButtonColor.PrimaryContainer
 }

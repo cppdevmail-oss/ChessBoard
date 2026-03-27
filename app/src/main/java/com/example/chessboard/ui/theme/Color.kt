@@ -29,11 +29,17 @@ object TextColor {
     val Secondary = Color(0xFF9E9E9E)
 }
 
+object ButtonColor {
+    val PrimaryContainer = Color(0xFF1DB584)
+    val DestructiveContainer = Color(0xFFF44336)
+    val Content = Color(0xFFFFFFFF)
+}
+
 val TrainingTextPrimary = TextColor.Primary
 val TrainingTextSecondary = TextColor.Secondary
-val TrainingAccentTeal = Color(0xFF1DB584)
+val TrainingAccentTeal = ButtonColor.PrimaryContainer
 val TrainingSuccessGreen = Color(0xFF4CAF50)
-val TrainingErrorRed = Color(0xFFF44336)
+val TrainingErrorRed = ButtonColor.DestructiveContainer
 val TrainingWarningOrange = Color(0xFFFF9800)
 val TrainingIconInactive = Color(0xFF666666)
 val TrainingDividerColor = Color(0xFF2A2A2A)

@@ -41,6 +41,7 @@ import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.Background
+import com.example.chessboard.ui.theme.ButtonColor
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import kotlinx.coroutines.Dispatchers
@@ -236,13 +237,13 @@ private fun AddOpeningButton(
         onClick = onClick,
         modifier = modifier.size(AppDimens.buttonHeight),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(AppDimens.radiusLg),
-        colors = ButtonDefaults.buttonColors(containerColor = TrainingAccentTeal),
+        colors = ButtonDefaults.buttonColors(containerColor = ButtonColor.PrimaryContainer),
         contentPadding = PaddingValues(0.dp)
     ) {
         Icon(
             imageVector = Icons.Default.Add,
             contentDescription = "Add opening",
-            tint = Color.White,
+            tint = ButtonColor.Content,
             modifier = Modifier.size(AppDimens.navIconSize)
         )
     }

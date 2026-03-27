@@ -163,7 +163,6 @@ fun GameEditorScreen(
                 onDelete()
             },
             confirmText = "Delete",
-            dismissText = "Cancel",
             isDestructive = true
         )
     }

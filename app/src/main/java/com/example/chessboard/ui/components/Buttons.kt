@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chessboard.ui.theme.AppDimens
-import com.example.chessboard.ui.theme.TrainingAccentTeal
+import com.example.chessboard.ui.theme.ButtonColor
 
 @Composable
 private fun AppButton(
@@ -66,8 +66,8 @@ fun PrimaryButton(
         defaultElevation = 2.dp,
         pressedElevation = 4.dp
     ),
-    containerColor : Color = TrainingAccentTeal,
-    contentColor : Color = Color.White,
+    containerColor : Color = ButtonColor.PrimaryContainer,
+    contentColor : Color = ButtonColor.Content,
     fontWeight : FontWeight = FontWeight.SemiBold,
     fontSize : Int = 14,
 ) {
@@ -101,8 +101,8 @@ fun SecondaryButton(
         defaultElevation = 0.dp,
         pressedElevation = 1.dp
     ),
-    containerColor: Color = TrainingAccentTeal,
-    contentColor: Color = Color.White,
+    containerColor: Color = ButtonColor.PrimaryContainer,
+    contentColor: Color = ButtonColor.Content,
     fontWeight: FontWeight = FontWeight.SemiBold,
     fontSize: Int = 12,
 ) {
