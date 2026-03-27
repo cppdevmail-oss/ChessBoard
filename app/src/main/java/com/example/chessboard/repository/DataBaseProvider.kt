@@ -13,6 +13,7 @@ import com.example.chessboard.entity.PositionEntity
 import com.example.chessboard.entity.TrainingEntity
 import com.example.chessboard.entity.TrainingTemplateEntity
 import com.example.chessboard.service.FirstTrainingGameLaunchResult
+import com.example.chessboard.service.GameDeleter
 import com.example.chessboard.service.GameSaver
 import com.example.chessboard.service.GameUpdater
 import com.example.chessboard.service.OneGameTrainingData
@@ -104,7 +105,8 @@ class DatabaseProvider private constructor(
     }
 
     suspend fun deleteGame(id: Long) {
-        database.gameDao().deleteById(id)
+        val gameDeleter = GameDeleter(database)
+        gameDeleter.deleteGame(id)
     }
 
     suspend fun createTrainingFromGames(
