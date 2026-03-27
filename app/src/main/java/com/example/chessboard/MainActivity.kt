@@ -10,22 +10,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.repository.DatabaseProvider
-import com.example.chessboard.ui.theme.ChessBoardTheme
 import com.example.chessboard.ui.screen.CreateOpeningScreenContainer
 import com.example.chessboard.ui.screen.CreateTrainingScreenContainer
 import com.example.chessboard.ui.screen.GameEditorScreenContainer
+import com.example.chessboard.ui.screen.GamesExplorerScreenContainer
 import com.example.chessboard.ui.screen.HomeScreenContainer
 import com.example.chessboard.ui.screen.ScreenType
+import com.example.chessboard.ui.screen.TrainingListScreenContainer
 import com.example.chessboard.ui.screen.trainSingleGame.TemporaryWrongWayStartOneSingleTraining
-import com.example.chessboard.ui.screen.TrainingScreenContainer
+import com.example.chessboard.ui.theme.ChessBoardTheme
 
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-
         super.onCreate(savedInstanceState)
 
-        val dbProvider =  DatabaseProvider.createInstance(this)
+        val dbProvider = DatabaseProvider.createInstance(this)
 
         enableEdgeToEdge()
         setContent {
@@ -34,8 +34,14 @@ class MainActivity : ComponentActivity() {
                 var selectedGame by remember { mutableStateOf<GameEntity?>(null) }
 
                 when (currentScreen) {
+                    ScreenType.Training -> TrainingListScreenContainer(
+                        activity = this@MainActivity,
+                        inDbProvider = dbProvider,
+                        onBackClick = { currentScreen = ScreenType.Home },
+                        onNavigate = { currentScreen = it },
+                    )
 
-                    ScreenType.Training -> TrainingScreenContainer(
+                    ScreenType.GamesExplorer -> GamesExplorerScreenContainer(
                         activity = this@MainActivity,
                         inDbProvider = dbProvider,
                         onBackClick = { currentScreen = ScreenType.Home },

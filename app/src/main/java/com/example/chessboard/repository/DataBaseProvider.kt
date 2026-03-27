@@ -115,6 +115,17 @@ class DatabaseProvider private constructor(
         return trainingService.createTrainingFromGames(name = name, games = games)
     }
 
+    suspend fun getAllTrainings(): List<TrainingEntity> {
+        val trainingService = TrainingService(
+            database = database,
+            gameDao = database.gameDao(),
+            dao = database.trainingDao(),
+            templateDao = database.trainingTemplateDao()
+        )
+
+        return trainingService.getAllTrainings()
+    }
+
     suspend fun finishTrainingGame(trainingId: Long, gameId: Long): Boolean {
         val trainSingleGameService = TrainSingleGameService(database)
 

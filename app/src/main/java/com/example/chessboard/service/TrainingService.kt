@@ -14,6 +14,10 @@ class TrainingService(
     private val templateDao: TrainingTemplateDao
 ) {
 
+    suspend fun getAllTrainings(): List<TrainingEntity> {
+        return dao.getAll()
+    }
+
     suspend fun createEmptyTraining(name: String = "FullTraining"): Long {
         return dao.insert(TrainingEntity(name = name))
     }
