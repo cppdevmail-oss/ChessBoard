@@ -17,7 +17,7 @@ import com.example.chessboard.ui.screen.GamesExplorerScreenContainer
 import com.example.chessboard.ui.screen.HomeScreenContainer
 import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.screen.TrainingListScreenContainer
-import com.example.chessboard.ui.screen.trainSingleGame.TemporaryWrongWayStartOneSingleTraining
+import com.example.chessboard.ui.screen.trainSingleGame.TrainSingleGameLauncherScreenContainer
 import com.example.chessboard.ui.theme.ChessBoardTheme
 
 class MainActivity : ComponentActivity() {
@@ -64,17 +64,23 @@ class MainActivity : ComponentActivity() {
                         activity = this@MainActivity,
                         onBackClick = { currentScreen = ScreenType.Home },
                         onNavigate = { currentScreen = it },
+                        onStartTrainingClick = { currentScreen = ScreenType.TrainSingleGame },
                         inDbProvider = dbProvider,
                     )
 
-                    ScreenType.TrainSingleGame -> TemporaryWrongWayStartOneSingleTraining(
-                        onTrainingFinished = {
-                            currentScreen = ScreenType.Home
-                        },
-                        onBackClick = { currentScreen = ScreenType.Home },
-                        onNavigate = { currentScreen = it },
-                        inDbProvider = dbProvider,
-                    )
+                    ScreenType.TrainSingleGame -> selectedTrainingId?.let { trainingId ->
+                        TrainSingleGameLauncherScreenContainer(
+                            trainingId = trainingId,
+                            onTrainingFinished = {
+                                currentScreen = ScreenType.Home
+                            },
+                            onBackClick = { currentScreen = ScreenType.Home },
+                            onNavigate = { currentScreen = it },
+                            inDbProvider = dbProvider,
+                        )
+                    } ?: run {
+                        currentScreen = ScreenType.Training
+                    }
 
                     ScreenType.GameEditor -> selectedGame?.let { game ->
                         GameEditorScreenContainer(
@@ -95,7 +101,7 @@ class MainActivity : ComponentActivity() {
                             currentScreen = ScreenType.CreateTraining
                         },
                         onStartFirstTrainingClick = {
-                            currentScreen = ScreenType.TrainSingleGame
+                            currentScreen = ScreenType.Training
                         },
                     )
 

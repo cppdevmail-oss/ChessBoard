@@ -151,8 +151,8 @@ fun HomeScreen(
                         onClick = onCreateTrainingClick
                     )
                     HomeActionCard(
-                        title = "Start First",
-                        subtitle = "Launch the first available line",
+                        title = "Select Training",
+                        subtitle = "Choose a training to start",
                         modifier = Modifier.weight(1f),
                         onClick = onStartFirstTrainingClick
                     )

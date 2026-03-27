@@ -8,50 +8,66 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.example.chessboard.repository.DatabaseProvider
-import com.example.chessboard.service.FirstTrainingGameLaunchBrokenTrainingDeleted
-import com.example.chessboard.service.FirstTrainingGameLaunchNoTrainings
-import com.example.chessboard.service.FirstTrainingGameLaunchReady
-import com.example.chessboard.service.FirstTrainingGameLaunchResult
+import com.example.chessboard.service.TrainingGameLaunchBrokenTrainingDeleted
+import com.example.chessboard.service.TrainingGameLaunchReady
+import com.example.chessboard.service.TrainingGameLaunchResult
+import com.example.chessboard.service.TrainingGameLaunchTrainingNotFound
 import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.screen.parsePgnMoves
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-// Temporarily resolves the first available single-game training before opening the clean screen.
+private suspend fun resolveLaunchResult(
+    dbProvider: DatabaseProvider,
+    trainingId: Long
+): TrainingGameLaunchResult {
+    return dbProvider.getTrainingGameLaunchData(trainingId)
+}
+
+private fun resolveBrokenTrainingDeletedMessage(): String {
+    return "The selected training was broken and has been deleted."
+}
+
 @Composable
-fun TemporaryWrongWayStartOneSingleTraining(
+fun TrainSingleGameLauncherScreenContainer(
+    trainingId: Long,
     onTrainingFinished: (TrainSingleGameResult) -> Unit = {},
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
     modifier: Modifier = Modifier,
     inDbProvider: DatabaseProvider,
 ) {
-    var launchResult by remember { mutableStateOf<FirstTrainingGameLaunchResult?>(null) }
+    var launchResult by remember { mutableStateOf<TrainingGameLaunchResult?>(null) }
     var trainingGameData by remember { mutableStateOf<TrainSingleGameData?>(null) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(trainingId) {
         val resolvedResult = withContext(Dispatchers.IO) {
-            inDbProvider.getFirstTrainingGameLaunchData()
+            resolveLaunchResult(
+                dbProvider = inDbProvider,
+                trainingId = trainingId,
+            )
         }
         launchResult = resolvedResult
 
-        if (resolvedResult !is FirstTrainingGameLaunchReady) {
+        if (resolvedResult !is TrainingGameLaunchReady) {
             return@LaunchedEffect
         }
 
         trainingGameData = withContext(Dispatchers.IO) {
-            val game = inDbProvider.loadTrainingGame(resolvedResult.launchData.gameId) ?: return@withContext null
+            val game = inDbProvider.loadTrainingGame(resolvedResult.launchData.gameId)
+                ?: return@withContext null
+
             TrainSingleGameData(
                 game = game,
-                uciMoves = parsePgnMoves(game.pgn)
+                uciMoves = parsePgnMoves(game.pgn),
             )
         }
     }
 
     val resolvedResult = launchResult ?: return
 
-    if (resolvedResult is FirstTrainingGameLaunchReady) {
+    if (resolvedResult is TrainingGameLaunchReady) {
         val loadedTrainingGameData = trainingGameData ?: return
 
         TrainSingleGameScreenContainer(
@@ -62,38 +78,38 @@ fun TemporaryWrongWayStartOneSingleTraining(
             onBackClick = onBackClick,
             onNavigate = onNavigate,
             modifier = modifier,
-            inDbProvider = inDbProvider
+            inDbProvider = inDbProvider,
         )
         return
     }
 
-    if (resolvedResult is FirstTrainingGameLaunchNoTrainings) {
-        TemporaryWrongWayStartTrainingErrorDialog(
-            title = "No trainings found",
-            message = "There are no trainings available to start.",
-            onDismiss = onBackClick
+    if (resolvedResult is TrainingGameLaunchTrainingNotFound) {
+        TrainingLaunchErrorDialog(
+            title = "Training not found",
+            message = "The selected training is unavailable to start.",
+            onDismiss = { onNavigate(ScreenType.Training) },
         )
         return
     }
 
-    if (resolvedResult is FirstTrainingGameLaunchBrokenTrainingDeleted) {
-        TemporaryWrongWayStartTrainingErrorDialog(
+    if (resolvedResult is TrainingGameLaunchBrokenTrainingDeleted) {
+        TrainingLaunchErrorDialog(
             title = "Broken training deleted",
-            message = "The first training was broken and has been deleted.",
-            onDismiss = onBackClick
+            message = resolveBrokenTrainingDeletedMessage(),
+            onDismiss = { onNavigate(ScreenType.Training) },
         )
     }
 }
 
 @Composable
-private fun TemporaryWrongWayStartTrainingErrorDialog(
+private fun TrainingLaunchErrorDialog(
     title: String,
     message: String,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     AppMessageDialog(
         title = title,
         message = message,
-        onDismiss = onDismiss
+        onDismiss = onDismiss,
     )
 }
