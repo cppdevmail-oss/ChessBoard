@@ -71,11 +71,6 @@ class DatabaseProvider private constructor(
         }
     }
 
-    /**
-     * Inserts a chess game into the database.
-     * @param game The GameEntity object to insert.
-     * @return true if the game was successfully saved, false otherwise.
-     */
     suspend fun addGame(game: GameEntity, moves: List<Move>): Boolean {
         val gameSaver = GameSaver(database)
         return gameSaver.trySaveGame(game, moves, game.sideMask)
@@ -92,7 +87,6 @@ class DatabaseProvider private constructor(
 
     suspend fun loadTrainingGame(gameId: Long): GameEntity? {
         val trainSingleGameService = TrainSingleGameService(database)
-
         return trainSingleGameService.loadGame(gameId)
     }
 
@@ -105,25 +99,18 @@ class DatabaseProvider private constructor(
         name: String = "FullTraining",
         games: List<OneGameTrainingData>
     ): Long? {
-        val trainingService = TrainingService(
-            database = database,
-            gameDao = database.gameDao(),
-            dao = database.trainingDao(),
-            templateDao = database.trainingTemplateDao()
-        )
-
+        val trainingService = createTrainingService()
         return trainingService.createTrainingFromGames(name = name, games = games)
     }
 
     suspend fun getAllTrainings(): List<TrainingEntity> {
-        val trainingService = TrainingService(
-            database = database,
-            gameDao = database.gameDao(),
-            dao = database.trainingDao(),
-            templateDao = database.trainingTemplateDao()
-        )
-
+        val trainingService = createTrainingService()
         return trainingService.getAllTrainings()
+    }
+
+    suspend fun getTrainingById(trainingId: Long): TrainingEntity? {
+        val trainingService = createTrainingService()
+        return trainingService.getTrainingById(trainingId)
     }
 
     suspend fun finishTrainingGame(trainingId: Long, gameId: Long): Boolean {
@@ -140,6 +127,15 @@ class DatabaseProvider private constructor(
         return trainSingleGameService.getFirstTrainingGameLaunchData()
     }
 
+    private fun createTrainingService(): TrainingService {
+        return TrainingService(
+            database = database,
+            gameDao = database.gameDao(),
+            dao = database.trainingDao(),
+            templateDao = database.trainingTemplateDao()
+        )
+    }
+
     companion object {
         private const val DB_NAME = "app_database"
 
@@ -152,7 +148,8 @@ class DatabaseProvider private constructor(
                 if (_instance != null) {
                     throw IllegalStateException(
                         "DatabaseProvider already was initialized." +
-                                " Please use existing object.")
+                            " Please use existing object."
+                    )
                 }
                 val newInstance = DatabaseProvider(context.applicationContext)
                 _instance = newInstance
