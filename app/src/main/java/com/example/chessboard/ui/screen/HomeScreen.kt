@@ -43,7 +43,6 @@ import com.example.chessboard.ui.theme.AppDimens
 
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import com.example.chessboard.ui.theme.TrainingBackgroundDark
-import com.example.chessboard.ui.theme.TrainingDividerColor
 import com.example.chessboard.ui.theme.TrainingTextPrimary
 import com.example.chessboard.ui.theme.TrainingTextSecondary
 import kotlinx.coroutines.Dispatchers
@@ -197,7 +196,7 @@ fun HomeScreen(
             }
 
             item {
-                AppDivider(modifier = Modifier.padding(top = AppDimens.spaceLg), color = TrainingDividerColor)
+                AppDivider(modifier = Modifier.padding(top = AppDimens.spaceLg))
                 Spacer(modifier = Modifier.height(AppDimens.spaceLg))
             }
 
