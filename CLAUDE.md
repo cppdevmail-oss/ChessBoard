@@ -17,17 +17,27 @@ Android chess opening trainer. Users save games (openings) and review/train them
 ### Entry
 | File | Role |
 |---|---|
-| `MainActivity.kt` | Single-Activity host. Holds `currentScreen` + `selectedGame` state, renders the active screen via `when`. |
+| `MainActivity.kt` | Single-Activity host. Holds `currentScreen` and screen-specific state used for screen routing, renders the active screen via `when`. |
 
 ### Screens (`ui/screen/`)
 | File | Role |
 |---|---|
 | `HomeScreen.kt` | Lists all saved games. Opens a game in `GameEditorScreen`. |
 | `CreateOpeningScreen.kt` | Form to input and save a new game/opening. |
+| `CreateTrainingScreen.kt` | Creates a training from selected games with editable weights. |
 | `GameEditorScreen.kt` | Loads a single `GameEntity`, replays its PGN, shows move-chip row, allows undo/redo/save/delete. |
 | `TrainingScreen.kt` | Loads all saved games, shows each as a `GameBlock` (title + move-chip row + nav). Clicking any chip loads that game at that ply on the shared board. |
 | `TrainingComponents.kt` | Shared composables and pure helpers reused by both Training and Editor screens (see below). |
-| `ScrenTypes.kt` | `sealed class ScreenType` — Home, Training, CreateOpening, GameEditor, Stats, Profile. |
+| `ScrenTypes.kt` | `sealed class ScreenType` — Home, Training, CreateOpening, CreateTraining, GameEditor, TrainSingleGame, Stats, Profile. |
+
+### Single-game training (`ui/screen/trainSingleGame/`)
+| File | Role |
+|---|---|
+| `TrainSingleGameScreen.kt` | Main single-game training screen orchestration and screen shell. |
+| `TrainSingleGameModels.kt` | Session models, enums, results, constants, and pure helpers. |
+| `TrainSingleGameLogic.kt` | Training session flow helpers and state transitions. |
+| `TrainSingleGameComponents.kt` | UI composables for the single-game training screen. |
+| `TemporaryWrongWayStartOneSingleTraining.kt` | Temporary launcher that resolves the first valid training/game pair before opening `TrainSingleGameScreen`. |
 
 ### Board (`ui/`)
 | File | Role |
@@ -52,14 +62,18 @@ Android chess opening trainer. Users save games (openings) and review/train them
 ### Repository (`repository/`)
 | File | Role |
 |---|---|
-| `DatabaseProvider.kt` | Singleton. Public API: `addGame`, `getAllGames`, `updateGamePgn`, `deleteGame`, `clearAllData`. |
+| `DatabaseProvider.kt` | Singleton facade over Room DB. Public API includes game add/update/delete, training creation, and single-game training launch/finish helpers. |
 | `GameDao`, `PositionDao`, `GamePositionDao`, etc. | Room DAO interfaces. |
 
 ### Services (`service/`)
 | File | Role |
 |---|---|
 | `GameSaver.kt` | Transactional save: checks position uniqueness (Zobrist), inserts game + all positions. |
+| `GameUpdater.kt` | Transactional game replacement flow: removes old links/positions as needed, deletes old game row, saves edited game again through `GameSaver`. |
+| `GameDeleter.kt` | Transactional delete: removes game links, deletes the game, then deletes or updates affected positions. |
 | `GameUniqueChecker.kt` | Returns true if at least one position in the game hasn't been seen for this side. |
+| `TrainingService.kt` | Creates trainings from game lists, validates training integrity, decreases line weight after completion. |
+| `TrainSingleGameService.kt` | Loads game data for single-game training, finishes a trained line, resolves first launchable training/game pair. |
 
 ---
 
@@ -75,8 +89,6 @@ Check here before writing any new helper — it may already exist.
 | `buildMoveLabels(uciMoves)` | fun | Replays UCI list, returns `List<String>` of algebraic labels |
 | `MoveChip(label, isSelected, onClick, unselectedBackground)` | @Composable | Teal when selected, `unselectedBackground` (default `TrainingSurfaceDark`) otherwise |
 | `ChessBoardSection(gameController)` | @Composable | Square-aspect-ratio board with rounded corners |
-| `TrainingActionButtons(...)` | @Composable | Save Game + Clear Database + Back/Forward/Reset row |
-| `ResetTrainingButton(...)` | @Composable | Full-width reset button with refresh icon |
 
 ---
 
@@ -86,7 +98,6 @@ Check here before writing any new helper — it may already exist.
 // Navigation
 fun undoMove(): Boolean
 fun redoMove(): Boolean
-fun goToMove(index: Int): Boolean          // replay from 0 to index (no redo after)
 fun resetToStartPosition()
 
 // Load a full game and park at targetPly (redo still works past targetPly)
@@ -96,6 +107,7 @@ fun loadFromUciMoves(uciMoves: List<String>, targetPly: Int = uciMoves.size)
 fun tryMove(from: String, to: String): Boolean
 fun setStartSquare(square: String?): Boolean
 fun setDestinationSquareAndTryMove(dest: String?): Boolean
+fun setOrientation(orientation: BoardOrientation)
 
 // Compose-observable state
 var boardState: Int          // increments on every change → drives recomposition
@@ -116,13 +128,15 @@ fun generatePgn(): String
 ```
 MainActivity
 ├─ currentScreen: ScreenType  (mutableStateOf)
-├─ selectedGame:  GameEntity? (passed to GameEditor)
+├─ selectedGame: GameEntity?  (passed to GameEditor)
 │
 └─ when(currentScreen) {
      Home            → HomeScreenContainer
      Training        → TrainingScreenContainer
      CreateOpening   → CreateOpeningScreenContainer
+     CreateTraining  → CreateTrainingScreenContainer
      GameEditor      → GameEditorScreenContainer(selectedGame)
+     TrainSingleGame → TemporaryWrongWayStartOneSingleTraining
      Stats / Profile → (placeholder)
    }
 ```
@@ -133,7 +147,9 @@ MainActivity
 
 - **TrainingTemplateEntity** — immutable set of games with weights (`gamesJson: [{gameId, weight}]`)
 - **TrainingEntity** — mutable copy of a template; weights decrease as user completes games; entry removed when weight hits 0; training deleted when list is empty
-- Methods: `decreaseWeight(trainingId, gameId)`, `increaseWeight(trainingId, gameId)`
+- `TrainingService.validateTraining(trainingId)` removes broken game references and deletes empty trainings
+- `TrainSingleGameScreen` decrements weight through `TrainSingleGameService.finishTraining(...)`
+- There is also direct training creation from UI via `createTrainingFromGames(...)`, not only template-copy creation
 
 ---
 
@@ -141,14 +157,17 @@ MainActivity
 
 | Token | Use |
 |---|---|
-| `TrainingBackgroundDark` | Screen background |
-| `TrainingCardDark` | Card / elevated surface |
-| `TrainingSurfaceDark` | Bottom bar, chip bg, button bg |
-| `TrainingAccentTeal` | Selected state, primary action |
-| `TrainingTextPrimary` | Main text |
-| `TrainingTextSecondary` | Subtitles, labels |
+| `Background.ScreenDark` | Screen background |
+| `Background.CardDark` | Card / elevated surface |
+| `Background.SurfaceDark` | Bottom bar, chip bg, input/container surface |
+| `ButtonColor.PrimaryContainer` | Primary button container |
+| `ButtonColor.DestructiveContainer` | Destructive button container |
+| `ButtonColor.Content` | Button text/icon content |
+| `TrainingAccentTeal` | General accent / selected state outside button semantics |
+| `TextColor.Primary` | Main text |
+| `TextColor.Secondary` | Subtitles, labels |
 | `TrainingIconInactive` | Disabled icons |
-| `TrainingErrorRed` | Delete actions |
+| `TrainingErrorRed` | General destructive/error accent outside button semantics |
 | `TrainingSuccessGreen` | Correct answers |
 | `TrainingWarningOrange` | Streak counter |
 
@@ -172,7 +191,7 @@ MainActivity
 - Screen files use **Container + Stateless** — state and DB calls in `XyzScreenContainer`, pure UI in `XyzScreen`
 - DB operations on `Dispatchers.IO`, CPU-heavy work on `Dispatchers.Default`, UI state updates on `Dispatchers.Main`
 - All DB access through `DatabaseProvider` — never call DAOs directly from screens
-- Transactional saves through `GameSaver`
+- Transactional game save/update/delete through `GameSaver`, `GameUpdater`, `GameDeleter`
 - Navigation state lives in `MainActivity`; add new screens to `ScreenType` and the `when` block
 
 ### Don't
