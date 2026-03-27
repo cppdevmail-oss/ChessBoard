@@ -1,11 +1,9 @@
 package com.example.chessboard.ui.screen
 
 import android.app.Activity
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,7 +31,6 @@ import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.CardMetaText
 import com.example.chessboard.ui.components.CardSurface
-import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.ScreenTitleText
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.theme.AppDimens
@@ -45,7 +42,7 @@ import kotlinx.coroutines.withContext
 private data class TrainingListItem(
     val trainingId: Long,
     val name: String,
-    val gamesCount: Int
+    val gamesCount: Int,
 )
 
 @Composable
@@ -56,7 +53,6 @@ fun TrainingListScreenContainer(
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
     onOpenTraining: (Long) -> Unit = {},
-    onStartTraining: (Long) -> Unit = {},
 ) {
     var isLoading by remember { mutableStateOf(true) }
     var trainings by remember { mutableStateOf<List<TrainingListItem>>(emptyList()) }
@@ -67,7 +63,7 @@ fun TrainingListScreenContainer(
                 TrainingListItem(
                     trainingId = training.id,
                     name = training.name.ifBlank { "Unnamed Training" },
-                    gamesCount = OneGameTrainingData.fromJson(training.gamesJson).size
+                    gamesCount = OneGameTrainingData.fromJson(training.gamesJson).size,
                 )
             }
         }
@@ -81,7 +77,6 @@ fun TrainingListScreenContainer(
         onBackClick = onBackClick,
         onNavigate = onNavigate,
         onOpenTraining = onOpenTraining,
-        onStartTraining = onStartTraining
     )
 }
 
@@ -94,7 +89,6 @@ private fun TrainingListScreen(
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
     onOpenTraining: (Long) -> Unit = {},
-    onStartTraining: (Long) -> Unit = {},
 ) {
     AppScreenScaffold(
         modifier = modifier.fillMaxSize(),
@@ -102,16 +96,16 @@ private fun TrainingListScreen(
             AppTopBar(
                 title = "Trainings",
                 onBackClick = onBackClick,
-                filledBackButton = true
+                filledBackButton = true,
             )
         },
         bottomBar = {
             AppBottomNavigation(
                 items = defaultAppBottomNavigationItems(),
                 selectedItem = ScreenType.Training,
-                onItemSelected = onNavigate
+                onItemSelected = onNavigate,
             )
-        }
+        },
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
@@ -119,8 +113,8 @@ private fun TrainingListScreen(
                 .padding(paddingValues),
             contentPadding = PaddingValues(
                 horizontal = AppDimens.spaceLg,
-                vertical = AppDimens.spaceLg
-            )
+                vertical = AppDimens.spaceLg,
+            ),
         ) {
             when {
                 isLoading -> {
@@ -129,7 +123,7 @@ private fun TrainingListScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(160.dp),
-                            contentAlignment = Alignment.Center
+                            contentAlignment = Alignment.Center,
                         ) {
                             CircularProgressIndicator(color = TrainingAccentTeal)
                         }
@@ -142,12 +136,12 @@ private fun TrainingListScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(160.dp),
-                            contentAlignment = Alignment.Center
+                            contentAlignment = Alignment.Center,
                         ) {
                             BodySecondaryText(
                                 text = "No trainings available.",
                                 color = TextColor.Secondary,
-                                textAlign = TextAlign.Center
+                                textAlign = TextAlign.Center,
                             )
                         }
                     }
@@ -158,7 +152,6 @@ private fun TrainingListScreen(
                         TrainingListCard(
                             training = training,
                             onClick = { onOpenTraining(training.trainingId) },
-                            onStartTrainingClick = { onStartTraining(training.trainingId) }
                         )
                         Spacer(modifier = Modifier.height(AppDimens.spaceMd))
                     }
@@ -172,28 +165,17 @@ private fun TrainingListScreen(
 private fun TrainingListCard(
     training: TrainingListItem,
     onClick: () -> Unit,
-    onStartTrainingClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     CardSurface(
         modifier = modifier.fillMaxWidth(),
         onClick = onClick,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd),
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                ScreenTitleText(text = training.name)
-                Spacer(modifier = Modifier.height(AppDimens.spaceXs))
-                CardMetaText(text = "Training ID: ${training.trainingId}")
-                CardMetaText(text = "Games: ${training.gamesCount}")
-            }
-
-            PrimaryButton(
-                text = "GO",
-                onClick = onStartTrainingClick,
-            )
+        Column(modifier = Modifier.fillMaxWidth()) {
+            ScreenTitleText(text = training.name)
+            Spacer(modifier = Modifier.height(AppDimens.spaceXs))
+            CardMetaText(text = "Training ID: ${training.trainingId}")
+            CardMetaText(text = "Games: ${training.gamesCount}")
         }
     }
 }

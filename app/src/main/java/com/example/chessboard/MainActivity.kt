@@ -44,10 +44,6 @@ class MainActivity : ComponentActivity() {
                             selectedTrainingId = trainingId
                             currentScreen = ScreenType.CreateTraining
                         },
-                        onStartTraining = { trainingId ->
-                            selectedTrainingId = trainingId
-                            currentScreen = ScreenType.TrainSingleGame
-                        },
                     )
 
                     ScreenType.GamesExplorer -> GamesExplorerScreenContainer(
