@@ -29,7 +29,7 @@ import com.github.bhlangonijr.chesslib.move.Move
         TrainingTemplateEntity::class,
         TrainingEntity::class
     ],
-    version = 5
+    version = 6
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun gameDao(): GameDao
