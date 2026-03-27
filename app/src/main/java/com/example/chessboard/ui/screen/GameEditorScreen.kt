@@ -14,7 +14,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
@@ -29,6 +28,7 @@ import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.ui.components.AppDivider
+import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.CardMetaText
@@ -37,7 +37,6 @@ import com.example.chessboard.ui.components.ScreenTitleText
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingBackgroundDark
 import com.example.chessboard.ui.theme.TrainingCardDark
 import com.example.chessboard.ui.theme.TrainingDividerColor
 import com.example.chessboard.ui.theme.TrainingErrorRed
@@ -181,9 +180,8 @@ fun GameEditorScreen(
         )
     }
 
-    Scaffold(
+    AppScreenScaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = TrainingBackgroundDark,
         topBar = {
             AppTopBar(
                 title = editedName.ifBlank { "Opening" },
