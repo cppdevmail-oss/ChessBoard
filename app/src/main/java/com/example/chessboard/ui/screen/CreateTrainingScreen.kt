@@ -101,7 +101,6 @@ fun CreateTrainingScreenContainer(
     trainingId: Long? = null,
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
-    onStartTrainingClick: () -> Unit = {},
     modifier: Modifier = Modifier,
     inDbProvider: DatabaseProvider,
 ) {
@@ -168,7 +167,6 @@ fun CreateTrainingScreenContainer(
         gamesForTraining = gamesForTraining,
         onBackClick = onBackClick,
         onNavigate = onNavigate,
-        onStartTrainingClick = onStartTrainingClick,
         onSaveTraining = { trainingName, editableGames ->
             scope.launch {
                 val normalizedName = trainingName.ifBlank { DEFAULT_TRAINING_NAME }
@@ -207,7 +205,6 @@ fun CreateTrainingScreen(
     gamesForTraining: List<TrainingGameEditorItem> = emptyList(),
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
-    onStartTrainingClick: () -> Unit = {},
     onSaveTraining: (String, List<TrainingGameEditorItem>) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
@@ -265,16 +262,6 @@ fun CreateTrainingScreen(
 
             ScreenSection {
                 BodySecondaryText(text = "Games loaded for training: ${editableGamesForTraining.size}")
-            }
-
-            if (isEditMode) {
-                Spacer(modifier = Modifier.height(AppDimens.spaceLg))
-                ScreenSection {
-                    PrimaryButton(
-                        text = "GO",
-                        onClick = onStartTrainingClick
-                    )
-                }
             }
 
             BoxWithConstraints(

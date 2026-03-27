@@ -44,6 +44,10 @@ class MainActivity : ComponentActivity() {
                             selectedTrainingId = trainingId
                             currentScreen = ScreenType.CreateTraining
                         },
+                        onStartTraining = { trainingId ->
+                            selectedTrainingId = trainingId
+                            currentScreen = ScreenType.TrainSingleGame
+                        },
                     )
 
                     ScreenType.GamesExplorer -> GamesExplorerScreenContainer(
@@ -64,7 +68,6 @@ class MainActivity : ComponentActivity() {
                         activity = this@MainActivity,
                         onBackClick = { currentScreen = ScreenType.Home },
                         onNavigate = { currentScreen = it },
-                        onStartTrainingClick = { currentScreen = ScreenType.TrainSingleGame },
                         inDbProvider = dbProvider,
                     )
 

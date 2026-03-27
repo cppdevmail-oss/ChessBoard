@@ -1,8 +1,11 @@
 package com.example.chessboard.ui.screen
 
 import android.app.Activity
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,6 +33,7 @@ import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.CardMetaText
 import com.example.chessboard.ui.components.CardSurface
+import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.ScreenTitleText
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.theme.AppDimens
@@ -52,6 +56,7 @@ fun TrainingListScreenContainer(
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
     onOpenTraining: (Long) -> Unit = {},
+    onStartTraining: (Long) -> Unit = {},
 ) {
     var isLoading by remember { mutableStateOf(true) }
     var trainings by remember { mutableStateOf<List<TrainingListItem>>(emptyList()) }
@@ -75,7 +80,8 @@ fun TrainingListScreenContainer(
         modifier = modifier,
         onBackClick = onBackClick,
         onNavigate = onNavigate,
-        onOpenTraining = onOpenTraining
+        onOpenTraining = onOpenTraining,
+        onStartTraining = onStartTraining
     )
 }
 
@@ -88,6 +94,7 @@ private fun TrainingListScreen(
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
     onOpenTraining: (Long) -> Unit = {},
+    onStartTraining: (Long) -> Unit = {},
 ) {
     AppScreenScaffold(
         modifier = modifier.fillMaxSize(),
@@ -150,7 +157,8 @@ private fun TrainingListScreen(
                     items(trainings, key = { it.trainingId }) { training ->
                         TrainingListCard(
                             training = training,
-                            onClick = { onOpenTraining(training.trainingId) }
+                            onClick = { onOpenTraining(training.trainingId) },
+                            onStartTrainingClick = { onStartTraining(training.trainingId) }
                         )
                         Spacer(modifier = Modifier.height(AppDimens.spaceMd))
                     }
@@ -164,15 +172,28 @@ private fun TrainingListScreen(
 private fun TrainingListCard(
     training: TrainingListItem,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onStartTrainingClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     CardSurface(
         modifier = modifier.fillMaxWidth(),
-        onClick = onClick
+        onClick = onClick,
     ) {
-        ScreenTitleText(text = training.name)
-        Spacer(modifier = Modifier.height(AppDimens.spaceXs))
-        CardMetaText(text = "Training ID: ${training.trainingId}")
-        CardMetaText(text = "Games: ${training.gamesCount}")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd),
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                ScreenTitleText(text = training.name)
+                Spacer(modifier = Modifier.height(AppDimens.spaceXs))
+                CardMetaText(text = "Training ID: ${training.trainingId}")
+                CardMetaText(text = "Games: ${training.gamesCount}")
+            }
+
+            PrimaryButton(
+                text = "GO",
+                onClick = onStartTrainingClick,
+            )
+        }
     }
 }
