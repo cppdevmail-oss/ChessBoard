@@ -33,6 +33,7 @@ class MainActivity : ComponentActivity() {
                 var currentScreen by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
                 var selectedGame by remember { mutableStateOf<GameEntity?>(null) }
                 var selectedTrainingId by remember { mutableStateOf<Long?>(null) }
+                var selectedTrainingGameId by remember { mutableStateOf<Long?>(null) }
 
                 when (currentScreen) {
                     ScreenType.Training -> TrainingListScreenContainer(
@@ -42,6 +43,7 @@ class MainActivity : ComponentActivity() {
                         onNavigate = { currentScreen = it },
                         onOpenTraining = { trainingId ->
                             selectedTrainingId = trainingId
+                            selectedTrainingGameId = null
                             currentScreen = ScreenType.CreateTraining
                         },
                     )
@@ -64,19 +66,32 @@ class MainActivity : ComponentActivity() {
                         activity = this@MainActivity,
                         onBackClick = { currentScreen = ScreenType.Home },
                         onNavigate = { currentScreen = it },
+                        onStartGameTrainingClick = { gameId ->
+                            selectedTrainingGameId = gameId
+                            currentScreen = ScreenType.TrainSingleGame
+                        },
                         inDbProvider = dbProvider,
                     )
 
                     ScreenType.TrainSingleGame -> selectedTrainingId?.let { trainingId ->
-                        TrainSingleGameLauncherScreenContainer(
-                            trainingId = trainingId,
-                            onTrainingFinished = {
-                                currentScreen = ScreenType.Home
-                            },
-                            onBackClick = { currentScreen = ScreenType.Home },
-                            onNavigate = { currentScreen = it },
-                            inDbProvider = dbProvider,
-                        )
+                        selectedTrainingGameId?.let { gameId ->
+                            TrainSingleGameLauncherScreenContainer(
+                                trainingId = trainingId,
+                                gameId = gameId,
+                                onTrainingFinished = {
+                                    selectedTrainingGameId = null
+                                    currentScreen = ScreenType.Home
+                                },
+                                onBackClick = {
+                                    selectedTrainingGameId = null
+                                    currentScreen = ScreenType.Home
+                                },
+                                onNavigate = { currentScreen = it },
+                                inDbProvider = dbProvider,
+                            )
+                        } ?: run {
+                            currentScreen = ScreenType.CreateTraining
+                        }
                     } ?: run {
                         currentScreen = ScreenType.Training
                     }
@@ -97,9 +112,11 @@ class MainActivity : ComponentActivity() {
                         onNavigate = { currentScreen = it },
                         onCreateTrainingClick = {
                             selectedTrainingId = null
+                            selectedTrainingGameId = null
                             currentScreen = ScreenType.CreateTraining
                         },
                         onStartFirstTrainingClick = {
+                            selectedTrainingGameId = null
                             currentScreen = ScreenType.Training
                         },
                     )

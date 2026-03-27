@@ -101,6 +101,7 @@ fun CreateTrainingScreenContainer(
     trainingId: Long? = null,
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
+    onStartGameTrainingClick: (Long) -> Unit = {},
     modifier: Modifier = Modifier,
     inDbProvider: DatabaseProvider,
 ) {
@@ -167,6 +168,7 @@ fun CreateTrainingScreenContainer(
         gamesForTraining = gamesForTraining,
         onBackClick = onBackClick,
         onNavigate = onNavigate,
+        onStartGameTrainingClick = onStartGameTrainingClick,
         onSaveTraining = { trainingName, editableGames ->
             scope.launch {
                 val normalizedName = trainingName.ifBlank { DEFAULT_TRAINING_NAME }
@@ -205,6 +207,7 @@ fun CreateTrainingScreen(
     gamesForTraining: List<TrainingGameEditorItem> = emptyList(),
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
+    onStartGameTrainingClick: (Long) -> Unit = {},
     onSaveTraining: (String, List<TrainingGameEditorItem>) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
@@ -295,6 +298,7 @@ fun CreateTrainingScreen(
                         totalPages = totalPages,
                         canGoPrevious = canGoPrevious,
                         canGoNext = canGoNext,
+                        showStartButton = isEditMode,
                         onDecreaseWeightClick = { gameId ->
                             editableGamesForTraining = editableGamesForTraining.map { game ->
                                 if (game.gameId == gameId) {
@@ -313,6 +317,7 @@ fun CreateTrainingScreen(
                                 }
                             }
                         },
+                        onStartTrainingClick = onStartGameTrainingClick,
                         onPreviousPageClick = {
                             if (canGoPrevious) {
                                 currentPage = safeCurrentPage - 1
@@ -365,8 +370,10 @@ private fun TrainingGamesPage(
     totalPages: Int,
     canGoPrevious: Boolean,
     canGoNext: Boolean,
+    showStartButton: Boolean,
     onDecreaseWeightClick: (Long) -> Unit,
     onIncreaseWeightClick: (Long) -> Unit,
+    onStartTrainingClick: (Long) -> Unit,
     onPreviousPageClick: () -> Unit,
     onNextPageClick: () -> Unit
 ) {
@@ -389,8 +396,10 @@ private fun TrainingGamesPage(
             games.forEachIndexed { index, game ->
                 TrainingGamePageRow(
                     game = game,
+                    showStartButton = showStartButton,
                     onDecreaseWeightClick = { onDecreaseWeightClick(game.gameId) },
-                    onIncreaseWeightClick = { onIncreaseWeightClick(game.gameId) }
+                    onIncreaseWeightClick = { onIncreaseWeightClick(game.gameId) },
+                    onStartTrainingClick = { onStartTrainingClick(game.gameId) },
                 )
                 if (index + 1 < games.size) {
                     Spacer(modifier = Modifier.height(TrainingGameRowSpacing))
@@ -423,8 +432,10 @@ private fun TrainingGamesPage(
 @Composable
 private fun TrainingGamePageRow(
     game: TrainingGameEditorItem,
+    showStartButton: Boolean,
     onDecreaseWeightClick: () -> Unit,
-    onIncreaseWeightClick: () -> Unit
+    onIncreaseWeightClick: () -> Unit,
+    onStartTrainingClick: () -> Unit,
 ) {
     CardSurface(
         modifier = Modifier.fillMaxWidth(),
@@ -460,8 +471,15 @@ private fun TrainingGamePageRow(
                 SecondaryButton(
                     text = "+",
                     onClick = onIncreaseWeightClick,
-                    modifier = Modifier.width(56.dp)
+                    modifier = Modifier.width(56.dp),
                 )
+                if (showStartButton) {
+                    PrimaryButton(
+                        text = "GO",
+                        onClick = onStartTrainingClick,
+                        modifier = Modifier.width(72.dp),
+                    )
+                }
             }
         }
     }
