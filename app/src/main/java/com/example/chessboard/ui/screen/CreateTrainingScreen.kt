@@ -60,9 +60,19 @@ private data class TrainingSaveSuccess(
     val gamesCount: Int
 )
 
+private fun resolveCreateTrainingTitle(isEditMode: Boolean): String {
+    if (isEditMode) {
+        return "Edit Training"
+    }
+
+    return "Create Training"
+}
+
+
 @Composable
 fun CreateTrainingScreenContainer(
     activity: Activity,
+    trainingId: Long? = null,
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
     modifier: Modifier = Modifier,
@@ -91,6 +101,7 @@ fun CreateTrainingScreenContainer(
     }
 
     CreateTrainingScreen(
+        trainingId = trainingId,
         gamesForTraining = gamesForTraining,
         onBackClick = onBackClick,
         onNavigate = onNavigate,
@@ -122,6 +133,7 @@ fun CreateTrainingScreenContainer(
 
 @Composable
 fun CreateTrainingScreen(
+    trainingId: Long? = null,
     gamesForTraining: List<TrainingGameEditorItem> = emptyList(),
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
@@ -132,6 +144,7 @@ fun CreateTrainingScreen(
     var trainingName by remember { mutableStateOf(DEFAULT_TRAINING_NAME) }
     var currentPage by remember { mutableStateOf(0) }
     var editableGamesForTraining by remember { mutableStateOf(gamesForTraining) }
+    val isEditMode = trainingId != null
 
     LaunchedEffect(gamesForTraining) {
         editableGamesForTraining = gamesForTraining
@@ -141,7 +154,7 @@ fun CreateTrainingScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             AppTopBar(
-                title = "Create Training",
+                title = resolveCreateTrainingTitle(isEditMode),
                 onBackClick = onBackClick,
                 actions = {
                     PrimaryButton(
