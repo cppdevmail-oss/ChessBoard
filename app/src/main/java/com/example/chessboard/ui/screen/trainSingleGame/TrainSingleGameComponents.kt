@@ -45,12 +45,26 @@ internal fun RenderCompletionDialog(
     )
 }
 
+// Renders the loading placeholder shown while the training game is being fetched.
+@Composable
+internal fun TrainingLoadingContent(
+    gameId: Long,
+    trainingId: Long
+) {
+    ScreenSection {
+        BodySecondaryText(
+            text = "Loading training session for gameId=$gameId, trainingId=$trainingId",
+            color = TrainingTextSecondary
+        )
+    }
+}
+
 // Renders the central training content for the selected game and side.
 @Composable
 internal fun TrainSingleGameContent(
     gameId: Long,
     trainingId: Long,
-    trainingGameData: TrainSingleGameData?,
+    trainingGameData: TrainSingleGameData,
     gameController: GameController,
     currentOrientation: BoardOrientation,
     currentSideIndex: Int,
@@ -62,14 +76,6 @@ internal fun TrainSingleGameContent(
     onMakeCorrectMoveClick: () -> Unit,
 ) {
     ScreenSection {
-        if (trainingGameData == null) {
-            BodySecondaryText(
-                text = "Loading training session for gameId=$gameId, trainingId=$trainingId",
-                color = TrainingTextSecondary
-            )
-            return@ScreenSection
-        }
-
         Column {
             TrainingGameHeader(title = trainingGameData.game.event)
             Spacer(modifier = Modifier.height(AppDimens.spaceSm))

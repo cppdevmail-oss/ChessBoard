@@ -59,7 +59,7 @@ fun TrainSingleGameScreenContainer(
 
     LaunchedEffect(gameId) {
         trainingGameData = withContext(Dispatchers.IO) {
-            val game = inDbProvider.getGameById(gameId) ?: return@withContext null
+            val game = inDbProvider.loadTrainingGame(gameId) ?: return@withContext null
             TrainSingleGameData(
                 game = game,
                 uciMoves = parsePgnMoves(game.pgn)
@@ -67,14 +67,26 @@ fun TrainSingleGameScreenContainer(
         }
     }
 
+    val loadedTrainingGameData = trainingGameData
+    if (loadedTrainingGameData == null) {
+        TrainSingleGameLoadingScreen(
+            gameId = gameId,
+            trainingId = trainingId,
+            onBackClick = onBackClick,
+            onNavigate = onNavigate,
+            modifier = modifier
+        )
+        return
+    }
+
     TrainSingleGameScreen(
         gameId = gameId,
         trainingId = trainingId,
-        trainingGameData = trainingGameData,
+        trainingGameData = loadedTrainingGameData,
         onTrainingFinished = { result ->
             scope.launch {
                 withContext(Dispatchers.IO) {
-                    inDbProvider.decreaseLineWeight(
+                    inDbProvider.finishTrainingGame(
                         trainingId = result.trainingId,
                         gameId = result.gameId
                     )
@@ -89,11 +101,56 @@ fun TrainSingleGameScreenContainer(
 }
 
 @Composable
+private fun TrainSingleGameLoadingScreen(
+    gameId: Long,
+    trainingId: Long,
+    onBackClick: () -> Unit,
+    onNavigate: (ScreenType) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
+
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        containerColor = TrainingBackgroundDark,
+        topBar = {
+            AppTopBar(
+                title = "Train Game",
+                onBackClick = onBackClick
+            )
+        },
+        bottomBar = {
+            AppBottomNavigation(
+                items = defaultAppBottomNavigationItems(),
+                selectedItem = selectedNavItem,
+                onItemSelected = {
+                    selectedNavItem = it
+                    onNavigate(it)
+                }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+        ) {
+            Spacer(modifier = Modifier.height(AppDimens.spaceLg))
+            TrainingLoadingContent(
+                gameId = gameId,
+                trainingId = trainingId
+            )
+        }
+    }
+}
+
+@Composable
 // Hosts the single-game training session state and coordinates training flow.
 private fun TrainSingleGameScreen(
     gameId: Long,
     trainingId: Long,
-    trainingGameData: TrainSingleGameData? = null,
+    trainingGameData: TrainSingleGameData,
     onTrainingFinished: (TrainSingleGameResult) -> Unit = {},
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
@@ -101,21 +158,21 @@ private fun TrainSingleGameScreen(
 ) {
     // Keeps the parent navigation section highlighted while the training screen is open.
     var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
-    val loadedGame = trainingGameData?.game
-    val uciMoves = trainingGameData?.uciMoves.orEmpty()
+    val loadedGame = trainingGameData.game
+    val uciMoves = trainingGameData.uciMoves
     // Stores the full mutable training session state for the current screen.
-    var uiState by remember(loadedGame?.id) { mutableStateOf(TrainSingleGameUiState()) }
+    var uiState by remember(loadedGame.id) { mutableStateOf(TrainSingleGameUiState()) }
     val scope = rememberCoroutineScope()
     // Resolves the ordered list of sides that must be trained for the current game.
-    val trainingSides = remember(loadedGame?.sideMask) {
-        loadedGame?.let { resolveTrainingOrientations(it.sideMask) }.orEmpty()
+    val trainingSides = remember(loadedGame.sideMask) {
+        resolveTrainingOrientations(loadedGame.sideMask)
     }
     // Selects the active board orientation for the current training side.
     val currentOrientation = trainingSides.getOrNull(uiState.currentSideIndex) ?: BoardOrientation.WHITE
     // Owns the interactive board state for the currently trained side.
     val gameController = remember(currentOrientation) { GameController(currentOrientation) }
 
-    LaunchedEffect(gameController, loadedGame?.id) {
+    LaunchedEffect(gameController, loadedGame.id) {
         gameController.resetToStartPosition()
         uiState = resetSessionState(uiState)
     }
