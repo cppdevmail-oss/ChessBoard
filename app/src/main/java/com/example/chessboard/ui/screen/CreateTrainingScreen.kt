@@ -79,15 +79,40 @@ fun CreateTrainingScreenContainer(
     inDbProvider: DatabaseProvider,
 ) {
     var gamesForTraining by remember { mutableStateOf<List<TrainingGameEditorItem>>(emptyList()) }
+    var trainingName by remember { mutableStateOf(DEFAULT_TRAINING_NAME) }
     var trainingSaveSuccess by remember { mutableStateOf<TrainingSaveSuccess?>(null) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
-        gamesForTraining = withContext(Dispatchers.IO) {
-            inDbProvider.getAllGames().map { game ->
+    LaunchedEffect(trainingId) {
+        val allGames = withContext(Dispatchers.IO) {
+            inDbProvider.getAllGames()
+        }
+
+        if (trainingId == null) {
+            trainingName = DEFAULT_TRAINING_NAME
+            gamesForTraining = allGames.map { game ->
                 game.toTrainingGameEditorItem()
             }
+            return@LaunchedEffect
         }
+
+        val training = withContext(Dispatchers.IO) {
+            inDbProvider.getTrainingById(trainingId)
+        }
+
+        if (training == null) {
+            trainingName = DEFAULT_TRAINING_NAME
+            gamesForTraining = allGames.map { game ->
+                game.toTrainingGameEditorItem()
+            }
+            return@LaunchedEffect
+        }
+
+        trainingName = training.name.ifBlank { DEFAULT_TRAINING_NAME }
+        gamesForTraining = buildTrainingEditorItems(
+            allGames = allGames,
+            trainingGames = OneGameTrainingData.fromJson(training.gamesJson)
+        )
     }
 
     trainingSaveSuccess?.let { success ->
@@ -102,6 +127,7 @@ fun CreateTrainingScreenContainer(
 
     CreateTrainingScreen(
         trainingId = trainingId,
+        initialTrainingName = trainingName,
         gamesForTraining = gamesForTraining,
         onBackClick = onBackClick,
         onNavigate = onNavigate,
@@ -134,6 +160,7 @@ fun CreateTrainingScreenContainer(
 @Composable
 fun CreateTrainingScreen(
     trainingId: Long? = null,
+    initialTrainingName: String = DEFAULT_TRAINING_NAME,
     gamesForTraining: List<TrainingGameEditorItem> = emptyList(),
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
@@ -141,12 +168,13 @@ fun CreateTrainingScreen(
     modifier: Modifier = Modifier
 ) {
     var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
-    var trainingName by remember { mutableStateOf(DEFAULT_TRAINING_NAME) }
+    var trainingName by remember(initialTrainingName) { mutableStateOf(initialTrainingName) }
     var currentPage by remember { mutableStateOf(0) }
     var editableGamesForTraining by remember { mutableStateOf(gamesForTraining) }
     val isEditMode = trainingId != null
 
-    LaunchedEffect(gamesForTraining) {
+    LaunchedEffect(initialTrainingName, gamesForTraining) {
+        trainingName = initialTrainingName
         editableGamesForTraining = gamesForTraining
     }
 
@@ -261,12 +289,32 @@ fun CreateTrainingScreen(
     }
 }
 
-private fun GameEntity.toTrainingGameEditorItem(): TrainingGameEditorItem {
+private fun GameEntity.toTrainingGameEditorItem(weight: Int = 1): TrainingGameEditorItem {
     return TrainingGameEditorItem(
         gameId = id,
         title = event ?: "Unnamed Opening",
-        weight = 1
+        weight = weight
     )
+}
+
+private fun buildTrainingEditorItems(
+    allGames: List<GameEntity>,
+    trainingGames: List<OneGameTrainingData>
+): List<TrainingGameEditorItem> {
+    if (trainingGames.isEmpty()) {
+        return allGames.map { game ->
+            game.toTrainingGameEditorItem()
+        }
+    }
+
+    val weightsByGameId = trainingGames.associate { trainingGame ->
+        trainingGame.gameId to trainingGame.weight
+    }
+
+    return allGames.mapNotNull { game ->
+        val weight = weightsByGameId[game.id] ?: return@mapNotNull null
+        game.toTrainingGameEditorItem(weight = weight)
+    }
 }
 
 @Composable
