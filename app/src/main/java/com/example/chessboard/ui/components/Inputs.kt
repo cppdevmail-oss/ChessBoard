@@ -21,10 +21,10 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.ui.theme.AppDimens
+import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import com.example.chessboard.ui.theme.TrainingErrorRed
 import com.example.chessboard.ui.theme.TrainingIconInactive
-import com.example.chessboard.ui.theme.TrainingSurfaceDark
 import com.example.chessboard.ui.theme.TrainingTextPrimary
 import com.example.chessboard.ui.theme.TrainingTextSecondary
 
@@ -47,7 +47,7 @@ fun AppTextField(
         )
         Surface(
             shape = RoundedCornerShape(AppDimens.radiusMd),
-            color = TrainingSurfaceDark,
+            color = Background.SurfaceDark,
             border = if (isError) BorderStroke(1.dp, TrainingErrorRed) else null,
             modifier = Modifier.fillMaxWidth()
         ) {

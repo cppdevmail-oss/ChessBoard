@@ -32,9 +32,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.theme.AppDimens
+import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import com.example.chessboard.ui.theme.TrainingIconInactive
-import com.example.chessboard.ui.theme.TrainingSurfaceDark
 
 data class AppBottomNavigationItem<T>(
     val value: T,
@@ -84,7 +84,7 @@ fun <T> AppBottomNavigation(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = TrainingSurfaceDark,
+        color = Background.SurfaceDark,
         tonalElevation = 8.dp
     ) {
         Column {

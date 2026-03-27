@@ -48,11 +48,9 @@ import com.example.chessboard.ui.components.CardMetaText
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.theme.AppDimens
-
+import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingCardDark
 import com.example.chessboard.ui.theme.TrainingIconInactive
-import com.example.chessboard.ui.theme.TrainingSurfaceDark
 import com.example.chessboard.ui.theme.TrainingTextPrimary
 import com.example.chessboard.ui.theme.TrainingTextSecondary
 import kotlinx.coroutines.Dispatchers
@@ -220,7 +218,7 @@ private fun GameBlock(
 ) {
     CardSurface(
         modifier = modifier.fillMaxWidth(),
-        color = if (isSelected) TrainingCardDark else TrainingSurfaceDark,
+        color = if (isSelected) Background.CardDark else Background.SurfaceDark,
         border = if (isSelected) BorderStroke(1.dp, TrainingAccentTeal) else null
     ) {
         // Header row

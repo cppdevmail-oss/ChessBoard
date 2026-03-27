@@ -21,8 +21,8 @@ import com.example.chessboard.ui.components.AppTextField
 import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.theme.AppDimens
+import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingSurfaceDark
 import com.example.chessboard.ui.theme.TrainingTextPrimary
 import com.example.chessboard.ui.theme.TrainingTextSecondary
 import com.github.bhlangonijr.chesslib.Board
@@ -136,7 +136,7 @@ fun MoveChip(
     label: String,
     isSelected: Boolean,
     onClick: () -> Unit,
-    unselectedBackground: Color = TrainingSurfaceDark,
+    unselectedBackground: Color = Background.SurfaceDark,
 ) {
     Box(
         modifier = Modifier
@@ -214,7 +214,7 @@ fun ResetTrainingButton(
         modifier = modifier.fillMaxWidth().height(56.dp),
         shape = RoundedCornerShape(AppDimens.radiusLg),
         colors = ButtonDefaults.buttonColors(
-            containerColor = TrainingSurfaceDark,
+            containerColor = Background.SurfaceDark,
             contentColor = TrainingTextPrimary
         ),
         elevation = ButtonDefaults.buttonElevation(

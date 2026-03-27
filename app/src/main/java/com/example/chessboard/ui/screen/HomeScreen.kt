@@ -41,8 +41,8 @@ import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.theme.AppDimens
 
+import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingBackgroundDark
 import com.example.chessboard.ui.theme.TrainingTextPrimary
 import com.example.chessboard.ui.theme.TrainingTextSecondary
 import kotlinx.coroutines.Dispatchers
@@ -264,7 +264,7 @@ private fun GameEntityCard(game: GameEntity, modifier: Modifier = Modifier, onCl
             Spacer(modifier = Modifier.height(AppDimens.spaceSm))
             Surface(
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(AppDimens.radiusXs),
-                color = TrainingBackgroundDark
+                color = Background.ScreenDark
             ) {
                 CardMetaText(
                     text = game.eco,

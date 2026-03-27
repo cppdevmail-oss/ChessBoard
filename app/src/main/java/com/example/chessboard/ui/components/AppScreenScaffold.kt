@@ -8,7 +8,7 @@ import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.example.chessboard.ui.theme.TrainingBackgroundDark
+import com.example.chessboard.ui.theme.Background
 
 /** Wraps Material Scaffold with the project's fixed screen background color. */
 @Composable
@@ -29,8 +29,8 @@ fun AppScreenScaffold(
         snackbarHost = snackbarHost,
         floatingActionButton = floatingActionButton,
         floatingActionButtonPosition = floatingActionButtonPosition,
-        containerColor = TrainingBackgroundDark,
-        contentColor = contentColorFor(TrainingBackgroundDark),
+        containerColor = Background.ScreenDark,
+        contentColor = contentColorFor(Background.ScreenDark),
         contentWindowInsets = contentWindowInsets,
         content = content
     )

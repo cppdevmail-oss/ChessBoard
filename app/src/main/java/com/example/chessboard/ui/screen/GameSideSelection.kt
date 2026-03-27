@@ -15,8 +15,8 @@ import com.example.chessboard.ui.components.CardSurface
 import com.example.chessboard.ui.components.PillSurface
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.theme.AppDimens
+import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingCardDark
 import com.example.chessboard.ui.theme.TrainingDividerColor
 import com.example.chessboard.ui.theme.TrainingTextPrimary
 import com.example.chessboard.ui.theme.TrainingTextSecondary
@@ -73,10 +73,7 @@ internal fun GameSideSelector(
     androidx.compose.foundation.layout.Column(
         modifier = modifier
     ) {
-        SectionTitleText(
-            text = "Selected side",
-            color = TrainingTextSecondary
-        )
+        SectionTitleText(text = "Selected side", color = TrainingTextSecondary)
 
         androidx.compose.foundation.layout.Spacer(
             modifier = Modifier.height(AppDimens.spaceSm)
@@ -120,7 +117,7 @@ private fun resolveSideSelectionColor(
         return TrainingAccentTeal
     }
 
-    return TrainingCardDark
+    return Background.CardDark
 }
 
 private fun resolveSideSelectionBorder(

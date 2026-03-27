@@ -5,7 +5,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingBackgroundDark
+import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TrainingErrorRed
 import com.example.chessboard.ui.theme.TrainingTextPrimary
 import com.example.chessboard.ui.theme.TrainingTextSecondary
@@ -25,7 +25,7 @@ fun AppMessageDialog(
     AlertDialog(
         modifier = modifier,
         onDismissRequest = onDismiss,
-        containerColor = TrainingBackgroundDark,
+        containerColor = Background.ScreenDark,
         title = {
             SectionTitleText(
                 text = title,
@@ -76,7 +76,7 @@ fun AppConfirmDialog(
     AlertDialog(
         modifier = modifier,
         onDismissRequest = onDismiss,
-        containerColor = TrainingBackgroundDark,
+        containerColor = Background.ScreenDark,
         title = {
             ScreenTitleText(
                 text = title,

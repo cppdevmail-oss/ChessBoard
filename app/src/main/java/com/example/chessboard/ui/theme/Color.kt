@@ -18,9 +18,12 @@ val ChessDark = Color(0xFFB58863)
 val ChessPieceDark = Color(0xFF312E2B)
 
 // Training Colors
-val TrainingBackgroundDark = Color(0xFF0D0D0D)
-val TrainingSurfaceDark = Color(0xFF1A1A1A)
-val TrainingCardDark = Color(0xFF252525)
+object Background {
+    val ScreenDark = Color(0xFF0D0D0D)
+    val SurfaceDark = Color(0xFF1A1A1A)
+    val CardDark = Color(0xFF252525)
+}
+
 val TrainingTextPrimary = Color(0xFFFFFFFF)
 val TrainingTextSecondary = Color(0xFF9E9E9E)
 val TrainingAccentTeal = Color(0xFF1DB584)
