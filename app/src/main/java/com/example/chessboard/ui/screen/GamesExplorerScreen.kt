@@ -264,37 +264,22 @@ private fun GameBlock(
                 SectionTitleText(
                     text = parsedGame.game.event ?: "Opening"
                 )
-                if (!parsedGame.game.eco.isNullOrBlank()) {
-                    CardMetaText(text = parsedGame.game.eco)
-                }
+                GameBlockMetaRow(
+                    eco = parsedGame.game.eco,
+                    gameId = parsedGame.game.id
+                )
             }
             CardMetaText(text = "${parsedGame.moveLabels.size} moves")
         }
 
         Spacer(modifier = Modifier.height(AppDimens.spaceSm))
 
-        if (parsedGame.moveLabels.isEmpty()) {
-            BodySecondaryText(text = "No moves recorded")
-        } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(AppDimens.radiusXs),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                parsedGame.moveLabels.forEachIndexed { index, label ->
-                    val ply = index + 1
-                    val moveNumber = index / 2 + 1
-                    val prefix = if (index % 2 == 0) "$moveNumber." else "$moveNumber..."
-                    MoveChip(
-                        label = "$prefix$label",
-                        isSelected = isSelected && ply == currentPly,
-                        onClick = { onMovePlyClick(ply) }
-                    )
-                }
-            }
-        }
+        GameMoveChips(
+            moveLabels = parsedGame.moveLabels,
+            isSelected = isSelected,
+            currentPly = currentPly,
+            onMovePlyClick = onMovePlyClick
+        )
 
         if (isSelected) {
             Spacer(modifier = Modifier.height(AppDimens.spaceSm))
@@ -323,6 +308,57 @@ private fun GameBlock(
                     )
                 }
             }
+        }
+    }
+}
+
+
+@Composable
+private fun GameBlockMetaRow(
+    eco: String?,
+    gameId: Long
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceSm),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (!eco.isNullOrBlank()) {
+            CardMetaText(text = eco)
+        }
+
+        CardMetaText(text = "ID: $gameId")
+    }
+}
+
+
+@Composable
+private fun GameMoveChips(
+    moveLabels: List<String>,
+    isSelected: Boolean,
+    currentPly: Int,
+    onMovePlyClick: (Int) -> Unit
+) {
+    if (moveLabels.isEmpty()) {
+        BodySecondaryText(text = "No moves recorded")
+        return
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(AppDimens.radiusXs),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        moveLabels.forEachIndexed { index, label ->
+            val ply = index + 1
+            val moveNumber = index / 2 + 1
+            val prefix = if (index % 2 == 0) "$moveNumber." else "$moveNumber..."
+            MoveChip(
+                label = "$prefix$label",
+                isSelected = isSelected && ply == currentPly,
+                onClick = { onMovePlyClick(ply) }
+            )
         }
     }
 }
