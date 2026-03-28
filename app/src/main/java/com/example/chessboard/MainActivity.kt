@@ -73,7 +73,7 @@ class MainActivity : ComponentActivity() {
                         trainingId = screen.trainingId,
                         gameId = screen.gameId,
                         onTrainingFinished = {
-                            currentScreen = ScreenType.Home
+                            currentScreen = ScreenType.CreateTraining(screen.trainingId)
                         },
                         onBackClick = {
                             currentScreen = ScreenType.Home
