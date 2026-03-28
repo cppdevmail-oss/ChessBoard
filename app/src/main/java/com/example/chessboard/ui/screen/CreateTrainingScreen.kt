@@ -74,6 +74,16 @@ private fun resolveCreateTrainingTitle(isEditMode: Boolean): String {
     return "Create Training"
 }
 
+private fun resolveRandomTrainingGameId(
+    games: List<TrainingGameEditorItem>
+): Long? {
+    if (games.isEmpty()) {
+        return null
+    }
+
+    return games.random().gameId
+}
+
 private suspend fun saveTraining(
     dbProvider: DatabaseProvider,
     trainingId: Long?,
@@ -234,6 +244,18 @@ fun CreateTrainingScreen(
                 title = resolveCreateTrainingTitle(isEditMode),
                 onBackClick = onBackClick,
                 actions = {
+                    if (isEditMode) {
+                        PrimaryButton(
+                            text = "Random",
+                            onClick = {
+                                val randomGameId = resolveRandomTrainingGameId(editableGamesForTraining)
+                                if (randomGameId != null) {
+                                    onStartGameTrainingClick(randomGameId)
+                                }
+                            }
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(AppDimens.spaceSm))
                     PrimaryButton(
                         text = "Save",
                         onClick = { onSaveTraining(trainingName, editableGamesForTraining) }
