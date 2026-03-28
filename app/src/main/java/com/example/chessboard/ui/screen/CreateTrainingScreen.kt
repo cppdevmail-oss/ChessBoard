@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -20,6 +22,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.repository.DatabaseProvider
@@ -38,6 +42,7 @@ import com.example.chessboard.ui.components.SecondaryButton
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.theme.AppDimens
+import com.example.chessboard.ui.theme.TrainingErrorRed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -67,6 +72,16 @@ private fun resolveCreateTrainingTitle(isEditMode: Boolean): String {
     }
 
     return "Create Training"
+}
+
+private fun resolveRandomTrainingGameId(
+    games: List<TrainingGameEditorItem>
+): Long? {
+    if (games.isEmpty()) {
+        return null
+    }
+
+    return games.random().gameId
 }
 
 private suspend fun saveTraining(
@@ -229,6 +244,18 @@ fun CreateTrainingScreen(
                 title = resolveCreateTrainingTitle(isEditMode),
                 onBackClick = onBackClick,
                 actions = {
+                    if (isEditMode) {
+                        PrimaryButton(
+                            text = "Random",
+                            onClick = {
+                                val randomGameId = resolveRandomTrainingGameId(editableGamesForTraining)
+                                if (randomGameId != null) {
+                                    onStartGameTrainingClick(randomGameId)
+                                }
+                            }
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(AppDimens.spaceSm))
                     PrimaryButton(
                         text = "Save",
                         onClick = { onSaveTraining(trainingName, editableGamesForTraining) }
@@ -317,6 +344,11 @@ fun CreateTrainingScreen(
                                 }
                             }
                         },
+                        onRemoveGameClick = { gameId ->
+                            editableGamesForTraining = editableGamesForTraining.filterNot { game ->
+                                game.gameId == gameId
+                            }
+                        },
                         onStartTrainingClick = onStartGameTrainingClick,
                         onPreviousPageClick = {
                             if (canGoPrevious) {
@@ -373,6 +405,7 @@ private fun TrainingGamesPage(
     showStartButton: Boolean,
     onDecreaseWeightClick: (Long) -> Unit,
     onIncreaseWeightClick: (Long) -> Unit,
+    onRemoveGameClick: (Long) -> Unit,
     onStartTrainingClick: (Long) -> Unit,
     onPreviousPageClick: () -> Unit,
     onNextPageClick: () -> Unit
@@ -399,6 +432,7 @@ private fun TrainingGamesPage(
                     showStartButton = showStartButton,
                     onDecreaseWeightClick = { onDecreaseWeightClick(game.gameId) },
                     onIncreaseWeightClick = { onIncreaseWeightClick(game.gameId) },
+                    onRemoveGameClick = { onRemoveGameClick(game.gameId) },
                     onStartTrainingClick = { onStartTrainingClick(game.gameId) },
                 )
                 if (index + 1 < games.size) {
@@ -435,6 +469,7 @@ private fun TrainingGamePageRow(
     showStartButton: Boolean,
     onDecreaseWeightClick: () -> Unit,
     onIncreaseWeightClick: () -> Unit,
+    onRemoveGameClick: () -> Unit,
     onStartTrainingClick: () -> Unit,
 ) {
     CardSurface(
@@ -463,21 +498,32 @@ private fun TrainingGamePageRow(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceSm)
             ) {
-                SecondaryButton(
-                    text = "-",
-                    onClick = onDecreaseWeightClick,
-                    modifier = Modifier.width(56.dp)
-                )
-                SecondaryButton(
-                    text = "+",
-                    onClick = onIncreaseWeightClick,
-                    modifier = Modifier.width(56.dp),
-                )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(AppDimens.spaceSm)
+                ) {
+                    SecondaryButton(
+                        text = "-",
+                        onClick = onDecreaseWeightClick,
+                        modifier = Modifier.width(56.dp)
+                    )
+                    SecondaryButton(
+                        text = "+",
+                        onClick = onIncreaseWeightClick,
+                        modifier = Modifier.width(56.dp),
+                    )
+                }
                 if (showStartButton) {
                     PrimaryButton(
                         text = "GO",
                         onClick = onStartTrainingClick,
                         modifier = Modifier.width(72.dp),
+                    )
+                }
+                IconButton(onClick = onRemoveGameClick) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Remove game from training",
+                        tint = TrainingErrorRed
                     )
                 }
             }

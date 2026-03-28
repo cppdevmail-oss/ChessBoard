@@ -8,6 +8,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.ui.screen.CreateOpeningScreenContainer
@@ -22,12 +25,24 @@ import com.example.chessboard.ui.theme.ChessBoardTheme
 
 class MainActivity : ComponentActivity() {
 
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+
+        if (!hasFocus) {
+            return
+        }
+
+        hideSystemBars()
+    }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         val dbProvider = DatabaseProvider.createInstance(this)
 
         enableEdgeToEdge()
+        hideSystemBars()
         setContent {
             ChessBoardTheme {
                 var currentScreen by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
@@ -60,7 +75,7 @@ class MainActivity : ComponentActivity() {
                     is ScreenType.CreateTraining -> CreateTrainingScreenContainer(
                         trainingId = screen.trainingId,
                         activity = this@MainActivity,
-                        onBackClick = { currentScreen = ScreenType.Home },
+                        onBackClick = { currentScreen = ScreenType.Training },
                         onNavigate = { currentScreen = it },
                         onStartGameTrainingClick = { gameId ->
                             val trainingId = screen.trainingId ?: return@CreateTrainingScreenContainer
@@ -73,7 +88,7 @@ class MainActivity : ComponentActivity() {
                         trainingId = screen.trainingId,
                         gameId = screen.gameId,
                         onTrainingFinished = {
-                            currentScreen = ScreenType.Home
+                            currentScreen = ScreenType.CreateTraining(screen.trainingId)
                         },
                         onBackClick = {
                             currentScreen = ScreenType.Home
@@ -108,5 +123,13 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun hideSystemBars() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        val controller = WindowInsetsControllerCompat(window, window.decorView)
+        controller.systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        controller.hide(WindowInsetsCompat.Type.systemBars())
     }
 }

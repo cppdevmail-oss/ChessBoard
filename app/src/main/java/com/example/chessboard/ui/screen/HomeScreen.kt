@@ -34,6 +34,7 @@ import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.CardMetaText
 import com.example.chessboard.ui.components.CardSurface
 import com.example.chessboard.ui.components.PrimaryButton
+import com.example.chessboard.ui.components.SecondaryButton
 import com.example.chessboard.ui.components.ScreenSection
 import com.example.chessboard.ui.components.ScreenTitleText
 import com.example.chessboard.ui.components.SectionTitleText
@@ -55,6 +56,7 @@ fun HomeScreenContainer(
         onNavigate = onNavigate,
         onCreateTrainingClick = onCreateTrainingClick,
         onStartFirstTrainingClick = onStartFirstTrainingClick,
+        onExitClick = { activity.finishAffinity() },
         modifier = modifier
     )
 }
@@ -64,6 +66,7 @@ fun HomeScreen(
     onNavigate: (ScreenType) -> Unit = {},
     onCreateTrainingClick: () -> Unit = {},
     onStartFirstTrainingClick: () -> Unit = {},
+    onExitClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     AppScreenScaffold(
@@ -164,6 +167,16 @@ fun HomeScreen(
                     PrimaryButton(
                         text = "Create Opening",
                         onClick = { onNavigate(ScreenType.CreateOpening) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
+            item {
+                ScreenSection {
+                    PrimaryButton(
+                        text = "Exit",
+                        onClick = onExitClick,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
