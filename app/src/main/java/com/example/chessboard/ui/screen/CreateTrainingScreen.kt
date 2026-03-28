@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.repository.DatabaseProvider
@@ -65,6 +66,12 @@ private data class CreateTrainingLoadState(
     val trainingLoadFailed: Boolean = false
 )
 
+private data class CreateTrainingEditorState(
+    val trainingName: String = DEFAULT_TRAINING_NAME,
+    val currentPage: Int = 0,
+    val editableGamesForTraining: List<TrainingGameEditorItem> = emptyList()
+)
+
 private data class TrainingSaveSuccess(
     val trainingId: Long,
     val trainingName: String,
@@ -88,6 +95,44 @@ private fun resolveRandomTrainingGameId(
     }
 
     return games.random().gameId
+}
+
+private fun decreaseTrainingGameWeight(
+    editorState: CreateTrainingEditorState,
+    gameId: Long
+): CreateTrainingEditorState {
+    if (editorState.editableGamesForTraining.none { it.gameId == gameId }) {
+        return editorState
+    }
+
+    return editorState.copy(
+        editableGamesForTraining = editorState.editableGamesForTraining.map { game ->
+            if (game.gameId != gameId) {
+                return@map game
+            }
+
+            return@map game.copy(weight = (game.weight - 1).coerceAtLeast(1))
+        }
+    )
+}
+
+private fun increaseTrainingGameWeight(
+    editorState: CreateTrainingEditorState,
+    gameId: Long
+): CreateTrainingEditorState {
+    if (editorState.editableGamesForTraining.none { it.gameId == gameId }) {
+        return editorState
+    }
+
+    return editorState.copy(
+        editableGamesForTraining = editorState.editableGamesForTraining.map { game ->
+            if (game.gameId != gameId) {
+                return@map game
+            }
+
+            return@map game.copy(weight = game.weight + 1)
+        }
+    )
 }
 
 private suspend fun saveTraining(
@@ -237,14 +282,21 @@ fun CreateTrainingScreen(
     modifier: Modifier = Modifier
 ) {
     var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
-    var trainingName by remember(initialTrainingName) { mutableStateOf(initialTrainingName) }
-    var currentPage by remember { mutableStateOf(0) }
-    var editableGamesForTraining by remember { mutableStateOf(gamesForTraining) }
+    var editorState by remember(initialTrainingName, gamesForTraining) {
+        mutableStateOf(
+            CreateTrainingEditorState(
+                trainingName = initialTrainingName,
+                editableGamesForTraining = gamesForTraining
+            )
+        )
+    }
     val isEditMode = trainingId != null
 
     LaunchedEffect(initialTrainingName, gamesForTraining) {
-        trainingName = initialTrainingName
-        editableGamesForTraining = gamesForTraining
+        editorState = editorState.copy(
+            trainingName = initialTrainingName,
+            editableGamesForTraining = gamesForTraining
+        )
     }
 
     AppScreenScaffold(
@@ -258,7 +310,7 @@ fun CreateTrainingScreen(
                         PrimaryButton(
                             text = "Random",
                             onClick = {
-                                val randomGameId = resolveRandomTrainingGameId(editableGamesForTraining)
+                                val randomGameId = resolveRandomTrainingGameId(editorState.editableGamesForTraining)
                                 if (randomGameId != null) {
                                     onStartGameTrainingClick(randomGameId)
                                 }
@@ -268,7 +320,7 @@ fun CreateTrainingScreen(
                     Spacer(modifier = Modifier.width(AppDimens.spaceSm))
                     PrimaryButton(
                         text = "Save",
-                        onClick = { onSaveTraining(trainingName, editableGamesForTraining) }
+                        onClick = { onSaveTraining(editorState.trainingName, editorState.editableGamesForTraining) }
                     )
                 }
             )
@@ -291,8 +343,8 @@ fun CreateTrainingScreen(
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
             ScreenSection {
                 AppTextField(
-                    value = trainingName,
-                    onValueChange = { trainingName = it },
+                    value = editorState.trainingName,
+                    onValueChange = { editorState = editorState.copy(trainingName = it) },
                     label = "Training Name",
                     placeholder = DEFAULT_TRAINING_NAME
                 )
@@ -301,82 +353,109 @@ fun CreateTrainingScreen(
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
 
             ScreenSection {
-                BodySecondaryText(text = "Games loaded for training: ${editableGamesForTraining.size}")
+                BodySecondaryText(text = "Games loaded for training: ${editorState.editableGamesForTraining.size}")
             }
 
-            BoxWithConstraints(
+            TrainingGamesEditorSection(
+                editorState = editorState,
+                isEditMode = isEditMode,
+                onEditorStateChange = { editorState = it },
+                onStartTrainingClick = onStartGameTrainingClick,
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-            ) {
-                val availableHeightForRows =
-                    (maxHeight - TrainingGamesHeaderHeight - TrainingGamesNavigationHeight)
-                        .coerceAtLeast(TrainingGameRowHeight)
-                val trainingGameSlotHeight = TrainingGameRowHeight + TrainingGameRowSpacing
-                val pageSize = (availableHeightForRows / trainingGameSlotHeight)
-                    .toInt()
-                    .coerceAtLeast(1)
-                val totalPages = ((editableGamesForTraining.size + pageSize - 1) / pageSize).coerceAtLeast(1)
-                val safeCurrentPage = currentPage.coerceIn(0, totalPages - 1)
-                val canGoPrevious = safeCurrentPage > 0
-                val canGoNext = safeCurrentPage + 1 < totalPages
-                val currentPageItems = editableGamesForTraining
-                    .drop(safeCurrentPage * pageSize)
-                    .take(pageSize)
-
-                ScreenSection(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = AppDimens.spaceLg)
-                ) {
-                    TrainingGamesPage(
-                        games = currentPageItems,
-                        currentPage = safeCurrentPage,
-                        totalPages = totalPages,
-                        canGoPrevious = canGoPrevious,
-                        canGoNext = canGoNext,
-                        showStartButton = isEditMode,
-                        onDecreaseWeightClick = { gameId ->
-                            editableGamesForTraining = editableGamesForTraining.map { game ->
-                                if (game.gameId == gameId) {
-                                    game.copy(weight = (game.weight - 1).coerceAtLeast(1))
-                                } else {
-                                    game
-                                }
-                            }
-                        },
-                        onIncreaseWeightClick = { gameId ->
-                            editableGamesForTraining = editableGamesForTraining.map { game ->
-                                if (game.gameId == gameId) {
-                                    game.copy(weight = game.weight + 1)
-                                } else {
-                                    game
-                                }
-                            }
-                        },
-                        onRemoveGameClick = { gameId ->
-                            editableGamesForTraining = editableGamesForTraining.filterNot { game ->
-                                game.gameId == gameId
-                            }
-                        },
-                        onStartTrainingClick = onStartGameTrainingClick,
-                        onPreviousPageClick = {
-                            if (canGoPrevious) {
-                                currentPage = safeCurrentPage - 1
-                            }
-                        },
-                        onNextPageClick = {
-                            if (canGoNext) {
-                                currentPage = safeCurrentPage + 1
-                            }
-                        }
-                    )
-                }
-            }
+            )
         }
     }
 }
 
+@Composable
+private fun TrainingGamesEditorSection(
+    editorState: CreateTrainingEditorState,
+    isEditMode: Boolean,
+    onEditorStateChange: (CreateTrainingEditorState) -> Unit,
+    onStartTrainingClick: (Long) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    data class TrainingGamesPageState(
+        val currentPageItems: List<TrainingGameEditorItem>,
+        val currentPage: Int,
+        val totalPages: Int,
+        val canGoPrevious: Boolean,
+        val canGoNext: Boolean,
+    )
+
+    fun resolveTrainingGamesPageState(maxHeight : Dp): TrainingGamesPageState {
+        val availableHeightForRows =
+            (maxHeight - TrainingGamesHeaderHeight - TrainingGamesNavigationHeight)
+                .coerceAtLeast(TrainingGameRowHeight)
+        val trainingGameSlotHeight = TrainingGameRowHeight + TrainingGameRowSpacing
+        val pageSize = (availableHeightForRows / trainingGameSlotHeight)
+            .toInt()
+            .coerceAtLeast(1)
+        val totalPages = ((editorState.editableGamesForTraining.size + pageSize - 1) / pageSize)
+            .coerceAtLeast(1)
+        val safeCurrentPage = editorState.currentPage.coerceIn(0, totalPages - 1)
+
+        return TrainingGamesPageState(
+            currentPageItems = editorState.editableGamesForTraining
+                .drop(safeCurrentPage * pageSize)
+                .take(pageSize),
+            currentPage = safeCurrentPage,
+            totalPages = totalPages,
+            canGoPrevious = safeCurrentPage > 0,
+            canGoNext = safeCurrentPage + 1 < totalPages,
+        )
+    }
+
+    BoxWithConstraints(modifier = modifier) {
+        val pageState = resolveTrainingGamesPageState(maxHeight)
+        ScreenSection(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = AppDimens.spaceLg)
+        ) {
+            TrainingGamesPage(
+                games = pageState.currentPageItems,
+                currentPage = pageState.currentPage,
+                totalPages = pageState.totalPages,
+                canGoPrevious = pageState.canGoPrevious,
+                canGoNext = pageState.canGoNext,
+                showStartButton = isEditMode,
+                onDecreaseWeightClick = { gameId ->
+                    onEditorStateChange(decreaseTrainingGameWeight(editorState, gameId))
+                },
+                onIncreaseWeightClick = { gameId ->
+                    onEditorStateChange(increaseTrainingGameWeight(editorState, gameId))
+                },
+                onRemoveGameClick = { gameId ->
+                    onEditorStateChange(
+                        editorState.copy(
+                            editableGamesForTraining = editorState.editableGamesForTraining.filterNot { game ->
+                                game.gameId == gameId
+                            }
+                        )
+                    )
+                },
+                onStartTrainingClick = onStartTrainingClick,
+                onPreviousPageClick = {
+                    if (!pageState.canGoPrevious) {
+                        return@TrainingGamesPage
+                    }
+
+                    onEditorStateChange(editorState.copy(currentPage = pageState.currentPage - 1))
+                },
+                onNextPageClick = {
+                    if (!pageState.canGoNext) {
+                        return@TrainingGamesPage
+                    }
+
+                    onEditorStateChange(editorState.copy(currentPage = pageState.currentPage + 1))
+                }
+            )
+        }
+    }
+}
 private fun GameEntity.toTrainingGameEditorItem(weight: Int = 1): TrainingGameEditorItem {
     return TrainingGameEditorItem(
         gameId = id,
