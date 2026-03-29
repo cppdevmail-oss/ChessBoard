@@ -53,10 +53,14 @@ internal fun TrainSingleGameContent(
     currentOrientation: BoardOrientation,
     currentSideIndex: Int,
     sidesCount: Int,
+    currentPly: Int,
+    moveLabels: List<String>,
     phase: TrainSingleGamePhase,
     mistakesCount: Int,
     onShowLineClick: () -> Unit,
+    onStopShowLineClick: () -> Unit,
     onStartTrainingClick: () -> Unit,
+    onStopTrainingClick: () -> Unit,
     onMakeCorrectMoveClick: () -> Unit,
 ) {
     ScreenSection {
@@ -67,10 +71,12 @@ internal fun TrainSingleGameContent(
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
             TrainingSingleGameActions(
                 onShowLineClick = onShowLineClick,
+                onStopShowLineClick = onStopShowLineClick,
                 onStartTrainingClick = onStartTrainingClick,
+                onStopTrainingClick = onStopTrainingClick,
                 onMakeCorrectMoveClick = onMakeCorrectMoveClick,
                 isShowingLine = phase == TrainSingleGamePhase.ShowingLine,
-                isTraining = phase == TrainSingleGamePhase.Training,
+                isTrainingActive = phase == TrainSingleGamePhase.Training || phase == TrainSingleGamePhase.Mistake,
                 showCorrectMove = phase == TrainSingleGamePhase.Mistake,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -84,6 +90,11 @@ internal fun TrainSingleGameContent(
                 sidesCount = sidesCount,
                 phase = phase,
                 mistakesCount = mistakesCount
+            )
+            Spacer(modifier = Modifier.height(AppDimens.spaceLg))
+            TrainingMovesLegend(
+                moveLabels = moveLabels,
+                currentPly = currentPly
             )
         }
     }
@@ -136,33 +147,103 @@ internal fun TrainingSessionInfo(
     }
 }
 
+@Composable
+internal fun TrainingMovesLegend(
+    moveLabels: List<String>,
+    currentPly: Int,
+    modifier: Modifier = Modifier
+) {
+    CardSurface(modifier = modifier.fillMaxWidth()) {
+        Column {
+            SectionTitleText(text = "Moves")
+            Spacer(modifier = Modifier.height(AppDimens.spaceSm))
+            BodySecondaryText(
+                text = resolveTrainingMoveLegendText(
+                    moveLabels = moveLabels,
+                    currentPly = currentPly
+                )
+            )
+        }
+    }
+}
+
+internal fun resolveTrainingMoveLegendText(
+    moveLabels: List<String>,
+    currentPly: Int
+): String {
+    val visibleMoves = moveLabels.take(currentPly)
+    if (visibleMoves.isEmpty()) {
+        return "No moves yet"
+    }
+
+    return visibleMoves.mapIndexed { index, label ->
+        val moveNumber = index / 2 + 1
+        val prefix = if (index % 2 == 0) "$moveNumber." else "$moveNumber..."
+        "$prefix$label"
+    }.joinToString(separator = " ")
+}
+
 // Displays the session action buttons and the corrective move action after mistakes.
 @Composable
 internal fun TrainingSingleGameActions(
     onShowLineClick: () -> Unit,
+    onStopShowLineClick: () -> Unit,
     onStartTrainingClick: () -> Unit,
+    onStopTrainingClick: () -> Unit,
     onMakeCorrectMoveClick: () -> Unit,
     isShowingLine: Boolean,
-    isTraining: Boolean,
+    isTrainingActive: Boolean,
     showCorrectMove: Boolean,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier) {
+    @Composable
+    fun IdleTrainingActions(
+        onShowLineClick: () -> Unit,
+        onStartTrainingClick: () -> Unit
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)
         ) {
             PrimaryButton(
                 text = "Show line",
-                onClick = onShowLineClick,
-                enabled = !isShowingLine && !isTraining
+                onClick = onShowLineClick
             )
             PrimaryButton(
                 text = "Start training",
-                onClick = onStartTrainingClick,
-                enabled = !isShowingLine && !isTraining
+                onClick = onStartTrainingClick
             )
         }
+    }
+
+    @Composable
+    fun PrimaryTrainingAction() {
+        if (isTrainingActive) {
+            PrimaryButton(
+                text = "Stop training",
+                onClick = onStopTrainingClick,
+                modifier = Modifier.fillMaxWidth()
+            )
+            return
+        }
+
+        IdleTrainingActions(
+            onShowLineClick = onShowLineClick,
+            onStartTrainingClick = onStartTrainingClick
+        )
+    }
+
+    Column(modifier = modifier) {
+        if (isShowingLine) {
+            PrimaryButton(
+                text = "Stop show line",
+                onClick = onStopShowLineClick,
+                modifier = Modifier.fillMaxWidth()
+            )
+            return@Column
+        }
+
+        PrimaryTrainingAction()
 
         if (!showCorrectMove) {
             return
