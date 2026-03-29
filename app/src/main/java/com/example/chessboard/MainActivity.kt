@@ -19,6 +19,8 @@ import com.example.chessboard.ui.screen.GameEditorScreenContainer
 import com.example.chessboard.ui.screen.GamesExplorerScreenContainer
 import com.example.chessboard.ui.screen.HomeScreenContainer
 import com.example.chessboard.ui.screen.ScreenType
+import com.example.chessboard.ui.screen.ProfileScreenContainer
+import com.example.chessboard.ui.screen.SettingsScreenContainer
 import com.example.chessboard.ui.screen.TrainingListScreenContainer
 import com.example.chessboard.ui.screen.trainSingleGame.TrainSingleGameLauncherScreenContainer
 import com.example.chessboard.ui.theme.ChessBoardTheme
@@ -117,6 +119,15 @@ class MainActivity : ComponentActivity() {
                         onStartFirstTrainingClick = {
                             currentScreen = ScreenType.Training
                         },
+                    )
+
+                    ScreenType.Profile -> ProfileScreenContainer(
+                        onBackClick = { currentScreen = ScreenType.Home },
+                        onNavigate = { currentScreen = it },
+                    )
+
+                    ScreenType.Settings -> SettingsScreenContainer(
+                        onBackClick = { currentScreen = ScreenType.Profile },
                     )
 
                     else -> currentScreen = ScreenType.Home

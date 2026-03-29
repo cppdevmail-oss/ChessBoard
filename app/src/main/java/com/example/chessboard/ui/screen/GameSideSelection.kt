@@ -34,26 +34,17 @@ internal enum class EditableGameSide(
         sideMask = SideMask.BLACK,
         orientation = BoardOrientation.BLACK,
         displayLabel = "As Black"
-    ),
-    AS_BOTH(
-        sideMask = SideMask.BOTH,
-        orientation = BoardOrientation.WHITE,
-        displayLabel = "As Both"
     );
 
     fun toDisplayText(): String = displayLabel
 
     companion object {
         fun fromSideMask(sideMask: Int): EditableGameSide {
-            if (sideMask == SideMask.WHITE) {
-                return AS_WHITE
-            }
-
             if (sideMask == SideMask.BLACK) {
                 return AS_BLACK
             }
 
-            return AS_BOTH
+            return AS_WHITE
         }
     }
 }

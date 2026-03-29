@@ -6,10 +6,9 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
@@ -28,8 +27,6 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.R
@@ -331,8 +328,6 @@ fun ChessBoardWithCoordinates(
     }
 
     val orientation = gameController.getSide()
-    val squareSizeDp = minScreenSizeDp(0.8f)
-    val squareSizePx = minScreenSizePx(0.8f) / CellCount
 
     // Tap selection state
     var selectedSquare by remember(orientation) { mutableStateOf<String?>(null) }
@@ -341,13 +336,15 @@ fun ChessBoardWithCoordinates(
     var dragFromSquare by remember(orientation) { mutableStateOf<String?>(null) }
     var dragOffset by remember(orientation) { mutableStateOf(Offset.Zero) }
 
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
+    BoxWithConstraints(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
+        val squareSizePx = constraints.maxWidth / CellCount.toFloat()
+
         Box(
             modifier = Modifier
-                .size(squareSizeDp.dp)
+                .fillMaxSize()
                 .pointerInput(squareSizePx, orientation) {
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
@@ -427,21 +424,3 @@ fun ChessBoardWithCoordinates(
     }
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Utilities
-// ──────────────────────────────────────────────────────────────────────────────
-
-@Composable
-private fun dpToPixel(pixels: Float): Float {
-    val density = LocalDensity.current
-    return with(density) { pixels.dp.toPx() }
-}
-
-@Composable
-private fun minScreenSizeDp(k: Float): Float {
-    val configuration = LocalConfiguration.current
-    return minOf(configuration.screenWidthDp, configuration.screenHeightDp) * k
-}
-
-@Composable
-private fun minScreenSizePx(k: Float): Float = dpToPixel(minScreenSizeDp(k))

@@ -11,6 +11,7 @@ sealed class ScreenType(val title: String) {
     object GameEditor : ScreenType("GameEditor")
     object Stats : ScreenType("Stats")
     object Profile : ScreenType("Profile")
+    object Settings : ScreenType("Settings")
 
     override fun toString(): String = title
 }

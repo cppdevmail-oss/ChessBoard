@@ -37,6 +37,8 @@ Android chess opening trainer. Users save games (openings) and review/train them
 | `GameEditorScreen.kt` | Loads a single `GameEntity`, replays its PGN, shows move-chip row, allows undo/redo/save/delete. |
 | `TrainingComponents.kt` | Shared composables and pure helpers reused by both training-related and editor screens (see below). |
 | `ScrenTypes.kt` | `sealed class ScreenType` - Home, Training, GamesExplorer, CreateOpening, CreateTraining, GameEditor, TrainSingleGame, Stats, Profile. |
+| `ProfileScreen.kt` | Profile screen - hero card with avatar/level/progress, quick stats, achievements list, settings/clear-data action rows. Container + Stateless pattern backed by `ProfileViewModel`. |
+| `ProfileViewModel.kt` | Holds `ProfileState` (userName, level, totalMoves, accuracy, bestStreak, achievements) via `StateFlow`. No DB access - state is static defaults for now. |
 
 ### Single-game training (`ui/screen/trainSingleGame/`)
 | File | Role |
@@ -228,6 +230,8 @@ After any non-trivial change update the relevant section above - correct file pa
 ---
 
 ## Recent Changes
+
+- **`ProfileScreen.kt` + `ProfileViewModel.kt`** - Profile feature added under `ScreenType.Profile`. `ProfileScreenContainer` uses `remember { ProfileViewModel() }` to collect `ProfileState` and delegates to stateless `ProfileScreen`. Screen contains hero card (avatar, level badge, progress bar), quick stats row (accuracy, best streak, achievements count), achievements list with lock/unlock state, and an action menu with Settings and Clear All Data rows. Wired into `MainActivity` before the `else` branch.
 
 - **Multi-line PGN import** - `PgnImportService.kt` now expands nested PGN variations into separate lines, and `CreateOpeningScreen.kt` saves imported lines as separate games on Save while still previewing the first line on the board.
 - **`.claude` workspace documented** - `CLAUDE.md` now documents the repo-local `.claude/agents`, `.claude/commands`, and local settings file so future work can reuse those prompts as project context.

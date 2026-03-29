@@ -13,13 +13,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.outlined.AccountBox
+import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -54,20 +54,14 @@ fun defaultAppBottomNavigationItems(): List<AppBottomNavigationItem<ScreenType>>
         AppBottomNavigationItem(
             value = ScreenType.Training,
             label = ScreenType.Training.toString(),
-            iconUnselected = Icons.Outlined.AccountBox,
-            iconSelected = Icons.Filled.AccountBox
-        ),
-        AppBottomNavigationItem(
-            value = ScreenType.GamesExplorer,
-            label = ScreenType.GamesExplorer.toString(),
-            iconUnselected = Icons.Outlined.Info,
-            iconSelected = Icons.Filled.Info
+            iconUnselected = Icons.AutoMirrored.Outlined.MenuBook,
+            iconSelected = Icons.AutoMirrored.Filled.MenuBook
         ),
         AppBottomNavigationItem(
             value = ScreenType.Stats,
             label = ScreenType.Stats.toString(),
-            iconUnselected = Icons.Outlined.Info,
-            iconSelected = Icons.Filled.Info
+            iconUnselected = Icons.Outlined.BarChart,
+            iconSelected = Icons.Filled.BarChart
         ),
         AppBottomNavigationItem(
             value = ScreenType.Profile,
