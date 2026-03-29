@@ -11,7 +11,9 @@ import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.entity.GamePositionEntity
 import com.example.chessboard.entity.PositionEntity
 import com.example.chessboard.entity.TrainingEntity
+import com.example.chessboard.entity.TrainingResultEntity
 import com.example.chessboard.entity.TrainingTemplateEntity
+import com.example.chessboard.service.TrainingResultService
 import com.example.chessboard.service.TrainingGameLaunchResult
 import com.example.chessboard.service.GameDeleter
 import com.example.chessboard.service.GameSaver
@@ -27,9 +29,10 @@ import com.github.bhlangonijr.chesslib.move.Move
         PositionEntity::class,
         GamePositionEntity::class,
         TrainingTemplateEntity::class,
-        TrainingEntity::class
+        TrainingEntity::class,
+        TrainingResultEntity::class,
     ],
-    version = 6
+    version = 7
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun gameDao(): GameDao
@@ -37,6 +40,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun gamePositionDao(): GamePositionDao
     abstract fun trainingTemplateDao(): TrainingTemplateDao
     abstract fun trainingDao(): TrainingDao
+    abstract fun trainingResultDao(): TrainingResultDao
 }
 
 class DatabaseProvider private constructor(
@@ -131,18 +135,41 @@ class DatabaseProvider private constructor(
         return trainingService.getTrainingById(trainingId)
     }
 
-    suspend fun finishTrainingGame(trainingId: Long, gameId: Long): Boolean {
+    suspend fun finishTrainingGame(
+        trainingId: Long,
+        gameId: Long,
+        mistakesCount: Int
+    ): Boolean {
         val trainSingleGameService = TrainSingleGameService(database)
 
         return trainSingleGameService.finishTraining(
             trainingId = trainingId,
-            gameId = gameId
+            gameId = gameId,
+            mistakesCount = mistakesCount
+        )
+    }
+
+
+    suspend fun getRecentTrainingResults(limit: Int): List<TrainingResultEntity> {
+        val trainingResultService = createTrainingResultService()
+        return trainingResultService.getRecentResults(limit)
+    }
+
+    suspend fun getTrainingResultsForGame(gameId: Long, limit: Int): List<TrainingResultEntity> {
+        val trainingResultService = createTrainingResultService()
+        return trainingResultService.getResultsForGame(
+            gameId = gameId,
+            limit = limit
         )
     }
 
     suspend fun getTrainingGameLaunchData(trainingId: Long): TrainingGameLaunchResult {
         val trainSingleGameService = TrainSingleGameService(database)
         return trainSingleGameService.getTrainingGameLaunchData(trainingId)
+    }
+
+    private fun createTrainingResultService(): TrainingResultService {
+        return TrainingResultService(database)
     }
 
     private fun createTrainingService(): TrainingService {
