@@ -25,7 +25,23 @@ import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TextColor
 
-// Renders the completion dialog only when the session has a completion state.
+// Renders the wrong-move dialog only when the session has a message.
+@Composable
+internal fun RenderWrongMoveDialog(
+    message: String?,
+    onDismiss: () -> Unit
+) {
+    if (message == null) {
+        return
+    }
+
+    AppMessageDialog(
+        title = "Wrong Move",
+        message = message,
+        onDismiss = onDismiss
+    )
+}
+
 @Composable
 internal fun RenderCompletionDialog(
     dialogState: TrainSingleGameCompletionState?,

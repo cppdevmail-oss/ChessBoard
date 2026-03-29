@@ -160,6 +160,11 @@ private fun TrainSingleGameScreen(
             )
         }
     ) { paddingValues ->
+        RenderWrongMoveDialog(
+            message = uiState.wrongMoveDialogMessage,
+            onDismiss = { uiState = uiState.copy(wrongMoveDialogMessage = null) }
+        )
+
         RenderCompletionDialog(
             dialogState = uiState.completionDialog,
             onRepeatClick = {
