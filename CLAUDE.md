@@ -1,4 +1,4 @@
-# CLAUDE.md — ChessBoard Project
+# CLAUDE.md - ChessBoard Project
 
 Loaded automatically at the start of every Claude Code session. Read this before touching any code.
 
@@ -14,6 +14,13 @@ Android chess opening trainer. Users save games (openings) and review/train them
 
 ## File Map
 
+### Claude Workspace (`.claude/`)
+| Path | Role |
+|---|---|
+| `.claude/agents/` | Repo-local specialist agent prompts for focused tasks such as chess logic, DB schema work, and screen building. |
+| `.claude/commands/` | Repo-local reusable command prompts for recurring workflows such as adding screens/entities and debugging board or training flows. |
+| `.claude/settings.local.json` | Local Claude workspace settings for this repository. |
+
 ### Entry
 | File | Role |
 |---|---|
@@ -23,13 +30,13 @@ Android chess opening trainer. Users save games (openings) and review/train them
 | File | Role |
 |---|---|
 | `HomeScreen.kt` | Lists all saved games. Opens a game in `GameEditorScreen`. |
-| `CreateOpeningScreen.kt` | Form to input and save a new game/opening. |
+| `CreateOpeningScreen.kt` | Form to input and save a new game/opening. Uses `PgnImportService` for PGN header extraction, SAN-to-UCI import, and batch-saving imported variation lines as separate games. |
 | `CreateTrainingScreen.kt` | Creates a training from selected games with editable weights. |
 | `TrainingListScreen.kt` | Loads and displays all saved trainings as cards with name, training ID, and games count. |
 | `GamesExplorerScreen.kt` | Loads all saved games, shows each as a `GameBlock` (title + move-chip row + nav). Clicking any chip loads that game at that ply on the shared board. |
 | `GameEditorScreen.kt` | Loads a single `GameEntity`, replays its PGN, shows move-chip row, allows undo/redo/save/delete. |
 | `TrainingComponents.kt` | Shared composables and pure helpers reused by both training-related and editor screens (see below). |
-| `ScrenTypes.kt` | `sealed class ScreenType` — Home, Training, GamesExplorer, CreateOpening, CreateTraining, GameEditor, TrainSingleGame, Stats, Profile. |
+| `ScrenTypes.kt` | `sealed class ScreenType` - Home, Training, GamesExplorer, CreateOpening, CreateTraining, GameEditor, TrainSingleGame, Stats, Profile. |
 
 ### Single-game training (`ui/screen/trainSingleGame/`)
 | File | Role |
@@ -49,7 +56,7 @@ Android chess opening trainer. Users save games (openings) and review/train them
 | File | Role |
 |---|---|
 | `GameController.kt` | Wraps `chesslib.Board`. Manages move list, undo/redo, `boardState` (Compose int-state that triggers recomposition), `canUndo`, `canRedo`. |
-| `BoardModel.kt` / `ChesslibMapper.kt` | Maps chesslib FEN → `BoardPosition` used for rendering. |
+| `BoardModel.kt` / `ChesslibMapper.kt` | Maps chesslib FEN to `BoardPosition` used for rendering. |
 
 ### Data (`entity/`)
 | Entity | Table | Key fields |
@@ -73,6 +80,7 @@ Android chess opening trainer. Users save games (openings) and review/train them
 | `GameUpdater.kt` | Transactional game replacement flow: removes old links/positions as needed, deletes old game row, saves edited game again through `GameSaver`. |
 | `GameDeleter.kt` | Transactional delete: removes game links, deletes the game, then deletes or updates affected positions. |
 | `GameUniqueChecker.kt` | Returns true if at least one position in the game hasn't been seen for this side. |
+| `PgnImportService.kt` | Extracts PGN headers, expands nested PGN variations into separate playable lines, converts SAN text into UCI moves, and builds stored PGN/move lists for `CreateOpeningScreen`. |
 | `TrainingService.kt` | Creates trainings from game lists, lists trainings, validates training integrity, decreases line weight after completion. |
 | `TrainSingleGameService.kt` | Loads game data for single-game training, finishes a trained line, resolves first launchable training/game pair. |
 
@@ -80,7 +88,7 @@ Android chess opening trainer. Users save games (openings) and review/train them
 
 ## Shared Logic in TrainingComponents.kt
 
-Check here before writing any new helper — it may already exist.
+Check here before writing any new helper - it may already exist.
 
 | Symbol | Type | Purpose |
 |---|---|---|
@@ -111,7 +119,7 @@ fun setDestinationSquareAndTryMove(dest: String?): Boolean
 fun setOrientation(orientation: BoardOrientation)
 
 // Compose-observable state
-var boardState: Int          // increments on every change → drives recomposition
+var boardState: Int
 var currentMoveIndex: Int
 var canUndo: Boolean
 var canRedo: Boolean
@@ -126,20 +134,20 @@ fun generatePgn(): String
 
 ## Navigation Pattern
 
-```
+```text
 MainActivity
-├─ currentScreen: ScreenType  (mutableStateOf)
-├─ selectedGame: GameEntity?  (passed to GameEditor)
-│
-└─ when(currentScreen) {
-     Home            → HomeScreenContainer
-     Training        → TrainingListScreenContainer
-     GamesExplorer   → GamesExplorerScreenContainer
-     CreateOpening   → CreateOpeningScreenContainer
-     CreateTraining  → CreateTrainingScreenContainer
-     GameEditor      → GameEditorScreenContainer(selectedGame)
-     TrainSingleGame → TemporaryWrongWayStartOneSingleTraining
-     Stats / Profile → (placeholder)
+|- currentScreen: ScreenType  (mutableStateOf)
+|- selectedGame: GameEntity?  (passed to GameEditor)
+|
+\- when(currentScreen) {
+     Home            -> HomeScreenContainer
+     Training        -> TrainingListScreenContainer
+     GamesExplorer   -> GamesExplorerScreenContainer
+     CreateOpening   -> CreateOpeningScreenContainer
+     CreateTraining  -> CreateTrainingScreenContainer
+     GameEditor      -> GameEditorScreenContainer(selectedGame)
+     TrainSingleGame -> TemporaryWrongWayStartOneSingleTraining
+     Stats / Profile -> (placeholder)
    }
 ```
 
@@ -147,8 +155,8 @@ MainActivity
 
 ## Training System Design
 
-- **TrainingTemplateEntity** — immutable set of games with weights (`gamesJson: [{gameId, weight}]`)
-- **TrainingEntity** — mutable copy of a template; weights decrease as user completes games; entry removed when weight hits 0; training deleted when list is empty
+- **TrainingTemplateEntity** - immutable set of games with weights (`gamesJson: [{gameId, weight}]`)
+- **TrainingEntity** - mutable copy of a template; weights decrease as user completes games; entry removed when weight hits 0; training deleted when list is empty
 - `TrainingService.validateTraining(trainingId)` removes broken game references and deletes empty trainings
 - `TrainSingleGameScreen` decrements weight through `TrainSingleGameService.finishTraining(...)`
 - There is also direct training creation from UI via `createTrainingFromGames(...)`, not only template-copy creation
@@ -190,11 +198,23 @@ MainActivity
 ## Rules
 
 ### Patterns to follow
-- Screen files use **Container + Stateless** — state and DB calls in `XyzScreenContainer`, pure UI in `XyzScreen`
+- Screen files use **Container + Stateless** - state and DB calls in `XyzScreenContainer`, pure UI in `XyzScreen`
 - DB operations on `Dispatchers.IO`, CPU-heavy work on `Dispatchers.Default`, UI state updates on `Dispatchers.Main`
-- All DB access through `DatabaseProvider` — never call DAOs directly from screens
+- All DB access through `DatabaseProvider` - never call DAOs directly from screens
 - Transactional game save/update/delete through `GameSaver`, `GameUpdater`, `GameDeleter`
 - Navigation state lives in `MainActivity`; add new screens to `ScreenType` and the `when` block
+- Check `.claude/agents/` and `.claude/commands/` before inventing new repo guidance; prefer reusing those repo-local prompts when they match the task
+
+### Repo-local Claude Agents
+- `.claude/agents/chess-logic.md` - use for move generation, PGN/FEN handling, legality, and board-state reasoning
+- `.claude/agents/db-schema.md` - use for Room entities, DAOs, schema shape, and persistence design changes
+- `.claude/agents/screen-builder.md` - use for Compose screen structure, screen wiring, and UI implementation patterns
+
+### Repo-local Claude Commands
+- `.claude/commands/add-entity.md` - workflow for introducing a new entity/table and associated persistence wiring
+- `.claude/commands/add-screen.md` - workflow for adding a new screen and routing it through the app
+- `.claude/commands/board-debug.md` - debugging checklist for board interaction and game-state issues
+- `.claude/commands/training-check.md` - validation checklist for training flows and data integrity
 
 ### Don't
 - Don't duplicate logic that belongs in `TrainingComponents.kt`
@@ -203,13 +223,16 @@ MainActivity
 - Don't over-engineer; solve only what was asked
 
 ### Keeping this file up to date
-After any non-trivial change update the relevant section above — correct file paths, API signatures, or add to Recent Changes.
+After any non-trivial change update the relevant section above - correct file paths, API signatures, or add to Recent Changes.
 
 ---
 
 ## Recent Changes
 
-- **`TrainingListScreen.kt` and training route split** — `ScreenType.Training` now opens a dedicated list of saved trainings. Each card shows the training name, DB ID, and games count parsed from `gamesJson`. The old `TrainingScreen.kt` role was renamed to `GamesExplorerScreen.kt` and moved under `ScreenType.GamesExplorer`.
-- **`ChessBoard.kt` drag-and-drop** — replaced tap-only `detectTapGestures` with `awaitEachGesture` that distinguishes tap vs drag by `viewConfiguration.touchSlop`. During drag: piece at origin is skipped in normal draw pass and re-drawn centered on the finger (on top). On release, target square is bounds-checked (off-board = no move), then `setStartSquare` + `setDestinationSquareAndTryMove` validate and attempt the move. Two-tap flow still works for taps. All `GameController` mutations moved out of the Canvas draw block into gesture callbacks (`ChessBoardWithCoordinates`). `ChessBoard` is now a pure renderer.
-- **`GameController.loadFromUciMoves(uciMoves, targetPly)`** — loads a full game from UCI strings and parks at `targetPly`; all moves kept so undo/redo works across the whole game; single `boardState++` at end
-- **Shared logic extracted to `TrainingComponents.kt`** — `parsePgnMoves`, `computeLabel`, `buildMoveLabels`, `MoveChip`, `ParsedGame` moved from both screen files into one canonical location
+- **Multi-line PGN import** - `PgnImportService.kt` now expands nested PGN variations into separate lines, and `CreateOpeningScreen.kt` saves imported lines as separate games on Save while still previewing the first line on the board.
+- **`.claude` workspace documented** - `CLAUDE.md` now documents the repo-local `.claude/agents`, `.claude/commands`, and local settings file so future work can reuse those prompts as project context.
+- **`PgnImportService.kt` ownership** - PGN import parsing for `CreateOpeningScreen.kt` now lives in `service/PgnImportService.kt`. The screen handles only UI state, dispatching the import job, and applying imported headers/moves to the controller.
+- **`TrainingListScreen.kt` and training route split** - `ScreenType.Training` now opens a dedicated list of saved trainings. Each card shows the training name, DB ID, and games count parsed from `gamesJson`. The old `TrainingScreen.kt` role was renamed to `GamesExplorerScreen.kt` and moved under `ScreenType.GamesExplorer`.
+- **`ChessBoard.kt` drag-and-drop** - replaced tap-only `detectTapGestures` with `awaitEachGesture` that distinguishes tap vs drag by `viewConfiguration.touchSlop`. During drag: piece at origin is skipped in normal draw pass and re-drawn centered on the finger (on top). On release, target square is bounds-checked (off-board = no move), then `setStartSquare` + `setDestinationSquareAndTryMove` validate and attempt the move. Two-tap flow still works for taps. All `GameController` mutations moved out of the Canvas draw block into gesture callbacks (`ChessBoardWithCoordinates`). `ChessBoard` is now a pure renderer.
+- **`GameController.loadFromUciMoves(uciMoves, targetPly)`** - loads a full game from UCI strings and parks at `targetPly`; all moves kept so undo/redo works across the whole game; single `boardState++` at end
+- **Shared logic extracted to `TrainingComponents.kt`** - `parsePgnMoves`, `computeLabel`, `buildMoveLabels`, `MoveChip`, `ParsedGame` moved from both screen files into one canonical location
