@@ -10,7 +10,8 @@ internal fun resetSessionState(uiState: TrainSingleGameUiState): TrainSingleGame
     uiState.copy(
         phase = TrainSingleGamePhase.Idle,
         expectedPly = 0,
-        completionDialog = null
+        completionDialog = null,
+        wrongMoveDialogMessage = null,
     )
 
 // Builds the state used when automatic line playback starts from the beginning.
@@ -18,7 +19,8 @@ internal fun buildShowLineState(uiState: TrainSingleGameUiState): TrainSingleGam
     uiState.copy(
         completionDialog = null,
         expectedPly = 0,
-        phase = TrainSingleGamePhase.ShowingLine
+        phase = TrainSingleGamePhase.ShowingLine,
+        wrongMoveDialogMessage = null,
     )
 
 // Builds the state used when interactive training starts from the beginning.
@@ -26,7 +28,8 @@ internal fun buildStartTrainingState(uiState: TrainSingleGameUiState): TrainSing
     uiState.copy(
         completionDialog = null,
         expectedPly = 0,
-        phase = TrainSingleGamePhase.Training
+        phase = TrainSingleGamePhase.Training,
+        wrongMoveDialogMessage = null,
     )
 
 // Builds the state used when the user chooses to replay the current variation.
@@ -34,7 +37,8 @@ internal fun buildRepeatVariationState(uiState: TrainSingleGameUiState): TrainSi
     uiState.copy(
         completionDialog = null,
         expectedPly = 0,
-        phase = TrainSingleGamePhase.Training
+        phase = TrainSingleGamePhase.Training,
+        wrongMoveDialogMessage = null,
     )
 
 // Replays the full variation from the start with a fixed delay between moves.
@@ -135,7 +139,8 @@ internal fun handleTrainingProgress(
     gameController.loadFromUciMoves(uciMoves, uiState.expectedPly)
     return uiState.copy(
         mistakesCount = uiState.mistakesCount + 1,
-        phase = TrainSingleGamePhase.Mistake
+        wrongMoveDialogMessage = "Wrong move. This move is not part of the training line.",
+        phase = TrainSingleGamePhase.Training,
     )
 }
 
@@ -249,7 +254,7 @@ internal fun resolveAllowedUserMoveUci(
         return null
     }
 
-    return uciMoves[uiState.expectedPly]
+    return null
 }
 
 internal fun resolveBoardInteractionEnabled(uiState: TrainSingleGameUiState): Boolean {

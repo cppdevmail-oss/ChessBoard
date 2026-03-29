@@ -45,7 +45,8 @@ internal data class TrainSingleGameUiState(
     // Total number of mistakes made during the session.
     val mistakesCount: Int = 0,
     // Completion dialog state shown after finishing a variation.
-    val completionDialog: TrainSingleGameCompletionState? = null
+    val completionDialog: TrainSingleGameCompletionState? = null,
+    val wrongMoveDialogMessage: String? = null
 )
 
 // Stores the data needed to render the variation completion dialog.
