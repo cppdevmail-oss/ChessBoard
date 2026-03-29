@@ -232,6 +232,12 @@ private fun TrainSingleGameScreen(
                         sidesCount = trainingSides.size
                     )
                 },
+                onStopTrainingClick = {
+                    showLineJob?.cancel()
+                    showLineJob = null
+                    gameController.resetToStartPosition()
+                    uiState = resetSessionState(uiState)
+                },
                 onMakeCorrectMoveClick = {
                     uiState = handleCorrectMove(
                         uiState = uiState,

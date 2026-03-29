@@ -58,6 +58,7 @@ internal fun TrainSingleGameContent(
     onShowLineClick: () -> Unit,
     onStopShowLineClick: () -> Unit,
     onStartTrainingClick: () -> Unit,
+    onStopTrainingClick: () -> Unit,
     onMakeCorrectMoveClick: () -> Unit,
 ) {
     ScreenSection {
@@ -70,9 +71,10 @@ internal fun TrainSingleGameContent(
                 onShowLineClick = onShowLineClick,
                 onStopShowLineClick = onStopShowLineClick,
                 onStartTrainingClick = onStartTrainingClick,
+                onStopTrainingClick = onStopTrainingClick,
                 onMakeCorrectMoveClick = onMakeCorrectMoveClick,
                 isShowingLine = phase == TrainSingleGamePhase.ShowingLine,
-                isTraining = phase == TrainSingleGamePhase.Training,
+                isTrainingActive = phase == TrainSingleGamePhase.Training || phase == TrainSingleGamePhase.Mistake,
                 showCorrectMove = phase == TrainSingleGamePhase.Mistake,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -144,12 +146,50 @@ internal fun TrainingSingleGameActions(
     onShowLineClick: () -> Unit,
     onStopShowLineClick: () -> Unit,
     onStartTrainingClick: () -> Unit,
+    onStopTrainingClick: () -> Unit,
     onMakeCorrectMoveClick: () -> Unit,
     isShowingLine: Boolean,
-    isTraining: Boolean,
+    isTrainingActive: Boolean,
     showCorrectMove: Boolean,
     modifier: Modifier = Modifier
 ) {
+    @Composable
+    fun IdleTrainingActions(
+        onShowLineClick: () -> Unit,
+        onStartTrainingClick: () -> Unit
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)
+        ) {
+            PrimaryButton(
+                text = "Show line",
+                onClick = onShowLineClick
+            )
+            PrimaryButton(
+                text = "Start training",
+                onClick = onStartTrainingClick
+            )
+        }
+    }
+
+    @Composable
+    fun PrimaryTrainingAction() {
+        if (isTrainingActive) {
+            PrimaryButton(
+                text = "Stop training",
+                onClick = onStopTrainingClick,
+                modifier = Modifier.fillMaxWidth()
+            )
+            return
+        }
+
+        IdleTrainingActions(
+            onShowLineClick = onShowLineClick,
+            onStartTrainingClick = onStartTrainingClick
+        )
+    }
+
     Column(modifier = modifier) {
         if (isShowingLine) {
             PrimaryButton(
@@ -160,21 +200,7 @@ internal fun TrainingSingleGameActions(
             return@Column
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)
-        ) {
-            PrimaryButton(
-                text = "Show line",
-                onClick = onShowLineClick,
-                enabled = !isTraining
-            )
-            PrimaryButton(
-                text = "Start training",
-                onClick = onStartTrainingClick,
-                enabled = !isTraining
-            )
-        }
+        PrimaryTrainingAction()
 
         if (!showCorrectMove) {
             return
