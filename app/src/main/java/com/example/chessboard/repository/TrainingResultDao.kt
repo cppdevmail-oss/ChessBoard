@@ -26,6 +26,27 @@ abstract class TrainingResultDao {
     )
     protected abstract suspend fun trimToLatestInternal(limit: Int)
 
+    @Query(
+        """
+        SELECT *
+        FROM training_results
+        ORDER BY trainedAt DESC, id DESC
+        LIMIT :limit
+        """
+    )
+    abstract suspend fun getRecentResults(limit: Int): List<TrainingResultEntity>
+
+    @Query(
+        """
+        SELECT *
+        FROM training_results
+        WHERE gameId = :gameId
+        ORDER BY trainedAt DESC, id DESC
+        LIMIT :limit
+        """
+    )
+    abstract suspend fun getResultsForGame(gameId: Long, limit: Int): List<TrainingResultEntity>
+
     @Transaction
     open suspend fun insertAndTrim(
         result: TrainingResultEntity,

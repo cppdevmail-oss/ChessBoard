@@ -13,6 +13,7 @@ import com.example.chessboard.entity.PositionEntity
 import com.example.chessboard.entity.TrainingEntity
 import com.example.chessboard.entity.TrainingResultEntity
 import com.example.chessboard.entity.TrainingTemplateEntity
+import com.example.chessboard.service.TrainingResultService
 import com.example.chessboard.service.TrainingGameLaunchResult
 import com.example.chessboard.service.GameDeleter
 import com.example.chessboard.service.GameSaver
@@ -148,9 +149,27 @@ class DatabaseProvider private constructor(
         )
     }
 
+
+    suspend fun getRecentTrainingResults(limit: Int): List<TrainingResultEntity> {
+        val trainingResultService = createTrainingResultService()
+        return trainingResultService.getRecentResults(limit)
+    }
+
+    suspend fun getTrainingResultsForGame(gameId: Long, limit: Int): List<TrainingResultEntity> {
+        val trainingResultService = createTrainingResultService()
+        return trainingResultService.getResultsForGame(
+            gameId = gameId,
+            limit = limit
+        )
+    }
+
     suspend fun getTrainingGameLaunchData(trainingId: Long): TrainingGameLaunchResult {
         val trainSingleGameService = TrainSingleGameService(database)
         return trainSingleGameService.getTrainingGameLaunchData(trainingId)
+    }
+
+    private fun createTrainingResultService(): TrainingResultService {
+        return TrainingResultService(database)
     }
 
     private fun createTrainingService(): TrainingService {

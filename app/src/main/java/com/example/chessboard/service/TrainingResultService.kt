@@ -20,4 +20,14 @@ class TrainingResultService(
             )
         )
     }
+    suspend fun getRecentResults(limit: Int): List<TrainingResultEntity> {
+        return database.trainingResultDao().getRecentResults(limit)
+    }
+
+    suspend fun getResultsForGame(gameId: Long, limit: Int): List<TrainingResultEntity> {
+        return database.trainingResultDao().getResultsForGame(
+            gameId = gameId,
+            limit = limit
+        )
+    }
 }
