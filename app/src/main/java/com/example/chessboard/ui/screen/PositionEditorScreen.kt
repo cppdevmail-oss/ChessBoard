@@ -427,11 +427,14 @@ private fun placePieceOnFen(
     pieceLetter: Char
 ): String {
     val currentPosition = ChesslibMapper.fromFen(fen)
-    val updatedPosition = BoardPosition(
-        pieces = currentPosition.pieces
-            .filterNot { it.field == square }
-            .plus(BoardPiece(pieceLetter, square))
-    )
+    val currentPiece = currentPosition.pieces.find { it.field == square }
+    val updatedPieces = currentPosition.pieces.filterNot { it.field == square }.toMutableList()
+
+    if (currentPiece?.letter != pieceLetter) {
+        updatedPieces += BoardPiece(pieceLetter, square)
+    }
+
+    val updatedPosition = BoardPosition(pieces = updatedPieces)
     val metadata = fen.substringAfter(' ', "w - - 0 1")
     return buildFenFromBoardPosition(updatedPosition, metadata)
 }
