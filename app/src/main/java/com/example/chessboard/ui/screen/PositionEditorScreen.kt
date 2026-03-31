@@ -114,9 +114,18 @@ fun PositionEditorScreenContainer(
             val wasLoaded = gameController.loadFromFen(normalizedFen)
             if (!wasLoaded) {
                 fenError = "Failed to parse FEN"
-            } else {
-                fenText = gameController.getFen()
+                return@PositionEditorScreen
             }
+
+            fenText = gameController.getFen()
+        },
+        onClearBoardClick = {
+            gameController.loadFromFen(EmptyBoardFen)
+            fenText = gameController.getFen()
+        },
+        onSetInitialPositionClick = {
+            gameController.resetToStartPosition()
+            fenText = gameController.getFen()
         },
         onBoardSquareClick = { square ->
             val updatedFen = placePieceOnFen(
@@ -145,6 +154,8 @@ private fun PositionEditorScreen(
     fenError: String?,
     onFenErrorDismiss: () -> Unit,
     onApplyFenClick: () -> Unit,
+    onClearBoardClick: () -> Unit,
+    onSetInitialPositionClick: () -> Unit,
     onBoardSquareClick: (String) -> Unit,
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
@@ -238,6 +249,24 @@ private fun PositionEditorScreen(
             }
 
             item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)
+                ) {
+                    SecondaryButton(
+                        text = "Clear board",
+                        onClick = onClearBoardClick,
+                        modifier = Modifier.weight(1f)
+                    )
+                    SecondaryButton(
+                        text = "Initial position",
+                        onClick = onSetInitialPositionClick,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            item {
                 PositionEditorSideSelector(
                     selectedSide = selectedSide,
                     onSideSelected = onSideSelected
@@ -312,7 +341,6 @@ private fun PositionEditorPiecePalette(
 ) {
     ScreenSection(modifier = modifier) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            SectionTitleText(text = "Place Piece")
             Spacer(modifier = Modifier.height(AppDimens.spaceSm))
             BodySecondaryText(text = selectedPiece.label)
             Spacer(modifier = Modifier.height(AppDimens.spaceMd))
