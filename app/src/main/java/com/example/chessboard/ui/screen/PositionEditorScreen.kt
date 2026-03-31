@@ -109,16 +109,6 @@ fun PositionEditorScreenContainer(
         onPieceSelected = { selectedPiece = it },
         fenError = fenError,
         onFenErrorDismiss = { fenError = null },
-        onApplyFenClick = {
-            val normalizedFen = normalizePositionEditorFen(fenText)
-            val wasLoaded = gameController.loadFromFen(normalizedFen)
-            if (!wasLoaded) {
-                fenError = "Failed to parse FEN"
-                return@PositionEditorScreen
-            }
-
-            fenText = gameController.getFen()
-        },
         onClearBoardClick = {
             gameController.loadFromFen(EmptyBoardFen)
             fenText = gameController.getFen()
@@ -153,7 +143,6 @@ private fun PositionEditorScreen(
     onPieceSelected: (PositionEditorPieceOption) -> Unit,
     fenError: String?,
     onFenErrorDismiss: () -> Unit,
-    onApplyFenClick: () -> Unit,
     onClearBoardClick: () -> Unit,
     onSetInitialPositionClick: () -> Unit,
     onBoardSquareClick: (String) -> Unit,
@@ -175,9 +164,6 @@ private fun PositionEditorScreen(
             AppTopBar(
                 title = "Position Editor",
                 onBackClick = onBackClick,
-                actions = {
-                    SecondaryButton(text = "Set by FEN", onClick = onApplyFenClick)
-                }
             )
         },
         bottomBar = {
@@ -202,8 +188,6 @@ private fun PositionEditorScreen(
             item {
                 ScreenSection {
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        SectionTitleText(text = "Position FEN", color = TrainingAccentTeal)
-                        Spacer(modifier = Modifier.height(AppDimens.spaceSm))
                         BasicTextField(
                             value = fenText,
                             onValueChange = onFenTextChange,
@@ -251,26 +235,31 @@ private fun PositionEditorScreen(
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)
+                    horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd),
+                    verticalAlignment = Alignment.Top
                 ) {
-                    SecondaryButton(
-                        text = "Clear board",
-                        onClick = onClearBoardClick,
+                    PositionEditorSideSelector(
+                        selectedSide = selectedSide,
+                        onSideSelected = onSideSelected,
                         modifier = Modifier.weight(1f)
                     )
-                    SecondaryButton(
-                        text = "Initial position",
-                        onClick = onSetInitialPositionClick,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
 
-            item {
-                PositionEditorSideSelector(
-                    selectedSide = selectedSide,
-                    onSideSelected = onSideSelected
-                )
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)
+                    ) {
+                        SecondaryButton(
+                            text = "Clear board",
+                            onClick = onClearBoardClick,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        SecondaryButton(
+                            text = "Initial position",
+                            onClick = onSetInitialPositionClick,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
             }
 
             item {
