@@ -45,15 +45,13 @@ import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.BodySecondaryText
-import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.ScreenSection
+import com.example.chessboard.ui.components.SecondaryButton
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.theme.AppDimens
-import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingDividerColor
 import com.example.chessboard.ui.theme.ChessPieceDark
 import com.example.chessboard.ui.theme.TrainingIconInactive
 import com.example.chessboard.ui.theme.TrainingTextPrimary
@@ -165,8 +163,10 @@ private fun PositionEditorScreen(
         topBar = {
             AppTopBar(
                 title = "Position Editor",
-                subtitle = "Build a board position manually or from FEN",
-                onBackClick = onBackClick
+                onBackClick = onBackClick,
+                actions = {
+                    SecondaryButton(text = "Set by FEN", onClick = onApplyFenClick)
+                }
             )
         },
         bottomBar = {
@@ -216,12 +216,6 @@ private fun PositionEditorScreen(
                                     innerTextField()
                                 }
                             }
-                        )
-                        Spacer(modifier = Modifier.height(AppDimens.spaceMd))
-                        PrimaryButton(
-                            text = "Set by FEN",
-                            onClick = onApplyFenClick,
-                            modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }
