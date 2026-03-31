@@ -18,6 +18,7 @@ import com.example.chessboard.ui.screen.CreateTrainingScreenContainer
 import com.example.chessboard.ui.screen.GameEditorScreenContainer
 import com.example.chessboard.ui.screen.GamesExplorerScreenContainer
 import com.example.chessboard.ui.screen.HomeScreenContainer
+import com.example.chessboard.ui.screen.PositionEditorScreenContainer
 import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.screen.ProfileScreenContainer
 import com.example.chessboard.ui.screen.SettingsScreenContainer
@@ -74,6 +75,11 @@ class MainActivity : ComponentActivity() {
                         inDbProvider = dbProvider,
                     )
 
+                    ScreenType.PositionEditor -> PositionEditorScreenContainer(
+                        onBackClick = { currentScreen = ScreenType.Home },
+                        onNavigate = { currentScreen = it },
+                    )
+
                     is ScreenType.CreateTraining -> CreateTrainingScreenContainer(
                         trainingId = screen.trainingId,
                         activity = this@MainActivity,
@@ -118,6 +124,9 @@ class MainActivity : ComponentActivity() {
                         },
                         onStartFirstTrainingClick = {
                             currentScreen = ScreenType.Training
+                        },
+                        onOpenPositionEditorClick = {
+                            currentScreen = ScreenType.PositionEditor
                         },
                     )
 

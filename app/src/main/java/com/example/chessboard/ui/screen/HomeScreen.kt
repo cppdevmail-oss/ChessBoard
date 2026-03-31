@@ -50,12 +50,14 @@ fun HomeScreenContainer(
     onNavigate: (ScreenType) -> Unit = {},
     onCreateTrainingClick: () -> Unit = {},
     onStartFirstTrainingClick: () -> Unit = {},
+    onOpenPositionEditorClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     HomeScreen(
         onNavigate = onNavigate,
         onCreateTrainingClick = onCreateTrainingClick,
         onStartFirstTrainingClick = onStartFirstTrainingClick,
+        onOpenPositionEditorClick = onOpenPositionEditorClick,
         onExitClick = { activity.finishAffinity() },
         modifier = modifier
     )
@@ -66,6 +68,7 @@ fun HomeScreen(
     onNavigate: (ScreenType) -> Unit = {},
     onCreateTrainingClick: () -> Unit = {},
     onStartFirstTrainingClick: () -> Unit = {},
+    onOpenPositionEditorClick: () -> Unit = {},
     onExitClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -167,6 +170,16 @@ fun HomeScreen(
                     PrimaryButton(
                         text = "Create Opening",
                         onClick = { onNavigate(ScreenType.CreateOpening) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
+            item {
+                ScreenSection {
+                    PrimaryButton(
+                        text = "Position Editor",
+                        onClick = onOpenPositionEditorClick,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
