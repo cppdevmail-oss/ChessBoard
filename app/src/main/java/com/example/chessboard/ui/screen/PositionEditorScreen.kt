@@ -167,6 +167,15 @@ fun PositionEditorScreenContainer(
             uiState = uiState.copy(fenText = updatedFen)
             gameController.loadFromFen(updatedFen)
         },
+        onBoardPieceMove = { fromSquare, toSquare ->
+            val updatedFen = movePieceOnFen(
+                fen = gameController.getFen(),
+                fromSquare = fromSquare,
+                toSquare = toSquare
+            )
+            uiState = uiState.copy(fenText = updatedFen)
+            gameController.loadFromFen(updatedFen)
+        },
         onBackClick = screenContext.onBackClick,
         onNavigate = screenContext.onNavigate,
         modifier = modifier
@@ -187,6 +196,7 @@ private fun PositionEditorScreen(
     onClearBoardClick: () -> Unit,
     onSetInitialPositionClick: () -> Unit,
     onBoardSquareClick: (String) -> Unit,
+    onBoardPieceMove: (String, String) -> Unit,
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
     modifier: Modifier = Modifier
@@ -247,7 +257,8 @@ private fun PositionEditorScreen(
             item {
                 PositionEditorBoardSection(
                     gameController = gameController,
-                    onBoardSquareClick = onBoardSquareClick
+                    onBoardSquareClick = onBoardSquareClick,
+                    onBoardPieceMove = onBoardPieceMove
                 )
             }
 
@@ -344,7 +355,8 @@ private fun PositionEditorFenSection(
 @Composable
 private fun PositionEditorBoardSection(
     gameController: GameController,
-    onBoardSquareClick: (String) -> Unit
+    onBoardSquareClick: (String) -> Unit,
+    onBoardPieceMove: (String, String) -> Unit
 ) {
     ScreenSection {
         Box(
@@ -355,6 +367,7 @@ private fun PositionEditorBoardSection(
             PositionEditorBoardWithCoordinates(
                 gameController = gameController,
                 onSquareClick = onBoardSquareClick,
+                onPieceMove = onBoardPieceMove,
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -539,6 +552,30 @@ private fun placePieceOnFen(
     if (currentPiece?.letter != pieceLetter) {
         updatedPieces += BoardPiece(pieceLetter, square)
     }
+
+    val updatedPosition = BoardPosition(pieces = updatedPieces)
+    val metadata = fen.substringAfter(' ', "w - - 0 1")
+    return buildFenFromBoardPosition(updatedPosition, metadata)
+}
+
+private fun movePieceOnFen(
+    fen: String,
+    fromSquare: String,
+    toSquare: String
+): String {
+    if (fromSquare == toSquare) {
+        return fen
+    }
+
+    val currentPosition = ChesslibMapper.fromFen(fen)
+    val movingPiece = currentPosition.pieces.find { piece ->
+        piece.field == fromSquare
+    } ?: return fen
+
+    val updatedPieces = currentPosition.pieces
+        .filterNot { piece -> piece.field == fromSquare || piece.field == toSquare }
+        .toMutableList()
+    updatedPieces += movingPiece.copy(field = toSquare)
 
     val updatedPosition = BoardPosition(pieces = updatedPieces)
     val metadata = fen.substringAfter(' ', "w - - 0 1")

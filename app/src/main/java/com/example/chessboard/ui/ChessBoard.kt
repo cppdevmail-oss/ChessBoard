@@ -312,11 +312,14 @@ fun ChessBoard(
 fun PositionEditorBoardWithCoordinates(
     gameController: GameController,
     onSquareClick: (String) -> Unit,
+    onPieceMove: (String, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     @Suppress("UNUSED_VARIABLE")
     val boardState = gameController.boardState
     val orientation = gameController.getSide()
+    var dragFromSquare by remember(orientation) { mutableStateOf<String?>(null) }
+    var dragOffset by remember(orientation) { mutableStateOf(Offset.Zero) }
 
     BoxWithConstraints(
         modifier = modifier.fillMaxSize(),
@@ -330,22 +333,63 @@ fun PositionEditorBoardWithCoordinates(
                 .pointerInput(squareSizePx, orientation, boardState) {
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
-                        val square = getSquareFromOffset(
+                        val startSquare = getSquareFromOffset(
                             down.position,
                             squareSizePx,
                             orientation
                         ) ?: return@awaitEachGesture
+                        val touchSlop = viewConfiguration.touchSlop
+                        val startPosition = down.position
+                        var latestPosition = startPosition
+                        var isDragging = false
+                        val hasPieceOnStartSquare = gameController.getBoardPosition().pieces.any { piece ->
+                            piece.field == startSquare
+                        }
 
                         while (true) {
                             val event = awaitPointerEvent()
                             val change = event.changes.firstOrNull() ?: break
-                            if (change.pressed) {
+                            latestPosition = change.position
+
+                            if (!change.pressed) {
+                                break
+                            }
+
+                            val movedDistance = (latestPosition - startPosition).getDistance()
+                            if (!isDragging && hasPieceOnStartSquare && movedDistance > touchSlop) {
+                                isDragging = true
+                                dragFromSquare = startSquare
+                                dragOffset = latestPosition
+                                change.consume()
                                 continue
                             }
 
-                            onSquareClick(square)
-                            break
+                            if (!isDragging) {
+                                continue
+                            }
+
+                            dragOffset = latestPosition
+                            change.consume()
                         }
+
+                        if (isDragging) {
+                            val targetSquare = getSquareFromOffset(
+                                latestPosition,
+                                squareSizePx,
+                                orientation
+                            )
+                            val sourceSquare = dragFromSquare
+
+                            if (targetSquare != null && sourceSquare != null) {
+                                onPieceMove(sourceSquare, targetSquare)
+                            }
+
+                            dragFromSquare = null
+                            dragOffset = Offset.Zero
+                            return@awaitEachGesture
+                        }
+
+                        onSquareClick(startSquare)
                     }
                 }
         ) {
@@ -354,8 +398,8 @@ fun PositionEditorBoardWithCoordinates(
                 boardState = boardState,
                 squareSizePx = squareSizePx,
                 selectedSquare = null,
-                dragFromSquare = null,
-                dragOffset = Offset.Zero,
+                dragFromSquare = dragFromSquare,
+                dragOffset = dragOffset,
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -477,4 +521,3 @@ fun ChessBoardWithCoordinates(
         }
     }
 }
-
