@@ -91,7 +91,6 @@ fun HomeScreenContainer(
     simpleViewEnabled: Boolean,
     onNavigate: (ScreenType) -> Unit = {},
     onCreateTrainingClick: () -> Unit = {},
-    onStartFirstTrainingClick: () -> Unit = {},
     onOpenPositionEditorClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -127,7 +126,6 @@ fun HomeScreenContainer(
         trainings = trainings,
         onNavigate = screenContext.onNavigate,
         onCreateTrainingClick = onCreateTrainingClick,
-        onStartFirstTrainingClick = onStartFirstTrainingClick,
         onOpenPositionEditorClick = onOpenPositionEditorClick,
         onExitClick = { activity.finishAffinity() },
         modifier = modifier
@@ -140,7 +138,6 @@ fun HomeScreen(
     trainings: List<HomeTrainingItem>,
     onNavigate: (ScreenType) -> Unit = {},
     onCreateTrainingClick: () -> Unit = {},
-    onStartFirstTrainingClick: () -> Unit = {},
     onOpenPositionEditorClick: () -> Unit = {},
     onExitClick: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -241,12 +238,6 @@ fun HomeScreen(
                         subtitle = "Build a training from saved games",
                         modifier = Modifier.weight(1f),
                         onClick = onCreateTrainingClick
-                    )
-                    HomeActionCard(
-                        title = "Select Training",
-                        subtitle = "Choose a training to start",
-                        modifier = Modifier.weight(1f),
-                        onClick = onStartFirstTrainingClick
                     )
                 }
             }
