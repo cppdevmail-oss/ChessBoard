@@ -23,7 +23,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,7 +38,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
@@ -357,31 +355,11 @@ private fun BoardControlRow(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Side selector: ♔ ♚
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                listOf(
-                    EditableGameSide.AS_WHITE to "♔",
-                    EditableGameSide.AS_BLACK to "♚"
-                ).forEach { (side, symbol) ->
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .background(
-                                if (selectedSide == side) SideButtonSelectedBg
-                                else Color.Transparent,
-                                RoundedCornerShape(50)
-                            )
-                            .clickable { onSideSelected(side) },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = symbol,
-                            fontSize = 20.sp,
-                            color = if (selectedSide == side) TrainingTextPrimary else TrainingIconInactive
-                        )
-                    }
-                }
-            }
+            GameSideSelector(
+                selectedSide = selectedSide,
+                onSideSelected = onSideSelected,
+                modifier = Modifier.weight(1f)
+            )
 
             PillDivider()
 
