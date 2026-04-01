@@ -72,6 +72,11 @@ private data class CreateTrainingEditorState(
     val editableGamesForTraining: List<TrainingGameEditorItem> = emptyList()
 )
 
+private data class CreateTrainingScreenData(
+    val trainingId: Long? = null,
+    val editorState: CreateTrainingEditorState = CreateTrainingEditorState()
+)
+
 private data class TrainingSaveSuccess(
     val trainingId: Long,
     val trainingName: String,
@@ -233,9 +238,13 @@ fun CreateTrainingScreenContainer(
     }
 
     CreateTrainingScreen(
-        trainingId = trainingId,
-        initialTrainingName = loadState.trainingName,
-        gamesForTraining = loadState.gamesForTraining,
+        screenData = CreateTrainingScreenData(
+            trainingId = trainingId,
+            editorState = CreateTrainingEditorState(
+                trainingName = loadState.trainingName,
+                editableGamesForTraining = loadState.gamesForTraining
+            )
+        ),
         onBackClick = onBackClick,
         onNavigate = onNavigate,
         onStartGameTrainingClick = onStartGameTrainingClick,
@@ -271,10 +280,8 @@ fun CreateTrainingScreenContainer(
 }
 
 @Composable
-fun CreateTrainingScreen(
-    trainingId: Long? = null,
-    initialTrainingName: String = DEFAULT_TRAINING_NAME,
-    gamesForTraining: List<TrainingGameEditorItem> = emptyList(),
+private fun CreateTrainingScreen(
+    screenData: CreateTrainingScreenData = CreateTrainingScreenData(),
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
     onStartGameTrainingClick: (Long) -> Unit = {},
@@ -282,21 +289,13 @@ fun CreateTrainingScreen(
     modifier: Modifier = Modifier
 ) {
     var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
-    var editorState by remember(initialTrainingName, gamesForTraining) {
-        mutableStateOf(
-            CreateTrainingEditorState(
-                trainingName = initialTrainingName,
-                editableGamesForTraining = gamesForTraining
-            )
-        )
+    var editorState by remember(screenData) {
+        mutableStateOf(screenData.editorState)
     }
-    val isEditMode = trainingId != null
+    val isEditMode = screenData.trainingId != null
 
-    LaunchedEffect(initialTrainingName, gamesForTraining) {
-        editorState = editorState.copy(
-            trainingName = initialTrainingName,
-            editableGamesForTraining = gamesForTraining
-        )
+    LaunchedEffect(screenData) {
+        editorState = screenData.editorState
     }
 
     AppScreenScaffold(
