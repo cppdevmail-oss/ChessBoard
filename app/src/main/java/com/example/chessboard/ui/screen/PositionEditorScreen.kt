@@ -1,11 +1,11 @@
 package com.example.chessboard.ui.screen
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,7 +20,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,7 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.chessboard.R
 import com.example.chessboard.boardmodel.BoardPiece
 import com.example.chessboard.boardmodel.BoardPosition
@@ -46,17 +44,13 @@ import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.ScreenSection
 import com.example.chessboard.ui.components.SecondaryButton
-import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import com.example.chessboard.ui.theme.ChessPieceDark
-import com.example.chessboard.ui.theme.TrainingIconInactive
-import com.example.chessboard.ui.theme.TrainingTextPrimary
 
 private const val EmptyBoardFen = "8/8/8/8/8/8/8/8 w - - 0 1"
-private val SideButtonSelectedBg = Color(0xFF2C2C2C)
 
 private data class PositionEditorPieceOption(
     val letter: Char,
@@ -87,8 +81,7 @@ private data class PositionEditorUiState(
 
 @Composable
 fun PositionEditorScreenContainer(
-    onBackClick: () -> Unit = {},
-    onNavigate: (ScreenType) -> Unit = {},
+    screenContext: ScreenContainerContext,
     modifier: Modifier = Modifier
 ) {
 
@@ -143,8 +136,8 @@ fun PositionEditorScreenContainer(
             uiState = uiState.copy(fenText = updatedFen)
             gameController.loadFromFen(updatedFen)
         },
-        onBackClick = onBackClick,
-        onNavigate = onNavigate,
+        onBackClick = screenContext.onBackClick,
+        onNavigate = screenContext.onNavigate,
         modifier = modifier
     )
 }
@@ -323,7 +316,7 @@ private fun PositionEditorControlsSection(
         horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd),
         verticalAlignment = Alignment.Top
     ) {
-        PositionEditorSideSelector(
+        GameSideSelector(
             selectedSide = selectedSide,
             onSideSelected = onSideSelected,
             modifier = Modifier.weight(1f)
@@ -357,52 +350,6 @@ private fun PositionEditorActionButtons(
             onClick = onSetInitialPositionClick,
             modifier = Modifier.fillMaxWidth()
         )
-    }
-}
-
-@Composable
-private fun PositionEditorSideSelector(
-    selectedSide: EditableGameSide,
-    onSideSelected: (EditableGameSide) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    ScreenSection(modifier = modifier) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            SectionTitleText(text = "Board Orientation")
-            Spacer(modifier = Modifier.height(AppDimens.spaceSm))
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                listOf(
-                    EditableGameSide.AS_WHITE to "♔",
-                    EditableGameSide.AS_BLACK to "♚"
-                ).forEach { (side, symbol) ->
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .background(
-                                color = if (selectedSide == side) {
-                                    SideButtonSelectedBg
-                                } else {
-                                    Color.Transparent
-                                },
-                                shape = RoundedCornerShape(50)
-                            )
-                            .clickable { onSideSelected(side) },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = symbol,
-                            fontSize = 20.sp,
-                            color = if (selectedSide == side) {
-                                TrainingTextPrimary
-                            } else {
-                                TrainingIconInactive
-                            }
-                        )
-                    }
-                }
-            }
-        }
     }
 }
 
