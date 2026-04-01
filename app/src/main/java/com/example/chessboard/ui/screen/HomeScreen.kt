@@ -91,7 +91,6 @@ fun HomeScreenContainer(
     simpleViewEnabled: Boolean,
     onNavigate: (ScreenType) -> Unit = {},
     onCreateTrainingClick: () -> Unit = {},
-    onStartFirstTrainingClick: () -> Unit = {},
     onOpenPositionEditorClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -127,7 +126,6 @@ fun HomeScreenContainer(
         trainings = trainings,
         onNavigate = screenContext.onNavigate,
         onCreateTrainingClick = onCreateTrainingClick,
-        onStartFirstTrainingClick = onStartFirstTrainingClick,
         onOpenPositionEditorClick = onOpenPositionEditorClick,
         onExitClick = { activity.finishAffinity() },
         modifier = modifier
@@ -140,7 +138,6 @@ fun HomeScreen(
     trainings: List<HomeTrainingItem>,
     onNavigate: (ScreenType) -> Unit = {},
     onCreateTrainingClick: () -> Unit = {},
-    onStartFirstTrainingClick: () -> Unit = {},
     onOpenPositionEditorClick: () -> Unit = {},
     onExitClick: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -242,31 +239,25 @@ fun HomeScreen(
                         modifier = Modifier.weight(1f),
                         onClick = onCreateTrainingClick
                     )
+                }
+            }
+
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)
+                ) {
                     HomeActionCard(
-                        title = "Select Training",
-                        subtitle = "Choose a training to start",
+                        title = "Create Opening",
+                        subtitle = "Save a new opening line",
                         modifier = Modifier.weight(1f),
-                        onClick = onStartFirstTrainingClick
+                        onClick = { onNavigate(ScreenType.CreateOpening) }
                     )
-                }
-            }
-
-            item {
-                ScreenSection {
-                    PrimaryButton(
-                        text = "Create Opening",
-                        onClick = { onNavigate(ScreenType.CreateOpening) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-
-            item {
-                ScreenSection {
-                    PrimaryButton(
-                        text = "Position Editor",
-                        onClick = onOpenPositionEditorClick,
-                        modifier = Modifier.fillMaxWidth()
+                    HomeActionCard(
+                        title = "Position Editor",
+                        subtitle = "Set up a custom board position",
+                        modifier = Modifier.weight(1f),
+                        onClick = onOpenPositionEditorClick
                     )
                 }
             }

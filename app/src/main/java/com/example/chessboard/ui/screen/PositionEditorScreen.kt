@@ -1,5 +1,6 @@
 package com.example.chessboard.ui.screen
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +38,7 @@ import com.example.chessboard.boardmodel.BoardPiece
 import com.example.chessboard.boardmodel.BoardPosition
 import com.example.chessboard.boardmodel.ChesslibMapper
 import com.example.chessboard.boardmodel.GameController
+import com.example.chessboard.service.calculateFenHashWithoutMoveNumbers
 import com.example.chessboard.ui.PositionEditorBoardWithCoordinates
 import com.example.chessboard.ui.components.AppBottomNavigation
 import com.example.chessboard.ui.components.AppMessageDialog
@@ -49,8 +52,13 @@ import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import com.example.chessboard.ui.theme.ChessPieceDark
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-private const val EmptyBoardFen = "8/8/8/8/8/8/8/8 w - - 0 1"
+private const val EmptyBoardBoardPart = "8/8/8/8/8/8/8/8"
+private const val EmptyBoardFen = "$EmptyBoardBoardPart w KQkq -"
+private const val PositionEditorLogTag = "PositionEditor"
 
 private data class PositionEditorPieceOption(
     val letter: Char,
@@ -73,24 +81,24 @@ private val PositionEditorPieceOptions = listOf(
 )
 
 private data class PositionEditorUiState(
-        val fenText: String = EmptyBoardFen,
-        val selectedSide: EditableGameSide = EditableGameSide.AS_WHITE,
-        val selectedPiece: PositionEditorPieceOption = PositionEditorPieceOptions.first(),
-        val fenError: String? = null
-    )
+    val fenText: String = EmptyBoardFen,
+    val selectedSide: EditableGameSide = EditableGameSide.AS_WHITE,
+    val selectedPiece: PositionEditorPieceOption = PositionEditorPieceOptions.first(),
+    val fenError: String? = null,
+    val foundGameIds: List<Long>? = null
+)
 
 @Composable
 fun PositionEditorScreenContainer(
     screenContext: ScreenContainerContext,
     modifier: Modifier = Modifier
 ) {
-
-
+    val scope = rememberCoroutineScope()
     val gameController = remember { GameController() }
     var uiState by remember { mutableStateOf(PositionEditorUiState()) }
 
     LaunchedEffect(Unit) {
-        gameController.loadFromFen(EmptyBoardFen)
+        gameController.loadFromFen(toLoadableFen(EmptyBoardFen))
     }
 
     LaunchedEffect(uiState.selectedSide) {
@@ -101,16 +109,33 @@ fun PositionEditorScreenContainer(
         gameController = gameController,
         uiState = uiState,
         onFenTextChange = { uiState = uiState.copy(fenText = it) },
-        onSideSelected = { uiState = uiState.copy(selectedSide = it) },
+        onSideSelected = { selectedSide ->
+            val updatedFen = replaceFenSide(
+                fen = uiState.fenText,
+                selectedSide = selectedSide
+            )
+            uiState = uiState.copy(
+                selectedSide = selectedSide,
+                fenText = updatedFen
+            )
+            gameController.loadFromFen(toLoadableFen(updatedFen))
+        },
         onPieceSelected = { uiState = uiState.copy(selectedPiece = it) },
         onFenErrorDismiss = { uiState = uiState.copy(fenError = null) },
+        onFoundGameIdsDismiss = { uiState = uiState.copy(foundGameIds = null) },
         onApplyFenClick = {
-            val normalizedFen = normalizePositionEditorFen(uiState.fenText)
+            val normalizedFen = normalizePositionEditorFen(
+                fen = uiState.fenText,
+                selectedSide = uiState.selectedSide
+            )
 
             try {
-                gameController.loadFromFen(normalizedFen)
+                gameController.loadFromFen(toLoadableFen(normalizedFen))
                 uiState = uiState.copy(
-                    fenText = gameController.getFen(),
+                    fenText = normalizePositionEditorFen(
+                        fen = gameController.getFen(),
+                        selectedSide = uiState.selectedSide
+                    ),
                     fenError = null
                 )
             } catch (error: Exception) {
@@ -119,13 +144,58 @@ fun PositionEditorScreenContainer(
                 )
             }
         },
+        onFindGamesClick = {
+            scope.launch {
+                val normalizedFen = normalizePositionEditorFen(
+                    fen = uiState.fenText,
+                    selectedSide = uiState.selectedSide
+                )
+
+                try {
+                    gameController.loadFromFen(toLoadableFen(normalizedFen))
+                } catch (error: Exception) {
+                    uiState = uiState.copy(
+                        fenError = error.message ?: "Failed to apply FEN"
+                    )
+                    return@launch
+                }
+
+                Log.d(
+                    PositionEditorLogTag,
+                    "findGames fen=${gameController.getFen()} hash=${calculateFenHashWithoutMoveNumbers(gameController.getFen())}"
+                )
+                val foundGameIds = withContext(Dispatchers.IO) {
+                    screenContext.inDbProvider.findGameIdsByFenWithoutMoveNumber(
+                        gameController.getFen()
+                    )
+                }
+
+                uiState = uiState.copy(
+                    fenText = normalizePositionEditorFen(
+                        fen = gameController.getFen(),
+                        selectedSide = uiState.selectedSide
+                    ),
+                    fenError = null,
+                    foundGameIds = foundGameIds
+                )
+            }
+        },
         onClearBoardClick = {
-            gameController.loadFromFen(EmptyBoardFen)
-            uiState = uiState.copy(fenText = gameController.getFen())
+            val updatedFen = resolveEmptyBoardFen(uiState.selectedSide)
+            gameController.loadFromFen(toLoadableFen(updatedFen))
+            uiState = uiState.copy(fenText = updatedFen)
         },
         onSetInitialPositionClick = {
             gameController.resetToStartPosition()
-            uiState = uiState.copy(fenText = gameController.getFen())
+            val updatedFen = replaceFenSide(
+                fen = normalizePositionEditorFen(
+                    fen = gameController.getFen(),
+                    selectedSide = uiState.selectedSide
+                ),
+                selectedSide = uiState.selectedSide
+            )
+            gameController.loadFromFen(toLoadableFen(updatedFen))
+            uiState = uiState.copy(fenText = updatedFen)
         },
         onBoardSquareClick = { square ->
             val updatedFen = placePieceOnFen(
@@ -134,7 +204,16 @@ fun PositionEditorScreenContainer(
                 pieceLetter = uiState.selectedPiece.letter
             )
             uiState = uiState.copy(fenText = updatedFen)
-            gameController.loadFromFen(updatedFen)
+            gameController.loadFromFen(toLoadableFen(updatedFen))
+        },
+        onBoardPieceMove = { fromSquare, toSquare ->
+            val updatedFen = movePieceOnFen(
+                fen = gameController.getFen(),
+                fromSquare = fromSquare,
+                toSquare = toSquare
+            )
+            uiState = uiState.copy(fenText = updatedFen)
+            gameController.loadFromFen(toLoadableFen(updatedFen))
         },
         onBackClick = screenContext.onBackClick,
         onNavigate = screenContext.onNavigate,
@@ -150,10 +229,13 @@ private fun PositionEditorScreen(
     onSideSelected: (EditableGameSide) -> Unit,
     onPieceSelected: (PositionEditorPieceOption) -> Unit,
     onFenErrorDismiss: () -> Unit,
+    onFoundGameIdsDismiss: () -> Unit,
     onApplyFenClick: () -> Unit,
+    onFindGamesClick: () -> Unit,
     onClearBoardClick: () -> Unit,
     onSetInitialPositionClick: () -> Unit,
     onBoardSquareClick: (String) -> Unit,
+    onBoardPieceMove: (String, String) -> Unit,
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
     modifier: Modifier = Modifier
@@ -161,6 +243,10 @@ private fun PositionEditorScreen(
     RenderPositionEditorFenError(
         fenError = uiState.fenError,
         onDismiss = onFenErrorDismiss
+    )
+    RenderFoundGameIdsDialog(
+        foundGameIds = uiState.foundGameIds,
+        onDismiss = onFoundGameIdsDismiss
     )
 
     AppScreenScaffold(
@@ -173,6 +259,10 @@ private fun PositionEditorScreen(
                     SecondaryButton(
                         text = "Apply FEN",
                         onClick = onApplyFenClick
+                    )
+                    SecondaryButton(
+                        text = "Find Games",
+                        onClick = onFindGamesClick
                     )
                 }
             )
@@ -206,7 +296,8 @@ private fun PositionEditorScreen(
             item {
                 PositionEditorBoardSection(
                     gameController = gameController,
-                    onBoardSquareClick = onBoardSquareClick
+                    onBoardSquareClick = onBoardSquareClick,
+                    onBoardPieceMove = onBoardPieceMove
                 )
             }
 
@@ -231,6 +322,22 @@ private fun PositionEditorScreen(
             }
         }
     }
+}
+
+@Composable
+private fun RenderFoundGameIdsDialog(
+    foundGameIds: List<Long>?,
+    onDismiss: () -> Unit
+) {
+    if (foundGameIds == null) {
+        return
+    }
+
+    AppMessageDialog(
+        title = resolveFoundGameIdsTitle(foundGameIds),
+        message = resolveFoundGameIdsMessage(foundGameIds),
+        onDismiss = onDismiss
+    )
 }
 
 @Composable
@@ -287,7 +394,8 @@ private fun PositionEditorFenSection(
 @Composable
 private fun PositionEditorBoardSection(
     gameController: GameController,
-    onBoardSquareClick: (String) -> Unit
+    onBoardSquareClick: (String) -> Unit,
+    onBoardPieceMove: (String, String) -> Unit
 ) {
     ScreenSection {
         Box(
@@ -298,6 +406,7 @@ private fun PositionEditorBoardSection(
             PositionEditorBoardWithCoordinates(
                 gameController = gameController,
                 onSquareClick = onBoardSquareClick,
+                onPieceMove = onBoardPieceMove,
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -439,17 +548,110 @@ private fun resolvePositionEditorPieceTint(pieceLetter: Char): Color {
     return ChessPieceDark
 }
 
-private fun normalizePositionEditorFen(fen: String): String {
+private fun normalizePositionEditorFen(
+    fen: String,
+    selectedSide: EditableGameSide
+): String {
     val trimmedFen = fen.trim()
     if (trimmedFen.isBlank()) {
-        return EmptyBoardFen
+        return resolveEmptyBoardFen(selectedSide)
     }
 
-    if (trimmedFen.contains(' ')) {
-        return trimmedFen
+    val fenParts = trimmedFen.split(Regex("\\s+"))
+    if (fenParts.size == 1) {
+        return buildPositionEditorFen(
+            boardPart = fenParts.first(),
+            sidePart = resolveFenSideToken(selectedSide),
+            castlingPart = "KQkq",
+            enPassantPart = "-"
+        )
     }
 
-    return "$trimmedFen w - - 0 1"
+    return buildPositionEditorFen(
+        boardPart = fenParts[0],
+        sidePart = fenParts.getOrNull(1)?.takeIf { it == "w" || it == "b" }
+            ?: resolveFenSideToken(selectedSide),
+        castlingPart = fenParts.getOrNull(2)?.takeIf { it.isNotBlank() } ?: "KQkq",
+        enPassantPart = fenParts.getOrNull(3)?.takeIf { it.isNotBlank() } ?: "-"
+    )
+}
+
+private fun replaceFenSide(
+    fen: String,
+    selectedSide: EditableGameSide
+): String {
+    val normalizedFen = normalizePositionEditorFen(
+        fen = fen,
+        selectedSide = selectedSide
+    )
+    val fenParts = normalizedFen.split(Regex("\\s+"))
+
+    return buildPositionEditorFen(
+        boardPart = fenParts[0],
+        sidePart = resolveFenSideToken(selectedSide),
+        castlingPart = fenParts[2],
+        enPassantPart = fenParts[3]
+    )
+}
+
+private fun resolveEmptyBoardFen(selectedSide: EditableGameSide): String {
+    return buildPositionEditorFen(
+        boardPart = EmptyBoardBoardPart,
+        sidePart = resolveFenSideToken(selectedSide),
+        castlingPart = "KQkq",
+        enPassantPart = "-"
+    )
+}
+
+private fun resolveFenSideToken(selectedSide: EditableGameSide): String {
+    if (selectedSide == EditableGameSide.AS_BLACK) {
+        return "b"
+    }
+
+    return "w"
+}
+
+private fun buildPositionEditorFen(
+    boardPart: String,
+    sidePart: String,
+    castlingPart: String,
+    enPassantPart: String
+): String {
+    return listOf(
+        boardPart,
+        sidePart,
+        castlingPart,
+        enPassantPart
+    ).joinToString(separator = " ")
+}
+
+private fun toLoadableFen(editorFen: String): String {
+    val normalizedFen = editorFen.trim()
+    val fenParts = normalizedFen.split(Regex("\\s+"))
+
+    if (fenParts.size >= 6) {
+        return normalizedFen
+    }
+
+    return "$normalizedFen 0 1"
+}
+
+private fun resolveFoundGameIdsTitle(foundGameIds: List<Long>): String {
+    if (foundGameIds.isEmpty()) {
+        return "Games Not Found"
+    }
+
+    return "Found Games"
+}
+
+private fun resolveFoundGameIdsMessage(foundGameIds: List<Long>): String {
+    if (foundGameIds.isEmpty()) {
+        return "No saved games contain this position."
+    }
+
+    return foundGameIds.joinToString(separator = "\n") { gameId ->
+        "Game ID: $gameId"
+    }
 }
 
 private fun placePieceOnFen(
@@ -466,7 +668,31 @@ private fun placePieceOnFen(
     }
 
     val updatedPosition = BoardPosition(pieces = updatedPieces)
-    val metadata = fen.substringAfter(' ', "w - - 0 1")
+    val metadata = fen.substringAfter(' ', "w KQkq -")
+    return buildFenFromBoardPosition(updatedPosition, metadata)
+}
+
+private fun movePieceOnFen(
+    fen: String,
+    fromSquare: String,
+    toSquare: String
+): String {
+    if (fromSquare == toSquare) {
+        return fen
+    }
+
+    val currentPosition = ChesslibMapper.fromFen(fen)
+    val movingPiece = currentPosition.pieces.find { piece ->
+        piece.field == fromSquare
+    } ?: return fen
+
+    val updatedPieces = currentPosition.pieces
+        .filterNot { piece -> piece.field == fromSquare || piece.field == toSquare }
+        .toMutableList()
+    updatedPieces += movingPiece.copy(field = toSquare)
+
+    val updatedPosition = BoardPosition(pieces = updatedPieces)
+    val metadata = fen.substringAfter(' ', "w KQkq -")
     return buildFenFromBoardPosition(updatedPosition, metadata)
 }
 
