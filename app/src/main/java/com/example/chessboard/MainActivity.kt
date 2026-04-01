@@ -146,9 +146,6 @@ class MainActivity : ComponentActivity() {
                         onCreateTrainingClick = {
                             currentScreen = ScreenType.CreateTraining
                         },
-                        onStartFirstTrainingClick = {
-                            currentScreen = ScreenType.Training
-                        },
                         onOpenPositionEditorClick = {
                             currentScreen = ScreenType.PositionEditor
                         },

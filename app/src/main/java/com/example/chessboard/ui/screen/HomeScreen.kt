@@ -243,21 +243,21 @@ fun HomeScreen(
             }
 
             item {
-                ScreenSection {
-                    PrimaryButton(
-                        text = "Create Opening",
-                        onClick = { onNavigate(ScreenType.CreateOpening) },
-                        modifier = Modifier.fillMaxWidth()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)
+                ) {
+                    HomeActionCard(
+                        title = "Create Opening",
+                        subtitle = "Save a new opening line",
+                        modifier = Modifier.weight(1f),
+                        onClick = { onNavigate(ScreenType.CreateOpening) }
                     )
-                }
-            }
-
-            item {
-                ScreenSection {
-                    PrimaryButton(
-                        text = "Position Editor",
-                        onClick = onOpenPositionEditorClick,
-                        modifier = Modifier.fillMaxWidth()
+                    HomeActionCard(
+                        title = "Position Editor",
+                        subtitle = "Set up a custom board position",
+                        modifier = Modifier.weight(1f),
+                        onClick = onOpenPositionEditorClick
                     )
                 }
             }
