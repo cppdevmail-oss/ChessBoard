@@ -16,4 +16,15 @@ class PositionService(
             normalizeFenWithoutMoveNumbers(position.fen) == normalizedFen
         }
     }
+
+    suspend fun findGameIdsByFenWithoutMoveNumber(fen: String): List<Long> {
+        val matchingPositions = findPositionsByFenWithoutMoveNumber(fen)
+        val positionIds = matchingPositions.map { position -> position.id }
+
+        if (positionIds.isEmpty()) {
+            return emptyList()
+        }
+
+        return database.gamePositionDao().getGameIdsByPositionIds(positionIds)
+    }
 }

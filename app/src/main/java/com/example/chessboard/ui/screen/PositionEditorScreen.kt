@@ -25,6 +25,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,6 +50,9 @@ import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import com.example.chessboard.ui.theme.ChessPieceDark
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private const val EmptyBoardFen = "8/8/8/8/8/8/8/8 w - - 0 1"
 
@@ -73,19 +77,19 @@ private val PositionEditorPieceOptions = listOf(
 )
 
 private data class PositionEditorUiState(
-        val fenText: String = EmptyBoardFen,
-        val selectedSide: EditableGameSide = EditableGameSide.AS_WHITE,
-        val selectedPiece: PositionEditorPieceOption = PositionEditorPieceOptions.first(),
-        val fenError: String? = null
-    )
+    val fenText: String = EmptyBoardFen,
+    val selectedSide: EditableGameSide = EditableGameSide.AS_WHITE,
+    val selectedPiece: PositionEditorPieceOption = PositionEditorPieceOptions.first(),
+    val fenError: String? = null,
+    val foundGameIds: List<Long>? = null
+)
 
 @Composable
 fun PositionEditorScreenContainer(
     screenContext: ScreenContainerContext,
     modifier: Modifier = Modifier
 ) {
-
-
+    val scope = rememberCoroutineScope()
     val gameController = remember { GameController() }
     var uiState by remember { mutableStateOf(PositionEditorUiState()) }
 
@@ -104,6 +108,7 @@ fun PositionEditorScreenContainer(
         onSideSelected = { uiState = uiState.copy(selectedSide = it) },
         onPieceSelected = { uiState = uiState.copy(selectedPiece = it) },
         onFenErrorDismiss = { uiState = uiState.copy(fenError = null) },
+        onFoundGameIdsDismiss = { uiState = uiState.copy(foundGameIds = null) },
         onApplyFenClick = {
             val normalizedFen = normalizePositionEditorFen(uiState.fenText)
 
@@ -116,6 +121,32 @@ fun PositionEditorScreenContainer(
             } catch (error: Exception) {
                 uiState = uiState.copy(
                     fenError = error.message ?: "Failed to apply FEN"
+                )
+            }
+        },
+        onFindGamesClick = {
+            scope.launch {
+                val normalizedFen = normalizePositionEditorFen(uiState.fenText)
+
+                try {
+                    gameController.loadFromFen(normalizedFen)
+                } catch (error: Exception) {
+                    uiState = uiState.copy(
+                        fenError = error.message ?: "Failed to apply FEN"
+                    )
+                    return@launch
+                }
+
+                val foundGameIds = withContext(Dispatchers.IO) {
+                    screenContext.inDbProvider.findGameIdsByFenWithoutMoveNumber(
+                        gameController.getFen()
+                    )
+                }
+
+                uiState = uiState.copy(
+                    fenText = gameController.getFen(),
+                    fenError = null,
+                    foundGameIds = foundGameIds
                 )
             }
         },
@@ -150,7 +181,9 @@ private fun PositionEditorScreen(
     onSideSelected: (EditableGameSide) -> Unit,
     onPieceSelected: (PositionEditorPieceOption) -> Unit,
     onFenErrorDismiss: () -> Unit,
+    onFoundGameIdsDismiss: () -> Unit,
     onApplyFenClick: () -> Unit,
+    onFindGamesClick: () -> Unit,
     onClearBoardClick: () -> Unit,
     onSetInitialPositionClick: () -> Unit,
     onBoardSquareClick: (String) -> Unit,
@@ -161,6 +194,10 @@ private fun PositionEditorScreen(
     RenderPositionEditorFenError(
         fenError = uiState.fenError,
         onDismiss = onFenErrorDismiss
+    )
+    RenderFoundGameIdsDialog(
+        foundGameIds = uiState.foundGameIds,
+        onDismiss = onFoundGameIdsDismiss
     )
 
     AppScreenScaffold(
@@ -173,6 +210,10 @@ private fun PositionEditorScreen(
                     SecondaryButton(
                         text = "Apply FEN",
                         onClick = onApplyFenClick
+                    )
+                    SecondaryButton(
+                        text = "Find Games",
+                        onClick = onFindGamesClick
                     )
                 }
             )
@@ -231,6 +272,22 @@ private fun PositionEditorScreen(
             }
         }
     }
+}
+
+@Composable
+private fun RenderFoundGameIdsDialog(
+    foundGameIds: List<Long>?,
+    onDismiss: () -> Unit
+) {
+    if (foundGameIds == null) {
+        return
+    }
+
+    AppMessageDialog(
+        title = resolveFoundGameIdsTitle(foundGameIds),
+        message = resolveFoundGameIdsMessage(foundGameIds),
+        onDismiss = onDismiss
+    )
 }
 
 @Composable
@@ -450,6 +507,24 @@ private fun normalizePositionEditorFen(fen: String): String {
     }
 
     return "$trimmedFen w - - 0 1"
+}
+
+private fun resolveFoundGameIdsTitle(foundGameIds: List<Long>): String {
+    if (foundGameIds.isEmpty()) {
+        return "Games Not Found"
+    }
+
+    return "Found Games"
+}
+
+private fun resolveFoundGameIdsMessage(foundGameIds: List<Long>): String {
+    if (foundGameIds.isEmpty()) {
+        return "No saved games contain this position."
+    }
+
+    return foundGameIds.joinToString(separator = "\n") { gameId ->
+        "Game ID: $gameId"
+    }
 }
 
 private fun placePieceOnFen(

@@ -31,4 +31,12 @@ interface GamePositionDao {
         JOIN games g ON g.id = gp.gameId
         WHERE gp.positionId = :positionId""")
     suspend fun getUsage(positionId: Long): List<PositionUsage>
+
+    @Query("""
+        SELECT DISTINCT gameId
+        FROM game_positions
+        WHERE positionId IN (:positionIds)
+        ORDER BY gameId
+    """)
+    suspend fun getGameIdsByPositionIds(positionIds: List<Long>): List<Long>
 }
