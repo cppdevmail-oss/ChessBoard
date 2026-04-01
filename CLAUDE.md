@@ -31,7 +31,7 @@ Android chess opening trainer. Users save games (openings) and review/train them
 |---|---|
 | `HomeScreen.kt` | Lists all saved games. Opens a game in `GameEditorScreen`. |
 | `CreateOpeningScreen.kt` | Form to input and save a new game/opening. Uses `PgnImportService` for PGN header extraction, SAN-to-UCI import, and batch-saving imported variation lines as separate games. |
-| `CreateTrainingScreen.kt` | Creation-only training flow: all games loaded with weight 1, paginated list with weight +/- and delete, Save calls `createTrainingFromGames`. Also exports shared internal helpers (`TrainingGameEditorItem`, `TrainingGamesEditorSection`, `TrainingGamesPage`, `TrainingGameBlock`, `CreateTrainingEditorState`, `decreaseTrainingGameWeight`, `increaseTrainingGameWeight`, `toTrainingGameEditorItem`, `DEFAULT_TRAINING_NAME`, `TrainingGameRowHeight`, `TrainingGameRowSpacing`). |
+| `CreateTrainingScreen.kt` | Creation-only training flow: loads all games with weight 1, paginated list with weight +/- and delete, Save calls `createTrainingFromGames` directly. No `trainingId` param, no edit-mode code. Exports shared `internal` helpers used by `EditTrainingScreen`: `DEFAULT_TRAINING_NAME`, `TrainingGameEditorItem`, `CreateTrainingEditorState`, `decreaseTrainingGameWeight`, `increaseTrainingGameWeight`, `GameEntity.toTrainingGameEditorItem`. |
 | `EditTrainingScreen.kt` | Edit-only training flow: loads only games already in the training with their saved weights, "Random" button in top bar, GO button per row, Save calls `updateTrainingFromGames`. Missing training shows dialog navigating to Training list. |
 | `TrainingListScreen.kt` | Loads and displays all saved trainings as cards with name, training ID, and games count. |
 | `GamesExplorerScreen.kt` | Loads all saved games, shows each as a `GameBlock` (title + move-chip row + nav). Clicking any chip loads that game at that ply on the shared board. |
@@ -238,6 +238,8 @@ After any non-trivial change update the relevant section above - correct file pa
 ---
 
 ## Recent Changes
+
+- **`CreateTrainingScreen.kt` cleaned up to creation-only** - Removed all edit-mode leftovers: `trainingId` param, `buildTrainingEditorItems`, `resolveCreateTrainingTitle`, `resolveRandomTrainingGameId`, `saveTraining` helper, `CreateTrainingScreenData`, `MissingTrainingDialog`, `TrainingSaveSuccess.wasUpdated`, `onStartGameTrainingClick`, `isEditMode` branches, and `showStartButton` from `TrainingGamesPage`/`TrainingGamePageRow`. `CreateTrainingScreenContainer` now calls `createTrainingFromGames` directly. Save success dialog always says "Training Created".
 
 - **`EditTrainingScreen.kt` redesigned with per-game board blocks** - `EditTrainingScreen` body replaced with a `LazyColumn`. Each game in `editableGamesForTraining` is rendered as a `GameTrainingBlock` (private) that shows: header row with title/ECO/weight (left) and `-`/`+`/`GO` buttons (right); a live `ChessBoardSection` loading the game PGN via `parsePgnMoves` + `buildMoveLabels` on `Dispatchers.Default` and parking at ply 0; a "Move Sequence" label row with teal accent; a horizontally scrollable `MoveChip` row with chip selection synced to `gameController.currentMoveIndex`; and a bottom nav row with a `TextButton("Reset")` and `←`/`→` `IconButton`s using `Icons.AutoMirrored`. `TrainingGameEditorItem` extended with `eco: String?` and `pgn: String` fields; `GameEntity.toTrainingGameEditorItem` updated to populate them. Container logic is unchanged.
 

@@ -1,6 +1,5 @@
 package com.example.chessboard.ui.screen
 
-import android.app.Activity
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,7 +26,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.entity.GameEntity
-import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.service.OneGameTrainingData
 import com.example.chessboard.ui.components.AppBottomNavigation
 import com.example.chessboard.ui.components.AppMessageDialog
@@ -64,8 +62,7 @@ data class TrainingGameEditorItem(
 
 private data class CreateTrainingLoadState(
     val trainingName: String = DEFAULT_TRAINING_NAME,
-    val gamesForTraining: List<TrainingGameEditorItem> = emptyList(),
-    val trainingLoadFailed: Boolean = false
+    val gamesForTraining: List<TrainingGameEditorItem> = emptyList()
 )
 
 internal data class CreateTrainingEditorState(
@@ -74,35 +71,11 @@ internal data class CreateTrainingEditorState(
     val editableGamesForTraining: List<TrainingGameEditorItem> = emptyList()
 )
 
-private data class CreateTrainingScreenData(
-    val trainingId: Long? = null,
-    val editorState: CreateTrainingEditorState = CreateTrainingEditorState()
-)
-
 private data class TrainingSaveSuccess(
     val trainingId: Long,
     val trainingName: String,
-    val gamesCount: Int,
-    val wasUpdated: Boolean
+    val gamesCount: Int
 )
-
-private fun resolveCreateTrainingTitle(isEditMode: Boolean): String {
-    if (isEditMode) {
-        return "Edit Training"
-    }
-
-    return "Create Training"
-}
-
-private fun resolveRandomTrainingGameId(
-    games: List<TrainingGameEditorItem>
-): Long? {
-    if (games.isEmpty()) {
-        return null
-    }
-
-    return games.random().gameId
-}
 
 internal fun decreaseTrainingGameWeight(
     editorState: CreateTrainingEditorState,
@@ -142,86 +115,24 @@ internal fun increaseTrainingGameWeight(
     )
 }
 
-private suspend fun saveTraining(
-    dbProvider: DatabaseProvider,
-    trainingId: Long?,
-    normalizedName: String,
-    trainingGames: List<OneGameTrainingData>
-): Long? {
-    if (trainingId == null) {
-        return dbProvider.createTrainingFromGames(
-            name = normalizedName,
-            games = trainingGames
-        )
-    }
-
-    val wasUpdated = dbProvider.updateTrainingFromGames(
-        trainingId = trainingId,
-        name = normalizedName,
-        games = trainingGames
-    )
-    if (!wasUpdated) {
-        return null
-    }
-
-    return trainingId
-}
-
-
 @Composable
 fun CreateTrainingScreenContainer(
-    trainingId: Long? = null,
     screenContext: ScreenContainerContext,
-    onStartGameTrainingClick: (Long) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var loadState by remember { mutableStateOf(CreateTrainingLoadState()) }
     var trainingSaveSuccess by remember { mutableStateOf<TrainingSaveSuccess?>(null) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(trainingId) {
-        loadState = loadState.copy(trainingLoadFailed = false)
+    LaunchedEffect(Unit) {
         val allGames = withContext(Dispatchers.IO) {
             screenContext.inDbProvider.getAllGames()
         }
 
-        if (trainingId == null) {
-            loadState = CreateTrainingLoadState(
-                trainingName = DEFAULT_TRAINING_NAME,
-                gamesForTraining = allGames.map { game ->
-                    game.toTrainingGameEditorItem()
-                }
-            )
-            return@LaunchedEffect
-        }
-
-        val training = withContext(Dispatchers.IO) {
-            screenContext.inDbProvider.getTrainingById(trainingId)
-        }
-
-        if (training == null) {
-            loadState = CreateTrainingLoadState(
-                trainingName = DEFAULT_TRAINING_NAME,
-                gamesForTraining = emptyList(),
-                trainingLoadFailed = true
-            )
-            return@LaunchedEffect
-        }
-
         loadState = CreateTrainingLoadState(
-            trainingName = training.name.ifBlank { DEFAULT_TRAINING_NAME },
-            gamesForTraining = buildTrainingEditorItems(
-                allGames = allGames,
-                trainingGames = OneGameTrainingData.fromJson(training.gamesJson)
-            )
-        )
-    }
-
-    if (loadState.trainingLoadFailed) {
-        MissingTrainingDialog(
-            onDismiss = {
-                loadState = loadState.copy(trainingLoadFailed = false)
-                screenContext.onNavigate(ScreenType.Training)
+            trainingName = DEFAULT_TRAINING_NAME,
+            gamesForTraining = allGames.map { game ->
+                game.toTrainingGameEditorItem()
             }
         )
     }
@@ -237,16 +148,12 @@ fun CreateTrainingScreenContainer(
     }
 
     CreateTrainingScreen(
-        screenData = CreateTrainingScreenData(
-            trainingId = trainingId,
-            editorState = CreateTrainingEditorState(
-                trainingName = loadState.trainingName,
-                editableGamesForTraining = loadState.gamesForTraining
-            )
+        editorState = CreateTrainingEditorState(
+            trainingName = loadState.trainingName,
+            editableGamesForTraining = loadState.gamesForTraining
         ),
         onBackClick = screenContext.onBackClick,
         onNavigate = screenContext.onNavigate,
-        onStartGameTrainingClick = onStartGameTrainingClick,
         onSaveTraining = { trainingName, editableGames ->
             scope.launch {
                 val normalizedName = trainingName.ifBlank { DEFAULT_TRAINING_NAME }
@@ -258,19 +165,16 @@ fun CreateTrainingScreenContainer(
                 }
 
                 val savedTrainingId = withContext(Dispatchers.IO) {
-                    saveTraining(
-                        dbProvider = screenContext.inDbProvider,
-                        trainingId = trainingId,
-                        normalizedName = normalizedName,
-                        trainingGames = trainingGames
+                    screenContext.inDbProvider.createTrainingFromGames(
+                        name = normalizedName,
+                        games = trainingGames
                     )
                 }
 
                 trainingSaveSuccess = TrainingSaveSuccess(
                     trainingId = savedTrainingId ?: return@launch,
                     trainingName = normalizedName,
-                    gamesCount = editableGames.size,
-                    wasUpdated = trainingId != null
+                    gamesCount = editableGames.size
                 )
             }
         },
@@ -280,45 +184,32 @@ fun CreateTrainingScreenContainer(
 
 @Composable
 private fun CreateTrainingScreen(
-    screenData: CreateTrainingScreenData = CreateTrainingScreenData(),
+    editorState: CreateTrainingEditorState = CreateTrainingEditorState(),
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
-    onStartGameTrainingClick: (Long) -> Unit = {},
     onSaveTraining: (String, List<TrainingGameEditorItem>) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
     var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
-    var editorState by remember(screenData) {
-        mutableStateOf(screenData.editorState)
+    var currentEditorState by remember(editorState) {
+        mutableStateOf(editorState)
     }
-    val isEditMode = screenData.trainingId != null
 
-    LaunchedEffect(screenData) {
-        editorState = screenData.editorState
+    LaunchedEffect(editorState) {
+        currentEditorState = editorState
     }
 
     AppScreenScaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
             AppTopBar(
-                title = resolveCreateTrainingTitle(isEditMode),
+                title = "Create Training",
                 onBackClick = onBackClick,
                 actions = {
-                    if (isEditMode) {
-                        PrimaryButton(
-                            text = "Random",
-                            onClick = {
-                                val randomGameId = resolveRandomTrainingGameId(editorState.editableGamesForTraining)
-                                if (randomGameId != null) {
-                                    onStartGameTrainingClick(randomGameId)
-                                }
-                            }
-                        )
-                    }
                     Spacer(modifier = Modifier.width(AppDimens.spaceSm))
                     PrimaryButton(
                         text = "Save",
-                        onClick = { onSaveTraining(editorState.trainingName, editorState.editableGamesForTraining) }
+                        onClick = { onSaveTraining(currentEditorState.trainingName, currentEditorState.editableGamesForTraining) }
                     )
                 }
             )
@@ -341,8 +232,8 @@ private fun CreateTrainingScreen(
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
             ScreenSection {
                 AppTextField(
-                    value = editorState.trainingName,
-                    onValueChange = { editorState = editorState.copy(trainingName = it) },
+                    value = currentEditorState.trainingName,
+                    onValueChange = { currentEditorState = currentEditorState.copy(trainingName = it) },
                     label = "Training Name",
                     placeholder = DEFAULT_TRAINING_NAME
                 )
@@ -351,14 +242,12 @@ private fun CreateTrainingScreen(
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
 
             ScreenSection {
-                BodySecondaryText(text = "Games loaded for training: ${editorState.editableGamesForTraining.size}")
+                BodySecondaryText(text = "Games loaded for training: ${currentEditorState.editableGamesForTraining.size}")
             }
 
             TrainingGamesEditorSection(
-                editorState = editorState,
-                isEditMode = isEditMode,
-                onEditorStateChange = { editorState = it },
-                onStartTrainingClick = onStartGameTrainingClick,
+                editorState = currentEditorState,
+                onEditorStateChange = { currentEditorState = it },
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
@@ -370,9 +259,7 @@ private fun CreateTrainingScreen(
 @Composable
 private fun TrainingGamesEditorSection(
     editorState: CreateTrainingEditorState,
-    isEditMode: Boolean,
     onEditorStateChange: (CreateTrainingEditorState) -> Unit,
-    onStartTrainingClick: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     data class TrainingGamesPageState(
@@ -383,7 +270,7 @@ private fun TrainingGamesEditorSection(
         val canGoNext: Boolean,
     )
 
-    fun resolveTrainingGamesPageState(maxHeight : Dp): TrainingGamesPageState {
+    fun resolveTrainingGamesPageState(maxHeight: Dp): TrainingGamesPageState {
         val availableHeightForRows =
             (maxHeight - TrainingGamesHeaderHeight - TrainingGamesNavigationHeight)
                 .coerceAtLeast(TrainingGameRowHeight)
@@ -419,7 +306,6 @@ private fun TrainingGamesEditorSection(
                 totalPages = pageState.totalPages,
                 canGoPrevious = pageState.canGoPrevious,
                 canGoNext = pageState.canGoNext,
-                showStartButton = isEditMode,
                 onDecreaseWeightClick = { gameId ->
                     onEditorStateChange(decreaseTrainingGameWeight(editorState, gameId))
                 },
@@ -435,7 +321,6 @@ private fun TrainingGamesEditorSection(
                         )
                     )
                 },
-                onStartTrainingClick = onStartTrainingClick,
                 onPreviousPageClick = {
                     if (!pageState.canGoPrevious) {
                         return@TrainingGamesPage
@@ -454,6 +339,7 @@ private fun TrainingGamesEditorSection(
         }
     }
 }
+
 internal fun GameEntity.toTrainingGameEditorItem(weight: Int = 1): TrainingGameEditorItem {
     return TrainingGameEditorItem(
         gameId = id,
@@ -464,26 +350,6 @@ internal fun GameEntity.toTrainingGameEditorItem(weight: Int = 1): TrainingGameE
     )
 }
 
-private fun buildTrainingEditorItems(
-    allGames: List<GameEntity>,
-    trainingGames: List<OneGameTrainingData>
-): List<TrainingGameEditorItem> {
-    if (trainingGames.isEmpty()) {
-        return allGames.map { game ->
-            game.toTrainingGameEditorItem()
-        }
-    }
-
-    val weightsByGameId = trainingGames.associate { trainingGame ->
-        trainingGame.gameId to trainingGame.weight
-    }
-
-    return allGames.mapNotNull { game ->
-        val weight = weightsByGameId[game.id] ?: return@mapNotNull null
-        game.toTrainingGameEditorItem(weight = weight)
-    }
-}
-
 @Composable
 private fun TrainingGamesPage(
     games: List<TrainingGameEditorItem>,
@@ -491,11 +357,9 @@ private fun TrainingGamesPage(
     totalPages: Int,
     canGoPrevious: Boolean,
     canGoNext: Boolean,
-    showStartButton: Boolean,
     onDecreaseWeightClick: (Long) -> Unit,
     onIncreaseWeightClick: (Long) -> Unit,
     onRemoveGameClick: (Long) -> Unit,
-    onStartTrainingClick: (Long) -> Unit,
     onPreviousPageClick: () -> Unit,
     onNextPageClick: () -> Unit
 ) {
@@ -518,11 +382,9 @@ private fun TrainingGamesPage(
             games.forEachIndexed { index, game ->
                 TrainingGamePageRow(
                     game = game,
-                    showStartButton = showStartButton,
                     onDecreaseWeightClick = { onDecreaseWeightClick(game.gameId) },
                     onIncreaseWeightClick = { onIncreaseWeightClick(game.gameId) },
                     onRemoveGameClick = { onRemoveGameClick(game.gameId) },
-                    onStartTrainingClick = { onStartTrainingClick(game.gameId) },
                 )
                 if (index + 1 < games.size) {
                     Spacer(modifier = Modifier.height(TrainingGameRowSpacing))
@@ -555,11 +417,9 @@ private fun TrainingGamesPage(
 @Composable
 private fun TrainingGamePageRow(
     game: TrainingGameEditorItem,
-    showStartButton: Boolean,
     onDecreaseWeightClick: () -> Unit,
     onIncreaseWeightClick: () -> Unit,
     onRemoveGameClick: () -> Unit,
-    onStartTrainingClick: () -> Unit,
 ) {
     CardSurface(
         modifier = Modifier.fillMaxWidth(),
@@ -601,13 +461,6 @@ private fun TrainingGamePageRow(
                         modifier = Modifier.width(56.dp),
                     )
                 }
-                if (showStartButton) {
-                    PrimaryButton(
-                        text = "GO",
-                        onClick = onStartTrainingClick,
-                        modifier = Modifier.width(72.dp),
-                    )
-                }
                 IconButton(onClick = onRemoveGameClick) {
                     Icon(
                         imageVector = Icons.Default.Delete,
@@ -621,38 +474,20 @@ private fun TrainingGamePageRow(
 }
 
 @Composable
-private fun MissingTrainingDialog(
-    onDismiss: () -> Unit
-) {
-    AppMessageDialog(
-        title = "Training Not Found",
-        message = "The selected training is unavailable.",
-        onDismiss = onDismiss
-    )
-}
-
-
-@Composable
 private fun TrainingSaveSuccessDialog(
     success: TrainingSaveSuccess,
     onDismiss: () -> Unit
 ) {
     AppMessageDialog(
-        title = if (success.wasUpdated) "Training Updated" else "Training Created",
-        message = buildTrainingSaveSuccessMessage(success),
+        title = "Training Created",
+        message = buildString {
+            appendLine("ID: ${success.trainingId}")
+            appendLine("Name: ${success.trainingName}")
+            append("Games added: ")
+            append(success.gamesCount)
+        },
         onDismiss = onDismiss
     )
-}
-
-private fun buildTrainingSaveSuccessMessage(
-    success: TrainingSaveSuccess
-): String {
-    return buildString {
-        appendLine("ID: ${success.trainingId}")
-        appendLine("Name: ${success.trainingName}")
-        append(if (success.wasUpdated) "Games in training: " else "Games added: ")
-        append(success.gamesCount)
-    }
 }
 
 @Composable
