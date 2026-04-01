@@ -26,6 +26,7 @@ fun parsePgnToUciLines(pgnText: String): List<List<String>> {
     val sanLines = extractSanLines(pgnText)
 
     return sanLines
+        .reversed() // extractSanLines adds the main line last; reverse so it comes first
         .mapNotNull(::parseSanLineToUci)
         .distinctBy { it.joinToString(" ") }
 }
@@ -85,30 +86,45 @@ private fun extractSanLines(pgnText: String): List<List<String>> {
     val branchStack = ArrayDeque<List<String>>()
     var currentLine = mutableListOf<String>()
 
-    for (token in tokens) {
+    var i = 0
+    while (i < tokens.size) {
+        val token = tokens[i]
         when {
             token == "(" -> {
                 branchStack.addLast(currentLine.toList())
-                currentLine = currentLine.dropLast(1).toMutableList()
+                // Use the move number right after "(" to find the exact backtrack point.
+                // e.g. "(4. Be2" means white's move 4 → ply = (4-1)*2 = 6 half-moves.
+                val targetPly = variationStartPly(tokens.getOrNull(i + 1))
+                    ?.coerceIn(0, currentLine.size)
+                    ?: (currentLine.size - 1)
+                currentLine = currentLine.take(targetPly).toMutableList()
             }
             token == ")" -> {
-                if (currentLine.isNotEmpty()) {
-                    lines.add(currentLine.toList())
-                }
+                if (currentLine.isNotEmpty()) lines.add(currentLine.toList())
                 currentLine = branchStack.removeLastOrNull()?.toMutableList() ?: mutableListOf()
             }
-            token.startsWith("$") || token.matches(Regex("""\d+\.(?:\.\.)?""")) || isResultToken(token) -> {
-                continue
+            token.startsWith("$") || token.matches(Regex("""\d+\.?(?:\.\.)?""")) || isResultToken(token) -> {
+                // skip move numbers, NAG annotations and result tokens
             }
             else -> currentLine.add(token)
         }
+        i++
     }
 
-    if (currentLine.isNotEmpty()) {
-        lines.add(currentLine.toList())
-    }
-
+    if (currentLine.isNotEmpty()) lines.add(currentLine.toList())
     return lines
+}
+
+/** Returns the half-move index (ply) at which a variation starts given its first token. */
+private fun variationStartPly(token: String?): Int? {
+    if (token == null) return null
+    return when {
+        token.matches(Regex("""\d+\.""")) ->
+            (token.dropLast(1).toIntOrNull() ?: return null).let { (it - 1) * 2 }
+        token.matches(Regex("""\d+\.\.\.""")) ->
+            (token.dropLast(3).toIntOrNull() ?: return null).let { (it - 1) * 2 + 1 }
+        else -> null
+    }
 }
 
 private fun parseSanLineToUci(tokens: List<String>): List<String>? {

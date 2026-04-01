@@ -41,8 +41,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import com.github.bhlangonijr.chesslib.Board
+import com.github.bhlangonijr.chesslib.Square
+import com.github.bhlangonijr.chesslib.move.Move
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.example.chessboard.boardmodel.GameController
@@ -50,6 +54,7 @@ import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.service.buildStoredPgnFromUci
 import com.example.chessboard.service.extractPgnHeaders
+import com.example.chessboard.service.OneGameTrainingData
 import com.example.chessboard.service.parsePgnToUciLines
 import com.example.chessboard.service.uciMovesToMoves
 import com.example.chessboard.ui.components.AppMessageDialog
@@ -110,6 +115,7 @@ fun CreateOpeningScreenContainer(
             importedPgnHeaders = emptyMap()
             importedUciLines = emptyList()
         },
+        importedUciLines = importedUciLines,
         pgnImportError = pgnImportError,
         onPgnImportErrorDismiss = { pgnImportError = null },
         saveError = saveError,
@@ -149,7 +155,7 @@ fun CreateOpeningScreenContainer(
             val importedHeadersSnapshot = importedPgnHeaders
             val importedLinesSnapshot = importedUciLines
             (activity as? LifecycleOwner)?.lifecycleScope?.launch(Dispatchers.IO) {
-                val savedCount = if (importedLinesSnapshot.isEmpty()) {
+                val savedGameIds = if (importedLinesSnapshot.isEmpty()) {
                     val entity = GameEntity(
                         event = openingName.ifBlank { null },
                         eco = ecoCode.ifBlank { null },
@@ -157,10 +163,10 @@ fun CreateOpeningScreenContainer(
                         initialFen = "",
                         sideMask = selectedSide.sideMask
                     )
-                    if (dbProvider.addGame(entity, gameController.getMovesCopy())) 1 else 0
+                    listOfNotNull(dbProvider.addGameAndGetId(entity, gameController.getMovesCopy()))
                 } else {
-                    var successCount = 0
-                    importedLinesSnapshot.forEachIndexed { index, uciMoves ->
+                    buildList {
+                        importedLinesSnapshot.forEachIndexed { index, uciMoves ->
                         val eventName = buildImportedLineEventName(
                             baseName = openingName,
                             index = index,
@@ -183,16 +189,29 @@ fun CreateOpeningScreenContainer(
                             initialFen = "",
                             sideMask = selectedSide.sideMask
                         )
-                        if (dbProvider.addGame(entity, uciMovesToMoves(uciMoves))) {
-                            successCount++
+                            dbProvider.addGameAndGetId(entity, uciMovesToMoves(uciMoves))?.let { gameId ->
+                                add(gameId)
+                            }
                         }
                     }
-                    successCount
+                }
+                val savedCount = savedGameIds.size
+                val trainingId = if (savedGameIds.isNotEmpty()) {
+                    dbProvider.createTrainingFromGames(
+                        name = openingName.ifBlank { "Opening" },
+                        games = savedGameIds.map { gameId ->
+                            OneGameTrainingData(gameId = gameId, weight = 1)
+                        }
+                    )
+                } else {
+                    null
                 }
 
                 withContext(Dispatchers.Main) {
-                    if (savedCount > 0) {
+                    if (savedCount > 0 && trainingId != null) {
                         onBackClick()
+                    } else if (savedCount > 0) {
+                        saveError = "Games were saved, but training could not be created"
                     } else {
                         saveError = if (importedLinesSnapshot.isEmpty()) {
                             "Failed to save opening"
@@ -221,6 +240,7 @@ private fun CreateOpeningScreen(
     nameError: Boolean,
     pgnText: String,
     onPgnTextChange: (String) -> Unit,
+    importedUciLines: List<List<String>>,
     pgnImportError: String?,
     onPgnImportErrorDismiss: () -> Unit,
     saveError: String?,
@@ -316,6 +336,16 @@ private fun CreateOpeningScreen(
                     onResetClick = { gameController.resetToStartPosition() },
                     onRedoClick = { gameController.redoMove() }
                 )
+            }
+
+            if (importedUciLines.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(AppDimens.spaceLg))
+                ScreenSection {
+                    ImportedMovesTreeSection(
+                        importedUciLines = importedUciLines,
+                        gameController = gameController
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
@@ -465,6 +495,191 @@ private fun PillDivider() {
             .background(TrainingIconInactive.copy(alpha = 0.4f))
     )
 }
+
+// ── Move tree ──────────────────────────────────────────────────────────────────
+
+private class MoveTrieNode(
+    val uciMove: String,
+    val label: String,
+    val children: MutableList<MoveTrieNode> = mutableListOf()
+)
+
+private data class MoveItem(val label: String, val uciPath: List<String>, val ply: Int)
+
+private sealed class TreeSegment {
+    data class MainMoves(val moves: List<MoveItem>) : TreeSegment()
+    data class Variation(val moves: List<MoveItem>) : TreeSegment()
+}
+
+private fun buildMoveTrie(uciLines: List<List<String>>): MoveTrieNode {
+    val root = MoveTrieNode("", "")
+    for (line in uciLines) {
+        val board = Board()
+        var current = root
+        for (uci in line) {
+            val from = uci.take(2)
+            val to = uci.drop(2).take(2)
+            val move = try {
+                Move(Square.fromValue(from.uppercase()), Square.fromValue(to.uppercase()))
+            } catch (_: Exception) { break }
+            var child = current.children.find { it.uciMove == uci }
+            if (child == null) {
+                val label = try { computeLabel(move, board.fen) } catch (_: Exception) { to }
+                child = MoveTrieNode(uciMove = uci, label = label)
+                current.children.add(child)
+            }
+            try { board.doMove(move) } catch (_: Exception) { break }
+            current = child
+        }
+    }
+    return root
+}
+
+private fun buildMoveTreeData(uciLines: List<List<String>>): List<TreeSegment> {
+    if (uciLines.isEmpty()) return emptyList()
+    val root = buildMoveTrie(uciLines)
+    val segments = mutableListOf<TreeSegment>()
+    var currentMainMoves = mutableListOf<MoveItem>()
+    var current = root
+    val mainPath = mutableListOf<String>()
+    var ply = 0
+    while (current.children.isNotEmpty()) {
+        val mainChild = current.children[0]
+        mainPath.add(mainChild.uciMove)
+        currentMainMoves.add(MoveItem(mainChild.label, mainPath.toList(), ply))
+        if (current.children.size > 1) {
+            // Flush main moves up to and including the branch move, then insert variations
+            segments.add(TreeSegment.MainMoves(currentMainMoves.toList()))
+            currentMainMoves = mutableListOf()
+            for (varChild in current.children.drop(1)) {
+                val varBase = mainPath.dropLast(1).toMutableList()
+                val varMoves = mutableListOf<MoveItem>()
+                collectVariationMoves(varChild, ply, varBase, varMoves)
+                if (varMoves.isNotEmpty()) segments.add(TreeSegment.Variation(varMoves))
+            }
+        }
+        current = mainChild
+        ply++
+    }
+    if (currentMainMoves.isNotEmpty()) segments.add(TreeSegment.MainMoves(currentMainMoves.toList()))
+    return segments
+}
+
+private fun collectVariationMoves(
+    node: MoveTrieNode,
+    ply: Int,
+    pathSoFar: MutableList<String>,
+    moves: MutableList<MoveItem>
+) {
+    pathSoFar.add(node.uciMove)
+    moves.add(MoveItem(node.label, pathSoFar.toList(), ply))
+    if (node.children.isNotEmpty()) {
+        collectVariationMoves(node.children[0], ply + 1, pathSoFar, moves)
+    }
+}
+
+@Composable
+private fun ImportedMovesTreeSection(
+    importedUciLines: List<List<String>>,
+    gameController: GameController,
+    modifier: Modifier = Modifier
+) {
+    val segments = remember(importedUciLines) { buildMoveTreeData(importedUciLines) }
+    var selectedPath by remember(importedUciLines) { mutableStateOf<List<String>?>(null) }
+
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)) {
+        SectionTitleText(text = "Move Tree", color = TrainingAccentTeal)
+        Surface(
+            shape = RoundedCornerShape(AppDimens.radiusMd),
+            color = Background.SurfaceDark,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                segments.forEachIndexed { segIndex, segment ->
+                    when (segment) {
+                        is TreeSegment.MainMoves -> {
+                            // After a variation, resume with move number even on black's move
+                            val isContinuation = segIndex > 0 && segments[segIndex - 1] is TreeSegment.Variation
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                segment.moves.forEachIndexed { moveIndex, move ->
+                                    val isWhite = move.ply % 2 == 0
+                                    val showNumber = isWhite || (moveIndex == 0 && isContinuation)
+                                    if (showNumber) {
+                                        Text(
+                                            text = if (isWhite) "${move.ply / 2 + 1}." else "${move.ply / 2 + 1}...",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = TextColor.Secondary,
+                                            modifier = Modifier.align(Alignment.CenterVertically)
+                                        )
+                                    }
+                                    TreeMoveChip(
+                                        label = move.label,
+                                        isSelected = selectedPath == move.uciPath,
+                                        onClick = {
+                                            selectedPath = move.uciPath
+                                            gameController.loadFromUciMoves(move.uciPath, move.uciPath.size)
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                        is TreeSegment.Variation -> {
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(
+                                    text = "—",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = TextColor.Secondary,
+                                    modifier = Modifier.align(Alignment.CenterVertically)
+                                )
+                                segment.moves.forEach { move ->
+                                    if (move.ply % 2 == 0) {
+                                        Text(
+                                            text = "${move.ply / 2 + 1}.",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = TextColor.Secondary,
+                                            modifier = Modifier.align(Alignment.CenterVertically)
+                                        )
+                                    }
+                                    TreeMoveChip(
+                                        label = move.label,
+                                        isSelected = selectedPath == move.uciPath,
+                                        onClick = {
+                                            selectedPath = move.uciPath
+                                            gameController.loadFromUciMoves(move.uciPath, move.uciPath.size)
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TreeMoveChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(AppDimens.radiusSm))
+            .background(if (isSelected) TrainingAccentTeal else Background.CardDark)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 3.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (isSelected) Color.White else TextColor.Primary
+        )
+    }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
 
 @Composable
 private fun ImportFromPgnBlock(

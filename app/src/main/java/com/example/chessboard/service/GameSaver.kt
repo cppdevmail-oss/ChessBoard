@@ -41,6 +41,14 @@ class GameSaver(
         moves: List<Move>,
         sideMask: Int
     ): Boolean {
+        return saveGame(game, moves, sideMask) != null
+    }
+
+    suspend fun saveGame(
+        game: GameEntity,
+        moves: List<Move>,
+        sideMask: Int
+    ): Long? {
 
         return database.withTransaction {
 
@@ -50,13 +58,13 @@ class GameSaver(
             )
 
             if (!isUnique) {
-                return@withTransaction false
+                return@withTransaction null
             }
 
             val gameId = gameDao.insertGame(game)
 
             if (gameId == -1L) {
-                return@withTransaction false
+                return@withTransaction null
             }
 
             val board = Board()
@@ -73,7 +81,7 @@ class GameSaver(
                 savePositionAndLink(gameId, board, ply, sideMask)
             }
 
-            true
+            gameId
         }
     }
 

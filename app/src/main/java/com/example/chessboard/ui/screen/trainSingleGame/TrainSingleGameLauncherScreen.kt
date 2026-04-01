@@ -63,7 +63,7 @@ fun TrainSingleGameLauncherScreenContainer(
         TrainingLaunchErrorDialog(
             title = "Game not found",
             message = "The selected game is unavailable to start.",
-            onDismiss = { onNavigate(ScreenType.CreateTraining(trainingId)) },
+            onDismiss = { onNavigate(ScreenType.EditTraining(trainingId)) },
         )
         return
     }

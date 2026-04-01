@@ -15,6 +15,7 @@ import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.ui.screen.CreateOpeningScreenContainer
 import com.example.chessboard.ui.screen.CreateTrainingScreenContainer
+import com.example.chessboard.ui.screen.EditTrainingScreenContainer
 import com.example.chessboard.ui.screen.GameEditorScreenContainer
 import com.example.chessboard.ui.screen.GamesExplorerScreenContainer
 import com.example.chessboard.ui.screen.HomeScreenContainer
@@ -49,6 +50,7 @@ class MainActivity : ComponentActivity() {
             ChessBoardTheme {
                 var currentScreen by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
                 var selectedGame by remember { mutableStateOf<GameEntity?>(null) }
+                var simpleViewEnabled by remember { mutableStateOf(false) }
 
                 when (val screen = currentScreen) {
                     ScreenType.Training -> TrainingListScreenContainer(
@@ -57,7 +59,7 @@ class MainActivity : ComponentActivity() {
                         onBackClick = { currentScreen = ScreenType.Home },
                         onNavigate = { currentScreen = it },
                         onOpenTraining = { trainingId ->
-                            currentScreen = ScreenType.CreateTraining(trainingId)
+                            currentScreen = ScreenType.EditTraining(trainingId)
                         },
                     )
 
@@ -74,14 +76,20 @@ class MainActivity : ComponentActivity() {
                         inDbProvider = dbProvider,
                     )
 
-                    is ScreenType.CreateTraining -> CreateTrainingScreenContainer(
+                    ScreenType.CreateTraining -> CreateTrainingScreenContainer(
+                        activity = this@MainActivity,
+                        onBackClick = { currentScreen = ScreenType.Training },
+                        onNavigate = { currentScreen = it },
+                        inDbProvider = dbProvider,
+                    )
+
+                    is ScreenType.EditTraining -> EditTrainingScreenContainer(
                         trainingId = screen.trainingId,
                         activity = this@MainActivity,
                         onBackClick = { currentScreen = ScreenType.Training },
                         onNavigate = { currentScreen = it },
                         onStartGameTrainingClick = { gameId ->
-                            val trainingId = screen.trainingId ?: return@CreateTrainingScreenContainer
-                            currentScreen = ScreenType.TrainSingleGame(trainingId, gameId)
+                            currentScreen = ScreenType.TrainSingleGame(screen.trainingId, gameId)
                         },
                         inDbProvider = dbProvider,
                     )
@@ -90,7 +98,7 @@ class MainActivity : ComponentActivity() {
                         trainingId = screen.trainingId,
                         gameId = screen.gameId,
                         onTrainingFinished = {
-                            currentScreen = ScreenType.CreateTraining(screen.trainingId)
+                            currentScreen = ScreenType.EditTraining(screen.trainingId)
                         },
                         onBackClick = {
                             currentScreen = ScreenType.Home
@@ -112,9 +120,11 @@ class MainActivity : ComponentActivity() {
 
                     ScreenType.Home -> HomeScreenContainer(
                         activity = this@MainActivity,
+                        inDbProvider = dbProvider,
+                        simpleViewEnabled = simpleViewEnabled,
                         onNavigate = { currentScreen = it },
                         onCreateTrainingClick = {
-                            currentScreen = ScreenType.CreateTraining(null)
+                            currentScreen = ScreenType.CreateTraining
                         },
                         onStartFirstTrainingClick = {
                             currentScreen = ScreenType.Training
@@ -127,6 +137,8 @@ class MainActivity : ComponentActivity() {
                     )
 
                     ScreenType.Settings -> SettingsScreenContainer(
+                        simpleViewEnabled = simpleViewEnabled,
+                        onSimpleViewToggle = { simpleViewEnabled = it },
                         onBackClick = { currentScreen = ScreenType.Profile },
                     )
 

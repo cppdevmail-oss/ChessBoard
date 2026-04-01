@@ -31,12 +31,13 @@ Android chess opening trainer. Users save games (openings) and review/train them
 |---|---|
 | `HomeScreen.kt` | Lists all saved games. Opens a game in `GameEditorScreen`. |
 | `CreateOpeningScreen.kt` | Form to input and save a new game/opening. Uses `PgnImportService` for PGN header extraction, SAN-to-UCI import, and batch-saving imported variation lines as separate games. |
-| `CreateTrainingScreen.kt` | Creates a training from selected games with editable weights. |
+| `CreateTrainingScreen.kt` | Creation-only training flow: all games loaded with weight 1, paginated list with weight +/- and delete, Save calls `createTrainingFromGames`. Also exports shared internal helpers (`TrainingGameEditorItem`, `TrainingGamesEditorSection`, `TrainingGamesPage`, `TrainingGameBlock`, `CreateTrainingEditorState`, `decreaseTrainingGameWeight`, `increaseTrainingGameWeight`, `toTrainingGameEditorItem`, `DEFAULT_TRAINING_NAME`, `TrainingGameRowHeight`, `TrainingGameRowSpacing`). |
+| `EditTrainingScreen.kt` | Edit-only training flow: loads only games already in the training with their saved weights, "Random" button in top bar, GO button per row, Save calls `updateTrainingFromGames`. Missing training shows dialog navigating to Training list. |
 | `TrainingListScreen.kt` | Loads and displays all saved trainings as cards with name, training ID, and games count. |
 | `GamesExplorerScreen.kt` | Loads all saved games, shows each as a `GameBlock` (title + move-chip row + nav). Clicking any chip loads that game at that ply on the shared board. |
 | `GameEditorScreen.kt` | Loads a single `GameEntity`, replays its PGN, shows move-chip row, allows undo/redo/save/delete. |
 | `TrainingComponents.kt` | Shared composables and pure helpers reused by both training-related and editor screens (see below). |
-| `ScrenTypes.kt` | `sealed class ScreenType` - Home, Training, GamesExplorer, CreateOpening, CreateTraining, GameEditor, TrainSingleGame, Stats, Profile. |
+| `ScrenTypes.kt` | `sealed class ScreenType` - Home, Training, GamesExplorer, CreateOpening, CreateTraining, EditTraining, GameEditor, TrainSingleGame, Stats, Profile. |
 | `ProfileScreen.kt` | Profile screen - hero card with avatar/level/progress, quick stats, achievements list, settings/clear-data action rows. Container + Stateless pattern backed by `ProfileViewModel`. |
 | `ProfileViewModel.kt` | Holds `ProfileState` (userName, level, totalMoves, accuracy, bestStreak, achievements) via `StateFlow`. No DB access - state is static defaults for now. |
 
@@ -189,11 +190,11 @@ MainActivity
 
 | Dependency | Version |
 |---|---|
-| Kotlin | 2.0.21 |
-| AGP | 8.13.2 |
-| KSP | 2.0.21-1.0.28 |
+| Kotlin | 2.2.10 |
+| AGP | 9.1.0 |
+| KSP | 2.2.10-2.0.2 |
 | Room | 2.6.1 |
-| Compose BOM | 2024.09.00 |
+| Compose BOM | 2026.03.01 |
 
 ---
 
@@ -218,11 +219,18 @@ MainActivity
 - `.claude/commands/board-debug.md` - debugging checklist for board interaction and game-state issues
 - `.claude/commands/training-check.md` - validation checklist for training flows and data integrity
 
+### Business logic placement
+- **All business logic lives in `service/`** - screens and containers hold only UI state and dispatch calls; they never compute, validate, or transform domain data themselves
+- When adding logic to a screen, ask: "could this be a pure function in a service?" If yes, put it there
+- New service methods should be **small and single-purpose** - one method per operation, named after what it does (`resolveX`, `buildX`, `validateX`), not after who calls it
+- Helpers that are only used inside one composable file are fine to stay private in that file **only if they are pure UI helpers** (formatting, layout math); anything touching domain models or DB results belongs in a service
+
 ### Don't
 - Don't duplicate logic that belongs in `TrainingComponents.kt`
 - Don't create new files unless no existing file is a reasonable home
 - Don't add comments or docstrings to code you didn't change
 - Don't over-engineer; solve only what was asked
+- Don't put business logic in screens - if a container does more than load state and call a service, extract the logic
 
 ### Keeping this file up to date
 After any non-trivial change update the relevant section above - correct file paths, API signatures, or add to Recent Changes.
@@ -230,6 +238,10 @@ After any non-trivial change update the relevant section above - correct file pa
 ---
 
 ## Recent Changes
+
+- **`EditTrainingScreen.kt` redesigned with per-game board blocks** - `EditTrainingScreen` body replaced with a `LazyColumn`. Each game in `editableGamesForTraining` is rendered as a `GameTrainingBlock` (private) that shows: header row with title/ECO/weight (left) and `-`/`+`/`GO` buttons (right); a live `ChessBoardSection` loading the game PGN via `parsePgnMoves` + `buildMoveLabels` on `Dispatchers.Default` and parking at ply 0; a "Move Sequence" label row with teal accent; a horizontally scrollable `MoveChip` row with chip selection synced to `gameController.currentMoveIndex`; and a bottom nav row with a `TextButton("Reset")` and `←`/`→` `IconButton`s using `Icons.AutoMirrored`. `TrainingGameEditorItem` extended with `eco: String?` and `pgn: String` fields; `GameEntity.toTrainingGameEditorItem` updated to populate them. Container logic is unchanged.
+
+- **`CreateTrainingScreen.kt` split into `CreateTrainingScreen.kt` + `EditTrainingScreen.kt`** - Creation flow (`CreateTrainingScreenContainer` / `CreateTrainingScreen`) is now in `CreateTrainingScreen.kt` with no `trainingId` param; edit flow (`EditTrainingScreenContainer` / `EditTrainingScreen`) is in `EditTrainingScreen.kt`. Shared low-level composables (`TrainingGamesEditorSection`, `TrainingGamesPage`, `TrainingGameBlock`) and helpers stay in `CreateTrainingScreen.kt` with `internal` visibility. `ScreenType.EditTraining(trainingId: Long)` added to `ScrenTypes.kt`. `MainActivity` routes `EditTraining` to `EditTrainingScreenContainer` and returns to `EditTraining` after `TrainSingleGame`. `TrainingListScreen` and `HomeScreen` `onOpenTraining` now navigate to `ScreenType.EditTraining`. `TrainSingleGameLauncherScreen` error dismiss also navigates to `EditTraining`.
 
 - **`ProfileScreen.kt` + `ProfileViewModel.kt`** - Profile feature added under `ScreenType.Profile`. `ProfileScreenContainer` uses `remember { ProfileViewModel() }` to collect `ProfileState` and delegates to stateless `ProfileScreen`. Screen contains hero card (avatar, level badge, progress bar), quick stats row (accuracy, best streak, achievements count), achievements list with lock/unlock state, and an action menu with Settings and Clear All Data rows. Wired into `MainActivity` before the `else` branch.
 
