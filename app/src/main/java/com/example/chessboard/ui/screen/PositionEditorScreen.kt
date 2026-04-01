@@ -201,33 +201,12 @@ private fun PositionEditorScreen(
             }
 
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd),
-                    verticalAlignment = Alignment.Top
-                ) {
-                    PositionEditorSideSelector(
-                        selectedSide = selectedSide,
-                        onSideSelected = onSideSelected,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)
-                    ) {
-                        SecondaryButton(
-                            text = "Clear board",
-                            onClick = onClearBoardClick,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        SecondaryButton(
-                            text = "Initial position",
-                            onClick = onSetInitialPositionClick,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
+                PositionEditorControlsSection(
+                    selectedSide = selectedSide,
+                    onSideSelected = onSideSelected,
+                    onClearBoardClick = onClearBoardClick,
+                    onSetInitialPositionClick = onSetInitialPositionClick
+                )
             }
 
             item {
@@ -312,6 +291,55 @@ private fun PositionEditorBoardSection(
                 modifier = Modifier.fillMaxSize()
             )
         }
+    }
+}
+
+@Composable
+private fun PositionEditorControlsSection(
+    selectedSide: EditableGameSide,
+    onSideSelected: (EditableGameSide) -> Unit,
+    onClearBoardClick: () -> Unit,
+    onSetInitialPositionClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd),
+        verticalAlignment = Alignment.Top
+    ) {
+        PositionEditorSideSelector(
+            selectedSide = selectedSide,
+            onSideSelected = onSideSelected,
+            modifier = Modifier.weight(1f)
+        )
+
+        PositionEditorActionButtons(
+            onClearBoardClick = onClearBoardClick,
+            onSetInitialPositionClick = onSetInitialPositionClick,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun PositionEditorActionButtons(
+    onClearBoardClick: () -> Unit,
+    onSetInitialPositionClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)
+    ) {
+        SecondaryButton(
+            text = "Clear board",
+            onClick = onClearBoardClick,
+            modifier = Modifier.fillMaxWidth()
+        )
+        SecondaryButton(
+            text = "Initial position",
+            onClick = onSetInitialPositionClick,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
