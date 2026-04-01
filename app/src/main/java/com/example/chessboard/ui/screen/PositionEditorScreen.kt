@@ -1,5 +1,6 @@
 package com.example.chessboard.ui.screen
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,6 +38,7 @@ import com.example.chessboard.boardmodel.BoardPiece
 import com.example.chessboard.boardmodel.BoardPosition
 import com.example.chessboard.boardmodel.ChesslibMapper
 import com.example.chessboard.boardmodel.GameController
+import com.example.chessboard.service.calculateFenHashWithoutMoveNumbers
 import com.example.chessboard.ui.PositionEditorBoardWithCoordinates
 import com.example.chessboard.ui.components.AppBottomNavigation
 import com.example.chessboard.ui.components.AppMessageDialog
@@ -56,6 +58,7 @@ import kotlinx.coroutines.withContext
 
 private const val EmptyBoardBoardPart = "8/8/8/8/8/8/8/8"
 private const val EmptyBoardFen = "$EmptyBoardBoardPart w KQkq -"
+private const val PositionEditorLogTag = "PositionEditor"
 
 private data class PositionEditorPieceOption(
     val letter: Char,
@@ -157,6 +160,10 @@ fun PositionEditorScreenContainer(
                     return@launch
                 }
 
+                Log.d(
+                    PositionEditorLogTag,
+                    "findGames fen=${gameController.getFen()} hash=${calculateFenHashWithoutMoveNumbers(gameController.getFen())}"
+                )
                 val foundGameIds = withContext(Dispatchers.IO) {
                     screenContext.inDbProvider.findGameIdsByFenWithoutMoveNumber(
                         gameController.getFen()
