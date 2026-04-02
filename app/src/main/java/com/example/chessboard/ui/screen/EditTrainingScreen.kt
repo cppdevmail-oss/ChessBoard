@@ -317,6 +317,49 @@ fun EditTrainingScreen(
 }
 
 @Composable
+private fun GameTrainingBlockHeader(
+    game: TrainingGameEditorItem,
+    onDecreaseWeightClick: () -> Unit,
+    onIncreaseWeightClick: () -> Unit,
+    onStartTrainingClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Top
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            SectionTitleText(text = game.title)
+            if (!game.eco.isNullOrBlank()) {
+                CardMetaText(text = game.eco)
+            }
+            CardMetaText(text = "Weight: ${game.weight}")
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceXs),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(AppDimens.spaceXs)
+            ) {
+                SecondaryButton(
+                    text = "-",
+                    onClick = onDecreaseWeightClick,
+                )
+                SecondaryButton(
+                    text = "+",
+                    onClick = onIncreaseWeightClick,
+                )
+            }
+            PrimaryButton(
+                text = "GO",
+                onClick = onStartTrainingClick,
+            )
+        }
+    }
+}
+
+@Composable
 private fun GameTrainingBlock(
     game: TrainingGameEditorItem,
     onDecreaseWeightClick: () -> Unit,
@@ -350,40 +393,12 @@ private fun GameTrainingBlock(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(AppDimens.spaceMd)
     ) {
-        // Header row
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                SectionTitleText(text = game.title)
-                if (!game.eco.isNullOrBlank()) {
-                    CardMetaText(text = game.eco)
-                }
-                CardMetaText(text = "Weight: ${game.weight}")
-            }
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceXs),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                SecondaryButton(
-                    text = "-",
-                    onClick = onDecreaseWeightClick,
-                    modifier = Modifier.width(48.dp)
-                )
-                SecondaryButton(
-                    text = "+",
-                    onClick = onIncreaseWeightClick,
-                    modifier = Modifier.width(48.dp)
-                )
-                PrimaryButton(
-                    text = "GO",
-                    onClick = onStartTrainingClick,
-                    modifier = Modifier.width(64.dp)
-                )
-            }
-        }
+        GameTrainingBlockHeader(
+            game = game,
+            onDecreaseWeightClick = onDecreaseWeightClick,
+            onIncreaseWeightClick = onIncreaseWeightClick,
+            onStartTrainingClick = onStartTrainingClick
+        )
 
         Spacer(modifier = Modifier.height(AppDimens.spaceMd))
 
