@@ -124,6 +124,7 @@ fun GameEditorScreenContainer(
         gameController = gameController,
         moveLabels = moveLabels,
         isLoading = isLoading,
+        onBackClick = screenContext.onBackClick,
         onNavigate = screenContext.onNavigate,
         onSave = { name, eco ->
             val idx = gameController.currentMoveIndex
