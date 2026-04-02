@@ -16,6 +16,7 @@ import com.example.chessboard.entity.TrainingResultEntity
 import com.example.chessboard.entity.TrainingTemplateEntity
 import com.example.chessboard.service.TrainingResultService
 import com.example.chessboard.service.TrainingGameLaunchResult
+import com.example.chessboard.service.GameBackupService
 import com.example.chessboard.service.GameDeleter
 import com.example.chessboard.service.GameSaver
 import com.example.chessboard.service.GameUpdater
@@ -97,6 +98,11 @@ class DatabaseProvider private constructor(
 
     suspend fun getAllGames(): List<GameEntity> {
         return database.gameDao().getAllGames()
+    }
+
+    suspend fun getAllGamePgnsForBackup(): List<String> {
+        val gameBackupService = GameBackupService(database)
+        return gameBackupService.getAllGamePgns()
     }
 
     suspend fun findPositionsByFenWithoutMoveNumber(fen: String): List<PositionEntity> {
