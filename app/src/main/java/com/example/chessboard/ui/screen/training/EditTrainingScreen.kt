@@ -35,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -408,6 +409,10 @@ private fun GameTrainingBlock(
     // Read boardState to trigger recomposition when the controller moves
     @Suppress("UNUSED_VARIABLE")
     val boardState = gameController.boardState
+
+    SideEffect {
+        gameController.setUserMovesEnabled(false)
+    }
 
     LaunchedEffect(game.pgn) {
         isLoadingBoard = true
