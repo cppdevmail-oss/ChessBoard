@@ -20,7 +20,6 @@ import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.ui.ChessBoardWithCoordinates
 import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.components.BodySecondaryText
-import com.example.chessboard.ui.components.CardMetaText
 import com.example.chessboard.ui.components.CardSurface
 import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.ScreenSection
@@ -28,7 +27,6 @@ import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TextColor
 
-// Renders the wrong-move dialog only when the session has a message.
 @Composable
 internal fun RenderWrongMoveDialog(
     message: String?,
@@ -62,7 +60,6 @@ internal fun RenderCompletionDialog(
     )
 }
 
-// Renders the central training content for the selected game and side.
 @Composable
 internal fun TrainSingleGameContent(
     state: TrainSingleGameContentState,
@@ -155,7 +152,6 @@ internal fun resolveTrainingMoveLegendText(
     }.joinToString(separator = " ")
 }
 
-// Displays the session action buttons and the corrective move action after mistakes.
 @Composable
 internal fun TrainingSingleGameActions(
     state: TrainingSingleGameActionsState,
@@ -227,7 +223,6 @@ internal fun TrainingSingleGameActions(
     }
 }
 
-// Renders the interactive chess board used by the training session.
 @Composable
 internal fun TrainingBoardSection(
     gameController: GameController,
@@ -250,7 +245,6 @@ internal fun TrainingBoardSection(
     }
 }
 
-// Shows the completion dialog for repeating the variation or finishing the side/session.
 @Composable
 internal fun TrainSingleGameCompletionDialog(
     dialogState: TrainSingleGameCompletionState,

@@ -23,6 +23,7 @@ private sealed interface TrainSingleGameLaunchState {
 }
 
 @Composable
+// Loads the training game data or shows a launch error before opening the training screen.
 fun TrainSingleGameLauncherScreenContainer(
     trainingId: Long,
     gameId: Long,

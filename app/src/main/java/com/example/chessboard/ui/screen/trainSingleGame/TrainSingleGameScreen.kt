@@ -36,16 +36,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/**
- * Loads the selected game, runs the single-game training flow and updates the training entry
- * before returning the session result.
- *
- * @param gameId Identifier of the game being trained.
- * @param trainingId Identifier of the training that owns the game.
- * @param onTrainingFinished Called after the training is updated in the database.
- * @param screenContext Shared screen callbacks and database access.
- * @param modifier Modifier for the root container.
- */
 @Composable
 fun TrainSingleGameScreenContainer(
     gameId: Long,
@@ -83,7 +73,6 @@ fun TrainSingleGameScreenContainer(
 }
 
 @Composable
-// Hosts the single-game training session state and coordinates training flow.
 private fun TrainSingleGameScreen(
     gameId: Long,
     trainingId: Long,
@@ -94,22 +83,17 @@ private fun TrainSingleGameScreen(
     onOpenGameEditorClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    // Keeps the parent navigation section highlighted while the training screen is open.
     var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
     val loadedGame = trainingGameData.game
     val uciMoves = trainingGameData.uciMoves
     val moveLabels = remember(uciMoves) { buildMoveLabels(uciMoves) }
-    // Stores the full mutable training session state for the current screen.
     var uiState by remember(loadedGame.id) { mutableStateOf(TrainSingleGameUiState()) }
     var showLineJob by remember { mutableStateOf<Job?>(null) }
     val scope = rememberCoroutineScope()
-    // Resolves the ordered list of sides that must be trained for the current game.
     val trainingSides = remember(loadedGame.sideMask) {
         resolveTrainingOrientations(loadedGame.sideMask)
     }
-    // Selects the active board orientation for the current training side.
     val currentOrientation = trainingSides.getOrNull(uiState.currentSideIndex) ?: BoardOrientation.WHITE
-    // Owns the interactive board state for the currently trained side.
     val gameController = remember(currentOrientation) { GameController(currentOrientation) }
 
     LaunchedEffect(gameController, loadedGame.id) {
@@ -146,6 +130,7 @@ private fun TrainSingleGameScreen(
         )
     }
 
+    // Keeps the event handlers together so the main render block stays compact.
     fun createContentActions(): TrainSingleGameContentActions {
         return TrainSingleGameContentActions(
             onShowLineClick = {
