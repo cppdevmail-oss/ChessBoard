@@ -66,13 +66,14 @@ internal fun RenderCompletionDialog(
 @Composable
 internal fun TrainSingleGameContent(
     state: TrainSingleGameContentState,
+    gameController: GameController,
     actions: TrainSingleGameContentActions,
 ) {
     ScreenSection {
         Column {
             TrainingGameHeader(title = state.trainingGameData.game.event)
             Spacer(modifier = Modifier.height(AppDimens.spaceSm))
-            TrainingBoardSection(gameController = state.gameController)
+            TrainingBoardSection(gameController = gameController)
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
             TrainingSingleGameActions(
                 actions = actions,

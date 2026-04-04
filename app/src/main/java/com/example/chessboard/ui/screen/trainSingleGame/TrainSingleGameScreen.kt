@@ -267,7 +267,6 @@ private fun TrainSingleGameScreen(
                     gameId = gameId,
                     trainingId = trainingId,
                     trainingGameData = trainingGameData,
-                    gameController = gameController,
                     currentOrientation = currentOrientation,
                     sidesCount = trainingSides.size,
                     currentPly = gameController.currentMoveIndex,
@@ -275,6 +274,7 @@ private fun TrainSingleGameScreen(
                     phase = uiState.phase,
                     mistakesCount = uiState.mistakesCount
                 ),
+                gameController = gameController,
                 actions = createContentActions()
             )
         }

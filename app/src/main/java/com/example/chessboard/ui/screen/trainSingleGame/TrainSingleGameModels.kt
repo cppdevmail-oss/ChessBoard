@@ -2,7 +2,6 @@ package com.example.chessboard.ui.screen.trainSingleGame
 
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.entity.SideMask
-import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.ui.BoardOrientation
 import com.github.bhlangonijr.chesslib.move.Move
 
@@ -62,7 +61,6 @@ internal data class TrainSingleGameContentState(
     val gameId: Long,
     val trainingId: Long,
     val trainingGameData: TrainSingleGameData,
-    val gameController: GameController,
     val currentOrientation: BoardOrientation,
     val sidesCount: Int,
     val currentPly: Int,
