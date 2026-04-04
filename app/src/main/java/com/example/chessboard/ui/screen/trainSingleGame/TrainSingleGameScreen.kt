@@ -146,6 +146,67 @@ private fun TrainSingleGameScreen(
         )
     }
 
+    fun createContentActions(): TrainSingleGameContentActions {
+        return TrainSingleGameContentActions(
+            onShowLineClick = {
+                Log.d(
+                    TrainSingleGameLogTag,
+                    "Show line clicked. gameId= trainingId= boardState= moves="
+                )
+
+                showLineJob?.cancel()
+                showLineJob = null
+                gameController.resetToStartPosition()
+                uiState = buildShowLineState(uiState)
+                showLineJob = scope.launch {
+                    try {
+                        Log.d(
+                            TrainSingleGameLogTag,
+                            "Starting runShowLine coroutine. boardState= movesCount="
+                        )
+                        uiState = runShowLine(
+                            uiState = uiState,
+                            gameController = gameController,
+                            uciMoves = uciMoves
+                        )
+                    } finally {
+                        showLineJob = null
+                    }
+                }
+            },
+            onStopShowLineClick = {
+                showLineJob?.cancel()
+                showLineJob = null
+                uiState = uiState.copy(phase = TrainSingleGamePhase.Idle)
+            },
+            onStartTrainingClick = {
+                gameController.resetToStartPosition()
+                uiState = advanceProgramMoves(
+                    uiState = buildStartTrainingState(uiState),
+                    gameController = gameController,
+                    uciMoves = uciMoves,
+                    currentOrientation = currentOrientation,
+                    sidesCount = trainingSides.size
+                )
+            },
+            onStopTrainingClick = {
+                showLineJob?.cancel()
+                showLineJob = null
+                gameController.resetToStartPosition()
+                uiState = resetSessionState(uiState)
+            },
+            onMakeCorrectMoveClick = {
+                uiState = handleCorrectMove(
+                    uiState = uiState,
+                    gameController = gameController,
+                    uciMoves = uciMoves,
+                    currentOrientation = currentOrientation,
+                    sidesCount = trainingSides.size
+                )
+            }
+        )
+    }
+
     AppScreenScaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
@@ -214,64 +275,7 @@ private fun TrainSingleGameScreen(
                     phase = uiState.phase,
                     mistakesCount = uiState.mistakesCount
                 ),
-                actions = TrainSingleGameContentActions(
-                    onShowLineClick = {
-                        Log.d(
-                            TrainSingleGameLogTag,
-                            "Show line clicked. gameId= trainingId= boardState= moves="
-                        )
-
-                        showLineJob?.cancel()
-                        showLineJob = null
-                        gameController.resetToStartPosition()
-                        uiState = buildShowLineState(uiState)
-                        showLineJob = scope.launch {
-                            try {
-                                Log.d(
-                                    TrainSingleGameLogTag,
-                                    "Starting runShowLine coroutine. boardState= movesCount="
-                                )
-                                uiState = runShowLine(
-                                    uiState = uiState,
-                                    gameController = gameController,
-                                    uciMoves = uciMoves
-                                )
-                            } finally {
-                                showLineJob = null
-                            }
-                        }
-                    },
-                    onStopShowLineClick = {
-                        showLineJob?.cancel()
-                        showLineJob = null
-                        uiState = uiState.copy(phase = TrainSingleGamePhase.Idle)
-                    },
-                    onStartTrainingClick = {
-                        gameController.resetToStartPosition()
-                        uiState = advanceProgramMoves(
-                            uiState = buildStartTrainingState(uiState),
-                            gameController = gameController,
-                            uciMoves = uciMoves,
-                            currentOrientation = currentOrientation,
-                            sidesCount = trainingSides.size
-                        )
-                    },
-                    onStopTrainingClick = {
-                        showLineJob?.cancel()
-                        showLineJob = null
-                        gameController.resetToStartPosition()
-                        uiState = resetSessionState(uiState)
-                    },
-                    onMakeCorrectMoveClick = {
-                        uiState = handleCorrectMove(
-                            uiState = uiState,
-                            gameController = gameController,
-                            uciMoves = uciMoves,
-                            currentOrientation = currentOrientation,
-                            sidesCount = trainingSides.size
-                        )
-                    }
-                )
+                actions = createContentActions()
             )
         }
     }
