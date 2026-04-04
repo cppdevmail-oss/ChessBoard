@@ -27,7 +27,7 @@ import com.example.chessboard.ui.theme.TrainingTextPrimary
 
 internal val SideButtonSelectedBg = Color(0xFF2C2C2C)
 
-internal enum class EditableGameSide(
+enum class EditableGameSide(
     val sideMask: Int,
     val orientation: BoardOrientation,
     private val displayLabel: String,
