@@ -1,5 +1,9 @@
 package com.example.chessboard.ui.screen.trainSingleGame
 
+// Render-only composables for the single-game training flow.
+// This file stays focused on UI structure so the screen and logic files do not mix
+// domain decisions with presentation details.
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

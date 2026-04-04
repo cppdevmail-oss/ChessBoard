@@ -1,5 +1,9 @@
 package com.example.chessboard.ui.screen.trainSingleGame
 
+// Entry/loading layer for single-game training.
+// This file stays separate so screen startup, error routing, and data preloading
+// do not leak into the actual training screen rendering.
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue

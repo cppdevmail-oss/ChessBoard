@@ -1,5 +1,9 @@
 package com.example.chessboard.ui.screen.trainSingleGame
 
+// Shared state models and small pure helpers for single-game training.
+// This file keeps lightweight data structures in one place so the screen, logic,
+// and UI component files can depend on the same vocabulary.
+
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.entity.SideMask
 import com.example.chessboard.ui.BoardOrientation

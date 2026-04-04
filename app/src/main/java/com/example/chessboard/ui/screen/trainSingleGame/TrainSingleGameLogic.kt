@@ -1,5 +1,9 @@
 package com.example.chessboard.ui.screen.trainSingleGame
 
+// Pure session-transition logic for single-game training.
+// This file is separate so move progression, completion handling, and mistake handling
+// can evolve independently from Compose rendering.
+
 import android.util.Log
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.ui.BoardOrientation

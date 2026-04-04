@@ -1,5 +1,9 @@
 package com.example.chessboard.ui.screen.trainSingleGame
 
+// Orchestrates the single-game training session.
+// This file owns screen-level state, lifecycle reactions, navigation callbacks,
+// and bridges pure training logic to render components.
+
 import android.util.Log
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
