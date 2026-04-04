@@ -56,7 +56,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private const val EmptyBoardBoardPart = "8/8/8/8/8/8/8/8"
-private const val EmptyBoardFen = "$EmptyBoardBoardPart w KQkq -"
+private const val EmptyBoardFen = "$EmptyBoardBoardPart w - -"
 private const val PositionEditorLogTag = "PositionEditor"
 
 private data class PositionEditorPieceOption(
@@ -542,7 +542,7 @@ private fun normalizePositionEditorFen(
         return buildPositionEditorFen(
             boardPart = fenParts.first(),
             sidePart = resolveFenSideToken(selectedSide),
-            castlingPart = "KQkq",
+            castlingPart = "-",
             enPassantPart = "-"
         )
     }
@@ -551,7 +551,7 @@ private fun normalizePositionEditorFen(
         boardPart = fenParts[0],
         sidePart = fenParts.getOrNull(1)?.takeIf { it == "w" || it == "b" }
             ?: resolveFenSideToken(selectedSide),
-        castlingPart = fenParts.getOrNull(2)?.takeIf { it.isNotBlank() } ?: "KQkq",
+        castlingPart = fenParts.getOrNull(2)?.takeIf { it.isNotBlank() } ?: "-",
         enPassantPart = fenParts.getOrNull(3)?.takeIf { it.isNotBlank() } ?: "-"
     )
 }
@@ -578,7 +578,7 @@ private fun resolveEmptyBoardFen(selectedSide: EditableGameSide): String {
     return buildPositionEditorFen(
         boardPart = EmptyBoardBoardPart,
         sidePart = resolveFenSideToken(selectedSide),
-        castlingPart = "KQkq",
+        castlingPart = "-",
         enPassantPart = "-"
     )
 }
