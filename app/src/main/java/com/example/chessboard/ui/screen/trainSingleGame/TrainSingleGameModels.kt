@@ -77,6 +77,31 @@ internal data class TrainSingleGameContentActions(
     val onMakeCorrectMoveClick: () -> Unit
 )
 
+internal sealed interface TrainingSingleGameActionsState {
+    data object ShowingLine : TrainingSingleGameActionsState
+    data object Idle : TrainingSingleGameActionsState
+    data object Training : TrainingSingleGameActionsState
+    data object Mistake : TrainingSingleGameActionsState
+}
+
+internal fun resolveTrainingSingleGameActionsState(
+    phase: TrainSingleGamePhase
+): TrainingSingleGameActionsState {
+    if (phase == TrainSingleGamePhase.ShowingLine) {
+        return TrainingSingleGameActionsState.ShowingLine
+    }
+
+    if (phase == TrainSingleGamePhase.Training) {
+        return TrainingSingleGameActionsState.Training
+    }
+
+    if (phase == TrainSingleGamePhase.Mistake) {
+        return TrainingSingleGameActionsState.Mistake
+    }
+
+    return TrainingSingleGameActionsState.Idle
+}
+
 // Resolves the ordered list of training orientations from the stored side mask.
 internal fun resolveTrainingOrientations(sideMask: Int): List<BoardOrientation> {
     if (sideMask == SideMask.WHITE) {

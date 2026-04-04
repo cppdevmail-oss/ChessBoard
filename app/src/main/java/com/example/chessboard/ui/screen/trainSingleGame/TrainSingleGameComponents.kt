@@ -76,10 +76,8 @@ internal fun TrainSingleGameContent(
             TrainingBoardSection(gameController = gameController)
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
             TrainingSingleGameActions(
+                state = resolveTrainingSingleGameActionsState(state.phase),
                 actions = actions,
-                isShowingLine = state.phase == TrainSingleGamePhase.ShowingLine,
-                isTrainingActive = state.phase == TrainSingleGamePhase.Training || state.phase == TrainSingleGamePhase.Mistake,
-                showCorrectMove = state.phase == TrainSingleGamePhase.Mistake,
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
@@ -160,10 +158,8 @@ internal fun resolveTrainingMoveLegendText(
 // Displays the session action buttons and the corrective move action after mistakes.
 @Composable
 internal fun TrainingSingleGameActions(
+    state: TrainingSingleGameActionsState,
     actions: TrainSingleGameContentActions,
-    isShowingLine: Boolean,
-    isTrainingActive: Boolean,
-    showCorrectMove: Boolean,
     modifier: Modifier = Modifier
 ) {
     @Composable
@@ -191,7 +187,7 @@ internal fun TrainingSingleGameActions(
 
     @Composable
     fun PrimaryTrainingAction() {
-        if (isTrainingActive) {
+        if (state == TrainingSingleGameActionsState.Training || state == TrainingSingleGameActionsState.Mistake) {
             PrimaryButton(
                 text = "Stop training",
                 onClick = actions.onStopTrainingClick,
@@ -207,7 +203,7 @@ internal fun TrainingSingleGameActions(
     }
 
     Column(modifier = modifier) {
-        if (isShowingLine) {
+        if (state == TrainingSingleGameActionsState.ShowingLine) {
             PrimaryButton(
                 text = "Stop show line",
                 onClick = actions.onStopShowLineClick,
@@ -218,7 +214,7 @@ internal fun TrainingSingleGameActions(
 
         PrimaryTrainingAction()
 
-        if (!showCorrectMove) {
+        if (state != TrainingSingleGameActionsState.Mistake) {
             return
         }
 
