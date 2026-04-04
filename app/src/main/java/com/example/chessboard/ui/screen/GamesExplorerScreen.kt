@@ -40,6 +40,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.boardmodel.GameController
+import com.example.chessboard.entity.SideMask
+import com.example.chessboard.ui.BoardOrientation
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.ui.components.AppBottomNavigation
 import com.example.chessboard.ui.components.AppConfirmDialog
@@ -71,6 +73,7 @@ import kotlinx.coroutines.withContext
 fun GamesExplorerScreenContainer(
     modifier: Modifier = Modifier,
     screenContext: ScreenContainerContext,
+    initialSelectedGameId: Long? = null,
     onOpenGameEditor: (com.example.chessboard.entity.GameEntity) -> Unit = {},
 ) {
     val inDbProvider = screenContext.inDbProvider
@@ -89,6 +92,14 @@ fun GamesExplorerScreenContainer(
             }
         }
         parsedGames.addAll(parsed)
+
+        if (initialSelectedGameId != null) {
+            val restoredIndex = parsed.indexOfFirst { game -> game.game.id == initialSelectedGameId }
+            if (restoredIndex >= 0) {
+                selectedGameIdx = restoredIndex
+            }
+        }
+
         isLoading = false
     }
 
@@ -140,6 +151,7 @@ fun GamesExplorerScreen(
 
     SideEffect {
         gameController.setUserMovesEnabled(false)
+        gameController.setOrientation(resolveGamesExplorerBoardOrientation(selectedGame))
     }
 
     if (showDeleteDialog && selectedGame != null) {
@@ -200,9 +212,10 @@ fun GamesExplorerScreen(
         ) {
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
 
-            ChessBoardSection(gameController = gameController)
-
-            Spacer(modifier = Modifier.height(AppDimens.spaceLg))
+            if (selectedGame == null) {
+                ChessBoardSection(gameController = gameController)
+                Spacer(modifier = Modifier.height(AppDimens.spaceLg))
+            }
 
             when {
                 isLoading -> {
@@ -234,6 +247,10 @@ fun GamesExplorerScreen(
                 else -> {
                     parsedGames.forEachIndexed { gameIdx, parsedGame ->
                         val isSelected = gameIdx == selectedGameIdx
+                        if (isSelected) {
+                            ChessBoardSection(gameController = gameController)
+                            Spacer(modifier = Modifier.height(AppDimens.spaceLg))
+                        }
                         GameBlock(
                             parsedGame = parsedGame,
                             isSelected = isSelected,
@@ -428,4 +445,12 @@ private fun resolveSelectedGame(
 private fun resolveDeleteGameMessage(parsedGame: ParsedGame): String {
     val gameName = parsedGame.game.event ?: "this game"
     return "Delete \"$gameName\"?\nGame ID: ${parsedGame.game.id}"
+}
+
+private fun resolveGamesExplorerBoardOrientation(parsedGame: ParsedGame?): BoardOrientation {
+    if (parsedGame?.game?.sideMask == SideMask.BLACK) {
+        return BoardOrientation.BLACK
+    }
+
+    return BoardOrientation.WHITE
 }

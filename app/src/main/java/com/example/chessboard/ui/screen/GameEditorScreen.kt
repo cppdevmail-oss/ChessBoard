@@ -69,6 +69,7 @@ fun GameEditorScreenContainer(
         val uciMoves = withContext(Dispatchers.Default) { parsePgnMoves(game.pgn) }
 
         gameController.resetToStartPosition()
+        gameController.setOrientation(EditableGameSide.fromSideMask(game.sideMask).orientation)
         fenHistory.clear()
         fenHistory.add(gameController.getFen())
         moveLabels.clear()
@@ -132,7 +133,7 @@ fun GameEditorScreenContainer(
         isLoading = isLoading,
         onBackClick = screenContext.onBackClick,
         onNavigate = screenContext.onNavigate,
-        onSave = { name, eco ->
+        onSave = { name, eco, selectedSide ->
             val idx = gameController.currentMoveIndex
             val pgn = gameController.generatePgn(
                 event = name.ifBlank { "Opening" },
@@ -141,7 +142,8 @@ fun GameEditorScreenContainer(
             val updatedGame = game.copy(
                 event = name.ifBlank { null },
                 eco = eco.ifBlank { null },
-                pgn = pgn
+                pgn = pgn,
+                sideMask = selectedSide.sideMask
             )
             val updatedMoves = gameController.getMovesCopy().take(idx)
 
@@ -227,7 +229,7 @@ fun GameEditorScreen(
     isLoading: Boolean,
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
-    onSave: (name: String, eco: String) -> Unit = { _, _ -> },
+    onSave: (name: String, eco: String, selectedSide: EditableGameSide) -> Unit = { _, _, _ -> },
     onDelete: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -235,6 +237,7 @@ fun GameEditorScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var editedName by remember(game.id) { mutableStateOf(game.event ?: "") }
     var editedEco by remember(game.id) { mutableStateOf(game.eco ?: "") }
+    var selectedSide by remember(game.id) { mutableStateOf(EditableGameSide.fromSideMask(game.sideMask)) }
 
     if (showDeleteDialog) {
         AppConfirmDialog(
@@ -261,7 +264,7 @@ fun GameEditorScreen(
                     IconButton(onClick = { showDeleteDialog = true }) {
                         Icon(Icons.Default.Delete, contentDescription = "Delete", tint = TrainingErrorRed)
                     }
-                    IconButton(onClick = { onSave(editedName, editedEco) }) {
+                    IconButton(onClick = { onSave(editedName, editedEco, selectedSide) }) {
                         Icon(
                             imageVector = Icons.Default.Save,
                             contentDescription = "Save",
@@ -291,6 +294,20 @@ fun GameEditorScreen(
                     .verticalScroll(rememberScrollState())
             ) {
                 ChessBoardSection(gameController = gameController, modifier = Modifier.fillMaxWidth())
+
+                Spacer(modifier = Modifier.height(AppDimens.spaceMd))
+
+                Column(
+                    modifier = Modifier.padding(horizontal = AppDimens.spaceLg)
+                ) {
+                    GameSideSelector(
+                        selectedSide = selectedSide,
+                        onSideSelected = {
+                            selectedSide = it
+                            gameController.setOrientation(it.orientation)
+                        }
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(AppDimens.spaceMd))
 
