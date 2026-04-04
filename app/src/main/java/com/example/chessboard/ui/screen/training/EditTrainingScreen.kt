@@ -513,6 +513,7 @@ private fun GameTrainingBlock(
     onStartTrainingClick: () -> Unit,
 ) {
     val gameController = remember(game.gameId) { GameController() }
+    var uciMoves by remember(game.gameId) { mutableStateOf<List<String>>(emptyList()) }
     var moveLabels by remember(game.gameId) { mutableStateOf<List<String>>(emptyList()) }
     var isLoadingBoard by remember(game.gameId) { mutableStateOf(true) }
 
@@ -526,15 +527,16 @@ private fun GameTrainingBlock(
 
     LaunchedEffect(game.pgn) {
         isLoadingBoard = true
-        val uciMoves = withContext(Dispatchers.Default) {
+        val parsedUciMoves = withContext(Dispatchers.Default) {
             parsePgnMoves(game.pgn)
         }
         val labels = withContext(Dispatchers.Default) {
-            buildMoveLabels(uciMoves)
+            buildMoveLabels(parsedUciMoves)
         }
         withContext(Dispatchers.Main) {
+            uciMoves = parsedUciMoves
             moveLabels = labels
-            gameController.loadFromUciMoves(uciMoves, targetPly = 0)
+            gameController.loadFromUciMoves(parsedUciMoves, targetPly = 0)
             isLoadingBoard = false
         }
     }
@@ -601,7 +603,6 @@ private fun GameTrainingBlock(
                         label = chipLabel,
                         isSelected = (index + 1 == gameController.currentMoveIndex),
                         onClick = {
-                            val uciMoves = parsePgnMoves(game.pgn)
                             gameController.loadFromUciMoves(uciMoves, targetPly = index + 1)
                         }
                     )
@@ -620,7 +621,6 @@ private fun GameTrainingBlock(
             val atStart = gameController.currentMoveIndex == 0
             TextButton(
                 onClick = {
-                    val uciMoves = parsePgnMoves(game.pgn)
                     gameController.loadFromUciMoves(uciMoves, targetPly = 0)
                 },
                 enabled = !atStart

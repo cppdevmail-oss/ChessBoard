@@ -24,6 +24,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.platform.testTag
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.ui.theme.ChessDark
 import com.example.chessboard.ui.theme.ChessLight
@@ -32,6 +35,7 @@ enum class BoardOrientation { WHITE, BLACK }
 
 private const val CellCount = 8
 private const val ChessBoardLogTag = "ChessBoard"
+internal const val InteractiveChessBoardTestTag = "interactive-chess-board"
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Pure coordinate helpers
@@ -124,11 +128,10 @@ private fun DrawScope.drawFigureDragged(
     centerOffset: Offset,
     squareSize: Float
 ) {
-    val pieceSize = squareSize * 0.770f
     drawPieceAt(
         letter = letter,
-        left = centerOffset.x - pieceSize / 2,
-        top = centerOffset.y - pieceSize / 2,
+        left = centerOffset.x - squareSize / 2,
+        top = centerOffset.y - squareSize / 2,
         squareSize = squareSize
     )
 }
@@ -269,6 +272,8 @@ fun PositionEditorBoardWithCoordinates(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .testTag(InteractiveChessBoardTestTag)
+                .semantics { stateDescription = gameController.getFen() }
                 .pointerInput(squareSizePx, orientation, boardState) {
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
@@ -382,7 +387,7 @@ fun ChessBoardWithCoordinates(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .pointerInput(squareSizePx, orientation) {
+                .pointerInput(squareSizePx, orientation, boardState) {
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
                         val startPos = down.position

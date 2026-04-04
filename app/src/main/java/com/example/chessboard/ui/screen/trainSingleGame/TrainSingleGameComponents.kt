@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.ui.Modifier
@@ -232,6 +233,8 @@ internal fun TrainingBoardSection(
     gameController: GameController,
     modifier: Modifier = Modifier
 ) {
+    val boardState = gameController.boardState
+
     CardSurface(
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(AppDimens.spaceMd)
@@ -241,10 +244,12 @@ internal fun TrainingBoardSection(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(AppDimens.radiusLg))
         ) {
-            ChessBoardWithCoordinates(
-                gameController = gameController,
-                modifier = Modifier.fillMaxWidth()
-            )
+            key(boardState) {
+                ChessBoardWithCoordinates(
+                    gameController = gameController,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }
