@@ -1,6 +1,7 @@
 package com.example.chessboard.ui.screen
 
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
@@ -11,10 +12,13 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.ui.InteractiveChessBoardTestTag
 import com.example.chessboard.ui.PositionEditorBoardWithCoordinates
+import com.example.chessboard.ui.components.SecondaryButton
 import com.example.chessboard.ui.theme.ChessBoardTheme
 import androidx.compose.ui.unit.dp
 import org.junit.Rule
@@ -102,6 +106,22 @@ class PositionEditorBoardTest {
         assertBoardFen("4k3/8/8/8/3Q4/8/8/4K3 w - - 0 1")
     }
 
+
+    @Test
+    fun positionEditorBoard_clearBoardButtonUpdatesVisibleFen() {
+        val gameController = GameController()
+
+        composeRule.setContent {
+            ChessBoardTheme {
+                PositionEditorClearBoardHost(gameController = gameController)
+            }
+        }
+
+        composeRule.onNodeWithText("Clear board").performClick()
+
+        assertBoardFen("8/8/8/8/8/8/8/8 w - - 0 1")
+    }
+
     private fun assertBoardFen(expectedFen: String) {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(InteractiveChessBoardTestTag).assert(
@@ -166,6 +186,28 @@ private fun PositionEditorPlacementBoardHost(gameController: GameController) {
             onPieceMove = { _, _ -> },
             modifier = Modifier.size(320.dp)
         )
+    }
+}
+
+@Composable
+private fun PositionEditorClearBoardHost(gameController: GameController) {
+    Column {
+        SecondaryButton(
+            text = "Clear board",
+            onClick = {
+                gameController.loadPreviewFen("8/8/8/8/8/8/8/8 w - - 0 1")
+            }
+        )
+
+        val boardState = gameController.boardState
+        key(boardState) {
+            PositionEditorBoardWithCoordinates(
+                gameController = gameController,
+                onSquareClick = {},
+                onPieceMove = { _, _ -> },
+                modifier = Modifier.size(320.dp)
+            )
+        }
     }
 }
 
