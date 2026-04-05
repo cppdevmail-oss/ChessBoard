@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
@@ -76,6 +77,31 @@ class PositionEditorBoardTest {
         assertBoardFen("4k3/8/8/8/8/8/4K3/8 w - - 0 1")
     }
 
+
+    @Test
+    fun positionEditorBoard_tapPlacesPieceAndUpdatesVisibleFen() {
+        val gameController = GameController()
+
+        composeRule.setContent {
+            ChessBoardTheme {
+                PositionEditorPlacementBoardHost(gameController = gameController)
+            }
+        }
+
+        composeRule.runOnIdle {
+            gameController.loadPreviewFen("4k3/8/8/8/8/8/8/4K3 w - - 0 1")
+        }
+
+        val boardNode = composeRule.onNodeWithTag(InteractiveChessBoardTestTag)
+        val squareSize = 320f / 8f
+
+        boardNode.performTouchInput {
+            click(squareCenter(file = 3, row = 4, squareSize = squareSize))
+        }
+
+        assertBoardFen("4k3/8/8/8/3Q4/8/8/4K3 w - - 0 1")
+    }
+
     private fun assertBoardFen(expectedFen: String) {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(InteractiveChessBoardTestTag).assert(
@@ -120,6 +146,45 @@ private fun PositionEditorInteractiveBoardHost(gameController: GameController) {
             modifier = Modifier.size(320.dp)
         )
     }
+}
+
+@Composable
+private fun PositionEditorPlacementBoardHost(gameController: GameController) {
+    val boardState = gameController.boardState
+
+    key(boardState) {
+        PositionEditorBoardWithCoordinates(
+            gameController = gameController,
+            onSquareClick = { square ->
+                val updatedFen = placePieceInPreviewFen(
+                    fen = gameController.getFen(),
+                    square = square,
+                    pieceLetter = 'Q'
+                )
+                gameController.loadPreviewFen(updatedFen)
+            },
+            onPieceMove = { _, _ -> },
+            modifier = Modifier.size(320.dp)
+        )
+    }
+}
+
+private fun placePieceInPreviewFen(
+    fen: String,
+    square: String,
+    pieceLetter: Char
+): String {
+    val boardPart = fen.substringBefore(' ')
+    val metadata = fen.substringAfter(' ', "w - - 0 1")
+    val pieces = parsePieces(boardPart)
+    val currentPiece = pieces.find { piece -> piece.second == square }
+    val updatedPieces = pieces.filterNot { piece -> piece.second == square }.toMutableList()
+
+    if (currentPiece?.first != pieceLetter) {
+        updatedPieces += pieceLetter to square
+    }
+
+    return buildFen(updatedPieces, metadata)
 }
 
 private fun movePieceInPreviewFen(
