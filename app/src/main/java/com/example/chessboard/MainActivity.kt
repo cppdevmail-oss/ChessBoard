@@ -24,6 +24,7 @@ import com.example.chessboard.ui.screen.ProfileScreenContainer
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.SettingsScreenContainer
 import com.example.chessboard.ui.screen.trainSingleGame.TrainSingleGameLauncherScreenContainer
+import com.example.chessboard.ui.screen.training.CreateTrainingChoiceScreenContainer
 import com.example.chessboard.ui.screen.training.CreateTrainingScreenContainer
 import com.example.chessboard.ui.screen.training.EditTrainingScreenContainer
 import com.example.chessboard.ui.screen.training.TrainingListScreenContainer
@@ -111,9 +112,15 @@ class MainActivity : ComponentActivity() {
                         ),
                     )
 
+                    ScreenType.CreateTrainingChoice -> CreateTrainingChoiceScreenContainer(
+                        screenContext = createScreenContext(
+                            onBackClick = { currentScreen = ScreenType.Home },
+                        ),
+                    )
+
                     ScreenType.CreateTraining -> CreateTrainingScreenContainer(
                         screenContext = createScreenContext(
-                            onBackClick = { currentScreen = ScreenType.Training },
+                            onBackClick = { currentScreen = ScreenType.CreateTrainingChoice },
                         ),
                     )
 
@@ -171,7 +178,7 @@ class MainActivity : ComponentActivity() {
                         ),
                         simpleViewEnabled = simpleViewEnabled,
                         onCreateTrainingClick = {
-                            currentScreen = ScreenType.CreateTraining
+                            currentScreen = ScreenType.CreateTrainingChoice
                         },
                         onOpenPositionEditorClick = {
                             currentScreen = ScreenType.PositionEditor

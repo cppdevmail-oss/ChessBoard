@@ -6,6 +6,7 @@ sealed class ScreenType(val title: String) {
     object Training : ScreenType("Training")
     object GamesExplorer : ScreenType("Games")
     data class TrainSingleGame(val trainingId: Long, val gameId: Long) : ScreenType("TrainSingleGame")
+    object CreateTrainingChoice : ScreenType("CreateTrainingChoice")
     object CreateTraining : ScreenType("CreateTraining")
     data class EditTraining(val trainingId: Long) : ScreenType("EditTraining")
     object CreateOpening : ScreenType("CreateOpening")
