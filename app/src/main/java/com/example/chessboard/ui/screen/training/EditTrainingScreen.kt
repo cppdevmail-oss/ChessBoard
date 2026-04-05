@@ -3,7 +3,6 @@ package com.example.chessboard.ui.screen.training
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -25,7 +24,6 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -39,6 +37,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.boardmodel.GameController
@@ -55,11 +54,10 @@ import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.CardMetaText
 import com.example.chessboard.ui.components.CardSurface
 import com.example.chessboard.ui.components.PrimaryButton
-import com.example.chessboard.ui.components.ScreenSection
-import com.example.chessboard.ui.components.SecondaryButton
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.theme.AppDimens
+import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import com.example.chessboard.ui.theme.TrainingIconInactive
@@ -81,6 +79,21 @@ private data class EditTrainingSaveSuccess(
     val trainingId: Long,
     val trainingName: String,
     val gamesCount: Int
+)
+
+private data class ParsedTrainingGameEditorItem(
+    val game: TrainingGameEditorItem,
+    val uciMoves: List<String>,
+    val moveLabels: List<String>
+)
+
+private data class EditTrainingBoardSession(
+    val gameController: GameController,
+    val parsedGamesById: Map<Long, ParsedTrainingGameEditorItem>,
+    val selectedGameId: Long?,
+    val onSelectGame: (Long) -> Unit,
+    val onMoveToPly: (Long, Int) -> Unit,
+    val onResetSelectedGame: (Long) -> Unit,
 )
 
 private fun normalizeTrainingName(trainingName: String): String {
@@ -131,6 +144,174 @@ private fun resolveRandomTrainingGameId(
     return games.random().gameId
 }
 
+private suspend fun loadEditTrainingState(
+    inDbProvider: com.example.chessboard.repository.DatabaseProvider,
+    trainingId: Long
+): EditTrainingLoadState {
+    val allGames = withContext(Dispatchers.IO) {
+        inDbProvider.getAllGames()
+    }
+
+    val training = withContext(Dispatchers.IO) {
+        inDbProvider.getTrainingById(trainingId)
+    } ?: return EditTrainingLoadState(
+        trainingName = DEFAULT_TRAINING_NAME,
+        gamesForTraining = emptyList(),
+        trainingLoadFailed = true
+    )
+
+    return EditTrainingLoadState(
+        trainingName = training.name.ifBlank { DEFAULT_TRAINING_NAME },
+        gamesForTraining = buildTrainingEditorItems(
+            allGames = allGames,
+            trainingGames = OneGameTrainingData.fromJson(training.gamesJson)
+        ),
+        allGamesById = allGames.associateBy { game -> game.id }
+    )
+}
+
+@Composable
+private fun RenderMissingTrainingDialog(
+    visible: Boolean,
+    onDismiss: () -> Unit
+) {
+    if (!visible) {
+        return
+    }
+
+    AppMessageDialog(
+        title = "Training Not Found",
+        message = "The selected training is unavailable.",
+        onDismiss = onDismiss
+    )
+}
+
+@Composable
+private fun RenderEditTrainingSaveSuccessDialog(
+    success: EditTrainingSaveSuccess?,
+    onDismiss: () -> Unit
+) {
+    val currentSuccess = success ?: return
+
+    AppMessageDialog(
+        title = "Training Updated",
+        message = buildString {
+            appendLine("ID: ${currentSuccess.trainingId}")
+            appendLine("Name: ${currentSuccess.trainingName}")
+            append("Games in training: ")
+            append(currentSuccess.gamesCount)
+        },
+        onDismiss = onDismiss
+    )
+}
+
+private suspend fun saveEditedTraining(
+    inDbProvider: com.example.chessboard.repository.DatabaseProvider,
+    trainingId: Long,
+    trainingName: String,
+    editableGames: List<TrainingGameEditorItem>
+): EditTrainingSaveSuccess? {
+    val normalizedName = normalizeTrainingName(trainingName)
+    val trainingGames = editableGames.map { game ->
+        OneGameTrainingData(
+            gameId = game.gameId,
+            weight = game.weight
+        )
+    }
+
+    val wasUpdated = withContext(Dispatchers.IO) {
+        inDbProvider.updateTrainingFromGames(
+            trainingId = trainingId,
+            name = normalizedName,
+            games = trainingGames
+        )
+    }
+
+    if (!wasUpdated) {
+        return null
+    }
+
+    return EditTrainingSaveSuccess(
+        trainingId = trainingId,
+        trainingName = normalizedName,
+        gamesCount = editableGames.size
+    )
+}
+
+private fun createOpenEditTrainingGameEditorAction(
+    allGamesById: Map<Long, GameEntity>,
+    onOpenGameEditorClick: (GameEntity) -> Unit
+): (Long) -> Unit {
+    return openGameEditor@{ gameId ->
+        val game = allGamesById[gameId] ?: return@openGameEditor
+        onOpenGameEditorClick(game)
+    }
+}
+
+@Composable
+private fun rememberEditTrainingBoardSession(
+    games: List<TrainingGameEditorItem>
+): EditTrainingBoardSession {
+    val gameController = remember { GameController() }
+    var parsedGamesById by remember { mutableStateOf<Map<Long, ParsedTrainingGameEditorItem>>(emptyMap()) }
+    var selectedGameId by remember { mutableStateOf<Long?>(null) }
+
+    SideEffect {
+        gameController.setUserMovesEnabled(false)
+    }
+
+    LaunchedEffect(games) {
+        val parsedGames = withContext(Dispatchers.Default) {
+            games.associate { game ->
+                val uciMoves = parsePgnMoves(game.pgn)
+                val moveLabels = buildMoveLabels(uciMoves)
+                game.gameId to ParsedTrainingGameEditorItem(
+                    game = game,
+                    uciMoves = uciMoves,
+                    moveLabels = moveLabels
+                )
+            }
+        }
+
+        parsedGamesById = parsedGames
+
+        if (selectedGameId !in parsedGames.keys) {
+            selectedGameId = games.firstOrNull()?.gameId
+        }
+    }
+
+    LaunchedEffect(selectedGameId, parsedGamesById) {
+        val selectedGame = selectedGameId?.let { parsedGamesById[it] } ?: return@LaunchedEffect
+        gameController.loadFromUciMoves(selectedGame.uciMoves, targetPly = 0)
+    }
+
+    fun selectGame(gameId: Long) {
+        selectedGameId = gameId
+        val parsedGame = parsedGamesById[gameId] ?: return
+        gameController.loadFromUciMoves(parsedGame.uciMoves, targetPly = 0)
+    }
+
+    fun moveToPly(gameId: Long, ply: Int) {
+        selectedGameId = gameId
+        val parsedGame = parsedGamesById[gameId] ?: return
+        gameController.loadFromUciMoves(parsedGame.uciMoves, targetPly = ply)
+    }
+
+    fun resetSelectedGame(gameId: Long) {
+        val parsedGame = parsedGamesById[gameId] ?: return
+        gameController.loadFromUciMoves(parsedGame.uciMoves, targetPly = 0)
+    }
+
+    return EditTrainingBoardSession(
+        gameController = gameController,
+        parsedGamesById = parsedGamesById,
+        selectedGameId = selectedGameId,
+        onSelectGame = ::selectGame,
+        onMoveToPly = ::moveToPly,
+        onResetSelectedGame = ::resetSelectedGame
+    )
+}
+
 @Composable
 fun EditTrainingScreenContainer(
     trainingId: Long,
@@ -147,61 +328,27 @@ fun EditTrainingScreenContainer(
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(trainingId) {
-        loadState = loadState.copy(trainingLoadFailed = false)
-
-        val allGames = withContext(Dispatchers.IO) {
-            inDbProvider.getAllGames()
-        }
-
-        val training = withContext(Dispatchers.IO) {
-            inDbProvider.getTrainingById(trainingId)
-        }
-
-        if (training == null) {
-            loadState = EditTrainingLoadState(
-                trainingName = DEFAULT_TRAINING_NAME,
-                gamesForTraining = emptyList(),
-                trainingLoadFailed = true
-            )
-            return@LaunchedEffect
-        }
-
-        loadState = EditTrainingLoadState(
-            trainingName = training.name.ifBlank { DEFAULT_TRAINING_NAME },
-            gamesForTraining = buildTrainingEditorItems(
-                allGames = allGames,
-                trainingGames = OneGameTrainingData.fromJson(training.gamesJson)
-            ),
-            allGamesById = allGames.associateBy { game -> game.id }
+        loadState = loadEditTrainingState(
+            inDbProvider = inDbProvider,
+            trainingId = trainingId
         )
     }
 
-    if (loadState.trainingLoadFailed) {
-        AppMessageDialog(
-            title = "Training Not Found",
-            message = "The selected training is unavailable.",
-            onDismiss = {
-                loadState = loadState.copy(trainingLoadFailed = false)
-                onNavigate(ScreenType.Training)
-            }
-        )
-    }
+    RenderMissingTrainingDialog(
+        visible = loadState.trainingLoadFailed,
+        onDismiss = {
+            loadState = loadState.copy(trainingLoadFailed = false)
+            onNavigate(ScreenType.Training)
+        }
+    )
 
-    trainingSaveSuccess?.let { success ->
-        AppMessageDialog(
-            title = "Training Updated",
-            message = buildString {
-                appendLine("ID: ${success.trainingId}")
-                appendLine("Name: ${success.trainingName}")
-                append("Games in training: ")
-                append(success.gamesCount)
-            },
-            onDismiss = {
-                trainingSaveSuccess = null
-                onNavigate(ScreenType.Home)
-            }
-        )
-    }
+    RenderEditTrainingSaveSuccessDialog(
+        success = trainingSaveSuccess,
+        onDismiss = {
+            trainingSaveSuccess = null
+            onNavigate(ScreenType.Home)
+        }
+    )
 
     EditTrainingScreen(
         trainingId = trainingId,
@@ -210,42 +357,25 @@ fun EditTrainingScreenContainer(
         onBackClick = onBackClick,
         onNavigate = onNavigate,
         onStartGameTrainingClick = onStartGameTrainingClick,
-        onOpenGameEditorClick = { gameId ->
-            val game = loadState.allGamesById[gameId] ?: return@EditTrainingScreen
-            onOpenGameEditorClick(game)
-        },
+        onOpenGameEditorClick = createOpenEditTrainingGameEditorAction(
+            allGamesById = loadState.allGamesById,
+            onOpenGameEditorClick = onOpenGameEditorClick
+        ),
         onSaveTraining = { trainingName, editableGames, showSuccessMessage, onSaved ->
             scope.launch {
-                val normalizedName = normalizeTrainingName(trainingName)
-                val trainingGames = editableGames.map { game ->
-                    OneGameTrainingData(
-                        gameId = game.gameId,
-                        weight = game.weight
-                    )
-                }
-
-                val wasUpdated = withContext(Dispatchers.IO) {
-                    inDbProvider.updateTrainingFromGames(
-                        trainingId = trainingId,
-                        name = normalizedName,
-                        games = trainingGames
-                    )
-                }
-
-                if (!wasUpdated) {
-                    return@launch
-                }
+                val saveSuccess = saveEditedTraining(
+                    inDbProvider = inDbProvider,
+                    trainingId = trainingId,
+                    trainingName = trainingName,
+                    editableGames = editableGames
+                ) ?: return@launch
 
                 onSaved?.invoke()
                 if (!showSuccessMessage) {
                     return@launch
                 }
 
-                trainingSaveSuccess = EditTrainingSaveSuccess(
-                    trainingId = trainingId,
-                    trainingName = normalizedName,
-                    gamesCount = editableGames.size
-                )
+                trainingSaveSuccess = saveSuccess
             }
         },
         modifier = modifier
@@ -276,6 +406,7 @@ fun EditTrainingScreen(
     var savedTrainingName by remember(initialTrainingName) { mutableStateOf(initialTrainingName) }
     var savedGamesForTraining by remember(gamesForTraining) { mutableStateOf(gamesForTraining) }
     var pendingLeaveAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    val boardSession = rememberEditTrainingBoardSession(editorState.editableGamesForTraining)
 
     fun hasUnsavedChanges(): Boolean {
         return hasUnsavedTrainingChanges(
@@ -424,8 +555,26 @@ fun EditTrainingScreen(
                 items = editorState.editableGamesForTraining,
                 key = { game -> game.gameId }
             ) { game ->
+                val parsedGame = boardSession.parsedGamesById[game.gameId]
+                val isSelected = boardSession.selectedGameId == game.gameId
+
+                if (isSelected && parsedGame != null) {
+                    ChessBoardSection(gameController = boardSession.gameController)
+                    Spacer(modifier = Modifier.height(AppDimens.spaceLg))
+                }
+
                 GameTrainingBlock(
                     game = game,
+                    parsedGame = parsedGame,
+                    isSelected = isSelected,
+                    currentPly = if (isSelected) boardSession.gameController.currentMoveIndex else 0,
+                    canUndo = isSelected && boardSession.gameController.canUndo,
+                    canRedo = isSelected && boardSession.gameController.canRedo,
+                    onSelect = { boardSession.onSelectGame(game.gameId) },
+                    onMovePlyClick = { ply -> boardSession.onMoveToPly(game.gameId, ply) },
+                    onPrevClick = { boardSession.gameController.undoMove() },
+                    onNextClick = { boardSession.gameController.redoMove() },
+                    onResetClick = { boardSession.onResetSelectedGame(game.gameId) },
                     onEditGameClick = {
                         requestLeave {
                             onOpenGameEditorClick(game.gameId)
@@ -507,43 +656,27 @@ private fun GameTrainingBlockHeader(
 @Composable
 private fun GameTrainingBlock(
     game: TrainingGameEditorItem,
+    parsedGame: ParsedTrainingGameEditorItem?,
+    isSelected: Boolean,
+    currentPly: Int,
+    canUndo: Boolean,
+    canRedo: Boolean,
+    onSelect: () -> Unit,
+    onMovePlyClick: (Int) -> Unit,
+    onPrevClick: () -> Unit,
+    onNextClick: () -> Unit,
+    onResetClick: () -> Unit,
     onEditGameClick: () -> Unit,
     onDecreaseWeightClick: () -> Unit,
     onIncreaseWeightClick: () -> Unit,
     onStartTrainingClick: () -> Unit,
 ) {
-    val gameController = remember(game.gameId) { GameController() }
-    var uciMoves by remember(game.gameId) { mutableStateOf<List<String>>(emptyList()) }
-    var moveLabels by remember(game.gameId) { mutableStateOf<List<String>>(emptyList()) }
-    var isLoadingBoard by remember(game.gameId) { mutableStateOf(true) }
-
-    // Read boardState to trigger recomposition when the controller moves
-    @Suppress("UNUSED_VARIABLE")
-    val boardState = gameController.boardState
-
-    SideEffect {
-        gameController.setUserMovesEnabled(false)
-    }
-
-    LaunchedEffect(game.pgn) {
-        isLoadingBoard = true
-        val parsedUciMoves = withContext(Dispatchers.Default) {
-            parsePgnMoves(game.pgn)
-        }
-        val labels = withContext(Dispatchers.Default) {
-            buildMoveLabels(parsedUciMoves)
-        }
-        withContext(Dispatchers.Main) {
-            uciMoves = parsedUciMoves
-            moveLabels = labels
-            gameController.loadFromUciMoves(parsedUciMoves, targetPly = 0)
-            isLoadingBoard = false
-        }
-    }
-
     CardSurface(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(AppDimens.spaceMd)
+        color = if (isSelected) Background.CardDark else Background.SurfaceDark,
+        border = if (isSelected) BorderStroke(1.dp, TrainingAccentTeal) else null,
+        contentPadding = PaddingValues(AppDimens.spaceMd),
+        onClick = onSelect
     ) {
         GameTrainingBlockHeader(
             game = game,
@@ -555,38 +688,17 @@ private fun GameTrainingBlock(
 
         Spacer(modifier = Modifier.height(AppDimens.spaceMd))
 
-        // Board
-        if (isLoadingBoard) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = TrainingAccentTeal)
-            }
-        } else {
-            ChessBoardSection(
-                gameController = gameController,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-
-        Spacer(modifier = Modifier.height(AppDimens.spaceMd))
-
-        // Move sequence label row
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = "\u25AB", color = TrainingAccentTeal)
+            Text(text = "▫", color = TrainingAccentTeal)
             Spacer(modifier = Modifier.width(AppDimens.spaceXs))
             SectionTitleText(text = "Move Sequence", color = TextColor.Secondary)
         }
 
         Spacer(modifier = Modifier.height(AppDimens.spaceSm))
 
-        // Move chip row
-        if (moveLabels.isEmpty()) {
+        if (parsedGame == null || parsedGame.moveLabels.isEmpty()) {
             BodySecondaryText(text = "No moves.")
         } else {
             Row(
@@ -595,61 +707,62 @@ private fun GameTrainingBlock(
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceSm)
             ) {
-                moveLabels.forEachIndexed { index, label ->
+                parsedGame.moveLabels.forEachIndexed { index, label ->
                     val moveNumber = index / 2 + 1
                     val isBlackMove = index % 2 == 1
                     val chipLabel = if (isBlackMove) "$moveNumber... $label" else "$moveNumber. $label"
                     MoveChip(
                         label = chipLabel,
-                        isSelected = (index + 1 == gameController.currentMoveIndex),
+                        isSelected = isSelected && index + 1 == currentPly,
                         onClick = {
-                            gameController.loadFromUciMoves(uciMoves, targetPly = index + 1)
+                            onSelect()
+                            onMovePlyClick(index + 1)
                         }
                     )
                 }
             }
         }
 
+        if (!isSelected) {
+            return@CardSurface
+        }
+
         Spacer(modifier = Modifier.height(AppDimens.spaceSm))
 
-        // Navigation row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val atStart = gameController.currentMoveIndex == 0
             TextButton(
-                onClick = {
-                    gameController.loadFromUciMoves(uciMoves, targetPly = 0)
-                },
-                enabled = !atStart
+                onClick = onResetClick,
+                enabled = currentPly > 0
             ) {
                 Text(
                     text = "Reset",
-                    color = if (atStart) TrainingIconInactive else TrainingAccentTeal
+                    color = if (currentPly > 0) TrainingAccentTeal else TrainingIconInactive
                 )
             }
             Row {
                 IconButton(
-                    onClick = { gameController.undoMove() },
-                    enabled = gameController.canUndo
+                    onClick = onPrevClick,
+                    enabled = canUndo
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                         contentDescription = "Previous move",
-                        tint = if (gameController.canUndo) TrainingTextPrimary else TrainingIconInactive,
+                        tint = if (canUndo) TrainingTextPrimary else TrainingIconInactive,
                         modifier = Modifier.size(AppDimens.iconButtonSize)
                     )
                 }
                 IconButton(
-                    onClick = { gameController.redoMove() },
-                    enabled = gameController.canRedo
+                    onClick = onNextClick,
+                    enabled = canRedo
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                         contentDescription = "Next move",
-                        tint = if (gameController.canRedo) TrainingTextPrimary else TrainingIconInactive,
+                        tint = if (canRedo) TrainingTextPrimary else TrainingIconInactive,
                         modifier = Modifier.size(AppDimens.iconButtonSize)
                     )
                 }
@@ -657,3 +770,4 @@ private fun GameTrainingBlock(
         }
     }
 }
+
