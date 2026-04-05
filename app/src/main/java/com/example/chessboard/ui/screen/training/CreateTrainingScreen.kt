@@ -38,7 +38,6 @@ import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.CardMetaText
 import com.example.chessboard.ui.components.CardSurface
-import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.ScreenSection
 import com.example.chessboard.ui.components.SecondaryButton
 import com.example.chessboard.ui.components.SectionTitleText
@@ -187,8 +186,10 @@ fun CreateTrainingScreenContainer(
 }
 
 @Composable
-private fun CreateTrainingScreen(
+internal fun CreateTrainingScreen(
     editorState: CreateTrainingEditorState = CreateTrainingEditorState(),
+    screenTitle: String = "Create Training",
+    gamesCountLabel: String = "Games loaded for training",
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
     onSaveTraining: (String, List<TrainingGameEditorItem>) -> Unit = { _, _ -> },
@@ -207,7 +208,7 @@ private fun CreateTrainingScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             AppTopBar(
-                title = "Create Training",
+                title = screenTitle,
                 onBackClick = onBackClick,
                 actions = {
                     Spacer(modifier = Modifier.width(AppDimens.spaceSm))
@@ -251,7 +252,7 @@ private fun CreateTrainingScreen(
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
 
             ScreenSection {
-                BodySecondaryText(text = "Games loaded for training: ${currentEditorState.editableGamesForTraining.size}")
+                BodySecondaryText(text = "$gamesCountLabel: ${currentEditorState.editableGamesForTraining.size}")
             }
 
             TrainingGamesEditorSection(
