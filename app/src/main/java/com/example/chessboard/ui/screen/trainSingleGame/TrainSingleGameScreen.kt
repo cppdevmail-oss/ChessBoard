@@ -156,7 +156,8 @@ private fun TrainSingleGameScreen(
                         uiState = runShowLine(
                             uiState = uiState,
                             gameController = gameController,
-                            uciMoves = uciMoves
+                            uciMoves = uciMoves,
+                            moveDelayMs = resolveShowLineMoveDelayMs(uiState.showLineMoveDelayInput)
                         )
                     } finally {
                         showLineJob = null
@@ -192,6 +193,47 @@ private fun TrainSingleGameScreen(
                     currentOrientation = currentOrientation,
                     sidesCount = trainingSides.size
                 )
+            },
+            onShowLineMoveDelayInputChange = { input ->
+                uiState = uiState.copy(
+                    showLineMoveDelayInput = input.filter(Char::isDigit)
+                )
+            },
+            onDecreaseShowLineMoveDelayClick = {
+                uiState = uiState.copy(
+                    showLineMoveDelayInput = changeShowLineMoveDelay(
+                        input = uiState.showLineMoveDelayInput,
+                        delta = -ShowLineMoveDelayStepMs
+                    )
+                )
+            },
+            onIncreaseShowLineMoveDelayClick = {
+                uiState = uiState.copy(
+                    showLineMoveDelayInput = changeShowLineMoveDelay(
+                        input = uiState.showLineMoveDelayInput,
+                        delta = ShowLineMoveDelayStepMs
+                    )
+                )
+            },
+            onMovePlyClick = { ply ->
+                if (uiState.showLineCompleted) {
+                    gameController.loadFromUciMoves(uciMoves, ply)
+                }
+            },
+            onPrevMoveClick = {
+                if (uiState.showLineCompleted && gameController.canUndo) {
+                    gameController.undoMove()
+                }
+            },
+            onNextMoveClick = {
+                if (uiState.showLineCompleted && gameController.canRedo) {
+                    gameController.redoMove()
+                }
+            },
+            onResetMovesClick = {
+                if (uiState.showLineCompleted) {
+                    gameController.loadFromUciMoves(uciMoves, 0)
+                }
             }
         )
     }
@@ -261,7 +303,9 @@ private fun TrainSingleGameScreen(
                     currentPly = gameController.currentMoveIndex,
                     moveLabels = moveLabels,
                     phase = uiState.phase,
-                    mistakesCount = uiState.mistakesCount
+                    mistakesCount = uiState.mistakesCount,
+                    showLineMoveDelayInput = uiState.showLineMoveDelayInput,
+                    showLineCompleted = uiState.showLineCompleted
                 ),
                 gameController = gameController,
                 actions = createContentActions()

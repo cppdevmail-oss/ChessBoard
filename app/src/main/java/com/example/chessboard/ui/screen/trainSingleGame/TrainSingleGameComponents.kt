@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.material3.Icon
@@ -24,11 +26,13 @@ import androidx.compose.ui.draw.clip
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.ui.ChessBoardWithCoordinates
 import com.example.chessboard.ui.components.AppMessageDialog
+import com.example.chessboard.ui.components.AppTextField
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.CardSurface
 import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.ScreenSection
 import com.example.chessboard.ui.components.SectionTitleText
+import com.example.chessboard.ui.screen.training.MoveLegendSection
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TextColor
 
@@ -79,16 +83,27 @@ internal fun TrainSingleGameContent(
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
             TrainingSingleGameActions(
                 state = resolveTrainingSingleGameActionsState(state.phase),
+                contentState = state,
                 actions = actions,
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
             TrainingSessionInfo(state = state)
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
-            TrainingMovesLegend(
-                moveLabels = state.moveLabels,
-                currentPly = state.currentPly
-            )
+            val visibleMoveLabels = resolveVisibleTrainingMoveLabels(state)
+            if (visibleMoveLabels.isNotEmpty()) {
+                TrainingMovesLegend(
+                    moveLabels = visibleMoveLabels,
+                    currentPly = state.currentPly,
+                    isSelectionEnabled = state.showLineCompleted,
+                    canUndo = state.showLineCompleted && state.currentPly > 0,
+                    canRedo = state.showLineCompleted && state.currentPly < state.moveLabels.size,
+                    onMovePlyClick = actions.onMovePlyClick,
+                    onPrevMoveClick = actions.onPrevMoveClick,
+                    onNextMoveClick = actions.onNextMoveClick,
+                    onResetMovesClick = actions.onResetMovesClick
+                )
+            }
         }
     }
 }
@@ -121,62 +136,96 @@ internal fun TrainingSessionInfo(
     }
 }
 
+internal fun resolveVisibleTrainingMoveLabels(
+    state: TrainSingleGameContentState
+): List<String> {
+    if (state.phase == TrainSingleGamePhase.ShowingLine) {
+        return state.moveLabels
+    }
+
+    if (state.showLineCompleted) {
+        return state.moveLabels
+    }
+
+    if (state.phase == TrainSingleGamePhase.Training || state.phase == TrainSingleGamePhase.Mistake) {
+        return state.moveLabels.take(state.currentPly)
+    }
+
+    return emptyList()
+}
+
 @Composable
 internal fun TrainingMovesLegend(
     moveLabels: List<String>,
     currentPly: Int,
+    isSelectionEnabled: Boolean,
+    canUndo: Boolean,
+    canRedo: Boolean,
+    onMovePlyClick: (Int) -> Unit,
+    onPrevMoveClick: () -> Unit,
+    onNextMoveClick: () -> Unit,
+    onResetMovesClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    CardSurface(modifier = modifier.fillMaxWidth()) {
-        Column {
-            SectionTitleText(text = "Moves")
-            Spacer(modifier = Modifier.height(AppDimens.spaceSm))
-            BodySecondaryText(
-                text = resolveTrainingMoveLegendText(
-                    moveLabels = moveLabels,
-                    currentPly = currentPly
-                )
-            )
-        }
-    }
-}
-
-internal fun resolveTrainingMoveLegendText(
-    moveLabels: List<String>,
-    currentPly: Int
-): String {
-    val visibleMoves = moveLabels.take(currentPly)
-    if (visibleMoves.isEmpty()) {
-        return "No moves yet"
-    }
-
-    return visibleMoves.mapIndexed { index, label ->
-        val moveNumber = index / 2 + 1
-        val prefix = if (index % 2 == 0) "$moveNumber." else "$moveNumber..."
-        "$prefix$label"
-    }.joinToString(separator = " ")
+    MoveLegendSection(
+        moveLabels = moveLabels,
+        currentPly = currentPly,
+        isSelectionEnabled = isSelectionEnabled,
+        canUndo = canUndo,
+        canRedo = canRedo,
+        onMovePlyClick = onMovePlyClick,
+        onPrevMoveClick = onPrevMoveClick,
+        onNextMoveClick = onNextMoveClick,
+        onResetMovesClick = onResetMovesClick,
+        modifier = modifier,
+        title = "Moves",
+        emptyText = "No moves yet"
+    )
 }
 
 @Composable
 internal fun TrainingSingleGameActions(
     state: TrainingSingleGameActionsState,
+    contentState: TrainSingleGameContentState,
     actions: TrainSingleGameContentActions,
     modifier: Modifier = Modifier
 ) {
     @Composable
     fun IdleTrainingActions(
-        onShowLineClick: () -> Unit,
-        onStartTrainingClick: () -> Unit
+        state: TrainSingleGameContentState,
+        actions: TrainSingleGameContentActions
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)
+            horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
         ) {
             PrimaryButton(
                 text = "Show line",
-                onClick = onShowLineClick
+                onClick = actions.onShowLineClick
             )
-            IconButton(onClick = onStartTrainingClick) {
+            AppTextField(
+                value = state.showLineMoveDelayInput,
+                onValueChange = actions.onShowLineMoveDelayInputChange,
+                label = "delay(ms)",
+                placeholder = ShowLineMoveDelayMs.toString(),
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(onClick = actions.onDecreaseShowLineMoveDelayClick) {
+                Icon(
+                    imageVector = Icons.Default.Remove,
+                    contentDescription = "Decrease move delay",
+                    tint = TextColor.Primary
+                )
+            }
+            IconButton(onClick = actions.onIncreaseShowLineMoveDelayClick) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Increase move delay",
+                    tint = TextColor.Primary
+                )
+            }
+            IconButton(onClick = actions.onStartTrainingClick) {
                 Icon(
                     imageVector = Icons.Default.PlayArrow,
                     contentDescription = "Start training",
@@ -198,8 +247,8 @@ internal fun TrainingSingleGameActions(
         }
 
         IdleTrainingActions(
-            onShowLineClick = actions.onShowLineClick,
-            onStartTrainingClick = actions.onStartTrainingClick
+            state = contentState,
+            actions = actions
         )
     }
 

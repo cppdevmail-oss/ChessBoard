@@ -21,6 +21,9 @@ data class TrainSingleGameResult(
 )
 
 internal const val ShowLineMoveDelayMs = 500L
+internal const val MinShowLineMoveDelayMs = 100L
+internal const val MaxShowLineMoveDelayMs = 1500L
+internal const val ShowLineMoveDelayStepMs = 100L
 internal const val TrainSingleGameLogTag = "TrainSingleGame"
 
 internal enum class TrainSingleGamePhase {
@@ -36,7 +39,9 @@ internal data class TrainSingleGameUiState(
     val expectedPly: Int = 0,
     val mistakesCount: Int = 0,
     val completionDialog: TrainSingleGameCompletionState? = null,
-    val wrongMoveDialogMessage: String? = null
+    val wrongMoveDialogMessage: String? = null,
+    val showLineMoveDelayInput: String = ShowLineMoveDelayMs.toString(),
+    val showLineCompleted: Boolean = false
 )
 
 internal data class TrainSingleGameCompletionState(
@@ -55,7 +60,9 @@ internal data class TrainSingleGameContentState(
     val currentPly: Int,
     val moveLabels: List<String>,
     val phase: TrainSingleGamePhase,
-    val mistakesCount: Int
+    val mistakesCount: Int,
+    val showLineMoveDelayInput: String,
+    val showLineCompleted: Boolean
 )
 
 internal data class TrainSingleGameContentActions(
@@ -63,7 +70,14 @@ internal data class TrainSingleGameContentActions(
     val onStopShowLineClick: () -> Unit,
     val onStartTrainingClick: () -> Unit,
     val onStopTrainingClick: () -> Unit,
-    val onMakeCorrectMoveClick: () -> Unit
+    val onMakeCorrectMoveClick: () -> Unit,
+    val onShowLineMoveDelayInputChange: (String) -> Unit,
+    val onDecreaseShowLineMoveDelayClick: () -> Unit,
+    val onIncreaseShowLineMoveDelayClick: () -> Unit,
+    val onMovePlyClick: (Int) -> Unit,
+    val onPrevMoveClick: () -> Unit,
+    val onNextMoveClick: () -> Unit,
+    val onResetMovesClick: () -> Unit
 )
 
 internal sealed interface TrainingSingleGameActionsState {
@@ -142,4 +156,16 @@ internal fun buildCompletionDialog(
         finishLabel = "Finish variation",
         hasNextSide = false
     )
+}
+
+internal fun resolveShowLineMoveDelayMs(input: String): Long {
+    return input.toLongOrNull()
+        ?.coerceIn(MinShowLineMoveDelayMs, MaxShowLineMoveDelayMs)
+        ?: ShowLineMoveDelayMs
+}
+
+internal fun changeShowLineMoveDelay(input: String, delta: Long): String {
+    val nextValue = (resolveShowLineMoveDelayMs(input) + delta)
+        .coerceIn(MinShowLineMoveDelayMs, MaxShowLineMoveDelayMs)
+    return nextValue.toString()
 }

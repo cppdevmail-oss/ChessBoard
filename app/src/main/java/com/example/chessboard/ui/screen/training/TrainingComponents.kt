@@ -2,9 +2,13 @@ package com.example.chessboard.ui.screen.training
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.ui.ChessBoardWithCoordinates
 import com.example.chessboard.ui.components.AppTextField
+import com.example.chessboard.ui.components.BodySecondaryText
+import com.example.chessboard.ui.components.CardSurface
 import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.theme.AppDimens
@@ -25,6 +31,7 @@ import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.ButtonColor
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
+import com.example.chessboard.ui.theme.TrainingIconInactive
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Shared composables
@@ -72,6 +79,94 @@ fun MoveChip(
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
             color = if (isSelected) Color.White else TextColor.Secondary
         )
+    }
+}
+
+@Composable
+fun MoveLegendSection(
+    moveLabels: List<String>,
+    currentPly: Int,
+    isSelectionEnabled: Boolean,
+    canUndo: Boolean,
+    canRedo: Boolean,
+    onMovePlyClick: (Int) -> Unit,
+    onPrevMoveClick: () -> Unit,
+    onNextMoveClick: () -> Unit,
+    onResetMovesClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    title: String = "Moves",
+    emptyText: String = "No moves yet"
+) {
+    CardSurface(modifier = modifier.fillMaxWidth()) {
+        Column {
+            SectionTitleText(text = title)
+            Spacer(modifier = Modifier.height(AppDimens.spaceSm))
+
+            if (moveLabels.isEmpty()) {
+                BodySecondaryText(text = emptyText)
+                return@Column
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceSm),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                moveLabels.forEachIndexed { index, label ->
+                    val ply = index + 1
+                    val moveNumber = index / 2 + 1
+                    val prefix = if (index % 2 == 0) "$moveNumber." else "$moveNumber..."
+                    MoveChip(
+                        label = "$prefix$label",
+                        isSelected = ply == currentPly,
+                        onClick = {
+                            if (!isSelectionEnabled) {
+                                return@MoveChip
+                            }
+
+                            onMovePlyClick(ply)
+                        }
+                    )
+                }
+            }
+
+            if (!isSelectionEnabled) {
+                return@Column
+            }
+
+            Spacer(modifier = Modifier.height(AppDimens.spaceMd))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onPrevMoveClick, enabled = canUndo) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                        contentDescription = "Previous move",
+                        tint = if (canUndo) TextColor.Primary else TrainingIconInactive,
+                        modifier = Modifier.size(AppDimens.iconButtonSize)
+                    )
+                }
+                TextButton(onClick = onResetMovesClick, enabled = canUndo) {
+                    Text(
+                        text = "Reset",
+                        color = if (canUndo) TextColor.Primary else TextColor.Secondary
+                    )
+                }
+                IconButton(onClick = onNextMoveClick, enabled = canRedo) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = "Next move",
+                        tint = if (canRedo) TextColor.Primary else TrainingIconInactive,
+                        modifier = Modifier.size(AppDimens.iconButtonSize)
+                    )
+                }
+            }
+        }
     }
 }
 
