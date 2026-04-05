@@ -1,7 +1,6 @@
 package com.example.chessboard.ui.screen.training
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,10 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PlayArrow
@@ -26,8 +22,6 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -50,20 +44,20 @@ import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTextField
 import com.example.chessboard.ui.components.AppTopBar
-import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.CardMetaText
 import com.example.chessboard.ui.components.CardSurface
 import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.SectionTitleText
+import com.example.chessboard.ui.screen.training.MoveLegendSection
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingIconInactive
 import com.example.chessboard.ui.theme.TrainingTextPrimary
 import com.example.chessboard.service.buildMoveLabels
 import com.example.chessboard.service.parsePgnMoves
+import com.example.chessboard.ui.components.BodySecondaryText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -688,86 +682,22 @@ private fun GameTrainingBlock(
 
         Spacer(modifier = Modifier.height(AppDimens.spaceMd))
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(text = "▫", color = TrainingAccentTeal)
-            Spacer(modifier = Modifier.width(AppDimens.spaceXs))
-            SectionTitleText(text = "Move Sequence", color = TextColor.Secondary)
-        }
-
-        Spacer(modifier = Modifier.height(AppDimens.spaceSm))
-
-        if (parsedGame == null || parsedGame.moveLabels.isEmpty()) {
-            BodySecondaryText(text = "No moves.")
-        } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceSm)
-            ) {
-                parsedGame.moveLabels.forEachIndexed { index, label ->
-                    val moveNumber = index / 2 + 1
-                    val isBlackMove = index % 2 == 1
-                    val chipLabel = if (isBlackMove) "$moveNumber... $label" else "$moveNumber. $label"
-                    MoveChip(
-                        label = chipLabel,
-                        isSelected = isSelected && index + 1 == currentPly,
-                        onClick = {
-                            onSelect()
-                            onMovePlyClick(index + 1)
-                        }
-                    )
-                }
-            }
-        }
-
-        if (!isSelected) {
-            return@CardSurface
-        }
-
-        Spacer(modifier = Modifier.height(AppDimens.spaceSm))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TextButton(
-                onClick = onResetClick,
-                enabled = currentPly > 0
-            ) {
-                Text(
-                    text = "Reset",
-                    color = if (currentPly > 0) TrainingAccentTeal else TrainingIconInactive
-                )
-            }
-            Row {
-                IconButton(
-                    onClick = onPrevClick,
-                    enabled = canUndo
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                        contentDescription = "Previous move",
-                        tint = if (canUndo) TrainingTextPrimary else TrainingIconInactive,
-                        modifier = Modifier.size(AppDimens.iconButtonSize)
-                    )
-                }
-                IconButton(
-                    onClick = onNextClick,
-                    enabled = canRedo
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = "Next move",
-                        tint = if (canRedo) TrainingTextPrimary else TrainingIconInactive,
-                        modifier = Modifier.size(AppDimens.iconButtonSize)
-                    )
-                }
-            }
-        }
+        MoveLegendSection(
+            moveLabels = parsedGame?.moveLabels ?: emptyList(),
+            currentPly = currentPly,
+            isSelectionEnabled = isSelected,
+            canUndo = isSelected && canUndo,
+            canRedo = isSelected && canRedo,
+            onMovePlyClick = { ply ->
+                onSelect()
+                onMovePlyClick(ply)
+            },
+            onPrevMoveClick = onPrevClick,
+            onNextMoveClick = onNextClick,
+            onResetMovesClick = onResetClick,
+            title = "Move Sequence",
+            emptyText = "No moves."
+        )
     }
 }
 

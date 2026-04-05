@@ -15,6 +15,7 @@ internal fun resetSessionState(uiState: TrainSingleGameUiState): TrainSingleGame
         expectedPly = 0,
         completionDialog = null,
         wrongMoveDialogMessage = null,
+        showLineCompleted = false,
     )
 
 internal fun buildShowLineState(uiState: TrainSingleGameUiState): TrainSingleGameUiState =
@@ -23,6 +24,7 @@ internal fun buildShowLineState(uiState: TrainSingleGameUiState): TrainSingleGam
         expectedPly = 0,
         phase = TrainSingleGamePhase.ShowingLine,
         wrongMoveDialogMessage = null,
+        showLineCompleted = false,
     )
 
 internal fun buildStartTrainingState(uiState: TrainSingleGameUiState): TrainSingleGameUiState =
@@ -31,6 +33,7 @@ internal fun buildStartTrainingState(uiState: TrainSingleGameUiState): TrainSing
         expectedPly = 0,
         phase = TrainSingleGamePhase.Training,
         wrongMoveDialogMessage = null,
+        showLineCompleted = false,
     )
 
 internal fun buildRepeatVariationState(uiState: TrainSingleGameUiState): TrainSingleGameUiState =
@@ -39,6 +42,7 @@ internal fun buildRepeatVariationState(uiState: TrainSingleGameUiState): TrainSi
         expectedPly = 0,
         phase = TrainSingleGamePhase.Training,
         wrongMoveDialogMessage = null,
+        showLineCompleted = false,
     )
 
 // Replays the full variation from the start with a fixed delay between moves.
@@ -83,7 +87,7 @@ internal suspend fun runShowLine(
         TrainSingleGameLogTag,
         "runShowLine finished. boardState=${gameController.boardState}"
     )
-    return uiState.copy(phase = TrainSingleGamePhase.Idle)
+    return uiState.copy(phase = TrainSingleGamePhase.Idle, showLineCompleted = true)
 }
 
 // Advances the session by applying forced program moves or validating the latest user move.
@@ -153,7 +157,7 @@ internal fun handleCorrectMove(
     sidesCount: Int
 ): TrainSingleGameUiState {
     if (uiState.expectedPly >= uciMoves.size) {
-        return uiState.copy(phase = TrainSingleGamePhase.Idle)
+        return uiState.copy(phase = TrainSingleGamePhase.Idle, showLineCompleted = true)
     }
 
     gameController.loadFromUciMoves(uciMoves, uiState.expectedPly + 1)
