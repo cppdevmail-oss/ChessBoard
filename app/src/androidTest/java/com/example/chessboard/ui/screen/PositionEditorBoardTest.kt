@@ -122,6 +122,22 @@ class PositionEditorBoardTest {
         assertBoardFen("8/8/8/8/8/8/8/8 w - - 0 1")
     }
 
+
+    @Test
+    fun positionEditorBoard_initialPositionButtonUpdatesVisibleFen() {
+        val gameController = GameController()
+
+        composeRule.setContent {
+            ChessBoardTheme {
+                PositionEditorInitialPositionHost(gameController = gameController)
+            }
+        }
+
+        composeRule.onNodeWithText("Initial position").performClick()
+
+        assertBoardFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+    }
+
     private fun assertBoardFen(expectedFen: String) {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(InteractiveChessBoardTestTag).assert(
@@ -196,6 +212,28 @@ private fun PositionEditorClearBoardHost(gameController: GameController) {
             text = "Clear board",
             onClick = {
                 gameController.loadPreviewFen("8/8/8/8/8/8/8/8 w - - 0 1")
+            }
+        )
+
+        val boardState = gameController.boardState
+        key(boardState) {
+            PositionEditorBoardWithCoordinates(
+                gameController = gameController,
+                onSquareClick = {},
+                onPieceMove = { _, _ -> },
+                modifier = Modifier.size(320.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun PositionEditorInitialPositionHost(gameController: GameController) {
+    Column {
+        SecondaryButton(
+            text = "Initial position",
+            onClick = {
+                gameController.resetToStartPosition()
             }
         )
 
