@@ -1,7 +1,5 @@
 package com.example.chessboard.ui.screen.training
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,14 +14,13 @@ import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.ui.ChessBoardWithCoordinates
 import com.example.chessboard.ui.components.AppTextField
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.CardSurface
+import com.example.chessboard.ui.components.MoveChip
 import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.theme.AppDimens
@@ -58,29 +55,6 @@ fun DarkInputField(
     )
 }
 
-@Composable
-fun MoveChip(
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    unselectedBackground: Color = Background.SurfaceDark,
-) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(AppDimens.radiusSm))
-            .background(if (isSelected) TrainingAccentTeal else unselectedBackground)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = if (isSelected) Color.White else TextColor.Secondary
-        )
-    }
-}
 
 @Composable
 fun MoveLegendSection(

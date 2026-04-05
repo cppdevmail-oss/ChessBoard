@@ -41,7 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material3.IconButton
-import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
@@ -67,6 +67,7 @@ import com.example.chessboard.ui.components.ScreenSection
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.screen.training.ChessBoardSection
 import com.example.chessboard.ui.screen.training.DarkInputField
+import com.example.chessboard.ui.components.MoveChip
 import com.example.chessboard.service.computeLabel
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.Background
@@ -714,20 +715,15 @@ internal fun ImportedMovesTreeSection(
 
 @Composable
 private fun TreeMoveChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(AppDimens.radiusSm))
-            .background(if (isSelected) TrainingAccentTeal else Background.CardDark)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 3.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (isSelected) Color.White else TextColor.Primary
-        )
-    }
+    MoveChip(
+        label = label,
+        isSelected = isSelected,
+        onClick = onClick,
+        unselectedBackground = Background.CardDark,
+        unselectedTextColor = TextColor.Primary,
+        textStyle = MaterialTheme.typography.bodyMedium,
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 3.dp)
+    )
 }
 
 // ──────────────────────────────────────────────────────────────────────────────

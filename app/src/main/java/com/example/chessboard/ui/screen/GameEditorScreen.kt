@@ -32,7 +32,6 @@ import com.example.chessboard.ui.components.AppDivider
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.CardMetaText
-import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TextColor
@@ -42,7 +41,7 @@ import com.example.chessboard.ui.theme.TrainingIconInactive
 import com.example.chessboard.ui.theme.TrainingTextPrimary
 import com.example.chessboard.ui.screen.training.ChessBoardSection
 import com.example.chessboard.ui.screen.training.DarkInputField
-import com.example.chessboard.ui.screen.training.MoveChip
+import com.example.chessboard.ui.components.MoveChip
 import com.example.chessboard.service.computeLabel
 import com.example.chessboard.service.parsePgnMoves
 import com.github.bhlangonijr.chesslib.Square
