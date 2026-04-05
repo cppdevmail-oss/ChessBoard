@@ -53,7 +53,7 @@ import com.example.chessboard.ui.components.CardSurface
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.screen.training.ChessBoardSection
-import com.example.chessboard.ui.screen.training.MoveChip
+import com.example.chessboard.ui.components.MoveChip
 import com.example.chessboard.service.ParsedGame
 import com.example.chessboard.service.buildMoveLabels
 import com.example.chessboard.service.parsePgnMoves
