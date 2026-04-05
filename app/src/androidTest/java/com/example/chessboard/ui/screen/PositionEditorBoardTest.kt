@@ -68,11 +68,11 @@ class PositionEditorBoardTest {
         }
 
         val boardNode = composeRule.onNodeWithTag(InteractiveChessBoardTestTag)
-        val squareSize = 320f / 8f
-        val from = squareCenter(file = 4, row = 7, squareSize = squareSize)
-        val to = squareCenter(file = 4, row = 6, squareSize = squareSize)
+        val squareSize = with(composeRule.density) { 320.dp.toPx() } / 8f
 
         boardNode.performTouchInput {
+            val from = squareCenter(square = "e1", squareSize = squareSize)
+            val to = squareCenter(square = "e2", squareSize = squareSize)
             down(from)
             moveTo(to)
             up()
@@ -97,10 +97,10 @@ class PositionEditorBoardTest {
         }
 
         val boardNode = composeRule.onNodeWithTag(InteractiveChessBoardTestTag)
-        val squareSize = 320f / 8f
+        val squareSize = with(composeRule.density) { 320.dp.toPx() } / 8f
 
         boardNode.performTouchInput {
-            click(squareCenter(file = 3, row = 4, squareSize = squareSize))
+            click(squareCenter(square = "d4", squareSize = squareSize))
         }
 
         assertBoardFen("4k3/8/8/8/3Q4/8/8/4K3 w - - 0 1")
@@ -348,7 +348,11 @@ private fun buildFen(
     return "$boardPart $metadata"
 }
 
-private fun squareCenter(file: Int, row: Int, squareSize: Float): Offset {
+private fun squareCenter(square: String, squareSize: Float): Offset {
+    val file = square[0] - 'a'
+    val rank = square[1].digitToInt()
+    val row = 8 - rank
+
     return Offset(
         x = file * squareSize + squareSize / 2f,
         y = row * squareSize + squareSize / 2f
