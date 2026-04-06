@@ -160,6 +160,7 @@ fun ChessBoard(
     modifier: Modifier = Modifier
 ) {
     val orientation = gameController.getSide()
+    val lastMoveHighlight = gameController.getLastMoveHighlight()
 
     SideEffect {
         Log.d(
@@ -225,7 +226,11 @@ fun ChessBoard(
         }
 
         // 3. Highlights
+        val lastMoveFromColor = Color(0xFFFFC857).copy(alpha = 0.22f)
+        val lastMoveToColor = Color(0xFFFFC857).copy(alpha = 0.34f)
         val highlightColor = Color.Yellow.copy(alpha = 0.4f)
+        drawHighlight(lastMoveHighlight?.from, orientation, squareSizePx, lastMoveFromColor)
+        drawHighlight(lastMoveHighlight?.to, orientation, squareSizePx, lastMoveToColor)
         drawHighlight(selectedSquare, orientation, squareSizePx, highlightColor)
         drawHighlight(dragFromSquare, orientation, squareSizePx, highlightColor)
 
