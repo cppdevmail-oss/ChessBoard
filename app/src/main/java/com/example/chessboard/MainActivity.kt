@@ -27,6 +27,8 @@ import com.example.chessboard.ui.screen.trainSingleGame.TrainSingleGameLauncherS
 import com.example.chessboard.ui.screen.training.CreateTrainingByStatisticsScreenContainer
 import com.example.chessboard.ui.screen.training.CreateTrainingChoiceScreenContainer
 import com.example.chessboard.ui.screen.training.TrainingTemplateSelectionScreenContainer
+import com.example.chessboard.ui.screen.training.TrainingTemplateBrowserScreenContainer
+import com.example.chessboard.ui.screen.training.EditTrainingTemplatePlaceholderScreenContainer
 import com.example.chessboard.ui.screen.training.CreateTrainingScreenContainer
 import com.example.chessboard.ui.screen.training.EditTrainingScreenContainer
 import com.example.chessboard.ui.screen.training.TrainingListScreenContainer
@@ -129,6 +131,15 @@ class MainActivity : ComponentActivity() {
                         },
                     )
 
+                    ScreenType.TrainingTemplates -> TrainingTemplateBrowserScreenContainer(
+                        screenContext = createScreenContext(
+                            onBackClick = { currentScreen = ScreenType.Home },
+                        ),
+                        onOpenTemplate = { templateId ->
+                            currentScreen = ScreenType.EditTrainingTemplate(templateId)
+                        },
+                    )
+
                     ScreenType.CreateTrainingByStatistics -> CreateTrainingByStatisticsScreenContainer(
                         screenContext = createScreenContext(
                             onBackClick = { currentScreen = ScreenType.CreateTrainingChoice },
@@ -148,6 +159,13 @@ class MainActivity : ComponentActivity() {
                         templateId = screen.templateId,
                         screenTitle = "Create Training From Template",
                         gamesCountLabel = "Games loaded from template",
+                    )
+
+                    is ScreenType.EditTrainingTemplate -> EditTrainingTemplatePlaceholderScreenContainer(
+                        templateId = screen.templateId,
+                        screenContext = createScreenContext(
+                            onBackClick = { currentScreen = ScreenType.TrainingTemplates },
+                        ),
                     )
 
                     is ScreenType.EditTraining -> EditTrainingScreenContainer(
