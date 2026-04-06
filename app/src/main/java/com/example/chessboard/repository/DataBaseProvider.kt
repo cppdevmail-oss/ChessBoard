@@ -27,6 +27,7 @@ import com.example.chessboard.service.PositionService
 import com.example.chessboard.service.StatisticsTrainingService
 import com.example.chessboard.service.TrainSingleGameService
 import com.example.chessboard.service.TrainingService
+import com.example.chessboard.service.TrainingTemplateService
 import com.github.bhlangonijr.chesslib.move.Move
 
 @Database(
@@ -207,6 +208,10 @@ class DatabaseProvider private constructor(
 
     fun createStatisticsTrainingService(): StatisticsTrainingService {
         return StatisticsTrainingService(database)
+    }
+
+    fun createTrainingTemplateService(): TrainingTemplateService {
+        return TrainingTemplateService(database.trainingTemplateDao())
     }
 
     private fun createTrainingResultService(): TrainingResultService {

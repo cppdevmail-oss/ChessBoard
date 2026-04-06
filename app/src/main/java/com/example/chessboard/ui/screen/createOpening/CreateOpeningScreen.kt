@@ -1,6 +1,23 @@
-package com.example.chessboard.ui.screen
+package com.example.chessboard.ui.screen.createOpening
 
-import android.app.Activity
+/**
+ * Pure UI for the create-opening screen.
+ *
+ * Keep in this file:
+ * - composable layout and visual subcomponents for the create-opening screen
+ * - small UI-only helpers used only by this screen
+ * - rendering logic that depends only on parameters already prepared by the container
+ *
+ * It is acceptable to add here:
+ * - new visual blocks of this screen
+ * - small private UI helper composables
+ * - UI-only formatting helpers
+ *
+ * Do not add here:
+ * - database calls, service orchestration, or coroutine-based save flows
+ * - navigation decisions beyond invoking callbacks passed from the container
+ * - post-save business flow for creating trainings or templates
+ */
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,17 +48,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material3.IconButton
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
@@ -49,15 +62,7 @@ import com.github.bhlangonijr.chesslib.Board
 import com.github.bhlangonijr.chesslib.Piece
 import com.github.bhlangonijr.chesslib.Square
 import com.github.bhlangonijr.chesslib.move.Move
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.lifecycleScope
 import com.example.chessboard.boardmodel.GameController
-import com.example.chessboard.entity.GameEntity
-import com.example.chessboard.service.buildStoredPgnFromUci
-import com.example.chessboard.service.extractPgnHeaders
-import com.example.chessboard.service.OneGameTrainingData
-import com.example.chessboard.service.parsePgnToUciLines
-import com.example.chessboard.service.uciMovesToMoves
 import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
@@ -65,6 +70,8 @@ import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.ScreenSection
 import com.example.chessboard.ui.components.SectionTitleText
+import com.example.chessboard.ui.screen.EditableGameSide
+import com.example.chessboard.ui.screen.GameSideSelector
 import com.example.chessboard.ui.screen.training.ChessBoardSection
 import com.example.chessboard.ui.screen.training.DarkInputField
 import com.example.chessboard.ui.components.MoveChip
@@ -75,162 +82,10 @@ import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import com.example.chessboard.ui.theme.TrainingIconInactive
 import com.example.chessboard.ui.theme.TrainingTextPrimary
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-
-@Composable
-fun CreateOpeningScreenContainer(
-    activity: Activity,
-    screenContext: ScreenContainerContext,
-    modifier: Modifier = Modifier,
-) {
-    val dbProvider = screenContext.inDbProvider
-    val gameController = remember { GameController() }
-    var selectedSide by remember { mutableStateOf(EditableGameSide.AS_WHITE) }
-    var openingName by remember { mutableStateOf("") }
-    var ecoCode by remember { mutableStateOf("") }
-    var nameError by remember { mutableStateOf(false) }
-    var pgnText by remember { mutableStateOf("") }
-    var pgnImportError by remember { mutableStateOf<String?>(null) }
-    var saveError by remember { mutableStateOf<String?>(null) }
-    var importedPgnHeaders by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
-    var importedUciLines by remember { mutableStateOf<List<List<String>>>(emptyList()) }
-
-    LaunchedEffect(selectedSide) {
-        gameController.setOrientation(selectedSide.orientation)
-    }
-
-    CreateOpeningScreen(
-        gameController = gameController,
-        selectedSide = selectedSide,
-        onSideSelected = { selectedSide = it },
-        onBackClick = screenContext.onBackClick,
-        openingName = openingName,
-        onOpeningNameChange = { openingName = it; nameError = false },
-        ecoCode = ecoCode,
-        onEcoCodeChange = { ecoCode = it },
-        nameError = nameError,
-        pgnText = pgnText,
-        onPgnTextChange = {
-            pgnText = it
-            importedPgnHeaders = emptyMap()
-            importedUciLines = emptyList()
-        },
-        importedUciLines = importedUciLines,
-        pgnImportError = pgnImportError,
-        onPgnImportErrorDismiss = { pgnImportError = null },
-        saveError = saveError,
-        onSaveErrorDismiss = { saveError = null },
-        onImportPgnClick = {
-            (activity as? LifecycleOwner)?.lifecycleScope?.launch(Dispatchers.Default) {
-                try {
-                    val headers = extractPgnHeaders(pgnText)
-                    val uciLines = parsePgnToUciLines(pgnText)
-                    withContext(Dispatchers.Main) {
-                        if (uciLines.isEmpty()) {
-                            pgnImportError = "No valid moves found in PGN text"
-                        } else {
-                            headers["Event"]
-                                ?.takeIf { it.isNotBlank() && it != "?" }
-                                ?.let { openingName = it }
-                            headers["ECO"]
-                                ?.takeIf { it.isNotBlank() && it != "?" }
-                                ?.let { ecoCode = it }
-                            importedPgnHeaders = headers
-                            importedUciLines = uciLines
-                            gameController.loadFromUciMoves(uciLines.first())
-                            pgnImportError = null
-                        }
-                    }
-                } catch (_: Exception) {
-                    withContext(Dispatchers.Main) { pgnImportError = "Failed to parse PGN" }
-                }
-            }
-        },
-        onSave = {
-            if (openingName.isBlank()) {
-                nameError = true
-                return@CreateOpeningScreen
-            }
-
-            val importedHeadersSnapshot = importedPgnHeaders
-            val importedLinesSnapshot = importedUciLines
-            (activity as? LifecycleOwner)?.lifecycleScope?.launch(Dispatchers.IO) {
-                val savedGameIds = if (importedLinesSnapshot.isEmpty()) {
-                    val entity = GameEntity(
-                        event = openingName.ifBlank { null },
-                        eco = ecoCode.ifBlank { null },
-                        pgn = gameController.generatePgn(event = openingName.ifBlank { "Opening" }),
-                        initialFen = "",
-                        sideMask = selectedSide.sideMask
-                    )
-                    listOfNotNull(dbProvider.addGameAndGetId(entity, gameController.getMovesCopy()))
-                } else {
-                    buildList {
-                        importedLinesSnapshot.forEachIndexed { index, uciMoves ->
-                        val eventName = buildImportedLineEventName(
-                            baseName = openingName,
-                            index = index,
-                            total = importedLinesSnapshot.size
-                        )
-                        val entity = GameEntity(
-                            white = importedHeadersSnapshot["White"]?.takeIf { it.isNotBlank() && it != "?" },
-                            black = importedHeadersSnapshot["Black"]?.takeIf { it.isNotBlank() && it != "?" },
-                            result = importedHeadersSnapshot["Result"]?.takeIf { it.isNotBlank() && it != "?" },
-                            site = importedHeadersSnapshot["Site"]?.takeIf { it.isNotBlank() && it != "?" },
-                            round = importedHeadersSnapshot["Round"]?.takeIf { it.isNotBlank() && it != "?" },
-                            event = eventName,
-                            eco = ecoCode.ifBlank { null },
-                            pgn = buildStoredPgnFromUci(
-                                uciMoves = uciMoves,
-                                event = eventName ?: "Opening",
-                                whiteName = importedHeadersSnapshot["White"]?.takeIf { it.isNotBlank() && it != "?" } ?: "White",
-                                blackName = importedHeadersSnapshot["Black"]?.takeIf { it.isNotBlank() && it != "?" } ?: "Black"
-                            ),
-                            initialFen = "",
-                            sideMask = selectedSide.sideMask
-                        )
-                            dbProvider.addGameAndGetId(entity, uciMovesToMoves(uciMoves))?.let { gameId ->
-                                add(gameId)
-                            }
-                        }
-                    }
-                }
-                val savedCount = savedGameIds.size
-                val trainingId = if (savedGameIds.isNotEmpty()) {
-                    dbProvider.createTrainingFromGames(
-                        name = openingName.ifBlank { "Opening" },
-                        games = savedGameIds.map { gameId ->
-                            OneGameTrainingData(gameId = gameId, weight = 1)
-                        }
-                    )
-                } else {
-                    null
-                }
-
-                withContext(Dispatchers.Main) {
-                    if (savedCount > 0 && trainingId != null) {
-                        screenContext.onBackClick()
-                    } else if (savedCount > 0) {
-                        saveError = "Games were saved, but training could not be created"
-                    } else {
-                        saveError = if (importedLinesSnapshot.isEmpty()) {
-                            "Failed to save opening"
-                        } else {
-                            "None of the imported lines could be saved"
-                        }
-                    }
-                }
-            }
-        },
-        modifier = modifier
-    )
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CreateOpeningScreen(
+internal fun CreateOpeningScreen(
     gameController: GameController,
     selectedSide: EditableGameSide,
     onSideSelected: (EditableGameSide) -> Unit,
@@ -364,7 +219,7 @@ private fun CreateOpeningScreen(
     }
 }
 
-private fun buildImportedLineEventName(
+internal fun buildImportedLineEventName(
     baseName: String,
     index: Int,
     total: Int

@@ -45,3 +45,14 @@ if (value.isNullOrBlank()) {
 
 - File-level declarations are for things reused across multiple functions or needed as stable screen-level helpers.
 - Nested declarations are preferred when the logic is tightly bound to one screen, one container, or one local workflow.
+
+## New File Header
+
+- Every newly created source file must start with a file-level comment immediately after the `package` line.
+- The header comment must explain:
+  - why the file exists
+  - what kinds of code belong in the file
+  - what kinds of code should not be added to the file
+- Keep the header concise, but explicit enough to guide future edits.
+- Apply this rule to all new project files created during implementation unless the user says otherwise.
+
