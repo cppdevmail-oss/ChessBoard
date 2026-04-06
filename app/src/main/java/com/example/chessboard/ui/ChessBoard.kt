@@ -226,8 +226,8 @@ fun ChessBoard(
         }
 
         // 3. Highlights
-        val lastMoveFromColor = Color(0xFFFFC857).copy(alpha = 0.22f)
-        val lastMoveToColor = Color(0xFFFFC857).copy(alpha = 0.34f)
+        val lastMoveFromColor = Color(0xFF00B8D4).copy(alpha = 0.28f)
+        val lastMoveToColor = Color(0xFF00B8D4).copy(alpha = 0.42f)
         val highlightColor = Color.Yellow.copy(alpha = 0.4f)
         drawHighlight(lastMoveHighlight?.from, orientation, squareSizePx, lastMoveFromColor)
         drawHighlight(lastMoveHighlight?.to, orientation, squareSizePx, lastMoveToColor)
