@@ -15,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.entity.GameEntity
@@ -49,11 +49,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-internal const val DEFAULT_TRAINING_NAME = "FullTraining"
-private val TrainingGameRowHeight = 92.dp
-private val TrainingGamesHeaderHeight = 88.dp
-private val TrainingGamesNavigationHeight = 64.dp
-private val TrainingGameRowSpacing = AppDimens.spaceMd
 
 data class TrainingGameEditorItem(
     val gameId: Long,
@@ -63,7 +58,7 @@ data class TrainingGameEditorItem(
     val pgn: String = ""
 )
 
-private data class CreateTrainingLoadState(
+internal data class CreateTrainingInitialData(
     val trainingName: String = DEFAULT_TRAINING_NAME,
     val gamesForTraining: List<TrainingGameEditorItem> = emptyList()
 )
@@ -119,65 +114,15 @@ internal fun increaseTrainingGameWeight(
 }
 
 @Composable
-fun CreateTrainingScreenContainer(
+internal fun CreateTrainingScreenContainer(
     screenContext: ScreenContainerContext,
-    templateId: Long? = null,
+    initialData: CreateTrainingInitialData,
     screenTitle: String = "Create Training",
     gamesCountLabel: String = "Games loaded for training",
     modifier: Modifier = Modifier,
 ) {
-    var loadState by remember { mutableStateOf(CreateTrainingLoadState()) }
     var trainingSaveSuccess by remember { mutableStateOf<TrainingSaveSuccess?>(null) }
-    var loadErrorMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
-
-    LaunchedEffect(templateId) {
-        if (templateId == null) {
-            val allGames = withContext(Dispatchers.IO) {
-                screenContext.inDbProvider.getAllGames()
-            }
-
-            loadState = CreateTrainingLoadState(
-                trainingName = DEFAULT_TRAINING_NAME,
-                gamesForTraining = allGames.map { game ->
-                    game.toTrainingGameEditorItem()
-                }
-            )
-            return@LaunchedEffect
-        }
-
-        val templateLoadState = withContext(Dispatchers.IO) {
-            val template = screenContext.inDbProvider.createTrainingTemplateService().getTemplateById(templateId) ?: return@withContext null
-            val allGamesById = screenContext.inDbProvider.getAllGames().associateBy { it.id }
-            val templateGames = OneGameTrainingData.fromJson(template.gamesJson).mapNotNull { templateGame ->
-                val game = allGamesById[templateGame.gameId] ?: return@mapNotNull null
-                game.toTrainingGameEditorItem(weight = templateGame.weight)
-            }
-
-            CreateTrainingLoadState(
-                trainingName = template.name.ifBlank { DEFAULT_TRAINING_NAME },
-                gamesForTraining = templateGames
-            )
-        }
-
-        if (templateLoadState == null) {
-            loadErrorMessage = "Template ID: $templateId"
-            return@LaunchedEffect
-        }
-
-        loadState = templateLoadState
-    }
-
-    loadErrorMessage?.let { message ->
-        AppMessageDialog(
-            title = "Template Not Found",
-            message = message,
-            onDismiss = {
-                loadErrorMessage = null
-                screenContext.onBackClick()
-            }
-        )
-    }
 
     trainingSaveSuccess?.let { success ->
         TrainingSaveSuccessDialog(
@@ -191,8 +136,8 @@ fun CreateTrainingScreenContainer(
 
     CreateTrainingScreen(
         editorState = CreateTrainingEditorState(
-            trainingName = loadState.trainingName,
-            editableGamesForTraining = loadState.gamesForTraining
+            trainingName = initialData.trainingName,
+            editableGamesForTraining = initialData.gamesForTraining
         ),
         screenTitle = screenTitle,
         gamesCountLabel = gamesCountLabel,
