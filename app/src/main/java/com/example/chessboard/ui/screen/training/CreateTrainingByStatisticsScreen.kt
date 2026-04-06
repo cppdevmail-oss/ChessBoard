@@ -1,7 +1,5 @@
 package com.example.chessboard.ui.screen.training
 
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +13,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -27,22 +24,20 @@ import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.PrimaryButton
+import com.example.chessboard.ui.components.RepeatStepButton
 import com.example.chessboard.ui.components.ScreenSection
-import com.example.chessboard.ui.components.SecondaryButton
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private const val DEFAULT_STATISTICS_TRAINING_NAME = "StatisticsTraining"
 private const val MAX_STATISTICS_GAMES = 50
 private const val DEFAULT_MAX_WEIGHT = 5
-private const val STEP_REPEAT_INTERVAL_MILLIS = 200L
 
 private data class StatisticsTrainingLoadState(
     val isLoading: Boolean = true,
@@ -55,38 +50,6 @@ private data class StatisticsTrainingSaveSuccess(
     val trainingName: String,
     val gamesCount: Int,
 )
-
-@Composable
-private fun RepeatStepButton(
-    text: String,
-    onStep: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val currentOnStep by rememberUpdatedState(onStep)
-
-    LaunchedEffect(enabled, isPressed) {
-        if (!enabled || !isPressed) {
-            return@LaunchedEffect
-        }
-
-        currentOnStep()
-        while (true) {
-            delay(STEP_REPEAT_INTERVAL_MILLIS)
-            currentOnStep()
-        }
-    }
-
-    SecondaryButton(
-        text = text,
-        onClick = {},
-        modifier = modifier,
-        enabled = enabled,
-        interactionSource = interactionSource,
-    )
-}
 
 @Composable
 private fun StatisticsSettingStepper(
