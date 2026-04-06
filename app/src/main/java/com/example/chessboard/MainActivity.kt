@@ -161,6 +161,15 @@ class MainActivity : ComponentActivity() {
                         gamesCountLabel = "Games loaded from template",
                     )
 
+                    is ScreenType.CreateTrainingFromGameIds -> CreateTrainingScreenContainer(
+                        screenContext = createScreenContext(
+                            onBackClick = { currentScreen = ScreenType.PositionEditor },
+                        ),
+                        gameIds = screen.gameIds,
+                        screenTitle = "Create Training From Position",
+                        gamesCountLabel = "Games found for position",
+                    )
+
                     is ScreenType.EditTrainingTemplate -> EditTrainingTemplatePlaceholderScreenContainer(
                         templateId = screen.templateId,
                         screenContext = createScreenContext(

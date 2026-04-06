@@ -122,6 +122,7 @@ internal fun increaseTrainingGameWeight(
 fun CreateTrainingScreenContainer(
     screenContext: ScreenContainerContext,
     templateId: Long? = null,
+    gameIds: List<Long>? = null,
     screenTitle: String = "Create Training",
     gamesCountLabel: String = "Games loaded for training",
     modifier: Modifier = Modifier,
@@ -131,7 +132,21 @@ fun CreateTrainingScreenContainer(
     var loadErrorMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(templateId) {
+    LaunchedEffect(templateId, gameIds) {
+        if (gameIds != null) {
+            val allGamesById = withContext(Dispatchers.IO) {
+                screenContext.inDbProvider.getAllGames().associateBy { it.id }
+            }
+
+            loadState = CreateTrainingLoadState(
+                trainingName = DEFAULT_TRAINING_NAME,
+                gamesForTraining = gameIds.mapNotNull { gameId ->
+                    allGamesById[gameId]?.toTrainingGameEditorItem()
+                }
+            )
+            return@LaunchedEffect
+        }
+
         if (templateId == null) {
             val allGames = withContext(Dispatchers.IO) {
                 screenContext.inDbProvider.getAllGames()

@@ -168,6 +168,11 @@ fun PositionEditorScreenContainer(
         onPieceSelected = { uiState = uiState.copy(selectedPiece = it) },
         onFenErrorDismiss = { uiState = uiState.copy(fenError = null) },
         onFoundGameIdsDismiss = { uiState = uiState.copy(foundGameIds = null) },
+        onCreateTrainingFromFoundGamesClick = createTrainingFromFoundGames@{
+            val foundGameIds = uiState.foundGameIds ?: return@createTrainingFromFoundGames
+            screenContext.onNavigate(ScreenType.CreateTrainingFromGameIds(foundGameIds))
+            uiState = uiState.copy(foundGameIds = null)
+        },
         onApplyFenClick = {
             applyPositionEditorFen(uiState.fenText)
         },
@@ -239,6 +244,7 @@ private fun PositionEditorScreen(
     onPieceSelected: (PositionEditorPieceOption) -> Unit,
     onFenErrorDismiss: () -> Unit,
     onFoundGameIdsDismiss: () -> Unit,
+    onCreateTrainingFromFoundGamesClick: () -> Unit,
     onApplyFenClick: () -> Unit,
     onFindGamesClick: () -> Unit,
     onClearBoardClick: () -> Unit,
@@ -255,7 +261,8 @@ private fun PositionEditorScreen(
     )
     RenderFoundGameIdsDialog(
         foundGameIds = uiState.foundGameIds,
-        onDismiss = onFoundGameIdsDismiss
+        onDismiss = onFoundGameIdsDismiss,
+        onCreateTrainingClick = onCreateTrainingFromFoundGamesClick
     )
 
     AppScreenScaffold(
@@ -336,7 +343,8 @@ private fun PositionEditorScreen(
 @Composable
 private fun RenderFoundGameIdsDialog(
     foundGameIds: List<Long>?,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onCreateTrainingClick: () -> Unit
 ) {
     if (foundGameIds == null) {
         return
@@ -345,7 +353,11 @@ private fun RenderFoundGameIdsDialog(
     AppMessageDialog(
         title = resolveFoundGameIdsTitle(foundGameIds),
         message = resolveFoundGameIdsMessage(foundGameIds),
-        onDismiss = onDismiss
+        onDismiss = onDismiss,
+        confirmText = if (foundGameIds.isEmpty()) "OK" else "Create Training",
+        onConfirm = if (foundGameIds.isEmpty()) null else onCreateTrainingClick,
+        dismissText = if (foundGameIds.isEmpty()) null else "Close",
+        onDismissClick = if (foundGameIds.isEmpty()) null else onDismiss
     )
 }
 
