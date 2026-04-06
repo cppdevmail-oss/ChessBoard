@@ -1,5 +1,6 @@
 package com.example.chessboard.ui.components
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -22,6 +23,7 @@ private fun AppButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    interactionSource: MutableInteractionSource? = null,
     heighDp: Dp,
     shape: Dp,
     elevation: ButtonElevation,
@@ -35,6 +37,7 @@ private fun AppButton(
     Button(
         onClick = onClick,
         enabled = enabled,
+        interactionSource = interactionSource,
         modifier = modifier.height(height = heighDp),
         shape = RoundedCornerShape(size = shape),
         colors = ButtonDefaults.buttonColors(
@@ -60,6 +63,7 @@ fun PrimaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    interactionSource: MutableInteractionSource? = null,
     heighDp : Dp = AppDimens.buttonHeight,
     shape : Dp = AppDimens.radiusLg,
     elevation : ButtonElevation = ButtonDefaults.buttonElevation(
@@ -76,6 +80,7 @@ fun PrimaryButton(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier,
+        interactionSource = interactionSource,
         heighDp = heighDp,
         shape = shape,
         elevation = elevation,
@@ -95,6 +100,7 @@ fun SecondaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    interactionSource: MutableInteractionSource? = null,
     heighDp: Dp = 30.dp,
     shape: Dp = AppDimens.radiusMd,
     elevation: ButtonElevation = ButtonDefaults.buttonElevation(
@@ -111,6 +117,7 @@ fun SecondaryButton(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier,
+        interactionSource = interactionSource,
         heighDp = heighDp,
         shape = shape,
         elevation = elevation,
