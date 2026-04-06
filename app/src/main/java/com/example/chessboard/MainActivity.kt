@@ -29,7 +29,9 @@ import com.example.chessboard.ui.screen.training.CreateTrainingChoiceScreenConta
 import com.example.chessboard.ui.screen.training.TrainingTemplateSelectionScreenContainer
 import com.example.chessboard.ui.screen.training.TrainingTemplateBrowserScreenContainer
 import com.example.chessboard.ui.screen.training.EditTrainingTemplatePlaceholderScreenContainer
-import com.example.chessboard.ui.screen.training.CreateTrainingScreenContainer
+import com.example.chessboard.ui.screen.training.CreateTrainingFromAllGamesScreenContainer
+import com.example.chessboard.ui.screen.training.CreateTrainingFromGameIdsScreenContainer
+import com.example.chessboard.ui.screen.training.CreateTrainingFromTemplateScreenContainer
 import com.example.chessboard.ui.screen.training.EditTrainingScreenContainer
 import com.example.chessboard.ui.screen.training.TrainingListScreenContainer
 import com.example.chessboard.ui.theme.ChessBoardTheme
@@ -146,13 +148,13 @@ class MainActivity : ComponentActivity() {
                         ),
                     )
 
-                    ScreenType.CreateTraining -> CreateTrainingScreenContainer(
+                    ScreenType.CreateTraining -> CreateTrainingFromAllGamesScreenContainer(
                         screenContext = createScreenContext(
                             onBackClick = { currentScreen = ScreenType.CreateTrainingChoice },
                         ),
                     )
 
-                    is ScreenType.CreateTrainingFromTemplate -> CreateTrainingScreenContainer(
+                    is ScreenType.CreateTrainingFromTemplate -> CreateTrainingFromTemplateScreenContainer(
                         screenContext = createScreenContext(
                             onBackClick = { currentScreen = ScreenType.TrainingTemplateSelection },
                         ),
@@ -161,7 +163,7 @@ class MainActivity : ComponentActivity() {
                         gamesCountLabel = "Games loaded from template",
                     )
 
-                    is ScreenType.CreateTrainingFromGameIds -> CreateTrainingScreenContainer(
+                    is ScreenType.CreateTrainingFromGameIds -> CreateTrainingFromGameIdsScreenContainer(
                         screenContext = createScreenContext(
                             onBackClick = { currentScreen = ScreenType.PositionEditor },
                         ),

@@ -35,9 +35,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private const val DEFAULT_STATISTICS_TRAINING_NAME = "StatisticsTraining"
-private const val MAX_STATISTICS_GAMES = 50
-private const val DEFAULT_MAX_WEIGHT = 5
 
 private data class StatisticsTrainingLoadState(
     val isLoading: Boolean = true,
