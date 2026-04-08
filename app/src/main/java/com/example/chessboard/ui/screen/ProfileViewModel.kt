@@ -27,6 +27,13 @@ data class AchievementItem(
     val isUnlocked: Boolean = false
 )
 
+private data class ProfileLevelProgress(
+    val level: Int,
+    val nextLevelThreshold: Int
+)
+
+private const val BaseLevelThresholdStep = 10
+
 private fun defaultAchievements() = listOf(
     AchievementItem("First Steps", "Complete your first training session"),
     AchievementItem("Dedication", "Practice 100 moves"),
@@ -34,16 +41,33 @@ private fun defaultAchievements() = listOf(
     AchievementItem("Streak King", "Achieve a 5-move perfect streak"),
 )
 
+private fun resolveProfileLevelProgress(totalTrainingsCount: Int): ProfileLevelProgress {
+    var level = 1
+    var nextLevelThreshold = 0
+
+    while (true) {
+        val requiredTrainings = nextLevelThreshold + BaseLevelThresholdStep + level
+        if (totalTrainingsCount < requiredTrainings) {
+            return ProfileLevelProgress(
+                level = level,
+                nextLevelThreshold = requiredTrainings
+            )
+        }
+
+        nextLevelThreshold = requiredTrainings
+        level += 1
+    }
+}
+
 private fun buildProfileState(stats: GlobalTrainingStatsEntity): ProfileState {
     val totalTrainingsCount = stats.totalTrainingsCount
-    val level = totalTrainingsCount / 10 + 1
-    val levelMoveThreshold = level * 10
+    val levelProgress = resolveProfileLevelProgress(totalTrainingsCount)
     val accuracy = resolveAccuracy(stats)
 
     return ProfileState(
-        level = level,
+        level = levelProgress.level,
         totalMoves = totalTrainingsCount,
-        levelMoveThreshold = levelMoveThreshold,
+        levelMoveThreshold = levelProgress.nextLevelThreshold,
         accuracy = accuracy,
         bestStreak = stats.bestPerfectStreak,
         achievements = buildAchievements(stats),
