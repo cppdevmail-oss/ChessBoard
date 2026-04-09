@@ -1,17 +1,15 @@
 package com.example.chessboard.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -19,7 +17,6 @@ import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import androidx.compose.foundation.layout.Box
 
 @Composable
 fun MoveChip(
@@ -31,13 +28,20 @@ fun MoveChip(
     textStyle: TextStyle = MaterialTheme.typography.labelMedium,
     contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
 ) {
-    Box(
+    Button(
+        onClick = onClick,
         modifier = Modifier
-            .clip(RoundedCornerShape(AppDimens.radiusSm))
-            .background(if (isSelected) TrainingAccentTeal else unselectedBackground)
-            .clickable(onClick = onClick)
-            .padding(contentPadding),
-        contentAlignment = Alignment.Center
+            .testTag("move-chip-$label"),
+        shape = RoundedCornerShape(AppDimens.radiusSm),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isSelected) TrainingAccentTeal else unselectedBackground,
+            contentColor = if (isSelected) Color.White else unselectedTextColor
+        ),
+        contentPadding = contentPadding,
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = 0.dp,
+            pressedElevation = 0.dp
+        )
     ) {
         Text(
             text = label,

@@ -2,13 +2,16 @@ package com.example.chessboard.ui.screen
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.semantics.SemanticsActions
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.entity.SideMask
 import com.example.chessboard.service.buildMoveLabels
+import com.example.chessboard.testing.normalizeFenForAssertion
 import com.example.chessboard.ui.theme.ChessBoardTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -35,11 +38,11 @@ class GameEditorScreenNavigationTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription("Next").performClick()
+        composeRule.onNodeWithTag("game-editor-next").performScrollTo().performClick()
 
         composeRule.runOnIdle {
             assertEquals(1, gameController.currentMoveIndex)
-            assertEquals(AfterE4Fen, gameController.getFen())
+            assertEquals(AfterE4Fen, normalizeFenForAssertion(gameController.getFen()))
         }
     }
 
@@ -59,11 +62,14 @@ class GameEditorScreenNavigationTest {
             }
         }
 
-        composeRule.onNodeWithText("1.e4").performClick()
+        composeRule.onNodeWithTag("move-chip-1.e4").performScrollTo()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("move-chip-1.e4")
+            .performSemanticsAction(SemanticsActions.OnClick)
 
         composeRule.runOnIdle {
             assertEquals(1, gameController.currentMoveIndex)
-            assertEquals(AfterE4Fen, gameController.getFen())
+            assertEquals(AfterE4Fen, normalizeFenForAssertion(gameController.getFen()))
         }
     }
 

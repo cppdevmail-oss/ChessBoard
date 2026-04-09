@@ -257,7 +257,7 @@ internal fun resolveAllowedUserMoveUci(
         return null
     }
 
-    return null
+    return uciMoves[uiState.expectedPly]
 }
 
 internal fun resolveBoardInteractionEnabled(uiState: TrainSingleGameUiState): Boolean {

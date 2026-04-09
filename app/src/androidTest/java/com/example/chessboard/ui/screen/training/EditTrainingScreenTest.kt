@@ -1,14 +1,15 @@
 package com.example.chessboard.ui.screen.training
 
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import com.example.chessboard.RuntimeContext
+import com.example.chessboard.testing.fenStateDescriptionMatcher
 import com.example.chessboard.ui.InteractiveChessBoardTestTag
 import com.example.chessboard.ui.theme.ChessBoardTheme
 import org.junit.Rule
@@ -32,7 +33,10 @@ class EditTrainingScreenTest {
         }
 
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("1. e4").performClick()
+        composeRule.onNodeWithTag("move-chip-1.e4").performScrollTo()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("move-chip-1.e4")
+            .performSemanticsAction(SemanticsActions.OnClick)
 
         assertBoardFen(AfterE4Fen)
     }
@@ -50,7 +54,9 @@ class EditTrainingScreenTest {
         }
 
         composeRule.waitForIdle()
-        composeRule.onNodeWithContentDescription("Next move").performClick()
+        composeRule.onNodeWithTag("move-legend-next").performScrollTo()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("move-legend-next").performClick()
 
         assertBoardFen(AfterE4Fen)
     }
@@ -58,10 +64,7 @@ class EditTrainingScreenTest {
     private fun assertBoardFen(expectedFen: String) {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(InteractiveChessBoardTestTag).assert(
-            SemanticsMatcher.expectValue(
-                androidx.compose.ui.semantics.SemanticsProperties.StateDescription,
-                expectedFen
-            )
+            fenStateDescriptionMatcher(expectedFen)
         )
     }
 
@@ -69,7 +72,7 @@ class EditTrainingScreenTest {
         val TestTrainingGame = TrainingGameEditorItem(
             gameId = 1L,
             title = "Test Opening",
-            pgn = "1. e4 e5 *"
+            pgn = "1. e2e4 e7e5 *"
         )
         const val AfterE4Fen = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
     }
