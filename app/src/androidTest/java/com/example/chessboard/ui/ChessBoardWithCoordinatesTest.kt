@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.boardmodel.GameController
+import com.example.chessboard.testing.normalizeFenForAssertion
 import com.example.chessboard.ui.theme.ChessBoardTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -45,7 +46,7 @@ class ChessBoardWithCoordinatesTest {
         composeRule.runOnIdle {
             assertEquals(
                 "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
-                gameController.getFen()
+                normalizeFenForAssertion(gameController.getFen())
             )
         }
     }
@@ -77,7 +78,7 @@ class ChessBoardWithCoordinatesTest {
         composeRule.runOnIdle {
             assertEquals(
                 "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
-                gameController.getFen()
+                normalizeFenForAssertion(gameController.getFen())
             )
         }
     }

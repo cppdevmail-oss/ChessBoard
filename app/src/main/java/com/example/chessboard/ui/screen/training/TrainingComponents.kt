@@ -14,6 +14,9 @@ import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.ui.ChessBoardWithCoordinates
@@ -117,10 +120,16 @@ fun MoveLegendSection(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onPrevMoveClick, enabled = canUndo) {
+                IconButton(
+                    onClick = onPrevMoveClick,
+                    enabled = canUndo,
+                    modifier = Modifier
+                        .testTag("move-legend-previous")
+                        .semantics { contentDescription = "Previous move" }
+                ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                        contentDescription = "Previous move",
+                        contentDescription = null,
                         tint = if (canUndo) TextColor.Primary else TrainingIconInactive,
                         modifier = Modifier.size(AppDimens.iconButtonSize)
                     )
@@ -131,10 +140,16 @@ fun MoveLegendSection(
                         color = if (canUndo) TextColor.Primary else TextColor.Secondary
                     )
                 }
-                IconButton(onClick = onNextMoveClick, enabled = canRedo) {
+                IconButton(
+                    onClick = onNextMoveClick,
+                    enabled = canRedo,
+                    modifier = Modifier
+                        .testTag("move-legend-next")
+                        .semantics { contentDescription = "Next move" }
+                ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = "Next move",
+                        contentDescription = null,
                         tint = if (canRedo) TextColor.Primary else TrainingIconInactive,
                         modifier = Modifier.size(AppDimens.iconButtonSize)
                     )

@@ -19,7 +19,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
@@ -232,6 +235,8 @@ fun GameEditorScreen(
     onDelete: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    @Suppress("UNUSED_VARIABLE")
+    val boardState = gameController.boardState
     val currentPly = gameController.currentMoveIndex
     var showDeleteDialog by remember { mutableStateOf(false) }
     var editedName by remember(game.id) { mutableStateOf(game.event ?: "") }
@@ -362,9 +367,16 @@ fun GameEditorScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = { gameController.undoMove() }, enabled = gameController.canUndo) {
+                    IconButton(
+                        onClick = { gameController.undoMove() },
+                        enabled = gameController.canUndo,
+                        modifier = Modifier
+                            .testTag("game-editor-previous")
+                            .semantics { contentDescription = "Previous" }
+                    ) {
                         Icon(
-                            Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Previous",
+                            Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                            contentDescription = null,
                             tint = if (gameController.canUndo) TrainingTextPrimary else TrainingIconInactive,
                             modifier = Modifier.size(28.dp)
                         )
@@ -403,9 +415,16 @@ fun GameEditorScreen(
                     ) {
                         CardMetaText(">>")
                     }
-                    IconButton(onClick = { gameController.redoMove() }, enabled = gameController.canRedo) {
+                    IconButton(
+                        onClick = { gameController.redoMove() },
+                        enabled = gameController.canRedo,
+                        modifier = Modifier
+                            .testTag("game-editor-next")
+                            .semantics { contentDescription = "Next" }
+                    ) {
                         Icon(
-                            Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next",
+                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null,
                             tint = if (gameController.canRedo) TrainingTextPrimary else TrainingIconInactive,
                             modifier = Modifier.size(28.dp)
                         )

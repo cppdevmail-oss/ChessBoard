@@ -262,8 +262,8 @@ fun PositionEditorBoardWithCoordinates(
     onPieceMove: (String, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    @Suppress("UNUSED_VARIABLE")
     val boardState = gameController.boardState
+    val currentFen = remember(boardState) { gameController.getFen() }
     val orientation = gameController.getSide()
     var dragFromSquare by remember(orientation) { mutableStateOf<String?>(null) }
     var dragOffset by remember(orientation) { mutableStateOf(Offset.Zero) }
@@ -278,7 +278,7 @@ fun PositionEditorBoardWithCoordinates(
             modifier = Modifier
                 .fillMaxSize()
                 .testTag(InteractiveChessBoardTestTag)
-                .semantics { stateDescription = gameController.getFen() }
+                .semantics { stateDescription = currentFen }
                 .pointerInput(squareSizePx, orientation, boardState) {
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
@@ -360,9 +360,8 @@ fun ChessBoardWithCoordinates(
     gameController: GameController,
     modifier: Modifier = Modifier,
 ) {
-    // Observe board changes so this composable (and ChessBoard) redraws on moves
-    @Suppress("UNUSED_VARIABLE")
     val boardState = gameController.boardState
+    val currentFen = remember(boardState) { gameController.getFen() }
 
     LaunchedEffect(boardState) {
         Log.d(
@@ -384,7 +383,10 @@ fun ChessBoardWithCoordinates(
     var dragOffset by remember(orientation) { mutableStateOf(Offset.Zero) }
 
     BoxWithConstraints(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .testTag(InteractiveChessBoardTestTag)
+            .semantics { stateDescription = currentFen },
         contentAlignment = Alignment.Center
     ) {
         val squareSizePx = constraints.maxWidth / CellCount.toFloat()

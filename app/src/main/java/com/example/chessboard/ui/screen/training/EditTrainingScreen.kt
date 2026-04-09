@@ -245,29 +245,25 @@ private fun rememberEditTrainingBoardSession(
     games: List<TrainingGameEditorItem>
 ): EditTrainingBoardSession {
     val gameController = remember { GameController() }
-    var parsedGamesById by remember { mutableStateOf<Map<Long, ParsedTrainingGameEditorItem>>(emptyMap()) }
-    var selectedGameId by remember { mutableStateOf<Long?>(null) }
+    val parsedGamesById = remember(games) {
+        games.associate { game ->
+            val uciMoves = parsePgnMoves(game.pgn)
+            val moveLabels = buildMoveLabels(uciMoves)
+            game.gameId to ParsedTrainingGameEditorItem(
+                game = game,
+                uciMoves = uciMoves,
+                moveLabels = moveLabels
+            )
+        }
+    }
+    var selectedGameId by remember(games) { mutableStateOf(games.firstOrNull()?.gameId) }
 
     SideEffect {
         gameController.setUserMovesEnabled(false)
     }
 
-    LaunchedEffect(games) {
-        val parsedGames = withContext(Dispatchers.Default) {
-            games.associate { game ->
-                val uciMoves = parsePgnMoves(game.pgn)
-                val moveLabels = buildMoveLabels(uciMoves)
-                game.gameId to ParsedTrainingGameEditorItem(
-                    game = game,
-                    uciMoves = uciMoves,
-                    moveLabels = moveLabels
-                )
-            }
-        }
-
-        parsedGamesById = parsedGames
-
-        if (selectedGameId !in parsedGames.keys) {
+    LaunchedEffect(games, parsedGamesById) {
+        if (selectedGameId !in parsedGamesById.keys) {
             selectedGameId = games.firstOrNull()?.gameId
         }
     }
@@ -676,7 +672,7 @@ private fun GameTrainingBlock(
         color = if (isSelected) Background.CardDark else Background.SurfaceDark,
         border = if (isSelected) BorderStroke(1.dp, TrainingAccentTeal) else null,
         contentPadding = PaddingValues(AppDimens.spaceMd),
-        onClick = onSelect
+        onClick = if (isSelected) null else onSelect
     ) {
         GameTrainingBlockHeader(
             game = game,

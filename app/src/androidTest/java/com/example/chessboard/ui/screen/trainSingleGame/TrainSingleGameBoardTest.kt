@@ -13,16 +13,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.entity.SideMask
+import com.example.chessboard.testing.fenStateDescriptionMatcher
 import com.example.chessboard.ui.BoardOrientation
 import com.example.chessboard.ui.ChessBoardWithCoordinates
 import com.example.chessboard.ui.InteractiveChessBoardTestTag
@@ -46,7 +48,10 @@ class TrainSingleGameBoardTest {
             }
         }
 
-        composeRule.onNodeWithText("Start training").performClick()
+        composeRule.onNode(
+            hasText("Start training") and hasClickAction()
+        ).performClick()
+        composeRule.waitForIdle()
 
         val boardNode = composeRule.onNodeWithTag(InteractiveChessBoardTestTag)
         val squareSize = 320f / 8f
@@ -59,8 +64,7 @@ class TrainSingleGameBoardTest {
 
         composeRule.waitForIdle()
         boardNode.assert(
-            SemanticsMatcher.expectValue(
-                androidx.compose.ui.semantics.SemanticsProperties.StateDescription,
+            fenStateDescriptionMatcher(
                 "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"
             )
         )

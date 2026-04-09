@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.boardmodel.BoardPiece
 import com.example.chessboard.boardmodel.BoardPosition
@@ -94,7 +95,11 @@ fun PositionEditorScreenContainer(
     modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
-    val gameController = remember { GameController() }
+    val gameController = remember {
+        GameController().also { controller ->
+            controller.loadPreviewFen(toLoadableFen(EmptyBoardFen))
+        }
+    }
     var uiState by remember { mutableStateOf(PositionEditorUiState()) }
 
     fun updatePositionEditorPreview(
@@ -140,10 +145,6 @@ fun PositionEditorScreenContainer(
             foundGameIds = foundGameIds
         )
         return true
-    }
-
-    LaunchedEffect(Unit) {
-        updatePositionEditorPreview(EmptyBoardFen)
     }
 
     LaunchedEffect(uiState.selectedSide) {
@@ -477,12 +478,16 @@ private fun PositionEditorActionButtons(
         SecondaryButton(
             text = "Clear board",
             onClick = onClearBoardClick,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("position-editor-clear-board")
         )
         SecondaryButton(
             text = "Initial position",
             onClick = onSetInitialPositionClick,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("position-editor-initial-position")
         )
     }
 }
