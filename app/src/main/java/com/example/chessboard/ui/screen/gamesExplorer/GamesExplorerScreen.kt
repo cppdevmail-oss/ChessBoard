@@ -27,9 +27,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -72,7 +69,6 @@ import com.example.chessboard.ui.screen.training.ChessBoardSection
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingErrorRed
 import com.example.chessboard.ui.theme.TrainingTextPrimary
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -228,15 +224,6 @@ fun GamesExplorerScreen(
                 onBackClick = onBackClick,
                 filledBackButton = true,
                 actions = {
-                    if (selectedGame != null) {
-                        IconButton(onClick = { onCloneGameClick(selectedGame.game) }) {
-                            Icon(
-                                imageVector = Icons.Default.ContentCopy,
-                                contentDescription = "Clone game",
-                                tint = TrainingTextPrimary
-                            )
-                        }
-                    }
                     IconButton(
                         onClick = {
                             draftFilterState = activeFilterState
@@ -248,22 +235,6 @@ fun GamesExplorerScreen(
                             contentDescription = "Search games",
                             tint = TrainingTextPrimary
                         )
-                    }
-                    if (selectedGame != null) {
-                        IconButton(onClick = { onOpenGameEditor(selectedGame.game) }) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = "Edit game",
-                                tint = TrainingTextPrimary
-                            )
-                        }
-                        IconButton(onClick = { showDeleteDialog = true }) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Delete game",
-                                tint = TrainingErrorRed
-                            )
-                        }
                     }
                 }
             )
@@ -352,7 +323,10 @@ fun GamesExplorerScreen(
                             onMovePlyClick = { ply -> onMovePlyClick(gameIdx, ply) },
                             onPrevClick = { gameController.undoMove() },
                             onNextClick = { gameController.redoMove() },
-                            onResetClick = { onMovePlyClick(gameIdx, 0) }
+                            onResetClick = { onMovePlyClick(gameIdx, 0) },
+                            onCloneClick = { onCloneGameClick(parsedGame.game) },
+                            onEditClick = { onOpenGameEditor(parsedGame.game) },
+                            onDeleteClick = { showDeleteDialog = true }
                         )
                         Spacer(modifier = Modifier.height(AppDimens.spaceMd))
                     }
