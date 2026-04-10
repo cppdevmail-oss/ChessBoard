@@ -40,6 +40,11 @@ internal fun DrawScope.drawPieceGlyph(
     val centerX = left + squareSize / 2
     val baselineY = top + squareSize * 0.76f
     val glyphTextSize = squareSize * 0.82f
+    val scaleX = when (letter.lowercaseChar()) {
+        'k' -> 1.25f
+        'q' -> 1.15f
+        else -> 1f
+    }
     val nativeCanvas = drawContext.canvas.nativeCanvas
 
     listOf(
@@ -56,6 +61,7 @@ internal fun DrawScope.drawPieceGlyph(
                 color = resolvePieceOutline(letter).toArgb()
                 textAlign = Paint.Align.CENTER
                 textSize = glyphTextSize
+                textScaleX = scaleX
                 isAntiAlias = true
             }
         )
@@ -69,6 +75,7 @@ internal fun DrawScope.drawPieceGlyph(
             color = resolvePieceTint(letter).toArgb()
             textAlign = Paint.Align.CENTER
             textSize = glyphTextSize
+            textScaleX = scaleX
             isAntiAlias = true
         }
     )
