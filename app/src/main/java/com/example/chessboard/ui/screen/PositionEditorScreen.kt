@@ -38,6 +38,7 @@ import com.example.chessboard.boardmodel.BoardPiece
 import com.example.chessboard.boardmodel.BoardPosition
 import com.example.chessboard.boardmodel.ChesslibMapper
 import com.example.chessboard.boardmodel.GameController
+import com.example.chessboard.boardmodel.InitialBoardFenWithoutMoveNumbers
 import com.example.chessboard.service.calculateFenHashWithoutMoveNumbers
 import com.example.chessboard.ui.PositionEditorBoardWithCoordinates
 import com.example.chessboard.ui.resolvePieceGlyph
@@ -91,6 +92,7 @@ private data class PositionEditorUiState(
 
 @Composable
 fun PositionEditorScreenContainer(
+    initialFen: String = InitialBoardFenWithoutMoveNumbers,
     screenContext: ScreenContainerContext,
     modifier: Modifier = Modifier
 ) {
@@ -101,6 +103,15 @@ fun PositionEditorScreenContainer(
         }
     }
     var uiState by remember { mutableStateOf(PositionEditorUiState()) }
+
+    fun resolveSelectedSide(fen: String): EditableGameSide {
+        val sideToken = fen.trim().split(Regex("\\s+")).getOrNull(1)
+        if (sideToken == "b") {
+            return EditableGameSide.AS_BLACK
+        }
+
+        return EditableGameSide.AS_WHITE
+    }
 
     fun updatePositionEditorPreview(
         fen: String,
@@ -149,6 +160,15 @@ fun PositionEditorScreenContainer(
 
     LaunchedEffect(uiState.selectedSide) {
         gameController.setOrientation(uiState.selectedSide.orientation)
+    }
+
+    LaunchedEffect(initialFen) {
+        val selectedSide = resolveSelectedSide(initialFen)
+        updatePositionEditorPreview(
+            fen = initialFen,
+            selectedSide = selectedSide,
+            foundGameIds = null
+        )
     }
 
     PositionEditorScreen(
@@ -204,12 +224,8 @@ fun PositionEditorScreenContainer(
             updatePositionEditorPreview(updatedFen)
         },
         onSetInitialPositionClick = {
-            gameController.resetToStartPosition()
             val updatedFen = replaceFenSide(
-                fen = normalizePositionEditorFen(
-                    fen = gameController.getFen(),
-                    selectedSide = uiState.selectedSide
-                ),
+                fen = InitialBoardFenWithoutMoveNumbers,
                 selectedSide = uiState.selectedSide
             )
             updatePositionEditorPreview(updatedFen)
