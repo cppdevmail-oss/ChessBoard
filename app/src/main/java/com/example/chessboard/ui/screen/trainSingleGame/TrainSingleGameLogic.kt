@@ -14,7 +14,7 @@ internal fun resetSessionState(uiState: TrainSingleGameUiState): TrainSingleGame
         phase = TrainSingleGamePhase.Idle,
         expectedPly = 0,
         completionDialog = null,
-        wrongMoveDialogMessage = null,
+        wrongMoveSquare = null,
         showLineCompleted = false,
     )
 
@@ -23,7 +23,7 @@ internal fun buildShowLineState(uiState: TrainSingleGameUiState): TrainSingleGam
         completionDialog = null,
         expectedPly = 0,
         phase = TrainSingleGamePhase.ShowingLine,
-        wrongMoveDialogMessage = null,
+        wrongMoveSquare = null,
         showLineCompleted = false,
     )
 
@@ -32,7 +32,7 @@ internal fun buildStartTrainingState(uiState: TrainSingleGameUiState): TrainSing
         completionDialog = null,
         expectedPly = 0,
         phase = TrainSingleGamePhase.Training,
-        wrongMoveDialogMessage = null,
+        wrongMoveSquare = null,
         showLineCompleted = false,
     )
 
@@ -41,7 +41,7 @@ internal fun buildRepeatVariationState(uiState: TrainSingleGameUiState): TrainSi
         completionDialog = null,
         expectedPly = 0,
         phase = TrainSingleGamePhase.Training,
-        wrongMoveDialogMessage = null,
+        wrongMoveSquare = null,
         showLineCompleted = false,
     )
 
@@ -133,7 +133,7 @@ internal fun handleTrainingProgress(
 
     if (lastMoveUci == uciMoves[uiState.expectedPly]) {
         return advanceProgramMoves(
-            uiState = uiState.copy(expectedPly = uiState.expectedPly + 1),
+            uiState = uiState.copy(expectedPly = uiState.expectedPly + 1, wrongMoveSquare = null),
             gameController = gameController,
             uciMoves = uciMoves,
             currentOrientation = currentOrientation,
@@ -141,10 +141,11 @@ internal fun handleTrainingProgress(
         )
     }
 
+    val wrongSquare = lastMoveUci.substring(2, 4)
     gameController.loadFromUciMoves(uciMoves, uiState.expectedPly)
     return uiState.copy(
         mistakesCount = uiState.mistakesCount + 1,
-        wrongMoveDialogMessage = "Wrong move. This move is not part of the training line.",
+        wrongMoveSquare = wrongSquare,
         phase = TrainSingleGamePhase.Training,
     )
 }

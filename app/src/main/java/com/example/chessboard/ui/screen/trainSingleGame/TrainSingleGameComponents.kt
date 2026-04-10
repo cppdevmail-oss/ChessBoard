@@ -37,22 +37,6 @@ import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TextColor
 
 @Composable
-internal fun RenderWrongMoveDialog(
-    message: String?,
-    onDismiss: () -> Unit
-) {
-    if (message == null) {
-        return
-    }
-
-    AppMessageDialog(
-        title = "Wrong Move",
-        message = message,
-        onDismiss = onDismiss
-    )
-}
-
-@Composable
 internal fun RenderCompletionDialog(
     dialogState: TrainSingleGameCompletionState?,
     onRepeatClick: () -> Unit,
@@ -79,7 +63,7 @@ internal fun TrainSingleGameContent(
         Column {
             TrainingGameHeader(title = state.trainingGameData.game.event)
             Spacer(modifier = Modifier.height(AppDimens.spaceSm))
-            TrainingBoardSection(gameController = gameController)
+            TrainingBoardSection(gameController = gameController, wrongMoveSquare = state.wrongMoveSquare)
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
             TrainingSingleGameActions(
                 state = resolveTrainingSingleGameActionsState(state.phase),
@@ -280,6 +264,7 @@ internal fun TrainingSingleGameActions(
 @Composable
 internal fun TrainingBoardSection(
     gameController: GameController,
+    wrongMoveSquare: String? = null,
     modifier: Modifier = Modifier
 ) {
     val boardState = gameController.boardState
@@ -293,6 +278,7 @@ internal fun TrainingBoardSection(
         key(boardState) {
             ChessBoardWithCoordinates(
                 gameController = gameController,
+                wrongMoveSquare = wrongMoveSquare,
                 modifier = Modifier.fillMaxSize()
             )
         }

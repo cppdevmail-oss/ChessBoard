@@ -157,6 +157,7 @@ fun ChessBoard(
     selectedSquare: String?,
     dragFromSquare: String?,
     dragOffset: Offset,
+    wrongMoveSquare: String? = null,
     modifier: Modifier = Modifier
 ) {
     val orientation = gameController.getSide()
@@ -229,10 +230,12 @@ fun ChessBoard(
         val lastMoveFromColor = Color(0xFFFFD600).copy(alpha = 0.55f)
         val lastMoveToColor = Color(0xFFFFFF80).copy(alpha = 0.50f)
         val highlightColor = Color.Yellow.copy(alpha = 0.4f)
+        val wrongMoveColor = Color.Red.copy(alpha = 0.45f)
         drawHighlight(lastMoveHighlight?.from, orientation, squareSizePx, lastMoveFromColor)
         drawHighlight(lastMoveHighlight?.to, orientation, squareSizePx, lastMoveToColor)
         drawHighlight(selectedSquare, orientation, squareSizePx, highlightColor)
         drawHighlight(dragFromSquare, orientation, squareSizePx, highlightColor)
+        drawHighlight(wrongMoveSquare, orientation, squareSizePx, wrongMoveColor)
 
         // 4. Pieces — skip the one being dragged (drawn separately on top)
         val position = gameController.getBoardPosition()
@@ -358,6 +361,7 @@ fun PositionEditorBoardWithCoordinates(
 @Composable
 fun ChessBoardWithCoordinates(
     gameController: GameController,
+    wrongMoveSquare: String? = null,
     modifier: Modifier = Modifier,
 ) {
     val boardState = gameController.boardState
@@ -467,6 +471,7 @@ fun ChessBoardWithCoordinates(
                 selectedSquare = selectedSquare,
                 dragFromSquare = dragFromSquare,
                 dragOffset = dragOffset,
+                wrongMoveSquare = wrongMoveSquare,
                 modifier = Modifier.fillMaxSize()
             )
         }

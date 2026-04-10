@@ -42,6 +42,7 @@ import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TrainingTextPrimary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -121,6 +122,13 @@ private fun TrainSingleGameScreen(
     SideEffect {
         gameController.setUserMovesEnabled(resolveBoardInteractionEnabled(uiState))
         gameController.setAllowedMoveUci(null)
+    }
+
+    LaunchedEffect(uiState.wrongMoveSquare) {
+        if (uiState.wrongMoveSquare != null) {
+            delay(1000L)
+            uiState = uiState.copy(wrongMoveSquare = null)
+        }
     }
 
     LaunchedEffect(
@@ -295,11 +303,6 @@ private fun TrainSingleGameScreen(
             )
         }
     ) { paddingValues ->
-        RenderWrongMoveDialog(
-            message = uiState.wrongMoveDialogMessage,
-            onDismiss = { uiState = uiState.copy(wrongMoveDialogMessage = null) }
-        )
-
         RenderCompletionDialog(
             dialogState = uiState.completionDialog,
             onRepeatClick = {
@@ -335,7 +338,8 @@ private fun TrainSingleGameScreen(
                     phase = uiState.phase,
                     mistakesCount = uiState.mistakesCount,
                     showLineMoveDelayInput = uiState.showLineMoveDelayInput,
-                    showLineCompleted = uiState.showLineCompleted
+                    showLineCompleted = uiState.showLineCompleted,
+                    wrongMoveSquare = uiState.wrongMoveSquare
                 ),
                 gameController = gameController,
                 actions = createContentActions()
