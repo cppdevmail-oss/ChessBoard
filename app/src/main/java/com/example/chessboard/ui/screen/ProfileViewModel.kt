@@ -1,5 +1,6 @@
 package com.example.chessboard.ui.screen
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.chessboard.entity.GlobalTrainingStatsEntity
@@ -11,9 +12,140 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+private const val ProfilePrefsName = "profile_prefs"
+private const val PrefKeyRankTier = "rank_title_tier"
+private const val PrefKeyRankTitle = "rank_title"
+
+enum class PlayerTier(val label: String, val symbol: String, val titles: List<String>) {
+    Pawn(
+        label = "Pawn",
+        symbol = "♟",
+        titles = listOf(
+            "Walking Blunder",
+            "Free Material",
+            "\"Oops, hung it\"",
+            "Pawn With Dreams",
+            "Future Rage Quitter",
+            "Center Feeder",
+            "One-Move Genius",
+            "Hope Chess Beginner",
+            "Sacrifice Without Reason",
+            "Still Learning Rules",
+        )
+    ),
+    Knight(
+        label = "Knight",
+        symbol = "♞",
+        titles = listOf(
+            "Fork Victim",
+            "L-Move Confusion",
+            "Random Jumper",
+            "\"That was calculated\"",
+            "Hope Chess Player",
+            "Missed the Fork",
+            "Tactical Tourist",
+            "Blunder Enthusiast",
+            "Chaos Enjoyer",
+            "Still Not Seeing It",
+        )
+    ),
+    Bishop(
+        label = "Bishop",
+        symbol = "♝",
+        titles = listOf(
+            "Bad Bishop Owner",
+            "Diagonal Pretender",
+            "Long-Range Miss",
+            "\"Didn't see that\"",
+            "Still Hanging Pieces",
+            "Color Complex Victim",
+            "Passive Observer",
+            "Fake Strategist",
+            "Trapped Bishop Club",
+            "Almost Improving",
+        )
+    ),
+    Rook(
+        label = "Rook",
+        symbol = "♜",
+        titles = listOf(
+            "Open File Tourist",
+            "Rook Hanger",
+            "Endgame Thrower",
+            "\"I Had This Won\"",
+            "Almost Competent",
+            "Back Rank Victim",
+            "Late Game Blunderer",
+            "Missed Mate Threat",
+            "Panic Defender",
+            "Somehow Winning",
+        )
+    ),
+    Queen(
+        label = "Queen",
+        symbol = "♛",
+        titles = listOf(
+            "Queen Blunder Specialist",
+            "\"It Was a Sacrifice\"",
+            "Tilt Manager",
+            "Calculation Optional",
+            "One Move Genius",
+            "Overconfident Player",
+            "Attack Without Plan",
+            "Fake Tactician",
+            "Blunder Recovery Expert",
+            "Chaos Creator",
+        )
+    ),
+    King(
+        label = "King",
+        symbol = "♚",
+        titles = listOf(
+            "Blunders Mate in 1",
+            "Self-Check Artist",
+            "\"I Didn't See That\"",
+            "Certified Thrower",
+            "Still Not GM",
+            "King in Danger",
+            "Panic Mode Activated",
+            "Last Hope Defender",
+            "Barely Surviving",
+            "Lucky Survivor",
+        )
+    ),
+}
+
+fun resolvePlayerTier(level: Int): PlayerTier = when {
+    level <= 5  -> PlayerTier.Pawn
+    level <= 15 -> PlayerTier.Knight
+    level <= 25 -> PlayerTier.Bishop
+    level <= 40 -> PlayerTier.Rook
+    level <= 60 -> PlayerTier.Queen
+    else        -> PlayerTier.King
+}
+
+// Returns the persisted title for the tier, or picks a new random one if the tier changed.
+private fun resolvePersistedTitle(context: Context, tier: PlayerTier): String {
+    val prefs = context.getSharedPreferences(ProfilePrefsName, Context.MODE_PRIVATE)
+    val storedTier = prefs.getString(PrefKeyRankTier, null)
+    val storedTitle = prefs.getString(PrefKeyRankTitle, null)
+
+    if (storedTier == tier.name && storedTitle != null) {
+        return storedTitle
+    }
+
+    val newTitle = tier.titles.random()
+    prefs.edit()
+        .putString(PrefKeyRankTier, tier.name)
+        .putString(PrefKeyRankTitle, newTitle)
+        .apply()
+    return newTitle
+}
+
 data class ProfileState(
-    val userName: String = "Chess Enthusiast",
     val level: Int = 1,
+    val tier: PlayerTier = PlayerTier.Pawn,
+    val rankTitle: String = PlayerTier.Pawn.titles.first(),
     val totalTrainings: Int = 0,
     val levelTrainingThreshold: Int = 10,
     val accuracy: Int = 0,
@@ -59,26 +191,28 @@ private fun resolveProfileLevelProgress(totalTrainingsCount: Int): ProfileLevelP
     }
 }
 
-private fun buildProfileState(stats: GlobalTrainingStatsEntity): ProfileState {
+private fun buildProfileState(
+    stats: GlobalTrainingStatsEntity,
+    context: Context
+): ProfileState {
     val totalTrainingsCount = stats.totalTrainingsCount
     val levelProgress = resolveProfileLevelProgress(totalTrainingsCount)
-    val accuracy = resolveAccuracy(stats)
+    val tier = resolvePlayerTier(levelProgress.level)
 
     return ProfileState(
         level = levelProgress.level,
+        tier = tier,
+        rankTitle = resolvePersistedTitle(context, tier),
         totalTrainings = totalTrainingsCount,
         levelTrainingThreshold = levelProgress.nextLevelThreshold,
-        accuracy = accuracy,
+        accuracy = resolveAccuracy(stats),
         bestStreak = stats.bestPerfectStreak,
         achievements = buildAchievements(stats),
     )
 }
 
 private fun resolveAccuracy(stats: GlobalTrainingStatsEntity): Int {
-    if (stats.totalTrainingsCount == 0) {
-        return 0
-    }
-
+    if (stats.totalTrainingsCount == 0) return 0
     return stats.perfectTrainingsCount * 100 / stats.totalTrainingsCount
 }
 
@@ -113,25 +247,21 @@ class ProfileViewModel : ViewModel() {
 
     private var isLoaded = false
 
-    fun loadStats(inDbProvider: DatabaseProvider) {
-        if (isLoaded) {
-            return
-        }
+    fun loadStats(inDbProvider: DatabaseProvider, context: Context) {
+        if (isLoaded) return
 
         isLoaded = true
         viewModelScope.launch {
-            val stats = inDbProvider.getGlobalTrainingStats()
-            _state.value = buildProfileState(stats)
+            val stats = withContext(Dispatchers.IO) { inDbProvider.getGlobalTrainingStats() }
+            _state.value = buildProfileState(stats, context)
         }
     }
 
-    fun clearAllData(inDbProvider: DatabaseProvider) {
+    fun clearAllData(inDbProvider: DatabaseProvider, context: Context) {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                inDbProvider.clearAllData()
-            }
+            withContext(Dispatchers.IO) { inDbProvider.clearAllData() }
             isLoaded = true
-            _state.value = buildProfileState(GlobalTrainingStatsEntity())
+            _state.value = buildProfileState(GlobalTrainingStatsEntity(), context)
         }
     }
 }

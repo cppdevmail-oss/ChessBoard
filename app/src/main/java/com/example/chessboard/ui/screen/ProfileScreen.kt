@@ -22,7 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
@@ -35,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -72,11 +72,12 @@ fun ProfileScreenContainer(
     screenContext: ScreenContainerContext,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     val viewModel = remember { ProfileViewModel() }
     val state by viewModel.state.collectAsState()
 
     LaunchedEffect(viewModel) {
-        viewModel.loadStats(screenContext.inDbProvider)
+        viewModel.loadStats(screenContext.inDbProvider, context)
     }
 
     ProfileScreen(
@@ -84,7 +85,7 @@ fun ProfileScreenContainer(
         onBackClick = screenContext.onBackClick,
         onNavigate = screenContext.onNavigate,
         onClearAllDataClick = {
-            viewModel.clearAllData(screenContext.inDbProvider)
+            viewModel.clearAllData(screenContext.inDbProvider, context)
         },
         modifier = modifier,
     )
@@ -180,16 +181,15 @@ private fun ProfileHeroCard(
                     .background(ProfileAvatarContainerColor),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Person,
-                    contentDescription = null,
-                    tint = TrainingAccentTeal,
-                    modifier = Modifier.size(32.dp),
+                Text(
+                    text = state.tier.symbol,
+                    fontSize = 30.sp,
+                    color = TrainingAccentTeal,
                 )
             }
             Spacer(modifier = Modifier.width(AppDimens.spaceLg))
             Column {
-                ScreenTitleText(text = state.userName)
+                ScreenTitleText(text = state.rankTitle)
                 Spacer(modifier = Modifier.height(AppDimens.spaceXs))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     LevelBadge(level = state.level)
@@ -204,7 +204,7 @@ private fun ProfileHeroCard(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             CardMetaText(text = "Progress to Level ${state.level + 1}")
-            CardMetaText(text = "${state.totalTrainings}/${state.levelTrainingThreshold} trainings")
+            CardMetaText(text = "${state.totalTrainings}/${state.levelTrainingThreshold}")
         }
         Spacer(modifier = Modifier.height(AppDimens.spaceSm))
         LevelProgressBar(
