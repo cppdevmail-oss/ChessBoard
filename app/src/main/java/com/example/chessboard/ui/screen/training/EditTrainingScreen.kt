@@ -321,6 +321,7 @@ fun EditTrainingScreenContainer(
     trainingId: Long,
     screenContext: ScreenContainerContext,
     orderGamesInTraining: RuntimeContext.OrderGamesInTraining,
+    hideLinesWithWeightZero: Boolean = false,
     onStartGameTrainingClick: (Long) -> Unit = {},
     onOpenGameEditorClick: (GameEntity) -> Unit = {},
     modifier: Modifier = Modifier,
@@ -355,10 +356,16 @@ fun EditTrainingScreenContainer(
         }
     )
 
+    val visibleGamesForTraining = if (hideLinesWithWeightZero) {
+        loadState.gamesForTraining.filter { it.weight > 0 }
+    } else {
+        loadState.gamesForTraining
+    }
+
     EditTrainingScreen(
         trainingId = trainingId,
         initialTrainingName = loadState.trainingName,
-        gamesForTraining = loadState.gamesForTraining,
+        gamesForTraining = visibleGamesForTraining,
         orderGamesInTraining = orderGamesInTraining,
         onBackClick = onBackClick,
         onNavigate = onNavigate,

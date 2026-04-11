@@ -194,7 +194,7 @@ private fun ProfileHeroCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     LevelBadge(level = state.level)
                     Spacer(modifier = Modifier.width(AppDimens.spaceMd))
-                    CardMetaText(text = "${state.totalMoves} total moves")
+                    CardMetaText(text = "${state.totalTrainings} total trainings")
                 }
             }
         }
@@ -204,12 +204,12 @@ private fun ProfileHeroCard(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             CardMetaText(text = "Progress to Level ${state.level + 1}")
-            CardMetaText(text = "${state.totalMoves}/${state.levelMoveThreshold} moves")
+            CardMetaText(text = "${state.totalTrainings}/${state.levelTrainingThreshold} trainings")
         }
         Spacer(modifier = Modifier.height(AppDimens.spaceSm))
         LevelProgressBar(
-            current = state.totalMoves,
-            max = state.levelMoveThreshold,
+            current = state.totalTrainings,
+            max = state.levelTrainingThreshold,
         )
     }
 }

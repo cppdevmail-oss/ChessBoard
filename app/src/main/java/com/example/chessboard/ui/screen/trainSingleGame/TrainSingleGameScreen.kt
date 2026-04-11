@@ -51,6 +51,7 @@ fun TrainSingleGameScreenContainer(
     gameId: Long,
     trainingId: Long,
     trainingGameData: TrainSingleGameData,
+    keepLineIfZero: Boolean = false,
     onTrainingFinished: (TrainSingleGameResult) -> Unit = {},
     onOpenGameEditorClick: () -> Unit = {},
     onCloneGameClick: (GameDraft) -> Unit = {},
@@ -71,7 +72,8 @@ fun TrainSingleGameScreenContainer(
                     inDbProvider.finishTrainingGame(
                         trainingId = result.trainingId,
                         gameId = result.gameId,
-                        mistakesCount = result.mistakesCount
+                        mistakesCount = result.mistakesCount,
+                        keepLineIfZero = keepLineIfZero
                     )
                 }
                 onTrainingFinished(result)

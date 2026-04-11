@@ -14,8 +14,8 @@ import kotlinx.coroutines.withContext
 data class ProfileState(
     val userName: String = "Chess Enthusiast",
     val level: Int = 1,
-    val totalMoves: Int = 0,
-    val levelMoveThreshold: Int = 10,
+    val totalTrainings: Int = 0,
+    val levelTrainingThreshold: Int = 10,
     val accuracy: Int = 0,
     val bestStreak: Int = 0,
     val achievements: List<AchievementItem> = defaultAchievements()
@@ -36,7 +36,7 @@ private const val BaseLevelThresholdStep = 10
 
 private fun defaultAchievements() = listOf(
     AchievementItem("First Steps", "Complete your first training session"),
-    AchievementItem("Dedication", "Practice 100 moves"),
+    AchievementItem("Dedication", "Complete 100 trainings"),
     AchievementItem("Opening Master", "Learn 10 different openings"),
     AchievementItem("Streak King", "Achieve a 5-move perfect streak"),
 )
@@ -66,8 +66,8 @@ private fun buildProfileState(stats: GlobalTrainingStatsEntity): ProfileState {
 
     return ProfileState(
         level = levelProgress.level,
-        totalMoves = totalTrainingsCount,
-        levelMoveThreshold = levelProgress.nextLevelThreshold,
+        totalTrainings = totalTrainingsCount,
+        levelTrainingThreshold = levelProgress.nextLevelThreshold,
         accuracy = accuracy,
         bestStreak = stats.bestPerfectStreak,
         achievements = buildAchievements(stats),
@@ -91,7 +91,7 @@ private fun buildAchievements(stats: GlobalTrainingStatsEntity): List<Achievemen
         ),
         AchievementItem(
             title = "Dedication",
-            description = "Practice 100 moves",
+            description = "Complete 100 trainings",
             isUnlocked = stats.totalTrainingsCount >= 100,
         ),
         AchievementItem(

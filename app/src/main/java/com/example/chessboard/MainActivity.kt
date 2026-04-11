@@ -68,6 +68,8 @@ class MainActivity : ComponentActivity() {
                 var createOpeningDraft by remember { mutableStateOf(GameDraft()) }
                 var createOpeningOnBackClick by remember { mutableStateOf<() -> Unit>({ currentScreen = ScreenType.Home }) }
                 var simpleViewEnabled by remember { mutableStateOf(false) }
+                var dontRemoveLineIfRepIsZero by remember { mutableStateOf(false) }
+                var hideLinesWithWeightZero by remember { mutableStateOf(false) }
                 val runtimeContext = remember { RuntimeContext() }
                 val scope = rememberCoroutineScope()
 
@@ -216,6 +218,7 @@ class MainActivity : ComponentActivity() {
                             onBackClick = { currentScreen = ScreenType.Training },
                         ),
                         orderGamesInTraining = runtimeContext.orderGamesInTraining,
+                        hideLinesWithWeightZero = hideLinesWithWeightZero,
                         onStartGameTrainingClick = { gameId ->
                             currentScreen = ScreenType.TrainSingleGame(screen.trainingId, gameId)
                         },
@@ -229,6 +232,7 @@ class MainActivity : ComponentActivity() {
                     is ScreenType.TrainSingleGame -> TrainSingleGameLauncherScreenContainer(
                         trainingId = screen.trainingId,
                         gameId = screen.gameId,
+                        keepLineIfZero = dontRemoveLineIfRepIsZero,
                         onTrainingFinished = { result ->
                             runtimeContext.orderGamesInTraining.markGameCompleted(
                                 gameId = result.gameId
@@ -311,6 +315,10 @@ class MainActivity : ComponentActivity() {
                     ScreenType.Settings -> SettingsScreenContainer(
                         simpleViewEnabled = simpleViewEnabled,
                         onSimpleViewToggle = { simpleViewEnabled = it },
+                        dontRemoveLineIfRepIsZero = dontRemoveLineIfRepIsZero,
+                        onDontRemoveLineIfRepIsZeroToggle = { dontRemoveLineIfRepIsZero = it },
+                        hideLinesWithWeightZero = hideLinesWithWeightZero,
+                        onHideLinesWithWeightZeroToggle = { hideLinesWithWeightZero = it },
                         onBackClick = { currentScreen = ScreenType.Profile },
                         screenContext = createScreenContext(
                             onBackClick = { currentScreen = ScreenType.Profile },

@@ -174,14 +174,16 @@ class DatabaseProvider private constructor(
     suspend fun finishTrainingGame(
         trainingId: Long,
         gameId: Long,
-        mistakesCount: Int
+        mistakesCount: Int,
+        keepLineIfZero: Boolean = false
     ): Boolean {
         val trainSingleGameService = TrainSingleGameService(database)
 
         return trainSingleGameService.finishTraining(
             trainingId = trainingId,
             gameId = gameId,
-            mistakesCount = mistakesCount
+            mistakesCount = mistakesCount,
+            keepLineIfZero = keepLineIfZero
         )
     }
 

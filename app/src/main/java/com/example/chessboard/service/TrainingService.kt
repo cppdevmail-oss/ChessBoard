@@ -152,14 +152,14 @@ class TrainingService(
         }
     }
 
-    suspend fun decreaseLineWeight(trainingId: Long, gameId: Long): Boolean {
+    suspend fun decreaseLineWeight(trainingId: Long, gameId: Long, keepIfZero: Boolean = false): Boolean {
         val context = findTrainingGame(trainingId, gameId) ?: return false
         val newWeight = context.games[context.index].weight - 1
 
-        if (newWeight <= 0) {
+        if (newWeight <= 0 && !keepIfZero) {
             context.games.removeAt(context.index)
         } else {
-            context.games[context.index] = context.games[context.index].copy(weight = newWeight)
+            context.games[context.index] = context.games[context.index].copy(weight = newWeight.coerceAtLeast(0))
         }
 
         if (context.games.isEmpty()) {

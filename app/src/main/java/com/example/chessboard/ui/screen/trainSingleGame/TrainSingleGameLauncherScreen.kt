@@ -32,6 +32,7 @@ private sealed interface TrainSingleGameLaunchState {
 fun TrainSingleGameLauncherScreenContainer(
     trainingId: Long,
     gameId: Long,
+    keepLineIfZero: Boolean = false,
     onTrainingFinished: (TrainSingleGameResult) -> Unit = {},
     onOpenGameEditorClick: (GameEntity) -> Unit = {},
     onCloneGameClick: (GameDraft) -> Unit = {},
@@ -92,6 +93,7 @@ fun TrainSingleGameLauncherScreenContainer(
         gameId = gameId,
         trainingId = trainingId,
         trainingGameData = readyState.trainingGameData,
+        keepLineIfZero = keepLineIfZero,
         onTrainingFinished = onTrainingFinished,
         onOpenGameEditorClick = { onOpenGameEditorClick(readyState.trainingGameData.game) },
         onCloneGameClick = { onCloneGameClick(it) },

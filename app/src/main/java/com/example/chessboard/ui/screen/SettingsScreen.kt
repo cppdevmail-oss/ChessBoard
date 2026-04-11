@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -49,12 +51,20 @@ fun SettingsScreenContainer(
     screenContext: ScreenContainerContext,
     simpleViewEnabled: Boolean,
     onSimpleViewToggle: (Boolean) -> Unit,
+    dontRemoveLineIfRepIsZero: Boolean,
+    onDontRemoveLineIfRepIsZeroToggle: (Boolean) -> Unit,
+    hideLinesWithWeightZero: Boolean,
+    onHideLinesWithWeightZeroToggle: (Boolean) -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     SettingsScreen(
         simpleViewEnabled = simpleViewEnabled,
         onSimpleViewToggle = onSimpleViewToggle,
+        dontRemoveLineIfRepIsZero = dontRemoveLineIfRepIsZero,
+        onDontRemoveLineIfRepIsZeroToggle = onDontRemoveLineIfRepIsZeroToggle,
+        hideLinesWithWeightZero = hideLinesWithWeightZero,
+        onHideLinesWithWeightZeroToggle = onHideLinesWithWeightZeroToggle,
         onBackClick = screenContext.onBackClick,
         modifier = modifier,
     )
@@ -64,6 +74,10 @@ fun SettingsScreenContainer(
 fun SettingsScreen(
     simpleViewEnabled: Boolean,
     onSimpleViewToggle: (Boolean) -> Unit,
+    dontRemoveLineIfRepIsZero: Boolean,
+    onDontRemoveLineIfRepIsZeroToggle: (Boolean) -> Unit,
+    hideLinesWithWeightZero: Boolean,
+    onHideLinesWithWeightZeroToggle: (Boolean) -> Unit,
     onBackClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -83,10 +97,17 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(AppDimens.spaceLg),
+            verticalArrangement = Arrangement.spacedBy(AppDimens.spaceLg),
         ) {
             DisplaySection(
                 simpleViewEnabled = simpleViewEnabled,
                 onSimpleViewToggle = onSimpleViewToggle,
+            )
+            TrainingSection(
+                dontRemoveLineIfRepIsZero = dontRemoveLineIfRepIsZero,
+                onDontRemoveLineIfRepIsZeroToggle = onDontRemoveLineIfRepIsZeroToggle,
+                hideLinesWithWeightZero = hideLinesWithWeightZero,
+                onHideLinesWithWeightZeroToggle = onHideLinesWithWeightZeroToggle,
             )
         }
     }
@@ -123,7 +144,68 @@ private fun DisplaySection(
 }
 
 @Composable
+private fun TrainingSection(
+    dontRemoveLineIfRepIsZero: Boolean,
+    onDontRemoveLineIfRepIsZeroToggle: (Boolean) -> Unit,
+    hideLinesWithWeightZero: Boolean,
+    onHideLinesWithWeightZeroToggle: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    CardSurface(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(0.dp),
+    ) {
+        Text(
+            text = "TRAINING",
+            modifier = Modifier.padding(
+                start = AppDimens.spaceLg,
+                top = AppDimens.spaceLg,
+                end = AppDimens.spaceLg,
+                bottom = AppDimens.spaceMd,
+            ),
+            style = MaterialTheme.typography.labelMedium,
+            color = TextColor.Secondary,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 1.sp,
+        )
+        SettingsToggleRow(
+            icon = Icons.Filled.FitnessCenter,
+            title = "Don't remove line if rep is 0",
+            subtitle = "Keep lines in training even when repetitions reach zero",
+            enabled = dontRemoveLineIfRepIsZero,
+            onToggle = onDontRemoveLineIfRepIsZeroToggle,
+        )
+        SettingsToggleRow(
+            icon = Icons.Filled.VisibilityOff,
+            title = "Hide lines with weight 0",
+            subtitle = "Hide exhausted lines from the training editor",
+            enabled = hideLinesWithWeightZero,
+            onToggle = onHideLinesWithWeightZeroToggle,
+        )
+    }
+}
+
+@Composable
 private fun SimpleViewRow(
+    enabled: Boolean,
+    onToggle: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SettingsToggleRow(
+        icon = Icons.Filled.Visibility,
+        title = "Simple View",
+        subtitle = "Simplified interface with minimal distractions",
+        enabled = enabled,
+        onToggle = onToggle,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun SettingsToggleRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    subtitle: String,
     enabled: Boolean,
     onToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
@@ -142,7 +224,7 @@ private fun SimpleViewRow(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = Icons.Filled.Visibility,
+                imageVector = icon,
                 contentDescription = null,
                 tint = TrainingAccentTeal,
                 modifier = Modifier.size(22.dp),
@@ -156,13 +238,13 @@ private fun SimpleViewRow(
             verticalArrangement = Arrangement.spacedBy(AppDimens.spaceXs),
         ) {
             Text(
-                text = "Simple View",
+                text = title,
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextColor.Primary,
                 fontWeight = FontWeight.SemiBold,
             )
             CardMetaText(
-                text = "Simplified interface with minimal distractions",
+                text = subtitle,
                 color = TextColor.Secondary,
             )
         }
@@ -189,6 +271,10 @@ private fun SettingsScreenPreview() {
         SettingsScreen(
             simpleViewEnabled = false,
             onSimpleViewToggle = {},
+            dontRemoveLineIfRepIsZero = false,
+            onDontRemoveLineIfRepIsZeroToggle = {},
+            hideLinesWithWeightZero = false,
+            onHideLinesWithWeightZeroToggle = {},
         )
     }
 }

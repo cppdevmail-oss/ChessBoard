@@ -44,7 +44,8 @@ class TrainSingleGameService(
     suspend fun finishTraining(
         trainingId: Long,
         gameId: Long,
-        mistakesCount: Int
+        mistakesCount: Int,
+        keepLineIfZero: Boolean = false
     ): Boolean {
         val trainingService = TrainingService(
             database = database,
@@ -58,7 +59,8 @@ class TrainSingleGameService(
         return database.withTransaction {
             val wasUpdated = trainingService.decreaseLineWeight(
                 trainingId = trainingId,
-                gameId = gameId
+                gameId = gameId,
+                keepIfZero = keepLineIfZero
             )
             if (!wasUpdated) {
                 return@withTransaction false
