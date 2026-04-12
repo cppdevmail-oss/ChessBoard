@@ -175,7 +175,7 @@ internal fun TrainingSingleGameActions(
     modifier: Modifier = Modifier
 ) {
     @Composable
-    fun IdleTrainingActions(
+    fun ShowLineActions(
         state: TrainSingleGameContentState,
         actions: TrainSingleGameContentActions
     ) {
@@ -209,6 +209,12 @@ internal fun TrainingSingleGameActions(
                     tint = TextColor.Primary
                 )
             }
+        }
+    }
+
+    @Composable
+    fun TrainingActionButton() {
+        if (state == TrainingSingleGameActionsState.Idle) {
             IconButton(onClick = actions.onStartTrainingClick) {
                 Icon(
                     imageVector = Icons.Default.PlayArrow,
@@ -216,23 +222,13 @@ internal fun TrainingSingleGameActions(
                     tint = TextColor.Primary
                 )
             }
-        }
-    }
-
-    @Composable
-    fun PrimaryTrainingAction() {
-        if (state == TrainingSingleGameActionsState.Training || state == TrainingSingleGameActionsState.Mistake) {
-            PrimaryButton(
-                text = "Stop training",
-                onClick = actions.onStopTrainingClick,
-                modifier = Modifier.fillMaxWidth()
-            )
             return
         }
 
-        IdleTrainingActions(
-            state = contentState,
-            actions = actions
+        PrimaryButton(
+            text = "Stop training",
+            onClick = actions.onStopTrainingClick,
+            modifier = Modifier.fillMaxWidth()
         )
     }
 
@@ -246,7 +242,16 @@ internal fun TrainingSingleGameActions(
             return@Column
         }
 
-        PrimaryTrainingAction()
+        // Keep show-line controls visible in idle/training/mistake states.
+        // Training now starts automatically on entry, so hiding this block outside Idle
+        // would remove the only way to inspect the full line mid-session.
+        ShowLineActions(
+            state = contentState,
+            actions = actions
+        )
+
+        Spacer(modifier = Modifier.height(AppDimens.spaceMd))
+        TrainingActionButton()
 
         if (state != TrainingSingleGameActionsState.Mistake) {
             return
