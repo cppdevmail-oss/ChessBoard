@@ -74,9 +74,10 @@ class MainActivity : ComponentActivity() {
                 var profileLoaded by remember { mutableStateOf(false) }
                 val runtimeContext = remember { RuntimeContext() }
                 val scope = rememberCoroutineScope()
+                val userProfileService = remember { dbProvider.createUserProfileService() }
 
                 LaunchedEffect(Unit) {
-                    val profile = dbProvider.getUserProfile()
+                    val profile = userProfileService.getProfile()
                     simpleViewEnabled = profile.simpleViewEnabled
                     dontRemoveLineIfRepIsZero = profile.dontRemoveLineIfRepIsZero
                     hideLinesWithWeightZero = profile.hideLinesWithWeightZero
@@ -331,7 +332,7 @@ class MainActivity : ComponentActivity() {
                         onSimpleViewToggle = { newValue ->
                             simpleViewEnabled = newValue
                             scope.launch {
-                                dbProvider.updateUserProfileSettings(
+                                userProfileService.updateSettings(
                                     simpleViewEnabled = newValue,
                                     dontRemoveLineIfRepIsZero = dontRemoveLineIfRepIsZero,
                                     hideLinesWithWeightZero = hideLinesWithWeightZero,
@@ -342,7 +343,7 @@ class MainActivity : ComponentActivity() {
                         onDontRemoveLineIfRepIsZeroToggle = { newValue ->
                             dontRemoveLineIfRepIsZero = newValue
                             scope.launch {
-                                dbProvider.updateUserProfileSettings(
+                                userProfileService.updateSettings(
                                     simpleViewEnabled = simpleViewEnabled,
                                     dontRemoveLineIfRepIsZero = newValue,
                                     hideLinesWithWeightZero = hideLinesWithWeightZero,
@@ -353,7 +354,7 @@ class MainActivity : ComponentActivity() {
                         onHideLinesWithWeightZeroToggle = { newValue ->
                             hideLinesWithWeightZero = newValue
                             scope.launch {
-                                dbProvider.updateUserProfileSettings(
+                                userProfileService.updateSettings(
                                     simpleViewEnabled = simpleViewEnabled,
                                     dontRemoveLineIfRepIsZero = dontRemoveLineIfRepIsZero,
                                     hideLinesWithWeightZero = newValue,

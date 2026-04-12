@@ -189,23 +189,8 @@ class DatabaseProvider private constructor(
         return SavedSearchPositionService(database.savedSearchPositionDao())
     }
 
-    suspend fun getUserProfile(): UserProfileEntity {
-        val service = UserProfileService(database.userProfileDao())
-        return service.getProfile()
-    }
-
-    suspend fun updateUserProfileRankTitle(tier: String, title: String) {
-        val service = UserProfileService(database.userProfileDao())
-        service.updateRankTitle(tier, title)
-    }
-
-    suspend fun updateUserProfileSettings(
-        simpleViewEnabled: Boolean,
-        dontRemoveLineIfRepIsZero: Boolean,
-        hideLinesWithWeightZero: Boolean,
-    ) {
-        val service = UserProfileService(database.userProfileDao())
-        service.updateSettings(simpleViewEnabled, dontRemoveLineIfRepIsZero, hideLinesWithWeightZero)
+    fun createUserProfileService(): UserProfileService {
+        return UserProfileService(database.userProfileDao())
     }
 
     fun createTrainingTemplateService(): TrainingTemplateService {
