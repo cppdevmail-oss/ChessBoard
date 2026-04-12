@@ -92,16 +92,6 @@ class DatabaseProvider private constructor(
         }
     }
 
-    suspend fun addGame(game: GameEntity, moves: List<Move>): Boolean {
-        val gameSaver = GameSaver(database)
-        return gameSaver.trySaveGame(game, moves, game.sideMask)
-    }
-
-    suspend fun addGameAndGetId(game: GameEntity, moves: List<Move>): Long? {
-        val gameSaver = GameSaver(database)
-        return gameSaver.saveGame(game, moves, game.sideMask)
-    }
-
     suspend fun updateGame(game: GameEntity, moves: List<Move>): Boolean {
         val gameUpdater = GameUpdater(database)
         return gameUpdater.updateGame(game, moves)
@@ -117,6 +107,10 @@ class DatabaseProvider private constructor(
 
     fun createGameBackupService(): GameBackupService {
         return GameBackupService(database)
+    }
+
+    fun createGameSaver(): GameSaver {
+        return GameSaver(database)
     }
 
     suspend fun findPositionsByFenWithoutMoveNumber(fen: String): List<PositionEntity> {

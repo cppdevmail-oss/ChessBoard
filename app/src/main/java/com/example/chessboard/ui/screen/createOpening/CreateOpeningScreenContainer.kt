@@ -67,6 +67,7 @@ fun CreateOpeningScreenContainer(
     modifier: Modifier = Modifier,
 ) {
     val dbProvider = screenContext.inDbProvider
+    val gameSaver = remember(dbProvider) { dbProvider.createGameSaver() }
     val gameController = remember { GameController() }
     var gameDraft by remember(initialDraft) { mutableStateOf(initialDraft) }
     var nameError by remember { mutableStateOf(false) }
@@ -279,7 +280,7 @@ fun CreateOpeningScreenContainer(
                                     initialFen = "",
                                     sideMask = selectedSideSnapshot.sideMask,
                                 )
-                                dbProvider.addGameAndGetId(entity, uciMovesToMoves(uciMoves))
+                                gameSaver.saveGame(entity, uciMovesToMoves(uciMoves), entity.sideMask)
                                     ?.let { add(it) }
                             }
                         }
@@ -324,7 +325,7 @@ fun CreateOpeningScreenContainer(
                             initialFen = "",
                             sideMask = selectedSideSnapshot.sideMask,
                         )
-                        listOfNotNull(dbProvider.addGameAndGetId(entity, movesSnapshot))
+                        listOfNotNull(gameSaver.saveGame(entity, movesSnapshot, entity.sideMask))
                     } else {
                         buildList {
                             importedLines.forEachIndexed { index, uciMoves ->
@@ -357,7 +358,7 @@ fun CreateOpeningScreenContainer(
                                     initialFen = "",
                                     sideMask = selectedSideSnapshot.sideMask,
                                 )
-                                dbProvider.addGameAndGetId(entity, uciMovesToMoves(uciMoves))
+                                gameSaver.saveGame(entity, uciMovesToMoves(uciMoves), entity.sideMask)
                                     ?.let { add(it) }
                             }
                         }
