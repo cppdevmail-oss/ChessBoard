@@ -71,6 +71,7 @@ class MainActivity : ComponentActivity() {
                 var simpleViewEnabled by remember { mutableStateOf(false) }
                 var dontRemoveLineIfRepIsZero by remember { mutableStateOf(false) }
                 var hideLinesWithWeightZero by remember { mutableStateOf(false) }
+                var profileLoaded by remember { mutableStateOf(false) }
                 val runtimeContext = remember { RuntimeContext() }
                 val scope = rememberCoroutineScope()
 
@@ -79,6 +80,7 @@ class MainActivity : ComponentActivity() {
                     simpleViewEnabled = profile.simpleViewEnabled
                     dontRemoveLineIfRepIsZero = profile.dontRemoveLineIfRepIsZero
                     hideLinesWithWeightZero = profile.hideLinesWithWeightZero
+                    profileLoaded = true
                 }
 
                 fun openGamesExplorer() {
@@ -106,6 +108,8 @@ class MainActivity : ComponentActivity() {
                         inDbProvider = dbProvider,
                     )
                 }
+
+                if (!profileLoaded) return@ChessBoardTheme
 
                 when (val screen = currentScreen) {
                     ScreenType.Training -> TrainingListScreenContainer(
