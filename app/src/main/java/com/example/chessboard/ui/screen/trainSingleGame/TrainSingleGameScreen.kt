@@ -114,11 +114,25 @@ private fun TrainSingleGameScreen(
     val currentOrientation = trainingSides.getOrNull(uiState.currentSideIndex) ?: BoardOrientation.WHITE
     val gameController = remember(currentOrientation) { GameController(currentOrientation) }
 
+    fun startTrainingSession(baseState: TrainSingleGameUiState): TrainSingleGameUiState {
+        return advanceProgramMoves(
+            uiState = buildStartTrainingState(baseState),
+            gameController = gameController,
+            uciMoves = uciMoves,
+            currentOrientation = currentOrientation,
+            sidesCount = trainingSides.size
+        )
+    }
+
     LaunchedEffect(gameController, loadedGame.id) {
         showLineJob?.cancel()
         showLineJob = null
         gameController.resetToStartPosition()
-        uiState = resetSessionState(uiState)
+        val resetState = resetSessionState(uiState)
+        // Start training immediately after opening the screen.
+        // This preserves the requested flow where choosing a game enters an active
+        // training session without an extra tap on the play button.
+        uiState = startTrainingSession(resetState)
     }
 
     SideEffect {
@@ -186,13 +200,7 @@ private fun TrainSingleGameScreen(
             },
             onStartTrainingClick = {
                 gameController.resetToStartPosition()
-                uiState = advanceProgramMoves(
-                    uiState = buildStartTrainingState(uiState),
-                    gameController = gameController,
-                    uciMoves = uciMoves,
-                    currentOrientation = currentOrientation,
-                    sidesCount = trainingSides.size
-                )
+                uiState = startTrainingSession(uiState)
             },
             onStopTrainingClick = {
                 showLineJob?.cancel()
