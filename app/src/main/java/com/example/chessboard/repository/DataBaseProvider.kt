@@ -24,7 +24,6 @@ import com.example.chessboard.service.GameListService
 import com.example.chessboard.service.GameSaver
 import com.example.chessboard.service.GameUpdater
 import com.example.chessboard.service.GlobalTrainingStatsService
-import com.example.chessboard.service.OneGameTrainingData
 import com.example.chessboard.service.PositionService
 import com.example.chessboard.service.SavedSearchPositionService
 import com.example.chessboard.service.StatisticsTrainingService
@@ -92,16 +91,6 @@ class DatabaseProvider private constructor(
         }
     }
 
-    suspend fun addGame(game: GameEntity, moves: List<Move>): Boolean {
-        val gameSaver = GameSaver(database)
-        return gameSaver.trySaveGame(game, moves, game.sideMask)
-    }
-
-    suspend fun addGameAndGetId(game: GameEntity, moves: List<Move>): Long? {
-        val gameSaver = GameSaver(database)
-        return gameSaver.saveGame(game, moves, game.sideMask)
-    }
-
     suspend fun updateGame(game: GameEntity, moves: List<Move>): Boolean {
         val gameUpdater = GameUpdater(database)
         return gameUpdater.updateGame(game, moves)
@@ -119,9 +108,8 @@ class DatabaseProvider private constructor(
         return GameBackupService(database)
     }
 
-    suspend fun findPositionsByFenWithoutMoveNumber(fen: String): List<PositionEntity> {
-        val positionService = PositionService(database)
-        return positionService.findPositionsByFenWithoutMoveNumber(fen)
+    fun createGameSaver(): GameSaver {
+        return GameSaver(database)
     }
 
     suspend fun findGameIdsByFenWithoutMoveNumber(fen: String): List<Long> {
@@ -137,42 +125,6 @@ class DatabaseProvider private constructor(
     suspend fun deleteGame(id: Long) {
         val gameDeleter = GameDeleter(database)
         gameDeleter.deleteGame(id)
-    }
-
-    suspend fun deleteTraining(trainingId: Long): Boolean {
-        val trainingService = createTrainingService()
-        return trainingService.deleteTraining(trainingId)
-    }
-
-    suspend fun createTrainingFromGames(
-        name: String = "FullTraining",
-        games: List<OneGameTrainingData>
-    ): Long? {
-        val trainingService = createTrainingService()
-        return trainingService.createTrainingFromGames(name = name, games = games)
-    }
-
-    suspend fun updateTrainingFromGames(
-        trainingId: Long,
-        name: String = "FullTraining",
-        games: List<OneGameTrainingData>
-    ): Boolean {
-        val trainingService = createTrainingService()
-        return trainingService.updateTrainingFromGames(
-            trainingId = trainingId,
-            name = name,
-            games = games
-        )
-    }
-
-    suspend fun getAllTrainings(): List<TrainingEntity> {
-        val trainingService = createTrainingService()
-        return trainingService.getAllTrainings()
-    }
-
-    suspend fun getTrainingById(trainingId: Long): TrainingEntity? {
-        val trainingService = createTrainingService()
-        return trainingService.getTrainingById(trainingId)
     }
 
     suspend fun finishTrainingGame(
@@ -191,33 +143,9 @@ class DatabaseProvider private constructor(
         )
     }
 
-
-    suspend fun getRecentTrainingResults(limit: Int): List<TrainingResultEntity> {
-        val trainingResultService = createTrainingResultService()
-        return trainingResultService.getRecentResults(limit)
-    }
-
     suspend fun getGlobalTrainingStats(): GlobalTrainingStatsEntity {
         val globalTrainingStatsService = createGlobalTrainingStatsService()
         return globalTrainingStatsService.getStats()
-    }
-
-    suspend fun recordGlobalTrainingResult(mistakesCount: Int): GlobalTrainingStatsEntity {
-        val globalTrainingStatsService = createGlobalTrainingStatsService()
-        return globalTrainingStatsService.recordTrainingResult(mistakesCount)
-    }
-
-    suspend fun getTrainingResultsForGame(gameId: Long, limit: Int): List<TrainingResultEntity> {
-        val trainingResultService = createTrainingResultService()
-        return trainingResultService.getResultsForGame(
-            gameId = gameId,
-            limit = limit
-        )
-    }
-
-    suspend fun getTrainingGameLaunchData(trainingId: Long): TrainingGameLaunchResult {
-        val trainSingleGameService = TrainSingleGameService(database)
-        return trainSingleGameService.getTrainingGameLaunchData(trainingId)
     }
 
     fun createStatisticsTrainingService(): StatisticsTrainingService {
@@ -232,23 +160,8 @@ class DatabaseProvider private constructor(
         return SavedSearchPositionService(database.savedSearchPositionDao())
     }
 
-    suspend fun getUserProfile(): UserProfileEntity {
-        val service = UserProfileService(database.userProfileDao())
-        return service.getProfile()
-    }
-
-    suspend fun updateUserProfileRankTitle(tier: String, title: String) {
-        val service = UserProfileService(database.userProfileDao())
-        service.updateRankTitle(tier, title)
-    }
-
-    suspend fun updateUserProfileSettings(
-        simpleViewEnabled: Boolean,
-        dontRemoveLineIfRepIsZero: Boolean,
-        hideLinesWithWeightZero: Boolean,
-    ) {
-        val service = UserProfileService(database.userProfileDao())
-        service.updateSettings(simpleViewEnabled, dontRemoveLineIfRepIsZero, hideLinesWithWeightZero)
+    fun createUserProfileService(): UserProfileService {
+        return UserProfileService(database.userProfileDao())
     }
 
     fun createTrainingTemplateService(): TrainingTemplateService {
@@ -263,7 +176,7 @@ class DatabaseProvider private constructor(
         return GlobalTrainingStatsService(database)
     }
 
-    private fun createTrainingService(): TrainingService {
+    fun createTrainingService(): TrainingService {
         return TrainingService(
             database = database,
             gameDao = database.gameDao(),

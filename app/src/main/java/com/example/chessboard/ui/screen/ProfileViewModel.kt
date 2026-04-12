@@ -238,14 +238,15 @@ class ProfileViewModel : ViewModel() {
 
         isLoaded = true
         viewModelScope.launch {
+            val userProfileService = inDbProvider.createUserProfileService()
             val (stats, profile) = withContext(Dispatchers.IO) {
-                inDbProvider.getGlobalTrainingStats() to inDbProvider.getUserProfile()
+                inDbProvider.getGlobalTrainingStats() to userProfileService.getProfile()
             }
             val newState = buildProfileState(stats, profile)
             // Persist rank title to DB if tier changed
             if (profile.rankTier != newState.tier.name || profile.rankTitle != newState.rankTitle) {
                 withContext(Dispatchers.IO) {
-                    inDbProvider.updateUserProfileRankTitle(newState.tier.name, newState.rankTitle)
+                    userProfileService.updateRankTitle(newState.tier.name, newState.rankTitle)
                 }
             }
             _state.value = newState

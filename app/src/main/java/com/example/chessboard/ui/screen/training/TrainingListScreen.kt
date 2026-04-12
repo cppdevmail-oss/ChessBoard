@@ -1,6 +1,5 @@
 package com.example.chessboard.ui.screen.training
 
-import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,7 +27,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.service.OneGameTrainingData
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
@@ -70,12 +68,13 @@ fun TrainingListScreenContainer(
     onOpenTraining: (Long) -> Unit = {},
 ) {
     val inDbProvider = screenContext.inDbProvider
+    val trainingService = remember(inDbProvider) { inDbProvider.createTrainingService() }
     val scope = rememberCoroutineScope()
     var state by remember { mutableStateOf(TrainingListState()) }
 
     LaunchedEffect(Unit) {
         val trainings = withContext(Dispatchers.IO) {
-            inDbProvider.getAllTrainings().map { training ->
+            trainingService.getAllTrainings().map { training ->
                 TrainingListItem(
                     trainingId = training.id,
                     name = training.name.ifBlank { "Unnamed Training" },
@@ -97,7 +96,7 @@ fun TrainingListScreenContainer(
         onOpenTraining = onOpenTraining,
         onDeleteTraining = createDeleteTrainingAction(
             scope = scope,
-            inDbProvider = inDbProvider,
+            trainingService = trainingService,
             trainings = { state.trainings },
             onTrainingsChange = { trainings -> state = state.copy(trainings = trainings) }
         ),
@@ -120,10 +119,10 @@ private fun TrainingListScreen(
     if (state.trainingToDelete != null) {
         AppConfirmDialog(
             title = "Delete Training",
-            message = resolveDeleteTrainingMessage(state.trainingToDelete!!),
+            message = resolveDeleteTrainingMessage(state.trainingToDelete),
             onDismiss = { onTrainingToDeleteChange(null) },
             onConfirm = {
-                onDeleteTraining(state.trainingToDelete!!.trainingId)
+                onDeleteTraining(state.trainingToDelete.trainingId)
                 onTrainingToDeleteChange(null)
             },
             confirmText = "Delete",
@@ -238,14 +237,14 @@ private fun TrainingListCard(
 
 private fun createDeleteTrainingAction(
     scope: kotlinx.coroutines.CoroutineScope,
-    inDbProvider: DatabaseProvider,
+    trainingService: com.example.chessboard.service.TrainingService,
     trainings: () -> List<TrainingListItem>,
     onTrainingsChange: (List<TrainingListItem>) -> Unit
 ): (Long) -> Unit {
     return { trainingId ->
         scope.launch {
             withContext(Dispatchers.IO) {
-                inDbProvider.deleteTraining(trainingId)
+                trainingService.deleteTraining(trainingId)
             }
             onTrainingsChange(trainings().filterNot { it.trainingId == trainingId })
         }

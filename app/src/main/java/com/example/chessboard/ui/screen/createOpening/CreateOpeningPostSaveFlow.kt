@@ -83,7 +83,7 @@ private suspend fun createOpeningTraining(
     dbProvider: DatabaseProvider,
     savedGames: SavedOpeningGames,
 ): Boolean {
-    val trainingId = dbProvider.createTrainingFromGames(
+    val trainingId = dbProvider.createTrainingService().createTrainingFromGames(
         name = savedGames.name,
         games = savedGames.gameIds.map { gameId ->
             OneGameTrainingData(gameId = gameId, weight = 1)

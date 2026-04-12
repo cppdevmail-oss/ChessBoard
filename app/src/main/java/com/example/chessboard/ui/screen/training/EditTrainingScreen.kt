@@ -57,10 +57,8 @@ import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTextField
 import com.example.chessboard.ui.components.AppTopBar
-import com.example.chessboard.ui.components.CardMetaText
 import com.example.chessboard.ui.components.CardSurface
 import com.example.chessboard.ui.components.PrimaryButton
-import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.Background
@@ -154,6 +152,7 @@ private fun resolveRandomTrainingGameId(
 
 private suspend fun loadEditTrainingState(
     inDbProvider: com.example.chessboard.repository.DatabaseProvider,
+    trainingService: com.example.chessboard.service.TrainingService,
     trainingId: Long
 ): EditTrainingLoadState {
     val allGames = withContext(Dispatchers.IO) {
@@ -161,7 +160,7 @@ private suspend fun loadEditTrainingState(
     }
 
     val training = withContext(Dispatchers.IO) {
-        inDbProvider.getTrainingById(trainingId)
+        trainingService.getTrainingById(trainingId)
     } ?: return EditTrainingLoadState(
         trainingName = DEFAULT_TRAINING_NAME,
         gamesForTraining = emptyList(),
@@ -214,7 +213,7 @@ private fun RenderEditTrainingSaveSuccessDialog(
 }
 
 private suspend fun saveEditedTraining(
-    inDbProvider: com.example.chessboard.repository.DatabaseProvider,
+    trainingService: com.example.chessboard.service.TrainingService,
     trainingId: Long,
     trainingName: String,
     editableGames: List<TrainingGameEditorItem>
@@ -228,7 +227,7 @@ private suspend fun saveEditedTraining(
     }
 
     val wasUpdated = withContext(Dispatchers.IO) {
-        inDbProvider.updateTrainingFromGames(
+        trainingService.updateTrainingFromGames(
             trainingId = trainingId,
             name = normalizedName,
             games = trainingGames
@@ -330,6 +329,7 @@ fun EditTrainingScreenContainer(
     val onBackClick = screenContext.onBackClick
     val onNavigate = screenContext.onNavigate
     val inDbProvider = screenContext.inDbProvider
+    val trainingService = remember(inDbProvider) { inDbProvider.createTrainingService() }
     var loadState by remember { mutableStateOf(EditTrainingLoadState()) }
     var trainingSaveSuccess by remember { mutableStateOf<EditTrainingSaveSuccess?>(null) }
     val scope = rememberCoroutineScope()
@@ -337,6 +337,7 @@ fun EditTrainingScreenContainer(
     LaunchedEffect(trainingId) {
         loadState = loadEditTrainingState(
             inDbProvider = inDbProvider,
+            trainingService = trainingService,
             trainingId = trainingId
         )
     }
@@ -364,7 +365,6 @@ fun EditTrainingScreenContainer(
     }
 
     EditTrainingScreen(
-        trainingId = trainingId,
         initialTrainingName = loadState.trainingName,
         gamesForTraining = visibleGamesForTraining,
         orderGamesInTraining = orderGamesInTraining,
@@ -378,7 +378,7 @@ fun EditTrainingScreenContainer(
         onSaveTraining = { trainingName, editableGames, showSuccessMessage, onSaved ->
             scope.launch {
                 val saveSuccess = saveEditedTraining(
-                    inDbProvider = inDbProvider,
+                    trainingService = trainingService,
                     trainingId = trainingId,
                     trainingName = trainingName,
                     editableGames = editableGames
@@ -398,7 +398,6 @@ fun EditTrainingScreenContainer(
 
 @Composable
 fun EditTrainingScreen(
-    trainingId: Long,
     initialTrainingName: String = DEFAULT_TRAINING_NAME,
     gamesForTraining: List<TrainingGameEditorItem> = emptyList(),
     orderGamesInTraining: RuntimeContext.OrderGamesInTraining,

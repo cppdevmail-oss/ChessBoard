@@ -255,7 +255,8 @@ fun CreateTrainingByStatisticsScreenContainer(
                 }
 
                 val savedTrainingId = withContext(Dispatchers.IO) {
-                    screenContext.inDbProvider.createTrainingFromGames(
+                    val trainingService = screenContext.inDbProvider.createTrainingService()
+                    trainingService.createTrainingFromGames(
                         name = normalizedName,
                         games = trainingGames,
                     )
