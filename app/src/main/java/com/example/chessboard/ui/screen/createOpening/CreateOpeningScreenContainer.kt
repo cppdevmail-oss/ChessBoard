@@ -68,6 +68,7 @@ fun CreateOpeningScreenContainer(
 ) {
     val dbProvider = screenContext.inDbProvider
     val gameSaver = remember(dbProvider) { dbProvider.createGameSaver() }
+    val trainingService = remember(dbProvider) { dbProvider.createTrainingService() }
     val gameController = remember { GameController() }
     var gameDraft by remember(initialDraft) { mutableStateOf(initialDraft) }
     var nameError by remember { mutableStateOf(false) }
@@ -286,7 +287,7 @@ fun CreateOpeningScreenContainer(
                         }
 
                         if (savedIds.isNotEmpty()) {
-                            dbProvider.createTrainingFromGames(
+                            trainingService.createTrainingFromGames(
                                 name = chapterName,
                                 games = savedIds.map { OneGameTrainingData(gameId = it, weight = 1) },
                             )

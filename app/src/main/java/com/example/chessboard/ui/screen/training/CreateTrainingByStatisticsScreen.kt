@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.material3.CircularProgressIndicator
 import com.example.chessboard.service.OneGameTrainingData
+import com.example.chessboard.service.TrainingService
 import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
@@ -255,7 +256,8 @@ fun CreateTrainingByStatisticsScreenContainer(
                 }
 
                 val savedTrainingId = withContext(Dispatchers.IO) {
-                    screenContext.inDbProvider.createTrainingFromGames(
+                    val trainingService = screenContext.inDbProvider.createTrainingService()
+                    trainingService.createTrainingFromGames(
                         name = normalizedName,
                         games = trainingGames,
                     )

@@ -24,7 +24,6 @@ import com.example.chessboard.service.GameListService
 import com.example.chessboard.service.GameSaver
 import com.example.chessboard.service.GameUpdater
 import com.example.chessboard.service.GlobalTrainingStatsService
-import com.example.chessboard.service.OneGameTrainingData
 import com.example.chessboard.service.PositionService
 import com.example.chessboard.service.SavedSearchPositionService
 import com.example.chessboard.service.StatisticsTrainingService
@@ -133,42 +132,6 @@ class DatabaseProvider private constructor(
         gameDeleter.deleteGame(id)
     }
 
-    suspend fun deleteTraining(trainingId: Long): Boolean {
-        val trainingService = createTrainingService()
-        return trainingService.deleteTraining(trainingId)
-    }
-
-    suspend fun createTrainingFromGames(
-        name: String = "FullTraining",
-        games: List<OneGameTrainingData>
-    ): Long? {
-        val trainingService = createTrainingService()
-        return trainingService.createTrainingFromGames(name = name, games = games)
-    }
-
-    suspend fun updateTrainingFromGames(
-        trainingId: Long,
-        name: String = "FullTraining",
-        games: List<OneGameTrainingData>
-    ): Boolean {
-        val trainingService = createTrainingService()
-        return trainingService.updateTrainingFromGames(
-            trainingId = trainingId,
-            name = name,
-            games = games
-        )
-    }
-
-    suspend fun getAllTrainings(): List<TrainingEntity> {
-        val trainingService = createTrainingService()
-        return trainingService.getAllTrainings()
-    }
-
-    suspend fun getTrainingById(trainingId: Long): TrainingEntity? {
-        val trainingService = createTrainingService()
-        return trainingService.getTrainingById(trainingId)
-    }
-
     suspend fun finishTrainingGame(
         trainingId: Long,
         gameId: Long,
@@ -257,7 +220,7 @@ class DatabaseProvider private constructor(
         return GlobalTrainingStatsService(database)
     }
 
-    private fun createTrainingService(): TrainingService {
+    fun createTrainingService(): TrainingService {
         return TrainingService(
             database = database,
             gameDao = database.gameDao(),

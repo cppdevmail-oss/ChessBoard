@@ -42,13 +42,14 @@ fun TrainSingleGameLauncherScreenContainer(
     modifier: Modifier = Modifier,
 ) {
     val inDbProvider = screenContext.inDbProvider
+    val trainingService = remember(inDbProvider) { inDbProvider.createTrainingService() }
     var launchState by remember { mutableStateOf<TrainSingleGameLaunchState>(TrainSingleGameLaunchState.Loading) }
 
     LaunchedEffect(trainingId, gameId) {
         launchState = TrainSingleGameLaunchState.Loading
 
         val training = withContext(Dispatchers.IO) {
-            inDbProvider.getTrainingById(trainingId)
+            trainingService.getTrainingById(trainingId)
         }
         if (training == null) {
             launchState = TrainSingleGameLaunchState.TrainingNotFound

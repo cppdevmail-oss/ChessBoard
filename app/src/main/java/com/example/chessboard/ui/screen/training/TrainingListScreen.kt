@@ -70,12 +70,13 @@ fun TrainingListScreenContainer(
     onOpenTraining: (Long) -> Unit = {},
 ) {
     val inDbProvider = screenContext.inDbProvider
+    val trainingService = remember(inDbProvider) { inDbProvider.createTrainingService() }
     val scope = rememberCoroutineScope()
     var state by remember { mutableStateOf(TrainingListState()) }
 
     LaunchedEffect(Unit) {
         val trainings = withContext(Dispatchers.IO) {
-            inDbProvider.getAllTrainings().map { training ->
+            trainingService.getAllTrainings().map { training ->
                 TrainingListItem(
                     trainingId = training.id,
                     name = training.name.ifBlank { "Unnamed Training" },
@@ -97,7 +98,7 @@ fun TrainingListScreenContainer(
         onOpenTraining = onOpenTraining,
         onDeleteTraining = createDeleteTrainingAction(
             scope = scope,
-            inDbProvider = inDbProvider,
+            trainingService = trainingService,
             trainings = { state.trainings },
             onTrainingsChange = { trainings -> state = state.copy(trainings = trainings) }
         ),
@@ -238,14 +239,14 @@ private fun TrainingListCard(
 
 private fun createDeleteTrainingAction(
     scope: kotlinx.coroutines.CoroutineScope,
-    inDbProvider: DatabaseProvider,
+    trainingService: com.example.chessboard.service.TrainingService,
     trainings: () -> List<TrainingListItem>,
     onTrainingsChange: (List<TrainingListItem>) -> Unit
 ): (Long) -> Unit {
     return { trainingId ->
         scope.launch {
             withContext(Dispatchers.IO) {
-                inDbProvider.deleteTraining(trainingId)
+                trainingService.deleteTraining(trainingId)
             }
             onTrainingsChange(trainings().filterNot { it.trainingId == trainingId })
         }

@@ -87,6 +87,7 @@ fun HomeScreenContainer(
     modifier: Modifier = Modifier,
 ) {
     var trainings by remember { mutableStateOf<List<HomeTrainingItem>>(emptyList()) }
+    val trainingService = remember(screenContext.inDbProvider) { screenContext.inDbProvider.createTrainingService() }
 
     LaunchedEffect(simpleViewEnabled) {
         trainings = if (!simpleViewEnabled) {
@@ -94,7 +95,7 @@ fun HomeScreenContainer(
         } else {
             withContext(Dispatchers.IO) {
                 val allGames = screenContext.inDbProvider.getAllGames().associateBy { it.id }
-                screenContext.inDbProvider.getAllTrainings().map { training ->
+                trainingService.getAllTrainings().map { training ->
                     val trainingGames = OneGameTrainingData.fromJson(training.gamesJson)
                     val includedGames = trainingGames.mapNotNull { allGames[it.gameId] }
                     HomeTrainingItem(

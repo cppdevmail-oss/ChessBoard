@@ -27,7 +27,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.service.OneGameTrainingData
 import com.example.chessboard.ui.screen.ScreenContainerContext
@@ -157,7 +156,8 @@ internal fun CreateTrainingScreenContainer(
                 }
 
                 val savedTrainingId = withContext(Dispatchers.IO) {
-                    screenContext.inDbProvider.createTrainingFromGames(
+                    val trainingService = screenContext.inDbProvider.createTrainingService()
+                    trainingService.createTrainingFromGames(
                         name = normalizedName,
                         games = trainingGames
                     )
