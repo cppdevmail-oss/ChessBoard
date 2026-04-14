@@ -685,7 +685,14 @@ fun EditTrainingScreen(
                         horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceXs)
                     ) {
                         IconButton(
-                            onClick = { editorState = decreaseTrainingGameWeight(editorState, game.gameId) },
+                            onClick = {
+                                editorState = editorState.copy(
+                                    editableGamesForTraining = decreaseTrainingGameWeight(
+                                        games = editorState.editableGamesForTraining,
+                                        gameId = game.gameId
+                                    )
+                                )
+                            },
                             modifier = Modifier.size(32.dp)
                         ) {
                             Icon(
@@ -708,7 +715,14 @@ fun EditTrainingScreen(
                             )
                         }
                         IconButton(
-                            onClick = { editorState = increaseTrainingGameWeight(editorState, game.gameId) },
+                            onClick = {
+                                editorState = editorState.copy(
+                                    editableGamesForTraining = increaseTrainingGameWeight(
+                                        games = editorState.editableGamesForTraining,
+                                        gameId = game.gameId
+                                    )
+                                )
+                            },
                             modifier = Modifier.size(32.dp)
                         ) {
                             Icon(
