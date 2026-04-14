@@ -28,6 +28,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.unit.Dp
 import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.entity.SideMask
 import com.example.chessboard.service.OneGameTrainingData
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
@@ -57,7 +58,8 @@ data class TrainingGameEditorItem(
     val title: String,
     val weight: Int = 1,
     val eco: String? = null,
-    val pgn: String = ""
+    val pgn: String = "",
+    val sideMask: Int = SideMask.BOTH
 )
 
 internal data class CreateTrainingInitialData(
@@ -352,7 +354,8 @@ internal fun GameEntity.toTrainingGameEditorItem(weight: Int = 1): TrainingGameE
         title = event ?: "Unnamed Opening",
         weight = weight,
         eco = eco,
-        pgn = pgn
+        pgn = pgn,
+        sideMask = sideMask
     )
 }
 

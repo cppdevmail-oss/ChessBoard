@@ -49,7 +49,9 @@ import androidx.compose.ui.unit.dp
 import com.example.chessboard.RuntimeContext
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.entity.SideMask
 import com.example.chessboard.service.OneGameTrainingData
+import com.example.chessboard.ui.BoardOrientation
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.components.AppBottomNavigation
@@ -288,23 +290,27 @@ private fun rememberEditTrainingBoardSession(
 
     LaunchedEffect(selectedGameId, parsedGamesById) {
         val selectedGame = selectedGameId?.let { parsedGamesById[it] } ?: return@LaunchedEffect
+        gameController.setOrientation(resolveTrainingPreviewBoardOrientation(selectedGame.game))
         gameController.loadFromUciMoves(selectedGame.uciMoves, targetPly = 0)
     }
 
     fun selectGame(gameId: Long) {
         selectedGameId = gameId
         val parsedGame = parsedGamesById[gameId] ?: return
+        gameController.setOrientation(resolveTrainingPreviewBoardOrientation(parsedGame.game))
         gameController.loadFromUciMoves(parsedGame.uciMoves, targetPly = 0)
     }
 
     fun moveToPly(gameId: Long, ply: Int) {
         selectedGameId = gameId
         val parsedGame = parsedGamesById[gameId] ?: return
+        gameController.setOrientation(resolveTrainingPreviewBoardOrientation(parsedGame.game))
         gameController.loadFromUciMoves(parsedGame.uciMoves, targetPly = ply)
     }
 
     fun resetSelectedGame(gameId: Long) {
         val parsedGame = parsedGamesById[gameId] ?: return
+        gameController.setOrientation(resolveTrainingPreviewBoardOrientation(parsedGame.game))
         gameController.loadFromUciMoves(parsedGame.uciMoves, targetPly = 0)
     }
 
@@ -316,6 +322,16 @@ private fun rememberEditTrainingBoardSession(
         onMoveToPly = ::moveToPly,
         onResetSelectedGame = ::resetSelectedGame
     )
+}
+
+private fun resolveTrainingPreviewBoardOrientation(
+    game: TrainingGameEditorItem
+): BoardOrientation {
+    if (game.sideMask == SideMask.BLACK) {
+        return BoardOrientation.BLACK
+    }
+
+    return BoardOrientation.WHITE
 }
 
 @Composable

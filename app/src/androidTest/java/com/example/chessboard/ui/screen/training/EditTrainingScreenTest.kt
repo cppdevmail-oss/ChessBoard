@@ -15,6 +15,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
 import com.example.chessboard.RuntimeContext
 import com.example.chessboard.boardmodel.InitialBoardFen
+import com.example.chessboard.entity.SideMask
 import com.example.chessboard.testing.fenStateDescriptionMatcher
 import com.example.chessboard.testing.normalizeFenForAssertion
 import com.example.chessboard.ui.EditTrainingListTestTag
@@ -122,11 +123,12 @@ class EditTrainingScreenTest {
         }.getOrNull()
     }
 
-    private companion object {
+        private companion object {
                 val TestTrainingGame = TrainingGameEditorItem(
             gameId = 1L,
             title = "Test Opening",
-            pgn = "1. e2e4 e7e5 *"
+            pgn = "1. e2e4 e7e5 *",
+            sideMask = SideMask.WHITE
         )
         const val AfterE4Fen = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
     }
