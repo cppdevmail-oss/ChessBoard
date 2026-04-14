@@ -27,8 +27,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.unit.Dp
-import com.example.chessboard.entity.GameEntity
-import com.example.chessboard.entity.SideMask
 import com.example.chessboard.service.OneGameTrainingData
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
@@ -52,16 +50,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-
-data class TrainingGameEditorItem(
-    val gameId: Long,
-    val title: String,
-    val weight: Int = 1,
-    val eco: String? = null,
-    val pgn: String = "",
-    val sideMask: Int = SideMask.BOTH
-)
-
 internal data class CreateTrainingInitialData(
     val trainingName: String = DEFAULT_TRAINING_NAME,
     val gamesForTraining: List<TrainingGameEditorItem> = emptyList()
@@ -78,44 +66,6 @@ private data class TrainingSaveSuccess(
     val trainingName: String,
     val gamesCount: Int
 )
-
-internal fun decreaseTrainingGameWeight(
-    editorState: CreateTrainingEditorState,
-    gameId: Long
-): CreateTrainingEditorState {
-    if (editorState.editableGamesForTraining.none { it.gameId == gameId }) {
-        return editorState
-    }
-
-    return editorState.copy(
-        editableGamesForTraining = editorState.editableGamesForTraining.map { game ->
-            if (game.gameId != gameId) {
-                return@map game
-            }
-
-            return@map game.copy(weight = (game.weight - 1).coerceAtLeast(1))
-        }
-    )
-}
-
-internal fun increaseTrainingGameWeight(
-    editorState: CreateTrainingEditorState,
-    gameId: Long
-): CreateTrainingEditorState {
-    if (editorState.editableGamesForTraining.none { it.gameId == gameId }) {
-        return editorState
-    }
-
-    return editorState.copy(
-        editableGamesForTraining = editorState.editableGamesForTraining.map { game ->
-            if (game.gameId != gameId) {
-                return@map game
-            }
-
-            return@map game.copy(weight = game.weight + 1)
-        }
-    )
-}
 
 @Composable
 internal fun CreateTrainingScreenContainer(
@@ -315,17 +265,32 @@ private fun TrainingGamesEditorSection(
                 canGoPrevious = pageState.canGoPrevious,
                 canGoNext = pageState.canGoNext,
                 onDecreaseWeightClick = { gameId ->
-                    onEditorStateChange(decreaseTrainingGameWeight(editorState, gameId))
+                    onEditorStateChange(
+                        editorState.copy(
+                            editableGamesForTraining = decreaseTrainingGameWeight(
+                                games = editorState.editableGamesForTraining,
+                                gameId = gameId
+                            )
+                        )
+                    )
                 },
                 onIncreaseWeightClick = { gameId ->
-                    onEditorStateChange(increaseTrainingGameWeight(editorState, gameId))
+                    onEditorStateChange(
+                        editorState.copy(
+                            editableGamesForTraining = increaseTrainingGameWeight(
+                                games = editorState.editableGamesForTraining,
+                                gameId = gameId
+                            )
+                        )
+                    )
                 },
                 onRemoveGameClick = { gameId ->
                     onEditorStateChange(
                         editorState.copy(
-                            editableGamesForTraining = editorState.editableGamesForTraining.filterNot { game ->
-                                game.gameId == gameId
-                            }
+                            editableGamesForTraining = removeTrainingGame(
+                                games = editorState.editableGamesForTraining,
+                                gameId = gameId
+                            )
                         )
                     )
                 },
@@ -346,17 +311,6 @@ private fun TrainingGamesEditorSection(
             )
         }
     }
-}
-
-internal fun GameEntity.toTrainingGameEditorItem(weight: Int = 1): TrainingGameEditorItem {
-    return TrainingGameEditorItem(
-        gameId = id,
-        title = event ?: "Unnamed Opening",
-        weight = weight,
-        eco = eco,
-        pgn = pgn,
-        sideMask = sideMask
-    )
 }
 
 @Composable
