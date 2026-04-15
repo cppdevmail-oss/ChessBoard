@@ -91,7 +91,7 @@ internal fun GameSideSelector(
 
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(64.dp)
                         .background(
                             color = resolveSideSelectionColor(visualState),
                             shape = RoundedCornerShape(50)
@@ -101,7 +101,7 @@ internal fun GameSideSelector(
                 ) {
                     Text(
                         text = side.toDisplaySymbol(),
-                        fontSize = 20.sp,
+                        fontSize = 30.sp,
                         color = resolveSideSelectionContentColor(visualState)
                     )
                 }

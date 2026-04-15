@@ -17,6 +17,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
@@ -37,7 +39,8 @@ fun AppTextField(
     placeholder: String,
     modifier: Modifier = Modifier,
     isError: Boolean = false,
-    minLines: Int = 1
+    minLines: Int = 1,
+    focusRequester: FocusRequester? = null,
 ) {
     Column(modifier = modifier) {
         FieldLabelText(
@@ -56,6 +59,7 @@ fun AppTextField(
                 onValueChange = onValueChange,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
                     .padding(horizontal = 14.dp, vertical = AppDimens.spaceMd),
                 textStyle = MaterialTheme.typography.bodyMedium.merge(
                     TextStyle(color = TextColor.Primary)

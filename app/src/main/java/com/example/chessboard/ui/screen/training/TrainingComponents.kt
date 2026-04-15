@@ -16,6 +16,7 @@ import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -50,6 +51,7 @@ fun DarkInputField(
     modifier: Modifier = Modifier,
     isError: Boolean = false,
     minLines: Int = 1,
+    focusRequester: FocusRequester? = null,
 ) {
     AppTextField(
         value = value,
@@ -58,7 +60,8 @@ fun DarkInputField(
         placeholder = placeholder,
         modifier = modifier,
         isError = isError,
-        minLines = minLines
+        minLines = minLines,
+        focusRequester = focusRequester,
     )
 }
 

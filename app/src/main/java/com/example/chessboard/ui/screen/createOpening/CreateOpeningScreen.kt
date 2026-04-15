@@ -35,6 +35,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.focus.FocusRequester
+import kotlinx.coroutines.launch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -68,7 +71,6 @@ import com.example.chessboard.ui.MoveTreeContentTestTag
 import com.example.chessboard.ui.moveTreeRowTestTag
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.BodySecondaryText
-import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.ScreenSection
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.screen.EditableGameSide
@@ -103,11 +105,14 @@ internal fun CreateOpeningScreen(
     onPgnImportErrorDismiss: () -> Unit,
     saveError: String?,
     onSaveErrorDismiss: () -> Unit,
-    onImportPgnClick: () -> Unit,
     onImportFromFileClick: () -> Unit,
-    onSave: () -> Unit,
+    onSave: (scrollToNameField: () -> Unit) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val scrollState = rememberScrollState()
+    val nameFocusRequester = remember { FocusRequester() }
+    val coroutineScope = rememberCoroutineScope()
+
     if (pgnImportError != null) {
         AppMessageDialog(
             title = "Import Failed",
@@ -131,7 +136,14 @@ internal fun CreateOpeningScreen(
                 subtitle = "Build your custom opening",
                 onBackClick = onBackClick,
                 actions = {
-                    IconButton(onClick = onSave) {
+                    IconButton(onClick = {
+                        onSave {
+                            coroutineScope.launch {
+                                scrollState.animateScrollTo(0)
+                                nameFocusRequester.requestFocus()
+                            }
+                        }
+                    }) {
                         Icon(
                             imageVector = Icons.Default.Save,
                             contentDescription = "Save",
@@ -146,7 +158,7 @@ internal fun CreateOpeningScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
         ) {
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
 
@@ -161,6 +173,7 @@ internal fun CreateOpeningScreen(
                         placeholder = "e.g., Sicilian Defense",
                         label = "Opening Name *",
                         isError = nameError,
+                        focusRequester = nameFocusRequester,
                         modifier = Modifier.weight(1f)
                     )
                     DarkInputField(
@@ -179,7 +192,6 @@ internal fun CreateOpeningScreen(
                 ImportFromPgnBlock(
                     pgnText = pgnText,
                     onPgnTextChange = onPgnTextChange,
-                    onImportClick = onImportPgnClick,
                     onImportFromFileClick = onImportFromFileClick,
                     importedChapterCount = importedChapterCount
                 )
@@ -254,7 +266,7 @@ private fun BoardControlRow(
     ) {
         Row(
             modifier = Modifier
-                .padding(horizontal = AppDimens.spaceSm, vertical = AppDimens.spaceSm),
+                .padding(horizontal = AppDimens.spaceLg, vertical = AppDimens.spaceMd),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -262,7 +274,7 @@ private fun BoardControlRow(
                 selectedSide = selectedSide,
                 onSideSelected = onSideSelected,
                 showTitle = false,
-                modifier = Modifier.width(88.dp)
+                modifier = Modifier.width(136.dp)
             )
 
             PillDivider()
@@ -270,7 +282,7 @@ private fun BoardControlRow(
             // Reset
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(64.dp)
                     .clip(RoundedCornerShape(50))
                     .clickable(onClick = onResetClick),
                 contentAlignment = Alignment.Center
@@ -279,7 +291,7 @@ private fun BoardControlRow(
                     imageVector = Icons.Filled.Refresh,
                     contentDescription = "Reset",
                     tint = TrainingTextPrimary,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(32.dp)
                 )
             }
 
@@ -289,7 +301,7 @@ private fun BoardControlRow(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(64.dp)
                         .clickable(enabled = canUndo, onClick = onUndoClick),
                     contentAlignment = Alignment.Center
                 ) {
@@ -297,12 +309,12 @@ private fun BoardControlRow(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                         contentDescription = "Undo",
                         tint = if (canUndo) TrainingTextPrimary else TrainingIconInactive,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(38.dp)
                     )
                 }
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(64.dp)
                         .clickable(enabled = canRedo, onClick = onRedoClick),
                     contentAlignment = Alignment.Center
                 ) {
@@ -310,7 +322,7 @@ private fun BoardControlRow(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                         contentDescription = "Redo",
                         tint = if (canRedo) TrainingTextPrimary else TrainingIconInactive,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(38.dp)
                     )
                 }
             }
@@ -323,7 +335,7 @@ private fun PillDivider() {
     Box(
         modifier = Modifier
             .width(1.dp)
-            .height(24.dp)
+            .height(40.dp)
             .background(TrainingIconInactive.copy(alpha = 0.4f))
     )
 }
@@ -495,7 +507,6 @@ private fun TreeMoveChip(label: String, isSelected: Boolean, onClick: () -> Unit
 private fun ImportFromPgnBlock(
     pgnText: String,
     onPgnTextChange: (String) -> Unit,
-    onImportClick: () -> Unit,
     onImportFromFileClick: () -> Unit,
     importedChapterCount: Int,
     modifier: Modifier = Modifier
@@ -553,42 +564,31 @@ private fun ImportFromPgnBlock(
             )
         }
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd),
+        Surface(
+            onClick = onImportFromFileClick,
+            shape = RoundedCornerShape(AppDimens.radiusMd),
+            color = Background.SurfaceDark,
+            border = BorderStroke(1.dp, TrainingAccentTeal),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Surface(
-                onClick = onImportFromFileClick,
-                shape = RoundedCornerShape(AppDimens.radiusMd),
-                color = Background.SurfaceDark,
-                border = BorderStroke(1.dp, TrainingAccentTeal),
-                modifier = Modifier.weight(1f)
+            Row(
+                modifier = Modifier.padding(horizontal = AppDimens.spaceMd, vertical = 12.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = AppDimens.spaceMd, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.FolderOpen,
-                        contentDescription = null,
-                        tint = TrainingAccentTeal,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(AppDimens.spaceXs))
-                    Text(
-                        text = "From File",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = TrainingAccentTeal
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.FolderOpen,
+                    contentDescription = null,
+                    tint = TrainingAccentTeal,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(AppDimens.spaceXs))
+                Text(
+                    text = "From File",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = TrainingAccentTeal
+                )
             }
-
-            PrimaryButton(
-                text = "Import PGN",
-                onClick = onImportClick,
-                modifier = Modifier.weight(1f)
-            )
         }
     }
 }

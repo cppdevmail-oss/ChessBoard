@@ -44,6 +44,7 @@ import com.example.chessboard.service.uciMovesToMoves
 import com.example.chessboard.ui.screen.EditableGameSide
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -113,6 +114,44 @@ fun CreateOpeningScreenContainer(
         gameController.setOrientation(EditableGameSide.fromSideMask(gameDraft.game.sideMask).orientation)
     }
 
+    LaunchedEffect(pgnText) {
+        if (pgnText.isBlank()) {
+            importedChapters = emptyList()
+            return@LaunchedEffect
+        }
+        delay(600)
+        try {
+            val chapters = withContext(Dispatchers.Default) {
+                splitPgnChapters(pgnText).mapNotNull { chapterPgn ->
+                    val headers = extractPgnHeaders(chapterPgn)
+                    val uciLines = parsePgnToUciLines(chapterPgn)
+                    if (uciLines.isEmpty()) null
+                    else ImportedChapter(headers = headers, uciLines = uciLines)
+                }
+            }
+            if (chapters.isEmpty()) {
+                pgnImportError = "No valid moves found in PGN text"
+            } else {
+                val first = chapters.first()
+                first.headers["Event"]
+                    ?.takeIf { it.isNotBlank() && it != "?" }
+                    ?.let { event ->
+                        updateDraftGame { draftGame -> draftGame.copy(event = event) }
+                    }
+                first.headers["ECO"]
+                    ?.takeIf { it.isNotBlank() && it != "?" }
+                    ?.let { eco ->
+                        updateDraftGame { draftGame -> draftGame.copy(eco = eco) }
+                    }
+                importedChapters = chapters
+                gameController.loadFromUciMoves(first.uciLines.first())
+                pgnImportError = null
+            }
+        } catch (_: Exception) {
+            pgnImportError = "Failed to parse PGN"
+        }
+    }
+
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
         onResult = { uri ->
@@ -125,7 +164,6 @@ fun CreateOpeningScreenContainer(
                         withContext(Dispatchers.Main) {
                             if (content != null) {
                                 pgnText = content
-                                importedChapters = emptyList()
                             } else {
                                 pgnImportError = "Could not read the selected file"
                             }
@@ -190,51 +228,11 @@ fun CreateOpeningScreenContainer(
         saveError = saveError,
         onSaveErrorDismiss = { saveError = null },
         onImportFromFileClick = { filePickerLauncher.launch(arrayOf("*/*")) },
-        onImportPgnClick = {
-            (activity as? LifecycleOwner)?.lifecycleScope?.launch(Dispatchers.Default) {
-                try {
-                    val chapters = splitPgnChapters(pgnText).mapNotNull { chapterPgn ->
-                        val headers = extractPgnHeaders(chapterPgn)
-                        val uciLines = parsePgnToUciLines(chapterPgn)
-                        if (uciLines.isEmpty()) null
-                        else ImportedChapter(headers = headers, uciLines = uciLines)
-                    }
-
-                    withContext(Dispatchers.Main) {
-                        if (chapters.isEmpty()) {
-                            pgnImportError = "No valid moves found in PGN text"
-                        } else {
-                            val first = chapters.first()
-                            first.headers["Event"]
-                                ?.takeIf { it.isNotBlank() && it != "?" }
-                                ?.let { event ->
-                                    updateDraftGame { draftGame ->
-                                        draftGame.copy(event = event)
-                                    }
-                                }
-                            first.headers["ECO"]
-                                ?.takeIf { it.isNotBlank() && it != "?" }
-                                ?.let { eco ->
-                                    updateDraftGame { draftGame ->
-                                        draftGame.copy(eco = eco)
-                                    }
-                                }
-                            importedChapters = chapters
-                            gameController.loadFromUciMoves(first.uciLines.first())
-                            pgnImportError = null
-                        }
-                    }
-                } catch (_: Exception) {
-                    withContext(Dispatchers.Main) {
-                        pgnImportError = "Failed to parse PGN"
-                    }
-                }
-            }
-        },
-        onSave = {
+        onSave = { scrollToNameField ->
             val isMultiChapter = importedChapters.size > 1
             if (!isMultiChapter && gameDraft.game.event.isNullOrBlank()) {
                 nameError = true
+                scrollToNameField()
                 return@CreateOpeningScreen
             }
 
