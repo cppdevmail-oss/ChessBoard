@@ -4,26 +4,20 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,11 +25,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.unit.dp
 import com.example.chessboard.RuntimeContext
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.ui.screen.training.loadsave.RenderUnsavedTrainingChangesDialog
@@ -52,14 +43,12 @@ import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTextField
 import com.example.chessboard.ui.components.AppTopBar
+import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.theme.AppDimens
-import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import androidx.compose.ui.text.style.TextAlign
 import com.example.chessboard.ui.EditTrainingListTestTag
-import com.example.chessboard.ui.components.BodySecondaryText
 import kotlinx.coroutines.launch
 
 private fun resolveRandomTrainingGameId(
@@ -210,8 +199,7 @@ fun EditTrainingScreen(
     modifier: Modifier = Modifier
 ) {
     var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
-    var moveFrom by remember { mutableIntStateOf(1) }
-    var moveTo by remember { mutableIntStateOf(0) }
+    var moveRange by remember { mutableStateOf(TrainingMoveRange()) }
     var editorState by remember(initialTrainingName, gamesForTraining) {
         mutableStateOf(
             CreateTrainingEditorState(
@@ -319,7 +307,7 @@ fun EditTrainingScreen(
                             }
 
                             requestLeave {
-                                onStartGameTrainingClick(randomGameId, moveFrom, moveTo)
+                                onStartGameTrainingClick(randomGameId, moveRange.from, moveRange.to)
                             }
                         }
                     )
@@ -357,7 +345,7 @@ fun EditTrainingScreen(
             val selectedIndex = orderedGamesForTraining
                 .indexOfFirst { it.gameId == boardSession.selectedGameId }
             if (selectedIndex >= 0) {
-                // +3 for the three header items (training name, depth control, games count)
+                // +3 for the three header items (training name, move range, games count)
                 listState.animateScrollToItem(selectedIndex + 3)
             }
         }
@@ -386,30 +374,10 @@ fun EditTrainingScreen(
             }
 
             item {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceLg)
-                ) {
-                    MoveRangeControl(
-                        label = "From:",
-                        value = moveFrom,
-                        displayText = "$moveFrom",
-                        onDecrement = { if (moveFrom > 1) moveFrom-- },
-                        onIncrement = { if (moveTo == 0 || moveFrom < moveTo) moveFrom++ }
-                    )
-                    MoveRangeControl(
-                        label = "To:",
-                        value = moveTo,
-                        displayText = if (moveTo == 0) "All" else "$moveTo",
-                        onDecrement = {
-                            if (moveTo > 0) {
-                                moveTo--
-                                if (moveTo > 0 && moveTo < moveFrom) moveFrom = moveTo
-                            }
-                        },
-                        onIncrement = { moveTo = if (moveTo == 0) moveFrom else moveTo + 1 }
-                    )
-                }
+                EditTrainingMoveRangeSection(
+                    moveRange = moveRange,
+                    onMoveRangeChange = { moveRange = it }
+                )
             }
 
             item {
@@ -462,7 +430,7 @@ fun EditTrainingScreen(
                     primaryAction = TrainingEditorPrimaryAction(
                         onClick = {
                             requestLeave {
-                                onStartGameTrainingClick(game.gameId, moveFrom, moveTo)
+                                onStartGameTrainingClick(game.gameId, moveRange.from, moveRange.to)
                             }
                         },
                         icon = Icons.Rounded.PlayArrow,
@@ -471,55 +439,6 @@ fun EditTrainingScreen(
                 )
 
             }
-        }
-    }
-}
-
-@Composable
-private fun MoveRangeControl(
-    label: String,
-    value: Int,
-    displayText: String,
-    onDecrement: () -> Unit,
-    onIncrement: () -> Unit,
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceXs)
-    ) {
-        BodySecondaryText(text = label)
-        IconButton(onClick = onDecrement, modifier = Modifier.size(32.dp)) {
-            Icon(
-                imageVector = Icons.Default.Remove,
-                contentDescription = "Decrease $label",
-                tint = TrainingAccentTeal,
-                modifier = Modifier.size(18.dp)
-            )
-        }
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.widthIn(min = 36.dp)
-        ) {
-            Text(
-                text = displayText,
-                color = TextColor.Primary,
-                style = MaterialTheme.typography.titleSmall,
-                textAlign = TextAlign.Center
-            )
-            Text(
-                text = "move",
-                color = TextColor.Secondary,
-                style = MaterialTheme.typography.labelSmall,
-                textAlign = TextAlign.Center
-            )
-        }
-        IconButton(onClick = onIncrement, modifier = Modifier.size(32.dp)) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Increase $label",
-                tint = TrainingAccentTeal,
-                modifier = Modifier.size(18.dp)
-            )
         }
     }
 }
