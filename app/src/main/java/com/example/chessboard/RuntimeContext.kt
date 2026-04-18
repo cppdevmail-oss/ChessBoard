@@ -14,6 +14,16 @@ class RuntimeContext {
     val positionEditor = PositionEditor()
     var trainingMoveFrom: Int = 1
     var trainingMoveTo: Int = 0
+    var trainingOrderedGameIds: List<Long> = emptyList()
+
+    fun resolveNextTrainingGameId(currentGameId: Long): Long? {
+        val currentIndex = trainingOrderedGameIds.indexOf(currentGameId)
+        if (currentIndex < 0) {
+            return null
+        }
+
+        return trainingOrderedGameIds.getOrNull(currentIndex + 1)
+    }
 
     companion object {
         const val GamesExplorerPageLimit = 20

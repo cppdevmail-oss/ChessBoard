@@ -77,7 +77,7 @@ fun EditTrainingScreenContainer(
     screenContext: ScreenContainerContext,
     orderGamesInTraining: RuntimeContext.OrderGamesInTraining,
     hideLinesWithWeightZero: Boolean = false,
-    onStartGameTrainingClick: (Long, Int, Int) -> Unit = { _, _, _ -> },
+    onStartGameTrainingClick: (Long, Int, Int, List<Long>) -> Unit = { _, _, _, _ -> },
     onOpenGameEditorClick: (GameEntity) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -166,7 +166,7 @@ fun EditTrainingScreen(
     orderGamesInTraining: RuntimeContext.OrderGamesInTraining,
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
-    onStartGameTrainingClick: (Long, Int, Int) -> Unit = { _, _, _ -> },
+    onStartGameTrainingClick: (Long, Int, Int, List<Long>) -> Unit = { _, _, _, _ -> },
     onOpenGameEditorClick: (Long) -> Unit = {},
     onSaveTraining: (String, List<TrainingGameEditorItem>, Boolean, (() -> Unit)?) -> Unit = { _, _, _, _ -> },
     modifier: Modifier = Modifier
@@ -185,9 +185,9 @@ fun EditTrainingScreen(
     var savedTrainingName by remember(initialTrainingName) { mutableStateOf(initialTrainingName) }
     var savedGamesForTraining by remember(gamesForTraining) { mutableStateOf(gamesForTraining) }
     var pendingLeaveAction by remember { mutableStateOf<(() -> Unit)?>(null) }
-    val orderedGameIds = remember(gamesForTraining) {
+    val orderedGameIds = remember(editorState.editableGamesForTraining) {
         orderGamesInTraining.orderGames(
-            games = gamesForTraining,
+            games = editorState.editableGamesForTraining,
             getGameId = { game -> game.gameId },
             getWeight = { game -> game.weight }
         ).map { it.gameId }
@@ -297,7 +297,7 @@ fun EditTrainingScreen(
         },
         topBarActions = {
             RenderEditTrainingRandomAction(
-                games = editorState.editableGamesForTraining,
+                games = orderedGamesForTraining,
                 moveRange = moveRange,
                 requestLeave = ::requestLeave,
                 onStartGameTrainingClick = onStartGameTrainingClick
@@ -349,6 +349,7 @@ fun EditTrainingScreen(
             ),
             primaryAction = createEditTrainingPrimaryAction(
                 gameId = game.gameId,
+                orderedGameIds = orderedGameIds,
                 moveRange = moveRange,
                 requestLeave = ::requestLeave,
                 onStartGameTrainingClick = onStartGameTrainingClick
