@@ -28,6 +28,7 @@ import androidx.compose.ui.draw.clip
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.ui.ChessBoardWithCoordinates
 import com.example.chessboard.ui.components.AppMessageDialog
+import com.example.chessboard.ui.components.AppMessageDialogAction
 import com.example.chessboard.ui.components.AppTextField
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.PrimaryButton
@@ -41,7 +42,8 @@ import com.example.chessboard.ui.theme.TextColor
 internal fun RenderCompletionDialog(
     dialogState: TrainSingleGameCompletionState?,
     onRepeatClick: () -> Unit,
-    onFinishClick: () -> Unit
+    onFinishClick: () -> Unit,
+    onNextTrainingClick: (() -> Unit)? = null,
 ) {
     if (dialogState == null) {
         return
@@ -50,7 +52,8 @@ internal fun RenderCompletionDialog(
     TrainSingleGameCompletionDialog(
         dialogState = dialogState,
         onRepeatClick = onRepeatClick,
-        onFinishClick = onFinishClick
+        onFinishClick = onFinishClick,
+        onNextTrainingClick = onNextTrainingClick,
     )
 }
 
@@ -295,15 +298,23 @@ internal fun TrainingBoardSection(
 internal fun TrainSingleGameCompletionDialog(
     dialogState: TrainSingleGameCompletionState,
     onRepeatClick: () -> Unit,
-    onFinishClick: () -> Unit
+    onFinishClick: () -> Unit,
+    onNextTrainingClick: (() -> Unit)? = null,
 ) {
+    val dialogActions = buildList {
+        add(AppMessageDialogAction(text = "Repeat variation", onClick = onRepeatClick))
+
+        if (onNextTrainingClick != null) {
+            add(AppMessageDialogAction(text = "Next training", onClick = onNextTrainingClick))
+        }
+
+        add(AppMessageDialogAction(text = dialogState.finishLabel, onClick = onFinishClick))
+    }
+
     AppMessageDialog(
         title = dialogState.title,
         message = dialogState.message,
         onDismiss = onFinishClick,
-        confirmText = "Repeat variation",
-        onConfirm = onRepeatClick,
-        dismissText = dialogState.finishLabel,
-        onDismissClick = onFinishClick
+        actions = dialogActions,
     )
 }
