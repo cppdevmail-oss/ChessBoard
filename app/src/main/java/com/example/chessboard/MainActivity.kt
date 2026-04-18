@@ -232,9 +232,10 @@ class MainActivity : ComponentActivity() {
                         ),
                         orderGamesInTraining = runtimeContext.orderGamesInTraining,
                         hideLinesWithWeightZero = hideLinesWithWeightZero,
-                        onStartGameTrainingClick = { gameId, moveFrom, moveTo ->
+                        onStartGameTrainingClick = { gameId, moveFrom, moveTo, orderedGameIds ->
                             runtimeContext.trainingMoveFrom = moveFrom
                             runtimeContext.trainingMoveTo = moveTo
+                            runtimeContext.trainingOrderedGameIds = orderedGameIds
                             currentScreen = ScreenType.TrainSingleGame(screen.trainingId, gameId)
                         },
                         onOpenGameEditorClick = { game ->
@@ -250,11 +251,22 @@ class MainActivity : ComponentActivity() {
                         moveFrom = runtimeContext.trainingMoveFrom,
                         moveTo = runtimeContext.trainingMoveTo,
                         keepLineIfZero = dontRemoveLineIfRepIsZero,
+                        hasNextTrainingGame = runtimeContext.resolveNextTrainingGameId(screen.gameId) != null,
                         onTrainingFinished = { result ->
                             runtimeContext.orderGamesInTraining.markGameCompleted(
                                 gameId = result.gameId
                             )
                             currentScreen = ScreenType.EditTraining(screen.trainingId)
+                        },
+                        onNextTrainingClick = { result ->
+                            runtimeContext.orderGamesInTraining.markGameCompleted(
+                                gameId = result.gameId
+                            )
+                            val nextGameId = runtimeContext.resolveNextTrainingGameId(result.gameId)
+                            currentScreen = ScreenType.EditTraining(screen.trainingId)
+                            if (nextGameId != null) {
+                                currentScreen = ScreenType.TrainSingleGame(screen.trainingId, nextGameId)
+                            }
                         },
                         onOpenGameEditorClick = { game ->
                             selectedGame = game

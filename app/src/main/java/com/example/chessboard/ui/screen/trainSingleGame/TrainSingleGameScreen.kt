@@ -52,7 +52,9 @@ fun TrainSingleGameScreenContainer(
     trainingId: Long,
     trainingGameData: TrainSingleGameData,
     keepLineIfZero: Boolean = false,
+    hasNextTrainingGame: Boolean = false,
     onTrainingFinished: (TrainSingleGameResult) -> Unit = {},
+    onNextTrainingClick: (TrainSingleGameResult) -> Unit = {},
     onOpenGameEditorClick: () -> Unit = {},
     onCloneGameClick: (GameDraft) -> Unit = {},
     onSearchByPositionClick: (String) -> Unit = {},
@@ -66,6 +68,7 @@ fun TrainSingleGameScreenContainer(
         gameId = gameId,
         trainingId = trainingId,
         trainingGameData = trainingGameData,
+        hasNextTrainingGame = hasNextTrainingGame,
         onTrainingFinished = { result ->
             scope.launch {
                 withContext(Dispatchers.IO) {
@@ -77,6 +80,19 @@ fun TrainSingleGameScreenContainer(
                     )
                 }
                 onTrainingFinished(result)
+            }
+        },
+        onNextTrainingClick = { result ->
+            scope.launch {
+                withContext(Dispatchers.IO) {
+                    inDbProvider.finishTrainingGame(
+                        trainingId = result.trainingId,
+                        gameId = result.gameId,
+                        mistakesCount = result.mistakesCount,
+                        keepLineIfZero = keepLineIfZero
+                    )
+                }
+                onNextTrainingClick(result)
             }
         },
         onBackClick = screenContext.onBackClick,
@@ -93,7 +109,9 @@ private fun TrainSingleGameScreen(
     gameId: Long,
     trainingId: Long,
     trainingGameData: TrainSingleGameData,
+    hasNextTrainingGame: Boolean = false,
     onTrainingFinished: (TrainSingleGameResult) -> Unit = {},
+    onNextTrainingClick: (TrainSingleGameResult) -> Unit = {},
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
     onOpenGameEditorClick: () -> Unit = {},
@@ -131,6 +149,27 @@ private fun TrainSingleGameScreen(
             startFen = startFen,
             hasMoveCap = hasMoveCap,
         )
+    }
+
+    fun createNextTrainingClickAction(): (() -> Unit)? {
+        if (!hasNextTrainingGame) {
+            return null
+        }
+
+        val completionDialog = uiState.completionDialog ?: return null
+        if (completionDialog.hasNextSide) {
+            return null
+        }
+
+        return {
+            val result = TrainSingleGameResult(
+                gameId = gameId,
+                trainingId = trainingId,
+                mistakesCount = uiState.mistakesCount,
+            )
+            uiState = uiState.copy(completionDialog = null)
+            onNextTrainingClick(result)
+        }
     }
 
     LaunchedEffect(gameController, loadedGame.id) {
@@ -330,7 +369,7 @@ private fun TrainSingleGameScreen(
         RenderCompletionDialog(
             dialogState = uiState.completionDialog,
             onRepeatClick = {
-                gameController.resetToStartPosition()
+                resetToTrainingStart()
                 uiState = buildRepeatVariationState(uiState)
             },
             onFinishClick = {
@@ -340,7 +379,8 @@ private fun TrainSingleGameScreen(
                     trainingId = trainingId,
                     onTrainingFinished = onTrainingFinished
                 )
-            }
+            },
+            onNextTrainingClick = createNextTrainingClickAction()
         )
 
         Column(

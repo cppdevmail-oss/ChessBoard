@@ -25,12 +25,13 @@ private fun resolveRandomTrainingGameId(
 
 private fun requestTrainingLaunch(
     gameId: Long,
+    orderedGameIds: List<Long>,
     moveRange: TrainingMoveRange,
     requestLeave: (() -> Unit) -> Unit,
-    onStartGameTrainingClick: (Long, Int, Int) -> Unit,
+    onStartGameTrainingClick: (Long, Int, Int, List<Long>) -> Unit,
 ) {
     requestLeave {
-        onStartGameTrainingClick(gameId, moveRange.from, moveRange.to)
+        onStartGameTrainingClick(gameId, moveRange.from, moveRange.to, orderedGameIds)
     }
 }
 
@@ -39,7 +40,7 @@ internal fun RenderEditTrainingRandomAction(
     games: List<TrainingGameEditorItem>,
     moveRange: TrainingMoveRange,
     requestLeave: (() -> Unit) -> Unit,
-    onStartGameTrainingClick: (Long, Int, Int) -> Unit,
+    onStartGameTrainingClick: (Long, Int, Int, List<Long>) -> Unit,
 ) {
     PrimaryButton(
         text = "Random",
@@ -47,6 +48,7 @@ internal fun RenderEditTrainingRandomAction(
             val randomGameId = resolveRandomTrainingGameId(games) ?: return@PrimaryButton
             requestTrainingLaunch(
                 gameId = randomGameId,
+                orderedGameIds = games.map { it.gameId },
                 moveRange = moveRange,
                 requestLeave = requestLeave,
                 onStartGameTrainingClick = onStartGameTrainingClick
@@ -57,14 +59,16 @@ internal fun RenderEditTrainingRandomAction(
 
 internal fun createEditTrainingPrimaryAction(
     gameId: Long,
+    orderedGameIds: List<Long>,
     moveRange: TrainingMoveRange,
     requestLeave: (() -> Unit) -> Unit,
-    onStartGameTrainingClick: (Long, Int, Int) -> Unit,
+    onStartGameTrainingClick: (Long, Int, Int, List<Long>) -> Unit,
 ): TrainingEditorPrimaryAction {
     return TrainingEditorPrimaryAction(
         onClick = {
             requestTrainingLaunch(
                 gameId = gameId,
+                orderedGameIds = orderedGameIds,
                 moveRange = moveRange,
                 requestLeave = requestLeave,
                 onStartGameTrainingClick = onStartGameTrainingClick
