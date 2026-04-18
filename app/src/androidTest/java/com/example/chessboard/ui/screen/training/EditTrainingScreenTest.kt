@@ -104,7 +104,7 @@ class EditTrainingScreenTest {
                 EditTrainingScreen(
                     gamesForTraining = listOf(TestTrainingGame),
                     orderGamesInTraining = RuntimeContext.OrderGamesInTraining(),
-                    onStartGameTrainingClick = { gameId, moveFrom, moveTo ->
+                    onStartGameTrainingClick = { gameId, moveFrom, moveTo, _ ->
                         launchedGameId = gameId
                         launchedMoveFrom = moveFrom
                         launchedMoveTo = moveTo
@@ -136,7 +136,7 @@ class EditTrainingScreenTest {
                 EditTrainingScreen(
                     gamesForTraining = listOf(TestTrainingGame),
                     orderGamesInTraining = RuntimeContext.OrderGamesInTraining(),
-                    onStartGameTrainingClick = { gameId, moveFrom, moveTo ->
+                    onStartGameTrainingClick = { gameId, moveFrom, moveTo, _ ->
                         launchedGameId = gameId
                         launchedMoveFrom = moveFrom
                         launchedMoveTo = moveTo
