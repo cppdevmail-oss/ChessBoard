@@ -18,6 +18,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -94,6 +95,45 @@ class EditTrainingTemplateScreenTest {
             .performSemanticsAction(SemanticsActions.OnClick)
 
         assertBoardFenEventually(AfterE4Fen)
+    }
+
+
+    @Test
+    fun editTrainingTemplateScreen_backShowsUnsavedChangesDialog_afterTemplateNameChange() {
+        composeRule.setContent {
+            ChessBoardTheme {
+                EditTrainingTemplateScreen(
+                    initialTemplateName = "Sicilian Templates",
+                    gamesForTemplate = listOf(TestTemplateGame),
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Sicilian Templates").performTextReplacement("Updated Template")
+        composeRule.activityRule.scenario.onActivity { activity ->
+            activity.onBackPressedDispatcher.onBackPressed()
+        }
+
+        composeRule.onNodeWithText("Unsaved Changes").assertIsDisplayed()
+    }
+
+    @Test
+    fun editTrainingTemplateScreen_backShowsUnsavedChangesDialog_afterWeightChange() {
+        composeRule.setContent {
+            ChessBoardTheme {
+                EditTrainingTemplateScreen(
+                    initialTemplateName = "Sicilian Templates",
+                    gamesForTemplate = listOf(TestTemplateGame),
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Increase").performClick()
+        composeRule.activityRule.scenario.onActivity { activity ->
+            activity.onBackPressedDispatcher.onBackPressed()
+        }
+
+        composeRule.onNodeWithText("Unsaved Changes").assertIsDisplayed()
     }
 
 
