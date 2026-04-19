@@ -16,8 +16,8 @@ import com.example.chessboard.entity.TrainingEntity
 import com.example.chessboard.entity.TrainingResultEntity
 import com.example.chessboard.entity.TrainingTemplateEntity
 import com.example.chessboard.entity.UserProfileEntity
+import com.example.chessboard.service.SmartTrainingService
 import com.example.chessboard.service.TrainingResultService
-import com.example.chessboard.service.TrainingGameLaunchResult
 import com.example.chessboard.service.GameBackupService
 import com.example.chessboard.service.GameDeleter
 import com.example.chessboard.service.GameListService
@@ -163,6 +163,10 @@ class DatabaseProvider private constructor(
 
     fun createSavedSearchPositionService(): SavedSearchPositionService {
         return SavedSearchPositionService(database.savedSearchPositionDao())
+    }
+
+    fun createSmartTrainingService(): SmartTrainingService {
+        return SmartTrainingService(database.trainingDao(), database.trainingResultDao())
     }
 
     fun createUserProfileService(): UserProfileService {

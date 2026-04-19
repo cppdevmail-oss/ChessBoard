@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.example.chessboard.boardmodel.InitialBoardFenWithoutMoveNumbers
 import com.example.chessboard.repository.DatabaseProvider
+import com.example.chessboard.service.SmartGamePair
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -15,6 +16,13 @@ class RuntimeContext {
     var trainingMoveFrom: Int = 1
     var trainingMoveTo: Int = 0
     var trainingOrderedGameIds: List<Long> = emptyList()
+    var smartTrainingQueue: List<SmartGamePair> = emptyList()
+
+    fun resolveNextSmartGamePair(currentGameId: Long): SmartGamePair? {
+        val index = smartTrainingQueue.indexOfFirst { it.gameId == currentGameId }
+        if (index < 0) return null
+        return smartTrainingQueue.getOrNull(index + 1)
+    }
 
     fun resolveNextTrainingGameId(currentGameId: Long): Long? {
         val currentIndex = trainingOrderedGameIds.indexOf(currentGameId)

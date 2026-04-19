@@ -393,6 +393,55 @@ class MainActivity : ComponentActivity() {
                         screenContext = createScreenContext(
                             onBackClick = { currentScreen = ScreenType.Home },
                         ),
+                        onStartTraining = { queue ->
+                            val first = queue.firstOrNull()
+                            if (first != null) {
+                                runtimeContext.smartTrainingQueue = queue
+                                currentScreen = ScreenType.SmartTrainGame(first.trainingId, first.gameId)
+                            }
+                        },
+                    )
+
+                    is ScreenType.SmartTrainGame -> TrainSingleGameLauncherScreenContainer(
+                        trainingId = screen.trainingId,
+                        gameId = screen.gameId,
+                        keepLineIfZero = dontRemoveLineIfRepIsZero,
+                        hasNextTrainingGame = runtimeContext.resolveNextSmartGamePair(screen.gameId) != null,
+                        onTrainingFinished = {
+                            currentScreen = ScreenType.SmartTraining
+                        },
+                        onNextTrainingClick = { result ->
+                            val next = runtimeContext.resolveNextSmartGamePair(result.gameId)
+                            if (next != null) {
+                                currentScreen = ScreenType.SmartTrainGame(next.trainingId, next.gameId)
+                            } else {
+                                currentScreen = ScreenType.SmartTraining
+                            }
+                        },
+                        onOpenGameEditorClick = { game ->
+                            selectedGame = game
+                            gameEditorOnBackClick = {
+                                currentScreen = ScreenType.SmartTrainGame(screen.trainingId, screen.gameId)
+                            }
+                            currentScreen = ScreenType.GameEditor
+                        },
+                        onCloneGameClick = { draft ->
+                            createOpeningDraft = draft
+                            createOpeningOnBackClick = {
+                                currentScreen = ScreenType.SmartTrainGame(screen.trainingId, screen.gameId)
+                            }
+                            currentScreen = ScreenType.CreateOpening
+                        },
+                        onSearchByPositionClick = { fen ->
+                            runtimeContext.positionEditor.initialFen = fen
+                            runtimeContext.positionEditor.onBackClick = {
+                                currentScreen = ScreenType.SmartTrainGame(screen.trainingId, screen.gameId)
+                            }
+                            currentScreen = ScreenType.PositionEditor
+                        },
+                        screenContext = createScreenContext(
+                            onBackClick = { currentScreen = ScreenType.SmartTraining },
+                        ),
                     )
 
                     else -> currentScreen = ScreenType.Home

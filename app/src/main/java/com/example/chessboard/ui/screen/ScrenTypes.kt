@@ -23,6 +23,7 @@ sealed class ScreenType(val title: String) {
     object Profile : ScreenType("Profile")
     object Settings : ScreenType("Settings")
     object SmartTraining : ScreenType("SmartTraining")
+    data class SmartTrainGame(val trainingId: Long, val gameId: Long) : ScreenType("SmartTrainGame")
 
     override fun toString(): String = title
 }
