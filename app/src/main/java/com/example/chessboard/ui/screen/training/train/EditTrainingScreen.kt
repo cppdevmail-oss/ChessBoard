@@ -10,6 +10,7 @@ import com.example.chessboard.ui.screen.training.common.TrainingGameEditorItem
 import com.example.chessboard.ui.screen.training.common.decreaseTrainingGameWeight
 import com.example.chessboard.ui.screen.training.common.increaseTrainingGameWeight
 import com.example.chessboard.ui.screen.training.common.removeTrainingGame
+import com.example.chessboard.ui.screen.training.common.resolveNextSelectedTrainingGameId
 import com.example.chessboard.ui.screen.training.common.rememberTrainingEditorBoardSession
 
 import androidx.activity.compose.BackHandler
@@ -189,23 +190,6 @@ fun EditTrainingScreen(
     onSaveTraining: (String, List<TrainingGameEditorItem>, Boolean, (() -> Unit)?) -> Unit = { _, _, _, _ -> },
     modifier: Modifier = Modifier
 ) {
-    fun resolveNextSelectedGameId(
-        games: List<TrainingGameEditorItem>,
-        removedGameId: Long,
-    ): Long? {
-        val removedIndex = games.indexOfFirst { game -> game.gameId == removedGameId }
-        if (removedIndex < 0) {
-            return null
-        }
-
-        val remainingGames = removeTrainingGame(games, removedGameId)
-        if (remainingGames.isEmpty()) {
-            return null
-        }
-
-        return remainingGames.getOrNull(removedIndex)?.gameId ?: remainingGames.last().gameId
-    }
-
     var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
     var moveRange by remember { mutableStateOf(TrainingMoveRange()) }
     var hasUserSelectedGame by remember { mutableStateOf(false) }
@@ -272,7 +256,7 @@ fun EditTrainingScreen(
     }
 
     fun removeGameFromTraining(gameId: Long) {
-        val nextSelectedGameId = resolveNextSelectedGameId(
+        val nextSelectedGameId = resolveNextSelectedTrainingGameId(
             games = editorState.editableGamesForTraining,
             removedGameId = gameId,
         )
