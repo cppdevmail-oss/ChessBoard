@@ -45,7 +45,7 @@ import com.github.bhlangonijr.chesslib.move.Move
         TrainingResultEntity::class,
         UserProfileEntity::class,
     ],
-    version = 11
+    version = 12
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun gameDao(): GameDao

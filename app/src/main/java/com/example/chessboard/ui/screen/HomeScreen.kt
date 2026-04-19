@@ -35,6 +35,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material3.Icon
 import androidx.compose.ui.res.painterResource
 import com.example.chessboard.R
@@ -61,6 +63,7 @@ private val HomeSegmentSelected = Color(0xFF202020)
 private val HomeBadgeBackground = Color(0xFF242428)
 private val HomeMetricCard = Color(0xFF202024)
 private val HomeDivider = Color(0xFF202020)
+private val SmartTrainingIconBg = Color(0xFF179A6F)
 
 enum class HomeSideFilter {
     ALL,
@@ -83,6 +86,7 @@ fun HomeScreenContainer(
     simpleViewEnabled: Boolean,
     onCreateOpeningClick: () -> Unit = { screenContext.onNavigate(ScreenType.CreateOpening) },
     onCreateTrainingClick: () -> Unit = {},
+    onSmartTrainingClick: () -> Unit = { screenContext.onNavigate(ScreenType.SmartTraining) },
     onOpenPositionEditorClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -120,6 +124,7 @@ fun HomeScreenContainer(
         onNavigate = screenContext.onNavigate,
         onCreateOpeningClick = onCreateOpeningClick,
         onCreateTrainingClick = onCreateTrainingClick,
+        onSmartTrainingClick = onSmartTrainingClick,
         onOpenPositionEditorClick = onOpenPositionEditorClick,
         onOpenBackupClick = { screenContext.onNavigate(ScreenType.Backup) },
         onExitClick = { activity.finishAffinity() },
@@ -134,6 +139,7 @@ fun HomeScreen(
     onNavigate: (ScreenType) -> Unit = {},
     onCreateOpeningClick: () -> Unit = { onNavigate(ScreenType.CreateOpening) },
     onCreateTrainingClick: () -> Unit = {},
+    onSmartTrainingClick: () -> Unit = {},
     onOpenPositionEditorClick: () -> Unit = {},
     onOpenBackupClick: () -> Unit = {},
     onExitClick: () -> Unit = {},
@@ -147,6 +153,7 @@ fun HomeScreen(
                 onNavigate(ScreenType.EditTraining(trainingId))
             },
             onNavigate = onNavigate,
+            onSmartTrainingClick = onSmartTrainingClick,
             modifier = modifier
         )
         return
@@ -294,6 +301,7 @@ private fun SimpleHomeScreen(
     onCreateOpeningClick: () -> Unit,
     onOpenTraining: (Long) -> Unit,
     onNavigate: (ScreenType) -> Unit,
+    onSmartTrainingClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -387,6 +395,10 @@ private fun SimpleHomeScreen(
                         .height(1.dp)
                         .background(HomeDivider)
                 )
+            }
+
+            item {
+                SmartTrainingBanner(onClick = onSmartTrainingClick)
             }
 
             if (filteredTrainings.isEmpty()) {
@@ -622,6 +634,60 @@ private fun AddOpeningButton(
             tint = Color.White,
             modifier = Modifier.size(24.dp)
         )
+    }
+}
+
+@Composable
+private fun SmartTrainingBanner(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(TrainingAccentTeal)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 18.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(52.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(SmartTrainingIconBg),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Psychology,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(30.dp),
+            )
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        Column {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Smart Training",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(
+                    imageVector = Icons.Filled.Bolt,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
+            Text(
+                text = "Create personalized practice sessions",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White.copy(alpha = 0.85f),
+            )
+        }
     }
 }
 

@@ -11,6 +11,7 @@ data class UserProfileEntity(
     val simpleViewEnabled: Boolean = false,
     val dontRemoveLineIfRepIsZero: Boolean = false,
     val hideLinesWithWeightZero: Boolean = false,
+    val hideSmartTrainingInfoCard: Boolean = false,
 ) {
     companion object {
         const val SINGLE_ROW_ID = 1L

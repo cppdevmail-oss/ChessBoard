@@ -28,4 +28,9 @@ class UserProfileService(private val dao: UserProfileDao) {
             )
         )
     }
+
+    suspend fun setHideSmartTrainingInfoCard(hide: Boolean) {
+        val current = getProfile()
+        dao.upsertProfile(current.copy(hideSmartTrainingInfoCard = hide))
+    }
 }

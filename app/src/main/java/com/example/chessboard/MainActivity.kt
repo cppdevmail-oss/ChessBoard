@@ -26,6 +26,7 @@ import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.screen.ProfileScreenContainer
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.SettingsScreenContainer
+import com.example.chessboard.ui.screen.SmartTrainingScreenContainer
 import com.example.chessboard.ui.screen.trainSingleGame.TrainSingleGameLauncherScreenContainer
 import com.example.chessboard.ui.screen.training.CreateTrainingByStatisticsScreenContainer
 import com.example.chessboard.ui.screen.training.CreateTrainingChoiceScreenContainer
@@ -383,6 +384,12 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         onBackClick = { currentScreen = ScreenType.Home },
+                        screenContext = createScreenContext(
+                            onBackClick = { currentScreen = ScreenType.Home },
+                        ),
+                    )
+
+                    ScreenType.SmartTraining -> SmartTrainingScreenContainer(
                         screenContext = createScreenContext(
                             onBackClick = { currentScreen = ScreenType.Home },
                         ),
