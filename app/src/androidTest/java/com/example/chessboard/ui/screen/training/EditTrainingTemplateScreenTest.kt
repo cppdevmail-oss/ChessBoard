@@ -16,7 +16,9 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
@@ -139,6 +141,30 @@ class EditTrainingTemplateScreenTest {
         composeRule.onNodeWithText("Unsaved Changes").assertIsDisplayed()
     }
 
+    @Test
+    fun editTrainingTemplateScreen_removeSelectedGameRemovesItFromTemplate() {
+        composeRule.setContent {
+            ChessBoardTheme {
+                EditTrainingTemplateScreen(
+                    initialTemplateName = "Sicilian Templates",
+                    gamesForTemplate = listOf(
+                        TestTemplateGame,
+                        SecondTemplateGame,
+                    ),
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Remove game from template").performClick()
+        waitForTextDisplayed("Remove Game")
+        composeRule.onNode(hasText("Remove") and hasClickAction()).performClick()
+
+        waitForTextInTree("Games in template: 1")
+        composeRule.onNodeWithTag(EditTrainingListTestTag)
+            .performScrollToNode(hasText("Games in template: 1"))
+        waitForTextDisplayed("Games in template: 1")
+    }
+
 
     private fun assertBoardFenEventually(expectedFen: String) {
         val normalizedExpectedFen = normalizeFenForAssertion(expectedFen)
@@ -159,6 +185,24 @@ class EditTrainingTemplateScreenTest {
         }
     }
 
+    private fun waitForTextDisplayed(text: String) {
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching {
+                composeRule.onNodeWithText(text).assertIsDisplayed()
+                true
+            }.getOrDefault(false)
+        }
+    }
+
+    private fun waitForTextInTree(text: String) {
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching {
+                composeRule.onNodeWithText(text).fetchSemanticsNode()
+                true
+            }.getOrDefault(false)
+        }
+    }
+
     private fun currentBoardFen(): String? {
         return runCatching {
             composeRule.onNodeWithTag(InteractiveChessBoardTestTag)
@@ -174,6 +218,13 @@ class EditTrainingTemplateScreenTest {
             title = "Sicilian Defense",
             weight = 2,
             pgn = "1. e2e4 c7c5 *",
+            sideMask = SideMask.WHITE,
+        )
+        val SecondTemplateGame = TrainingGameEditorItem(
+            gameId = 2L,
+            title = "French Defense",
+            weight = 1,
+            pgn = "1. e2e4 e7e6 *",
             sideMask = SideMask.WHITE,
         )
         const val AfterE4Fen = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"

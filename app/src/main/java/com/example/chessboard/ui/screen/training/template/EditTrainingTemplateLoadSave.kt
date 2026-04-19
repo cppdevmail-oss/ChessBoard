@@ -34,6 +34,11 @@ internal data class TrainingTemplateSaveSuccess(
     val gamesCount: Int,
 )
 
+internal enum class TrainingTemplateSaveResult {
+    UPDATED,
+    DELETED,
+}
+
 internal suspend fun loadEditTrainingTemplateState(
     inDbProvider: DatabaseProvider,
     trainingTemplateService: TrainingTemplateService,
@@ -69,7 +74,7 @@ internal suspend fun saveEditedTrainingTemplate(
     templateId: Long,
     templateName: String,
     editableGames: List<TrainingGameEditorItem>,
-): TrainingTemplateSaveSuccess? {
+): Pair<TrainingTemplateSaveResult, TrainingTemplateSaveSuccess?>? {
     val normalizedName = normalizeTrainingEditorName(
         trainingName = templateName,
         defaultName = DEFAULT_TEMPLATE_NAME,
@@ -81,7 +86,7 @@ internal suspend fun saveEditedTrainingTemplate(
         )
     }
 
-    val wasUpdated = withContext(Dispatchers.IO) {
+    val updateResult = withContext(Dispatchers.IO) {
         trainingTemplateService.updateTemplateFromGames(
             templateId = templateId,
             games = templateGames,
@@ -89,13 +94,17 @@ internal suspend fun saveEditedTrainingTemplate(
         )
     }
 
-    if (!wasUpdated) {
-        return null
+    when (updateResult) {
+        TrainingTemplateService.UpdateTemplateFromGamesResult.NOT_FOUND -> return null
+        TrainingTemplateService.UpdateTemplateFromGamesResult.DELETED -> {
+            return TrainingTemplateSaveResult.DELETED to null
+        }
+        TrainingTemplateService.UpdateTemplateFromGamesResult.UPDATED -> {
+            return TrainingTemplateSaveResult.UPDATED to TrainingTemplateSaveSuccess(
+                templateId = templateId,
+                templateName = normalizedName,
+                gamesCount = editableGames.size,
+            )
+        }
     }
-
-    return TrainingTemplateSaveSuccess(
-        templateId = templateId,
-        templateName = normalizedName,
-        gamesCount = editableGames.size,
-    )
 }

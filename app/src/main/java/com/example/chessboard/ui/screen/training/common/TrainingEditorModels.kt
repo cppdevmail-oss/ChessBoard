@@ -66,6 +66,23 @@ internal fun removeTrainingGame(
     }
 }
 
+internal fun resolveNextSelectedTrainingGameId(
+    games: List<TrainingGameEditorItem>,
+    removedGameId: Long,
+): Long? {
+    val removedIndex = games.indexOfFirst { game -> game.gameId == removedGameId }
+    if (removedIndex < 0) {
+        return null
+    }
+
+    val remainingGames = removeTrainingGame(games, removedGameId)
+    if (remainingGames.isEmpty()) {
+        return null
+    }
+
+    return remainingGames.getOrNull(removedIndex)?.gameId ?: remainingGames.last().gameId
+}
+
 internal fun GameEntity.toTrainingGameEditorItem(weight: Int = 1): TrainingGameEditorItem {
     return TrainingGameEditorItem(
         gameId = id,
