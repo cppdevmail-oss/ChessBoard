@@ -2,6 +2,7 @@ package com.example.chessboard.ui.screen.training.train
 import com.example.chessboard.ui.screen.training.common.CreateTrainingEditorState
 import com.example.chessboard.ui.screen.training.common.DEFAULT_TRAINING_NAME
 import com.example.chessboard.ui.screen.training.common.TrainingCollectionEditorScreen
+import com.example.chessboard.ui.screen.training.common.TrainingCollectionRemoveAction
 import com.example.chessboard.ui.screen.training.common.TrainingCollectionEditorStrings
 import com.example.chessboard.ui.screen.training.common.TrainingEditorGameSection
 import com.example.chessboard.ui.screen.training.common.TrainingEditorGameSectionActions
@@ -9,6 +10,8 @@ import com.example.chessboard.ui.screen.training.common.TrainingEditorGameSectio
 import com.example.chessboard.ui.screen.training.common.TrainingGameEditorItem
 import com.example.chessboard.ui.screen.training.common.decreaseTrainingGameWeight
 import com.example.chessboard.ui.screen.training.common.increaseTrainingGameWeight
+import com.example.chessboard.ui.screen.training.common.removeTrainingGame
+import com.example.chessboard.ui.screen.training.common.resolveNextSelectedTrainingGameId
 import com.example.chessboard.ui.screen.training.common.rememberTrainingEditorBoardSession
 
 import androidx.activity.compose.BackHandler
@@ -206,6 +209,9 @@ fun EditTrainingScreen(
     val currentGamesById = editorState.editableGamesForTraining.associateBy { it.gameId }
     val orderedGamesForTraining = orderedGameIds.mapNotNull { currentGamesById[it] }
     val boardSession = rememberTrainingEditorBoardSession(orderedGamesForTraining)
+    val selectedGame = editorState.editableGamesForTraining.firstOrNull { game ->
+        game.gameId == boardSession.selectedGameId
+    }
 
     fun hasUnsavedChanges(): Boolean {
         return hasUnsavedTrainingEditorChanges(
@@ -241,6 +247,27 @@ fun EditTrainingScreen(
         }
 
         pendingLeaveAction = action
+    }
+
+    fun removeGameFromTraining(gameId: Long) {
+        val nextSelectedGameId = resolveNextSelectedTrainingGameId(
+            games = editorState.editableGamesForTraining,
+            removedGameId = gameId,
+        )
+        editorState = editorState.copy(
+            editableGamesForTraining = removeTrainingGame(
+                games = editorState.editableGamesForTraining,
+                gameId = gameId
+            )
+        )
+
+        if (nextSelectedGameId == null) {
+            hasUserSelectedGame = false
+            return
+        }
+
+        hasUserSelectedGame = true
+        boardSession.onSelectGame(nextSelectedGameId)
     }
 
     LaunchedEffect(initialTrainingName, gamesForTraining) {
@@ -314,6 +341,14 @@ fun EditTrainingScreen(
                 onStartGameTrainingClick = onStartGameTrainingClick
             )
             Spacer(modifier = Modifier.width(AppDimens.spaceSm))
+            TrainingCollectionRemoveAction(
+                selectedGame = selectedGame,
+                collectionLabel = "training",
+                onConfirmRemove = ::removeGameFromTraining,
+            )
+            if (selectedGame != null) {
+                Spacer(modifier = Modifier.width(AppDimens.spaceSm))
+            }
         }
     ) { game ->
         val parsedGame = boardSession.parsedGamesById[game.gameId]

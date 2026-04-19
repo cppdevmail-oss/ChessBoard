@@ -10,6 +10,7 @@ package com.example.chessboard.ui.screen.training.template
 
 import com.example.chessboard.ui.screen.training.common.CreateTrainingEditorState
 import com.example.chessboard.ui.screen.training.common.TrainingCollectionEditorScreen
+import com.example.chessboard.ui.screen.training.common.TrainingCollectionRemoveAction
 import com.example.chessboard.ui.screen.training.common.TrainingCollectionEditorStrings
 import com.example.chessboard.ui.screen.training.common.TrainingEditorGameSection
 import com.example.chessboard.ui.screen.training.common.TrainingEditorGameSectionActions
@@ -17,6 +18,8 @@ import com.example.chessboard.ui.screen.training.common.TrainingEditorGameSectio
 import com.example.chessboard.ui.screen.training.common.TrainingGameEditorItem
 import com.example.chessboard.ui.screen.training.common.decreaseTrainingGameWeight
 import com.example.chessboard.ui.screen.training.common.increaseTrainingGameWeight
+import com.example.chessboard.ui.screen.training.common.removeTrainingGame
+import com.example.chessboard.ui.screen.training.common.resolveNextSelectedTrainingGameId
 import com.example.chessboard.ui.screen.training.common.rememberTrainingEditorBoardSession
 
 import androidx.activity.compose.BackHandler
@@ -133,7 +136,7 @@ fun EditTrainingTemplateScreenContainer(
         ),
         onSaveTemplate = { templateName, editableGames, onSaved ->
             scope.launch {
-                val saveSuccess = saveEditedTrainingTemplate(
+                val saveResult = saveEditedTrainingTemplate(
                     trainingTemplateService = trainingTemplateService,
                     templateId = templateId,
                     templateName = templateName,
@@ -141,7 +144,12 @@ fun EditTrainingTemplateScreenContainer(
                 ) ?: return@launch
 
                 onSaved?.invoke()
-                templateSaveSuccess = saveSuccess
+                if (saveResult.first == TrainingTemplateSaveResult.DELETED) {
+                    onNavigate(ScreenType.TrainingTemplates)
+                    return@launch
+                }
+
+                templateSaveSuccess = saveResult.second
             }
         },
         modifier = modifier,
@@ -179,6 +187,9 @@ fun EditTrainingTemplateScreen(
     var savedGamesForTemplate by remember(gamesForTemplate) { mutableStateOf(gamesForTemplate) }
     var pendingLeaveAction by remember { mutableStateOf<(() -> Unit)?>(null) }
     val boardSession = rememberTrainingEditorBoardSession(editorState.editableGamesForTraining)
+    val selectedGame = editorState.editableGamesForTraining.firstOrNull { game ->
+        game.gameId == boardSession.selectedGameId
+    }
 
     fun hasUnsavedChanges(): Boolean {
         return hasUnsavedTrainingEditorChanges(
@@ -214,6 +225,27 @@ fun EditTrainingTemplateScreen(
         }
 
         pendingLeaveAction = action
+    }
+
+    fun removeGameFromTemplate(gameId: Long) {
+        val nextSelectedGameId = resolveNextSelectedTrainingGameId(
+            games = editorState.editableGamesForTraining,
+            removedGameId = gameId,
+        )
+        editorState = editorState.copy(
+            editableGamesForTraining = removeTrainingGame(
+                games = editorState.editableGamesForTraining,
+                gameId = gameId,
+            )
+        )
+
+        if (nextSelectedGameId == null) {
+            hasUserSelectedGame = false
+            return
+        }
+
+        hasUserSelectedGame = true
+        boardSession.onSelectGame(nextSelectedGameId)
     }
 
     LaunchedEffect(initialTemplateName, gamesForTemplate) {
@@ -275,6 +307,13 @@ fun EditTrainingTemplateScreen(
         },
         modifier = modifier,
         autoScrollToGameIndex = autoScrollToGameIndex,
+        topBarActions = {
+            TrainingCollectionRemoveAction(
+                selectedGame = selectedGame,
+                collectionLabel = "template",
+                onConfirmRemove = ::removeGameFromTemplate,
+            )
+        },
     ) { game ->
         val parsedGame = boardSession.parsedGamesById[game.gameId]
         val isSelected = boardSession.selectedGameId == game.gameId

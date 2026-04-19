@@ -7,6 +7,12 @@ class TrainingTemplateService(
     private val dao: TrainingTemplateDao
 ) {
 
+    enum class UpdateTemplateFromGamesResult {
+        UPDATED,
+        DELETED,
+        NOT_FOUND,
+    }
+
     suspend fun getAllTemplates(): List<TrainingTemplateEntity> {
         return dao.getAll()
     }
@@ -27,15 +33,20 @@ class TrainingTemplateService(
         templateId: Long,
         games: List<OneGameTrainingData>,
         name: String,
-    ): Boolean {
-        val template = dao.getById(templateId) ?: return false
+    ): UpdateTemplateFromGamesResult {
+        val template = dao.getById(templateId) ?: return UpdateTemplateFromGamesResult.NOT_FOUND
+        if (games.isEmpty()) {
+            dao.deleteById(templateId)
+            return UpdateTemplateFromGamesResult.DELETED
+        }
+
         dao.update(
             template.copy(
                 name = name,
                 gamesJson = OneGameTrainingData.toJson(games)
             )
         )
-        return true
+        return UpdateTemplateFromGamesResult.UPDATED
     }
 
     suspend fun addGame(templateId: Long, gameId: Long, weight: Int): Boolean {
