@@ -8,8 +8,11 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onNode
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -162,6 +165,30 @@ class EditTrainingScreenTest {
         }
     }
 
+    @Test
+    fun editTrainingScreen_removeSelectedGameRemovesItFromTraining() {
+        composeRule.setContent {
+            ChessBoardTheme {
+                EditTrainingScreen(
+                    gamesForTraining = listOf(
+                        TestTrainingGame,
+                        SecondTrainingGame,
+                    ),
+                    orderGamesInTraining = RuntimeContext.OrderGamesInTraining(),
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Remove game from training").performClick()
+        waitForTextDisplayed("Remove Game")
+        composeRule.onNode(hasText("Remove") and hasClickAction()).performClick()
+
+        waitForTextInTree("Games in training: 1")
+        composeRule.onNodeWithTag(EditTrainingListTestTag)
+            .performScrollToNode(hasText("Games in training: 1"))
+        waitForTextDisplayed("Games in training: 1")
+    }
+
     private fun assertBoardFenEventually(expectedFen: String) {
         // Do not replace this with a single immediate assert unless the screen's async behavior
         // is removed. On this screen the visible board can lag slightly behind the click because
@@ -195,6 +222,24 @@ class EditTrainingScreenTest {
         }
     }
 
+    private fun waitForTextDisplayed(text: String) {
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching {
+                composeRule.onNodeWithText(text).assertIsDisplayed()
+                true
+            }.getOrDefault(false)
+        }
+    }
+
+    private fun waitForTextInTree(text: String) {
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching {
+                composeRule.onNodeWithText(text).fetchSemanticsNode()
+                true
+            }.getOrDefault(false)
+        }
+    }
+
     private fun currentBoardFen(): String? {
         return runCatching {
             composeRule.onNodeWithTag(InteractiveChessBoardTestTag)
@@ -209,6 +254,12 @@ class EditTrainingScreenTest {
             gameId = 1L,
             title = "Test Opening",
             pgn = "1. e2e4 e7e5 *",
+            sideMask = SideMask.WHITE
+        )
+        val SecondTrainingGame = TrainingGameEditorItem(
+            gameId = 2L,
+            title = "Second Opening",
+            pgn = "1. d2d4 d7d5 *",
             sideMask = SideMask.WHITE
         )
         const val AfterE4Fen = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"

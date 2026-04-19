@@ -9,11 +9,16 @@ import com.example.chessboard.ui.screen.training.common.TrainingEditorGameSectio
 import com.example.chessboard.ui.screen.training.common.TrainingGameEditorItem
 import com.example.chessboard.ui.screen.training.common.decreaseTrainingGameWeight
 import com.example.chessboard.ui.screen.training.common.increaseTrainingGameWeight
+import com.example.chessboard.ui.screen.training.common.removeTrainingGame
 import com.example.chessboard.ui.screen.training.common.rememberTrainingEditorBoardSession
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCut
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -24,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.example.chessboard.RuntimeContext
 import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.ui.components.AppConfirmDialog
 import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
@@ -35,6 +41,7 @@ import com.example.chessboard.ui.screen.training.loadsave.loadEditTrainingState
 import com.example.chessboard.ui.screen.training.loadsave.normalizeTrainingEditorName
 import com.example.chessboard.ui.screen.training.loadsave.saveEditedTraining
 import com.example.chessboard.ui.theme.AppDimens
+import com.example.chessboard.ui.theme.TextColor
 import kotlinx.coroutines.launch
 
 @Composable
@@ -182,6 +189,23 @@ fun EditTrainingScreen(
     onSaveTraining: (String, List<TrainingGameEditorItem>, Boolean, (() -> Unit)?) -> Unit = { _, _, _, _ -> },
     modifier: Modifier = Modifier
 ) {
+    fun resolveNextSelectedGameId(
+        games: List<TrainingGameEditorItem>,
+        removedGameId: Long,
+    ): Long? {
+        val removedIndex = games.indexOfFirst { game -> game.gameId == removedGameId }
+        if (removedIndex < 0) {
+            return null
+        }
+
+        val remainingGames = removeTrainingGame(games, removedGameId)
+        if (remainingGames.isEmpty()) {
+            return null
+        }
+
+        return remainingGames.getOrNull(removedIndex)?.gameId ?: remainingGames.last().gameId
+    }
+
     var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
     var moveRange by remember { mutableStateOf(TrainingMoveRange()) }
     var hasUserSelectedGame by remember { mutableStateOf(false) }
@@ -196,6 +220,7 @@ fun EditTrainingScreen(
     var savedTrainingName by remember(initialTrainingName) { mutableStateOf(initialTrainingName) }
     var savedGamesForTraining by remember(gamesForTraining) { mutableStateOf(gamesForTraining) }
     var pendingLeaveAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var gameToRemove by remember { mutableStateOf<TrainingGameEditorItem?>(null) }
     val orderedGameIds = remember(editorState.editableGamesForTraining) {
         orderGamesInTraining.orderGames(
             games = editorState.editableGamesForTraining,
@@ -206,6 +231,9 @@ fun EditTrainingScreen(
     val currentGamesById = editorState.editableGamesForTraining.associateBy { it.gameId }
     val orderedGamesForTraining = orderedGameIds.mapNotNull { currentGamesById[it] }
     val boardSession = rememberTrainingEditorBoardSession(orderedGamesForTraining)
+    val selectedGame = editorState.editableGamesForTraining.firstOrNull { game ->
+        game.gameId == boardSession.selectedGameId
+    }
 
     fun hasUnsavedChanges(): Boolean {
         return hasUnsavedTrainingEditorChanges(
@@ -243,6 +271,27 @@ fun EditTrainingScreen(
         pendingLeaveAction = action
     }
 
+    fun removeGameFromTraining(gameId: Long) {
+        val nextSelectedGameId = resolveNextSelectedGameId(
+            games = editorState.editableGamesForTraining,
+            removedGameId = gameId,
+        )
+        editorState = editorState.copy(
+            editableGamesForTraining = removeTrainingGame(
+                games = editorState.editableGamesForTraining,
+                gameId = gameId
+            )
+        )
+
+        if (nextSelectedGameId == null) {
+            hasUserSelectedGame = false
+            return
+        }
+
+        hasUserSelectedGame = true
+        boardSession.onSelectGame(nextSelectedGameId)
+    }
+
     LaunchedEffect(initialTrainingName, gamesForTraining) {
         editorState = editorState.copy(
             trainingName = initialTrainingName,
@@ -251,6 +300,21 @@ fun EditTrainingScreen(
         savedTrainingName = initialTrainingName
         savedGamesForTraining = gamesForTraining
         pendingLeaveAction = null
+    }
+
+    if (gameToRemove != null) {
+        AppConfirmDialog(
+            title = "Remove Game",
+            message = "Remove \"${gameToRemove!!.title}\" from training?",
+            onDismiss = { gameToRemove = null },
+            onConfirm = {
+                val gameId = gameToRemove!!.gameId
+                gameToRemove = null
+                removeGameFromTraining(gameId)
+            },
+            confirmText = "Remove",
+            isDestructive = true
+        )
     }
 
     RenderUnsavedTrainingChangesDialog(
@@ -314,6 +378,16 @@ fun EditTrainingScreen(
                 onStartGameTrainingClick = onStartGameTrainingClick
             )
             Spacer(modifier = Modifier.width(AppDimens.spaceSm))
+            if (selectedGame != null) {
+                IconButton(onClick = { gameToRemove = selectedGame }) {
+                    Icon(
+                        imageVector = Icons.Default.ContentCut,
+                        contentDescription = "Remove game from training",
+                        tint = TextColor.Primary,
+                    )
+                }
+                Spacer(modifier = Modifier.width(AppDimens.spaceSm))
+            }
         }
     ) { game ->
         val parsedGame = boardSession.parsedGamesById[game.gameId]
