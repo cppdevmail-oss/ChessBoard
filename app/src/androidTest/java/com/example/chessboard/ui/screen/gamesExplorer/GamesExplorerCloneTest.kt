@@ -44,6 +44,7 @@ class GamesExplorerCloneTest {
                     parsedGame = parsedGame,
                     isSelected = true,
                     currentPly = 0,
+                    onSelectClick = {},
                     canUndo = false,
                     canRedo = false,
                     onMovePlyClick = {},
@@ -54,7 +55,7 @@ class GamesExplorerCloneTest {
                         clonedGame = parsedGame.game
                     },
                     onEditClick = {},
-                    onDeleteClick = {}
+                    onDeleteClick = {},
                 )
             }
         }
