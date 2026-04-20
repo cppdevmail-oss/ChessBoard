@@ -83,7 +83,7 @@ private const val EmptyBoardFen = "$EmptyBoardBoardPart w - -"
 private const val PositionEditorLogTag = "PositionEditor"
 private const val PositionTemplateDefaultName = "Template From Position"
 
-private data class PositionEditorPieceOption(
+internal data class PositionEditorPieceOption(
     val letter: Char,
     val label: String
 )
@@ -119,6 +119,62 @@ private data class PositionEditorInfoDialog(
 
 internal data class PositionEditorSaveDialogState(
     val positionName: String = ""
+)
+
+private data class PositionEditorScreenState(
+    val editor: PositionEditorUiState,
+    val saveDialog: PositionEditorSaveDialogState?
+)
+
+internal data class PositionEditorScreenActions(
+    val position: Position,
+    val board: Board,
+    val topBar: TopBar,
+    val saveDialog: SaveDialog,
+    val foundGamesDialog: FoundGamesDialog,
+    val feedback: Feedback
+) {
+    data class Position(
+        val onFenTextChange: (String) -> Unit,
+        val onSideSelected: (EditableGameSide) -> Unit,
+        val onCastlingStateChange: (PositionEditorCastlingState) -> Unit,
+        val onClearBoardClick: () -> Unit,
+        val onSetInitialPositionClick: () -> Unit
+    )
+
+    data class Board(
+        val onPieceSelected: (PositionEditorPieceOption) -> Unit,
+        val onBoardSquareClick: (String) -> Unit,
+        val onBoardPieceMove: (String, String) -> Unit
+    )
+
+    data class TopBar(
+        val onApplyFenClick: () -> Unit,
+        val onSavePositionClick: () -> Unit,
+        val onFindGamesClick: () -> Unit
+    )
+
+    data class SaveDialog(
+        val onDismiss: () -> Unit,
+        val onPositionNameChange: (String) -> Unit,
+        val onConfirm: () -> Unit
+    )
+
+    data class FoundGamesDialog(
+        val onDismiss: () -> Unit,
+        val onCreateTrainingClick: () -> Unit,
+        val onCreateTemplateClick: () -> Unit
+    )
+
+    data class Feedback(
+        val onFenErrorDismiss: () -> Unit,
+        val onInfoDialogDismiss: () -> Unit
+    )
+}
+
+private data class PositionEditorNavigationActions(
+    val onBackClick: () -> Unit = {},
+    val onNavigate: (ScreenType) -> Unit = {}
 )
 
 @Composable
@@ -238,109 +294,127 @@ fun PositionEditorScreenContainer(
 
     PositionEditorScreen(
         gameController = gameController,
-        uiState = uiState,
-        onFenTextChange = { uiState = uiState.copy(fenText = it) },
-        onSideSelected = { selectedSide ->
-            val updatedFen = replaceFenSide(
-                fen = uiState.fenText,
-                selectedSide = selectedSide
-            )
-            updatePositionEditorPreview(
-                fen = updatedFen,
-                selectedSide = selectedSide,
-                foundGameIds = uiState.foundGameIds
-            )
-        },
-        onPieceSelected = { uiState = uiState.copy(selectedPiece = it) },
-        onCastlingStateChange = { castlingState ->
-            val normalizedFen = normalizePositionEditorFen(
-                fen = uiState.fenText,
-                selectedSide = uiState.selectedSide
-            )
-            updatePositionEditorPreview(
-                fen = replacePositionEditorFenCastlingPart(
-                    fen = normalizedFen,
-                    castlingState = castlingState
-                ),
-                foundGameIds = uiState.foundGameIds
-            )
-        },
-        onFenErrorDismiss = { uiState = uiState.copy(fenError = null) },
-        onFoundGameIdsDismiss = { uiState = uiState.copy(foundGameIds = null) },
-        onInfoDialogDismiss = { uiState = uiState.copy(infoDialog = null) },
-        onSaveDialogDismiss = { saveDialogState = null },
-        saveDialogState = saveDialogState,
-        onSavePositionNameChange = { updatedName ->
-            saveDialogState = saveDialogState?.copy(positionName = updatedName)
-        },
-        onSavePositionConfirm = {
-            saveDialogState = null
-        },
-        onCreateTrainingFromFoundGamesClick = createTrainingFromFoundGames@{
-            val foundGameIds = uiState.foundGameIds ?: return@createTrainingFromFoundGames
-            screenContext.onNavigate(ScreenType.CreateTrainingFromGameIds(foundGameIds))
-            uiState = uiState.copy(foundGameIds = null)
-        },
-        onCreateTemplateFromFoundGamesClick = ::createTemplateFromFoundGames,
-        onApplyFenClick = {
-            applyPositionEditorFen(uiState.fenText)
-        },
-        onSavePositionClick = {
-            if (applyPositionEditorFen(uiState.fenText)) {
-                saveDialogState = PositionEditorSaveDialogState()
-            }
-        },
-        onFindGamesClick = {
-            scope.launch {
-                if (!applyPositionEditorFen(uiState.fenText)) {
-                    return@launch
-                }
-
-                Log.d(
-                    PositionEditorLogTag,
-                    "findGames fen=${gameController.getFen()} hash=${calculateFenHashWithoutMoveNumbers(gameController.getFen())}"
-                )
-                val foundGameIds = withContext(Dispatchers.IO) {
-                    screenContext.inDbProvider.findGameIdsByFenWithoutMoveNumber(
-                        gameController.getFen()
+        state = PositionEditorScreenState(
+            editor = uiState,
+            saveDialog = saveDialogState
+        ),
+        actions = PositionEditorScreenActions(
+            position = PositionEditorScreenActions.Position(
+                onFenTextChange = { uiState = uiState.copy(fenText = it) },
+                onSideSelected = { selectedSide ->
+                    val updatedFen = replaceFenSide(
+                        fen = uiState.fenText,
+                        selectedSide = selectedSide
                     )
+                    updatePositionEditorPreview(
+                        fen = updatedFen,
+                        selectedSide = selectedSide,
+                        foundGameIds = uiState.foundGameIds
+                    )
+                },
+                onCastlingStateChange = { castlingState ->
+                    val normalizedFen = normalizePositionEditorFen(
+                        fen = uiState.fenText,
+                        selectedSide = uiState.selectedSide
+                    )
+                    updatePositionEditorPreview(
+                        fen = replacePositionEditorFenCastlingPart(
+                            fen = normalizedFen,
+                            castlingState = castlingState
+                        ),
+                        foundGameIds = uiState.foundGameIds
+                    )
+                },
+                onClearBoardClick = {
+                    val updatedFen = resolveEmptyBoardFen(uiState.selectedSide)
+                    updatePositionEditorPreview(updatedFen)
+                },
+                onSetInitialPositionClick = {
+                    val updatedFen = replaceFenSide(
+                        fen = InitialBoardFenWithoutMoveNumbers,
+                        selectedSide = uiState.selectedSide
+                    )
+                    updatePositionEditorPreview(updatedFen)
                 }
+            ),
+            board = PositionEditorScreenActions.Board(
+                onPieceSelected = { uiState = uiState.copy(selectedPiece = it) },
+                onBoardSquareClick = { square ->
+                    val updatedFen = placePieceOnFen(
+                        fen = gameController.getFen(),
+                        square = square,
+                        pieceLetter = uiState.selectedPiece.letter
+                    )
+                    updatePositionEditorPreview(updatedFen)
+                },
+                onBoardPieceMove = { fromSquare, toSquare ->
+                    val updatedFen = movePieceOnFen(
+                        fen = gameController.getFen(),
+                        fromSquare = fromSquare,
+                        toSquare = toSquare
+                    )
+                    updatePositionEditorPreview(updatedFen)
+                }
+            ),
+            topBar = PositionEditorScreenActions.TopBar(
+                onApplyFenClick = {
+                    applyPositionEditorFen(uiState.fenText)
+                },
+                onSavePositionClick = {
+                    if (applyPositionEditorFen(uiState.fenText)) {
+                        saveDialogState = PositionEditorSaveDialogState()
+                    }
+                },
+                onFindGamesClick = {
+                    scope.launch {
+                        if (!applyPositionEditorFen(uiState.fenText)) {
+                            return@launch
+                        }
 
-                uiState = uiState.copy(
-                    foundGameIds = foundGameIds,
-                    fenError = null
-                )
-            }
-        },
-        onClearBoardClick = {
-            val updatedFen = resolveEmptyBoardFen(uiState.selectedSide)
-            updatePositionEditorPreview(updatedFen)
-        },
-        onSetInitialPositionClick = {
-            val updatedFen = replaceFenSide(
-                fen = InitialBoardFenWithoutMoveNumbers,
-                selectedSide = uiState.selectedSide
+                        Log.d(
+                            PositionEditorLogTag,
+                            "findGames fen=${gameController.getFen()} hash=${calculateFenHashWithoutMoveNumbers(gameController.getFen())}"
+                        )
+                        val foundGameIds = withContext(Dispatchers.IO) {
+                            screenContext.inDbProvider.findGameIdsByFenWithoutMoveNumber(
+                                gameController.getFen()
+                            )
+                        }
+
+                        uiState = uiState.copy(
+                            foundGameIds = foundGameIds,
+                            fenError = null
+                        )
+                    }
+                }
+            ),
+            saveDialog = PositionEditorScreenActions.SaveDialog(
+                onDismiss = { saveDialogState = null },
+                onPositionNameChange = { updatedName ->
+                    saveDialogState = saveDialogState?.copy(positionName = updatedName)
+                },
+                onConfirm = {
+                    saveDialogState = null
+                }
+            ),
+            foundGamesDialog = PositionEditorScreenActions.FoundGamesDialog(
+                onDismiss = { uiState = uiState.copy(foundGameIds = null) },
+                onCreateTrainingClick = createTrainingFromFoundGames@{
+                    val foundGameIds = uiState.foundGameIds ?: return@createTrainingFromFoundGames
+                    screenContext.onNavigate(ScreenType.CreateTrainingFromGameIds(foundGameIds))
+                    uiState = uiState.copy(foundGameIds = null)
+                },
+                onCreateTemplateClick = ::createTemplateFromFoundGames
+            ),
+            feedback = PositionEditorScreenActions.Feedback(
+                onFenErrorDismiss = { uiState = uiState.copy(fenError = null) },
+                onInfoDialogDismiss = { uiState = uiState.copy(infoDialog = null) }
             )
-            updatePositionEditorPreview(updatedFen)
-        },
-        onBoardSquareClick = { square ->
-            val updatedFen = placePieceOnFen(
-                fen = gameController.getFen(),
-                square = square,
-                pieceLetter = uiState.selectedPiece.letter
-            )
-            updatePositionEditorPreview(updatedFen)
-        },
-        onBoardPieceMove = { fromSquare, toSquare ->
-            val updatedFen = movePieceOnFen(
-                fen = gameController.getFen(),
-                fromSquare = fromSquare,
-                toSquare = toSquare
-            )
-            updatePositionEditorPreview(updatedFen)
-        },
-        onBackClick = screenContext.onBackClick,
-        onNavigate = screenContext.onNavigate,
+        ),
+        navigation = PositionEditorNavigationActions(
+            onBackClick = screenContext.onBackClick,
+            onNavigate = screenContext.onNavigate
+        ),
         modifier = modifier
     )
 }
@@ -348,50 +422,26 @@ fun PositionEditorScreenContainer(
 @Composable
 private fun PositionEditorScreen(
     gameController: GameController,
-    uiState: PositionEditorUiState,
-    onFenTextChange: (String) -> Unit,
-    onSideSelected: (EditableGameSide) -> Unit,
-    onPieceSelected: (PositionEditorPieceOption) -> Unit,
-    onCastlingStateChange: (PositionEditorCastlingState) -> Unit,
-    onFenErrorDismiss: () -> Unit,
-    onFoundGameIdsDismiss: () -> Unit,
-    onInfoDialogDismiss: () -> Unit,
-    saveDialogState: PositionEditorSaveDialogState?,
-    onSaveDialogDismiss: () -> Unit,
-    onSavePositionNameChange: (String) -> Unit,
-    onSavePositionConfirm: () -> Unit,
-    onCreateTrainingFromFoundGamesClick: () -> Unit,
-    onCreateTemplateFromFoundGamesClick: () -> Unit,
-    onApplyFenClick: () -> Unit,
-    onSavePositionClick: () -> Unit,
-    onFindGamesClick: () -> Unit,
-    onClearBoardClick: () -> Unit,
-    onSetInitialPositionClick: () -> Unit,
-    onBoardSquareClick: (String) -> Unit,
-    onBoardPieceMove: (String, String) -> Unit,
-    onBackClick: () -> Unit = {},
-    onNavigate: (ScreenType) -> Unit = {},
+    state: PositionEditorScreenState,
+    actions: PositionEditorScreenActions,
+    navigation: PositionEditorNavigationActions = PositionEditorNavigationActions(),
     modifier: Modifier = Modifier
 ) {
     RenderPositionEditorFenError(
-        fenError = uiState.fenError,
-        onDismiss = onFenErrorDismiss
+        fenError = state.editor.fenError,
+        onDismiss = actions.feedback.onFenErrorDismiss
     )
     RenderFoundGameIdsDialog(
-        foundGameIds = uiState.foundGameIds,
-        onDismiss = onFoundGameIdsDismiss,
-        onCreateTrainingClick = onCreateTrainingFromFoundGamesClick,
-        onCreateTemplateClick = onCreateTemplateFromFoundGamesClick
+        foundGameIds = state.editor.foundGameIds,
+        actions = actions.foundGamesDialog
     )
     RenderPositionEditorInfoDialog(
-        infoDialog = uiState.infoDialog,
-        onDismiss = onInfoDialogDismiss
+        infoDialog = state.editor.infoDialog,
+        onDismiss = actions.feedback.onInfoDialogDismiss
     )
     RenderPositionEditorSaveDialog(
-        saveDialogState = saveDialogState,
-        onDismiss = onSaveDialogDismiss,
-        onPositionNameChange = onSavePositionNameChange,
-        onConfirm = onSavePositionConfirm
+        saveDialogState = state.saveDialog,
+        actions = actions.saveDialog
     )
 
     AppScreenScaffold(
@@ -399,14 +449,14 @@ private fun PositionEditorScreen(
         topBar = {
             AppTopBar(
                 title = "Position Editor",
-                onBackClick = onBackClick,
+                onBackClick = navigation.onBackClick,
                 actions = {
                     SecondaryButton(
                         text = "Apply FEN",
-                        onClick = onApplyFenClick
+                        onClick = actions.topBar.onApplyFenClick
                     )
                     IconButton(
-                        onClick = onSavePositionClick
+                        onClick = actions.topBar.onSavePositionClick
                     ) {
                         Icon(
                             imageVector = Icons.Default.Save,
@@ -415,7 +465,7 @@ private fun PositionEditorScreen(
                         )
                     }
                     IconButton(
-                        onClick = onFindGamesClick
+                        onClick = actions.topBar.onFindGamesClick
                     ) {
                         Icon(
                             imageVector = Icons.Default.Search,
@@ -430,7 +480,7 @@ private fun PositionEditorScreen(
             AppBottomNavigation(
                 items = defaultAppBottomNavigationItems(),
                 selectedItem = ScreenType.Home,
-                onItemSelected = onNavigate
+                onItemSelected = navigation.onNavigate
             )
         }
     ) { paddingValues ->
@@ -448,39 +498,37 @@ private fun PositionEditorScreen(
 
             item {
                 PositionEditorFenSection(
-                    fenText = uiState.fenText,
-                    onFenTextChange = onFenTextChange
+                    fenText = state.editor.fenText,
+                    onFenTextChange = actions.position.onFenTextChange
                 )
             }
 
             item {
                 PositionEditorCastlesSection(
-                    castlingState = resolvePositionEditorCastlingState(uiState.fenText),
-                    onCastlingStateChange = onCastlingStateChange
+                    castlingState = resolvePositionEditorCastlingState(state.editor.fenText),
+                    onCastlingStateChange = actions.position.onCastlingStateChange
                 )
             }
 
             item {
                 PositionEditorBoardSection(
                     gameController = gameController,
-                    onBoardSquareClick = onBoardSquareClick,
-                    onBoardPieceMove = onBoardPieceMove
+                    onBoardSquareClick = actions.board.onBoardSquareClick,
+                    onBoardPieceMove = actions.board.onBoardPieceMove
                 )
             }
 
             item {
                 PositionEditorControlsSection(
-                    selectedSide = uiState.selectedSide,
-                    onSideSelected = onSideSelected,
-                    onClearBoardClick = onClearBoardClick,
-                    onSetInitialPositionClick = onSetInitialPositionClick
+                    selectedSide = state.editor.selectedSide,
+                    actions = actions.position
                 )
             }
 
             item {
                 PositionEditorPaletteSection(
-                    selectedPiece = uiState.selectedPiece,
-                    onPieceSelected = onPieceSelected
+                    selectedPiece = state.editor.selectedPiece,
+                    onPieceSelected = actions.board.onPieceSelected
                 )
             }
 
@@ -494,9 +542,7 @@ private fun PositionEditorScreen(
 @Composable
 private fun RenderFoundGameIdsDialog(
     foundGameIds: List<Long>?,
-    onDismiss: () -> Unit,
-    onCreateTrainingClick: () -> Unit,
-    onCreateTemplateClick: () -> Unit
+    actions: PositionEditorScreenActions.FoundGamesDialog
 ) {
     if (foundGameIds == null) {
         return
@@ -506,7 +552,7 @@ private fun RenderFoundGameIdsDialog(
         AppMessageDialog(
             title = resolveFoundGameIdsTitle(foundGameIds),
             message = resolveFoundGameIdsMessage(foundGameIds),
-            onDismiss = onDismiss
+            onDismiss = actions.onDismiss
         )
         return
     }
@@ -514,19 +560,19 @@ private fun RenderFoundGameIdsDialog(
     AppMessageDialog(
         title = resolveFoundGameIdsTitle(foundGameIds),
         message = resolveFoundGameIdsMessage(foundGameIds),
-        onDismiss = onDismiss,
+        onDismiss = actions.onDismiss,
         actions = listOf(
             AppMessageDialogAction(
                 text = "Close",
-                onClick = onDismiss
+                onClick = actions.onDismiss
             ),
             AppMessageDialogAction(
                 text = "Create Template",
-                onClick = onCreateTemplateClick
+                onClick = actions.onCreateTemplateClick
             ),
             AppMessageDialogAction(
                 text = "Create Training",
-                onClick = onCreateTrainingClick
+                onClick = actions.onCreateTrainingClick
             )
         )
     )
@@ -626,9 +672,7 @@ private fun PositionEditorBoardSection(
 @Composable
 private fun PositionEditorControlsSection(
     selectedSide: EditableGameSide,
-    onSideSelected: (EditableGameSide) -> Unit,
-    onClearBoardClick: () -> Unit,
-    onSetInitialPositionClick: () -> Unit
+    actions: PositionEditorScreenActions.Position
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -637,13 +681,13 @@ private fun PositionEditorControlsSection(
     ) {
         GameSideSelector(
             selectedSide = selectedSide,
-            onSideSelected = onSideSelected,
+            onSideSelected = actions.onSideSelected,
             modifier = Modifier.weight(1f)
         )
 
         PositionEditorActionButtons(
-            onClearBoardClick = onClearBoardClick,
-            onSetInitialPositionClick = onSetInitialPositionClick,
+            onClearBoardClick = actions.onClearBoardClick,
+            onSetInitialPositionClick = actions.onSetInitialPositionClick,
             modifier = Modifier.weight(1f)
         )
     }

@@ -32,14 +32,12 @@ import com.example.chessboard.ui.theme.Background
 @Composable
 internal fun RenderPositionEditorSaveDialog(
     saveDialogState: PositionEditorSaveDialogState?,
-    onDismiss: () -> Unit,
-    onPositionNameChange: (String) -> Unit,
-    onConfirm: () -> Unit
+    actions: PositionEditorScreenActions.SaveDialog
 ) {
     val currentState = saveDialogState ?: return
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = actions.onDismiss,
         title = {
             ScreenTitleText(text = "Save Position")
         },
@@ -50,7 +48,7 @@ internal fun RenderPositionEditorSaveDialog(
                 )
                 AppTextField(
                     value = currentState.positionName,
-                    onValueChange = onPositionNameChange,
+                    onValueChange = actions.onPositionNameChange,
                     label = "Position Name",
                     placeholder = "e.g., Carlsbad Structure",
                     modifier = Modifier.testTag(PositionEditorSaveNameFieldTestTag)
@@ -60,11 +58,11 @@ internal fun RenderPositionEditorSaveDialog(
         confirmButton = {
             PrimaryButton(
                 text = "Save",
-                onClick = onConfirm
+                onClick = actions.onConfirm
             )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = actions.onDismiss) {
                 CardMetaText(text = "Cancel")
             }
         },
