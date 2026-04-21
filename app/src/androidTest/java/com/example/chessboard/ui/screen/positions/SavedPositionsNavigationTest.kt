@@ -20,8 +20,11 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import com.example.chessboard.MainActivity
 import com.example.chessboard.boardmodel.InitialBoardFen
+import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.entity.SideMask
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.service.SaveSavedSearchPositionResult
+import com.example.chessboard.service.uciMovesToMoves
 import com.example.chessboard.testing.fenStateDescriptionMatcher
 import com.example.chessboard.ui.InteractiveChessBoardTestTag
 import com.example.chessboard.ui.SavedPositionsContentTestTag
@@ -31,6 +34,7 @@ import com.example.chessboard.ui.SavedPositionsPreviousPageTestTag
 import com.example.chessboard.ui.SavedPositionsSearchActionTestTag
 import com.example.chessboard.ui.SavedPositionsSearchNameFieldTestTag
 import com.example.chessboard.ui.savedPositionCardTestTag
+import com.example.chessboard.ui.savedPositionCreateButtonTestTag
 import com.example.chessboard.ui.savedPositionDeleteButtonTestTag
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
@@ -186,6 +190,56 @@ class SavedPositionsNavigationTest {
     }
 
     @Test
+    fun savedPositionsScreen_createFromPositionCreatesTemplateFromFoundGames() {
+        saveGameContainingInitialPosition()
+        val positionId = savePosition(name = "Create From Position", fen = InitialBoardFen)
+
+        waitForTextDisplayed("Saved Positions")
+        composeRule.onNodeWithText("Saved Positions").performClick()
+
+        waitForTextDisplayed("Create From Position")
+        composeRule.onNodeWithTag(savedPositionCreateButtonTestTag(positionId)).performClick()
+
+        waitForTextDisplayed("Games Found")
+        composeRule.onNodeWithText("Found games: 1").assertIsDisplayed()
+        composeRule.onNodeWithText("Create Training").assertIsDisplayed()
+        composeRule.onNodeWithText("Create Template").performClick()
+
+        waitForTextDisplayed("Template Created")
+        val templates = runBlocking {
+            dbProvider.createTrainingTemplateService().getAllTemplates()
+        }
+        check(templates.size == 1) {
+            "Expected one template after create-from-position, got ${templates.size}"
+        }
+
+        val templateGames = runBlocking {
+            dbProvider.createTrainingTemplateService().getGames(templates.first().id)
+        }
+        check(templateGames.size == 1) {
+            "Expected one template game after create-from-position, got ${templateGames.size}"
+        }
+    }
+
+    @Test
+    fun savedPositionsScreen_createFromPositionOpensTrainingCreationFromFoundGames() {
+        saveGameContainingInitialPosition()
+        val positionId = savePosition(name = "Training From Position", fen = InitialBoardFen)
+
+        waitForTextDisplayed("Saved Positions")
+        composeRule.onNodeWithText("Saved Positions").performClick()
+
+        waitForTextDisplayed("Training From Position")
+        composeRule.onNodeWithTag(savedPositionCreateButtonTestTag(positionId)).performClick()
+
+        waitForTextDisplayed("Games Found")
+        composeRule.onNodeWithText("Create Training").performClick()
+
+        waitForTextDisplayed("Create Training From Position")
+        waitForTextDisplayed("Games found for position: 1")
+    }
+
+    @Test
     fun savedPositionsScreen_deletePositionRemovesPersistedPosition() {
         val positionId = savePosition(name = "Delete Me")
 
@@ -263,6 +317,26 @@ class SavedPositionsNavigationTest {
                 "Expected saved position success, got $result"
             }
             result.id
+        }
+    }
+
+    private fun saveGameContainingInitialPosition(): Long {
+        return runBlocking {
+            val game = GameEntity(
+                event = "Saved Position Source",
+                pgn = "1. e4 e5 *",
+                initialFen = "",
+                sideMask = SideMask.BOTH,
+            )
+            val gameId = dbProvider.createGameSaver().saveGame(
+                game = game,
+                moves = uciMovesToMoves(listOf("e2e4", "e7e5")),
+                sideMask = game.sideMask,
+            )
+
+            checkNotNull(gameId) {
+                "Expected source game to be saved"
+            }
         }
     }
 
