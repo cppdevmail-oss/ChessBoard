@@ -50,6 +50,9 @@ private data class SavedPositionsState(
     val positions: List<SavedPositionListItem> = emptyList(),
     val selectedPositionId: Long? = null,
     val positionToDelete: SavedPositionListItem? = null,
+    val showSearchDialog: Boolean = false,
+    val activeFilterState: SavedPositionsFilterState = SavedPositionsFilterState(),
+    val draftFilterState: SavedPositionsFilterState = SavedPositionsFilterState(),
 )
 
 internal data class SavedPositionListItem(
@@ -70,6 +73,17 @@ fun SavedPositionsScreenContainer(
     }
     val scope = rememberCoroutineScope()
     var state by remember { mutableStateOf(SavedPositionsState()) }
+
+    fun resolveSearchDialogVisibilityState(isVisible: Boolean): SavedPositionsState {
+        if (!isVisible) {
+            return state.copy(showSearchDialog = false)
+        }
+
+        return state.copy(
+            showSearchDialog = true,
+            draftFilterState = state.activeFilterState,
+        )
+    }
 
     LaunchedEffect(savedSearchPositionService) {
         val positions = withContext(Dispatchers.IO) {
@@ -94,6 +108,18 @@ fun SavedPositionsScreenContainer(
         },
         onPositionToDeleteChange = { position ->
             state = state.copy(positionToDelete = position)
+        },
+        onSearchDialogVisibilityChange = { isVisible ->
+            state = resolveSearchDialogVisibilityState(isVisible)
+        },
+        onDraftFilterStateChange = { filterState ->
+            state = state.copy(draftFilterState = filterState)
+        },
+        onApplyFilter = {
+            state = state.copy(
+                activeFilterState = state.draftFilterState,
+                showSearchDialog = false,
+            )
         },
         onDeletePosition = { position ->
             scope.launch {
@@ -122,9 +148,16 @@ private fun SavedPositionsScreen(
     onOpenSelectedPosition: (SavedPositionListItem) -> Unit = {},
     onPositionSelected: (Long) -> Unit = {},
     onPositionToDeleteChange: (SavedPositionListItem?) -> Unit = {},
+    onSearchDialogVisibilityChange: (Boolean) -> Unit = {},
+    onDraftFilterStateChange: (SavedPositionsFilterState) -> Unit = {},
+    onApplyFilter: () -> Unit = {},
     onDeletePosition: (SavedPositionListItem) -> Unit = {},
 ) {
     val selectedPosition = resolveSelectedPosition(state)
+    val displayedPositions = resolveDisplayedPositions(
+        positions = state.positions,
+        filterState = state.activeFilterState,
+    )
 
     RenderDeleteSavedPositionDialog(
         positionToDelete = state.positionToDelete,
@@ -133,6 +166,13 @@ private fun SavedPositionsScreen(
             onDeletePosition(position)
         },
     )
+    RenderSavedPositionsSearchDialog(
+        visible = state.showSearchDialog,
+        filterState = state.draftFilterState,
+        onDismiss = { onSearchDialogVisibilityChange(false) },
+        onFilterStateChange = onDraftFilterStateChange,
+        onApplyClick = onApplyFilter,
+    )
 
     AppScreenScaffold(
         modifier = modifier.fillMaxSize(),
@@ -140,6 +180,7 @@ private fun SavedPositionsScreen(
             SavedPositionsTopBar(
                 onBackClick = onBackClick,
                 selectedPosition = selectedPosition,
+                onSearchClick = { onSearchDialogVisibilityChange(true) },
                 onOpenSelectedPosition = onOpenSelectedPosition,
             )
         },
@@ -163,6 +204,7 @@ private fun SavedPositionsScreen(
         ) {
             renderSavedPositionsContent(
                 state = state,
+                displayedPositions = displayedPositions,
                 onPositionSelected = onPositionSelected,
                 onPositionToDeleteChange = onPositionToDeleteChange,
             )
@@ -197,6 +239,7 @@ private fun resolveSelectedPosition(state: SavedPositionsState): SavedPositionLi
 
 private fun LazyListScope.renderSavedPositionsContent(
     state: SavedPositionsState,
+    displayedPositions: List<SavedPositionListItem>,
     onPositionSelected: (Long) -> Unit,
     onPositionToDeleteChange: (SavedPositionListItem?) -> Unit,
 ) {
@@ -214,7 +257,14 @@ private fun LazyListScope.renderSavedPositionsContent(
         return
     }
 
-    items(state.positions, key = { it.id }) { position ->
+    if (displayedPositions.isEmpty()) {
+        item {
+            SavedPositionsNoFilterMatchesState()
+        }
+        return
+    }
+
+    items(displayedPositions, key = { it.id }) { position ->
         SavedPositionCard(
             position = position,
             isSelected = position.id == state.selectedPositionId,
@@ -222,6 +272,22 @@ private fun LazyListScope.renderSavedPositionsContent(
             onDeleteClick = { onPositionToDeleteChange(position) },
         )
         Spacer(modifier = Modifier.height(AppDimens.spaceMd))
+    }
+}
+
+private fun resolveDisplayedPositions(
+    positions: List<SavedPositionListItem>,
+    filterState: SavedPositionsFilterState,
+): List<SavedPositionListItem> {
+    if (filterState.query.isBlank()) {
+        return positions
+    }
+
+    return positions.filter { position ->
+        matchesSavedPositionsFilter(
+            position = position,
+            filterState = filterState,
+        )
     }
 }
 
@@ -247,6 +313,22 @@ private fun SavedPositionsEmptyState() {
     ) {
         BodySecondaryText(
             text = "No saved positions available.",
+            color = TextColor.Secondary,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+private fun SavedPositionsNoFilterMatchesState() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(160.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        BodySecondaryText(
+            text = "No saved positions match the current filter.",
             color = TextColor.Secondary,
             textAlign = TextAlign.Center,
         )

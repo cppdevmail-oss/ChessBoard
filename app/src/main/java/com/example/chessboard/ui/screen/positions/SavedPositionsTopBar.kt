@@ -7,6 +7,7 @@ package com.example.chessboard.ui.screen.positions
  */
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -14,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import com.example.chessboard.ui.SavedPositionsOpenSelectedTestTag
+import com.example.chessboard.ui.SavedPositionsSearchActionTestTag
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
@@ -22,6 +24,7 @@ import com.example.chessboard.ui.theme.TrainingAccentTeal
 internal fun SavedPositionsTopBar(
     selectedPosition: SavedPositionListItem?,
     onBackClick: () -> Unit,
+    onSearchClick: () -> Unit,
     onOpenSelectedPosition: (SavedPositionListItem) -> Unit,
 ) {
     fun resolveOpenSelectedPositionTint(): Color {
@@ -37,6 +40,16 @@ internal fun SavedPositionsTopBar(
         onBackClick = onBackClick,
         filledBackButton = true,
         actions = {
+            IconButton(
+                onClick = onSearchClick,
+                modifier = Modifier.testTag(SavedPositionsSearchActionTestTag),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "Search saved positions",
+                    tint = TextColor.Primary,
+                )
+            }
             IconButton(
                 onClick = {
                     val position = selectedPosition ?: return@IconButton

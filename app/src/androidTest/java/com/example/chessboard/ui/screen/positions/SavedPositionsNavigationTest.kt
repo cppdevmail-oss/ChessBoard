@@ -13,12 +13,15 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import com.example.chessboard.MainActivity
 import com.example.chessboard.boardmodel.InitialBoardFen
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.service.SaveSavedSearchPositionResult
 import com.example.chessboard.ui.SavedPositionsContentTestTag
 import com.example.chessboard.ui.SavedPositionsOpenSelectedTestTag
+import com.example.chessboard.ui.SavedPositionsSearchActionTestTag
+import com.example.chessboard.ui.SavedPositionsSearchNameFieldTestTag
 import com.example.chessboard.ui.savedPositionCardTestTag
 import com.example.chessboard.ui.savedPositionDeleteButtonTestTag
 import kotlinx.coroutines.runBlocking
@@ -114,12 +117,55 @@ class SavedPositionsNavigationTest {
         }
     }
 
-    private fun savePosition(name: String): Long {
+    @Test
+    fun savedPositionsScreen_searchApplyFiltersByPositionName() {
+        savePosition(name = "Italian Position", fen = InitialBoardFen)
+        savePosition(name = "French Structure", fen = EmptyBoardFen)
+
+        waitForTextDisplayed("Saved Positions")
+        composeRule.onNodeWithText("Saved Positions").performClick()
+
+        waitForTextDisplayed("Italian Position")
+        waitForTextDisplayed("French Structure")
+        composeRule.onNodeWithTag(SavedPositionsSearchActionTestTag).performClick()
+        waitForTextDisplayed("Search Positions")
+        composeRule.onNodeWithTag(SavedPositionsSearchNameFieldTestTag)
+            .performTextInput("ita")
+        composeRule.onNodeWithText("Apply").performClick()
+
+        waitForTextDisplayed("Italian Position")
+        composeRule.onNodeWithText("French Structure").assertDoesNotExist()
+    }
+
+    @Test
+    fun savedPositionsScreen_searchCancelDoesNotApplyDraftFilter() {
+        savePosition(name = "Italian Position", fen = InitialBoardFen)
+        savePosition(name = "French Structure", fen = EmptyBoardFen)
+
+        waitForTextDisplayed("Saved Positions")
+        composeRule.onNodeWithText("Saved Positions").performClick()
+
+        waitForTextDisplayed("Italian Position")
+        waitForTextDisplayed("French Structure")
+        composeRule.onNodeWithTag(SavedPositionsSearchActionTestTag).performClick()
+        waitForTextDisplayed("Search Positions")
+        composeRule.onNodeWithTag(SavedPositionsSearchNameFieldTestTag)
+            .performTextInput("Italian")
+        composeRule.onNodeWithText("Cancel").performClick()
+
+        composeRule.onNodeWithText("Italian Position").assertIsDisplayed()
+        composeRule.onNodeWithText("French Structure").assertIsDisplayed()
+    }
+
+    private fun savePosition(
+        name: String,
+        fen: String = InitialBoardFen,
+    ): Long {
         return runBlocking {
             val result = dbProvider.createSavedSearchPositionService().create(
                 name = name,
-                fenForSearch = InitialBoardFen,
-                fenFull = InitialBoardFen,
+                fenForSearch = fen,
+                fenFull = fen,
             )
             check(result is SaveSavedSearchPositionResult.Success) {
                 "Expected saved position success, got $result"
@@ -144,5 +190,9 @@ class SavedPositionsNavigationTest {
                 true
             }.getOrDefault(false)
         }
+    }
+
+    private companion object {
+        const val EmptyBoardFen = "8/8/8/8/8/8/8/8 w - - 0 1"
     }
 }
