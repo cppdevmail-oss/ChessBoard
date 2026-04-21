@@ -12,8 +12,10 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.example.chessboard.MainActivity
+import com.example.chessboard.boardmodel.InitialBoardFen
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.ui.SavedPositionsContentTestTag
+import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -38,7 +40,24 @@ class SavedPositionsNavigationTest {
         composeRule.onNodeWithText("Saved Positions").performClick()
 
         waitForNodeDisplayed(SavedPositionsContentTestTag)
-        composeRule.onNodeWithText("Saved positions will appear here.").assertIsDisplayed()
+        composeRule.onNodeWithText("No saved positions available.").assertIsDisplayed()
+    }
+
+    @Test
+    fun savedPositionsScreen_displaysPersistedPositions() {
+        runBlocking {
+            dbProvider.createSavedSearchPositionService().create(
+                name = "Italian Position",
+                fenForSearch = InitialBoardFen,
+                fenFull = InitialBoardFen,
+            )
+        }
+
+        waitForTextDisplayed("Saved Positions")
+        composeRule.onNodeWithText("Saved Positions").performClick()
+
+        waitForTextDisplayed("Italian Position")
+        composeRule.onNodeWithText("FEN: $InitialBoardFen").assertIsDisplayed()
     }
 
     private fun waitForTextDisplayed(text: String) {
