@@ -7,6 +7,7 @@ package com.example.chessboard.ui.screen.positions
  * Do not add low-level persistence or board interaction tests here.
  */
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -14,7 +15,9 @@ import androidx.compose.ui.test.performClick
 import com.example.chessboard.MainActivity
 import com.example.chessboard.boardmodel.InitialBoardFen
 import com.example.chessboard.repository.DatabaseProvider
+import com.example.chessboard.service.SaveSavedSearchPositionResult
 import com.example.chessboard.ui.SavedPositionsContentTestTag
+import com.example.chessboard.ui.savedPositionCardTestTag
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
@@ -45,19 +48,40 @@ class SavedPositionsNavigationTest {
 
     @Test
     fun savedPositionsScreen_displaysPersistedPositions() {
-        runBlocking {
-            dbProvider.createSavedSearchPositionService().create(
-                name = "Italian Position",
-                fenForSearch = InitialBoardFen,
-                fenFull = InitialBoardFen,
-            )
-        }
+        savePosition(name = "Italian Position")
 
         waitForTextDisplayed("Saved Positions")
         composeRule.onNodeWithText("Saved Positions").performClick()
 
         waitForTextDisplayed("Italian Position")
         composeRule.onNodeWithText("FEN: $InitialBoardFen").assertIsDisplayed()
+    }
+
+    @Test
+    fun savedPositionsScreen_clickingPositionSelectsCard() {
+        val positionId = savePosition(name = "Selected Position")
+
+        waitForTextDisplayed("Saved Positions")
+        composeRule.onNodeWithText("Saved Positions").performClick()
+
+        waitForTextDisplayed("Selected Position")
+        composeRule.onNodeWithTag(savedPositionCardTestTag(positionId)).performClick()
+
+        composeRule.onNodeWithTag(savedPositionCardTestTag(positionId)).assertIsSelected()
+    }
+
+    private fun savePosition(name: String): Long {
+        return runBlocking {
+            val result = dbProvider.createSavedSearchPositionService().create(
+                name = name,
+                fenForSearch = InitialBoardFen,
+                fenFull = InitialBoardFen,
+            )
+            check(result is SaveSavedSearchPositionResult.Success) {
+                "Expected saved position success, got $result"
+            }
+            result.id
+        }
     }
 
     private fun waitForTextDisplayed(text: String) {

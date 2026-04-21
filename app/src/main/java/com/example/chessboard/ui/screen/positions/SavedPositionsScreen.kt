@@ -7,9 +7,10 @@ package com.example.chessboard.ui.screen.positions
  * Do not add database schema, DAO queries, or reusable generic UI components here.
  */
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,10 +30,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.entity.SavedSearchPositionEntity
 import com.example.chessboard.ui.SavedPositionsContentTestTag
+import com.example.chessboard.ui.savedPositionCardTestTag
 import com.example.chessboard.ui.components.AppBottomNavigation
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
@@ -44,6 +48,7 @@ import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.theme.AppDimens
+import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import kotlinx.coroutines.Dispatchers
@@ -52,6 +57,7 @@ import kotlinx.coroutines.withContext
 private data class SavedPositionsState(
     val isLoading: Boolean = true,
     val positions: List<SavedPositionListItem> = emptyList(),
+    val selectedPositionId: Long? = null,
 )
 
 private data class SavedPositionListItem(
@@ -86,6 +92,9 @@ fun SavedPositionsScreenContainer(
         modifier = modifier,
         onBackClick = screenContext.onBackClick,
         onNavigate = screenContext.onNavigate,
+        onPositionSelected = { positionId ->
+            state = state.copy(selectedPositionId = positionId)
+        },
     )
 }
 
@@ -96,6 +105,7 @@ private fun SavedPositionsScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
+    onPositionSelected: (Long) -> Unit = {},
 ) {
     AppScreenScaffold(
         modifier = modifier.fillMaxSize(),
@@ -124,12 +134,18 @@ private fun SavedPositionsScreen(
                 vertical = AppDimens.spaceLg,
             ),
         ) {
-            renderSavedPositionsContent(state = state)
+            renderSavedPositionsContent(
+                state = state,
+                onPositionSelected = onPositionSelected,
+            )
         }
     }
 }
 
-private fun LazyListScope.renderSavedPositionsContent(state: SavedPositionsState) {
+private fun LazyListScope.renderSavedPositionsContent(
+    state: SavedPositionsState,
+    onPositionSelected: (Long) -> Unit,
+) {
     if (state.isLoading) {
         item {
             SavedPositionsLoadingState()
@@ -145,7 +161,11 @@ private fun LazyListScope.renderSavedPositionsContent(state: SavedPositionsState
     }
 
     items(state.positions, key = { it.id }) { position ->
-        SavedPositionCard(position = position)
+        SavedPositionCard(
+            position = position,
+            isSelected = position.id == state.selectedPositionId,
+            onClick = { onPositionSelected(position.id) },
+        )
         Spacer(modifier = Modifier.height(AppDimens.spaceMd))
     }
 }
@@ -181,11 +201,27 @@ private fun SavedPositionsEmptyState() {
 @Composable
 private fun SavedPositionCard(
     position: SavedPositionListItem,
+    isSelected: Boolean,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    CardSurface(modifier = modifier.fillMaxWidth()) {
+    CardSurface(
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag(savedPositionCardTestTag(position.id))
+            .semantics { selected = isSelected },
+        color = if (isSelected) Background.CardDark else Background.SurfaceDark,
+        border = if (isSelected) BorderStroke(1.dp, TrainingAccentTeal) else null,
+        onClick = onClick,
+    ) {
         Column(verticalArrangement = Arrangement.spacedBy(AppDimens.spaceXs)) {
             ScreenTitleText(text = position.name)
+            if (isSelected) {
+                CardMetaText(
+                    text = "Selected",
+                    color = TrainingAccentTeal,
+                )
+            }
             CardMetaText(text = "Position ID: ${position.id}")
             CardMetaText(text = "FEN: ${resolveDisplayedFen(position)}")
         }
