@@ -7,6 +7,7 @@ package com.example.chessboard.ui.screen.positions
  * Do not add low-level persistence or board interaction tests here.
  */
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -17,6 +18,7 @@ import com.example.chessboard.boardmodel.InitialBoardFen
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.service.SaveSavedSearchPositionResult
 import com.example.chessboard.ui.SavedPositionsContentTestTag
+import com.example.chessboard.ui.SavedPositionsOpenSelectedTestTag
 import com.example.chessboard.ui.savedPositionCardTestTag
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
@@ -68,6 +70,23 @@ class SavedPositionsNavigationTest {
         composeRule.onNodeWithTag(savedPositionCardTestTag(positionId)).performClick()
 
         composeRule.onNodeWithTag(savedPositionCardTestTag(positionId)).assertIsSelected()
+    }
+
+    @Test
+    fun savedPositionsScreen_openSelectedPositionRequiresExplicitAction() {
+        val positionId = savePosition(name = "Editor Position")
+
+        waitForTextDisplayed("Saved Positions")
+        composeRule.onNodeWithText("Saved Positions").performClick()
+
+        waitForTextDisplayed("Editor Position")
+        composeRule.onNodeWithTag(savedPositionCardTestTag(positionId)).performClick()
+        composeRule.onNodeWithText("Position Editor").assertDoesNotExist()
+
+        composeRule.onNodeWithTag(SavedPositionsOpenSelectedTestTag).assertIsEnabled()
+        composeRule.onNodeWithTag(SavedPositionsOpenSelectedTestTag).performClick()
+
+        waitForTextDisplayed("Position Editor")
     }
 
     private fun savePosition(name: String): Long {

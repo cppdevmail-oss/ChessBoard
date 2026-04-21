@@ -163,6 +163,13 @@ class MainActivity : ComponentActivity() {
                         screenContext = createScreenContext(
                             onBackClick = { currentScreen = ScreenType.Home },
                         ),
+                        onOpenPositionEditor = { fen ->
+                            runtimeContext.positionEditor.initialFen = fen
+                            runtimeContext.positionEditor.onBackClick = {
+                                currentScreen = ScreenType.SavedPositions
+                            }
+                            currentScreen = ScreenType.PositionEditor
+                        },
                     )
 
                     ScreenType.Backup -> BackupScreenContainer(

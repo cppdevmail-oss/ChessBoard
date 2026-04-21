@@ -10,6 +10,7 @@ const val PositionEditorBlackLongCastleTestTag = "position-editor-black-long-cas
 const val PositionEditorListTestTag = "position-editor-list"
 const val PositionEditorSaveNameFieldTestTag = "position-editor-save-name-field"
 const val SavedPositionsContentTestTag = "saved-positions-content"
+const val SavedPositionsOpenSelectedTestTag = "saved-positions-open-selected"
 fun savedPositionCardTestTag(positionId: Long): String = "saved-position-card-$positionId"
 const val GameEditorScrollContainerTestTag = "game-editor-scroll-container"
 const val GameEditorMoveSequenceSectionTestTag = "game-editor-move-sequence-section"

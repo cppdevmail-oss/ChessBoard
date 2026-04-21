@@ -19,8 +19,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -29,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -36,6 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.entity.SavedSearchPositionEntity
 import com.example.chessboard.ui.SavedPositionsContentTestTag
+import com.example.chessboard.ui.SavedPositionsOpenSelectedTestTag
 import com.example.chessboard.ui.savedPositionCardTestTag
 import com.example.chessboard.ui.components.AppBottomNavigation
 import com.example.chessboard.ui.components.AppScreenScaffold
@@ -71,6 +77,7 @@ private data class SavedPositionListItem(
 fun SavedPositionsScreenContainer(
     screenContext: ScreenContainerContext,
     modifier: Modifier = Modifier,
+    onOpenPositionEditor: (String) -> Unit = {},
 ) {
     val savedSearchPositionService = remember(screenContext.inDbProvider) {
         screenContext.inDbProvider.createSavedSearchPositionService()
@@ -92,6 +99,9 @@ fun SavedPositionsScreenContainer(
         modifier = modifier,
         onBackClick = screenContext.onBackClick,
         onNavigate = screenContext.onNavigate,
+        onOpenSelectedPosition = { selectedPosition ->
+            onOpenPositionEditor(resolveDisplayedFen(selectedPosition))
+        },
         onPositionSelected = { positionId ->
             state = state.copy(selectedPositionId = positionId)
         },
@@ -105,15 +115,18 @@ private fun SavedPositionsScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
+    onOpenSelectedPosition: (SavedPositionListItem) -> Unit = {},
     onPositionSelected: (Long) -> Unit = {},
 ) {
+    val selectedPosition = resolveSelectedPosition(state)
+
     AppScreenScaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
-            AppTopBar(
-                title = "Saved Positions",
+            SavedPositionsTopBar(
                 onBackClick = onBackClick,
-                filledBackButton = true,
+                selectedPosition = selectedPosition,
+                onOpenSelectedPosition = onOpenSelectedPosition,
             )
         },
         bottomBar = {
@@ -140,6 +153,48 @@ private fun SavedPositionsScreen(
             )
         }
     }
+}
+
+@Composable
+private fun SavedPositionsTopBar(
+    selectedPosition: SavedPositionListItem?,
+    onBackClick: () -> Unit,
+    onOpenSelectedPosition: (SavedPositionListItem) -> Unit,
+) {
+    fun resolveOpenSelectedPositionTint(): Color {
+        if (selectedPosition == null) {
+            return TextColor.Secondary
+        }
+
+        return TrainingAccentTeal
+    }
+
+    AppTopBar(
+        title = "Saved Positions",
+        onBackClick = onBackClick,
+        filledBackButton = true,
+        actions = {
+            IconButton(
+                onClick = {
+                    val position = selectedPosition ?: return@IconButton
+                    onOpenSelectedPosition(position)
+                },
+                enabled = selectedPosition != null,
+                modifier = Modifier.testTag(SavedPositionsOpenSelectedTestTag),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Open selected position",
+                    tint = resolveOpenSelectedPositionTint(),
+                )
+            }
+        },
+    )
+}
+
+private fun resolveSelectedPosition(state: SavedPositionsState): SavedPositionListItem? {
+    val selectedPositionId = state.selectedPositionId ?: return null
+    return state.positions.firstOrNull { it.id == selectedPositionId }
 }
 
 private fun LazyListScope.renderSavedPositionsContent(
