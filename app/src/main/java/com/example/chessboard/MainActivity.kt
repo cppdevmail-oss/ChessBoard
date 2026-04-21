@@ -27,6 +27,7 @@ import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.SettingsScreenContainer
 import com.example.chessboard.ui.screen.SmartTrainingScreenContainer
 import com.example.chessboard.ui.screen.positions.PositionEditorScreenContainer
+import com.example.chessboard.ui.screen.positions.SavedPositionsScreenContainer
 import com.example.chessboard.ui.screen.trainSingleGame.TrainSingleGameLauncherScreenContainer
 import com.example.chessboard.ui.screen.training.CreateTrainingByStatisticsScreenContainer
 import com.example.chessboard.ui.screen.training.CreateTrainingChoiceScreenContainer
@@ -156,6 +157,19 @@ class MainActivity : ComponentActivity() {
                         screenContext = createScreenContext(
                             onBackClick = { runtimeContext.positionEditor.onBackClick() },
                         ),
+                    )
+
+                    ScreenType.SavedPositions -> SavedPositionsScreenContainer(
+                        screenContext = createScreenContext(
+                            onBackClick = { currentScreen = ScreenType.Home },
+                        ),
+                        onOpenPositionEditor = { fen ->
+                            runtimeContext.positionEditor.initialFen = fen
+                            runtimeContext.positionEditor.onBackClick = {
+                                currentScreen = ScreenType.SavedPositions
+                            }
+                            currentScreen = ScreenType.PositionEditor
+                        },
                     )
 
                     ScreenType.Backup -> BackupScreenContainer(
