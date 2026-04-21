@@ -10,6 +10,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -24,7 +25,9 @@ import com.example.chessboard.service.SaveSavedSearchPositionResult
 import com.example.chessboard.testing.fenStateDescriptionMatcher
 import com.example.chessboard.ui.InteractiveChessBoardTestTag
 import com.example.chessboard.ui.SavedPositionsContentTestTag
+import com.example.chessboard.ui.SavedPositionsNextPageTestTag
 import com.example.chessboard.ui.SavedPositionsOpenSelectedTestTag
+import com.example.chessboard.ui.SavedPositionsPreviousPageTestTag
 import com.example.chessboard.ui.SavedPositionsSearchActionTestTag
 import com.example.chessboard.ui.SavedPositionsSearchNameFieldTestTag
 import com.example.chessboard.ui.savedPositionCardTestTag
@@ -66,6 +69,31 @@ class SavedPositionsNavigationTest {
 
         waitForTextDisplayed("Italian Position")
         composeRule.onNodeWithText("FEN: $InitialBoardFen").assertIsDisplayed()
+    }
+
+    @Test
+    fun savedPositionsScreen_paginatesPositionsTwentyAtATime() {
+        val firstPositionId = savePagedPositions(count = 21)
+
+        waitForTextDisplayed("Saved Positions")
+        composeRule.onNodeWithText("Saved Positions").performClick()
+
+        waitForTextDisplayed("Positions: 21 • Page 1/2")
+        waitForTextDisplayed("Paged Position 01")
+        composeRule.onNodeWithText("Paged Position 21").assertDoesNotExist()
+        composeRule.onNodeWithTag(SavedPositionsPreviousPageTestTag).assertIsNotEnabled()
+        composeRule.onNodeWithTag(SavedPositionsNextPageTestTag).assertIsEnabled()
+
+        composeRule.onNodeWithTag(savedPositionCardTestTag(firstPositionId)).performClick()
+        composeRule.onNodeWithTag(SavedPositionsOpenSelectedTestTag).assertIsEnabled()
+        composeRule.onNodeWithTag(SavedPositionsNextPageTestTag).performClick()
+
+        waitForTextDisplayed("Positions: 21 • Page 2/2")
+        waitForTextDisplayed("Paged Position 21")
+        composeRule.onNodeWithText("Paged Position 01").assertDoesNotExist()
+        composeRule.onNodeWithTag(SavedPositionsOpenSelectedTestTag).assertIsNotEnabled()
+        composeRule.onNodeWithTag(SavedPositionsPreviousPageTestTag).assertIsEnabled()
+        composeRule.onNodeWithTag(SavedPositionsNextPageTestTag).assertIsNotEnabled()
     }
 
     @Test
@@ -236,6 +264,46 @@ class SavedPositionsNavigationTest {
             }
             result.id
         }
+    }
+
+    private fun savePagedPositions(count: Int): Long {
+        check(count > 0) {
+            "Paged positions count must be positive"
+        }
+
+        return (0 until count).map { index ->
+            savePosition(
+                name = "Paged Position ${(index + 1).toString().padStart(2, '0')}",
+                fen = uniquePagedPositionFen(index),
+            )
+        }.first()
+    }
+
+    private fun uniquePagedPositionFen(index: Int): String {
+        val rows = (0 until 8).map { row ->
+            buildFenRankWithKing(
+                targetSquareIndex = index % 64,
+                row = row,
+            )
+        }
+
+        return "${rows.joinToString(separator = "/")} w - - 0 1"
+    }
+
+    private fun buildFenRankWithKing(
+        targetSquareIndex: Int,
+        row: Int,
+    ): String {
+        val rankStartIndex = row * 8
+        val targetFile = targetSquareIndex - rankStartIndex
+
+        if (targetFile !in 0..7) {
+            return "8"
+        }
+
+        val prefix = targetFile.takeIf { it > 0 }?.toString().orEmpty()
+        val suffix = (7 - targetFile).takeIf { it > 0 }?.toString().orEmpty()
+        return "${prefix}K$suffix"
     }
 
     private fun waitForTextDisplayed(text: String) {

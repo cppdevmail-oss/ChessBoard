@@ -51,11 +51,14 @@ private data class SavedPositionsState(
     val isLoading: Boolean = true,
     val positions: List<SavedPositionListItem> = emptyList(),
     val selectedPositionId: Long? = null,
+    val currentPage: Int = 1,
     val positionToDelete: SavedPositionListItem? = null,
     val showSearchDialog: Boolean = false,
     val activeFilterState: SavedPositionsFilterState = SavedPositionsFilterState(),
     val draftFilterState: SavedPositionsFilterState = SavedPositionsFilterState(),
 )
+
+private const val SavedPositionsPageLimit = 20
 
 internal data class SavedPositionListItem(
     val id: Long,
@@ -94,6 +97,10 @@ fun SavedPositionsScreenContainer(
         state = state.copy(
             isLoading = false,
             positions = positions,
+            currentPage = resolveSavedPositionsCurrentPage(
+                totalPositionsCount = positions.size,
+                currentPage = state.currentPage,
+            ),
         )
     }
 
@@ -107,6 +114,24 @@ fun SavedPositionsScreenContainer(
         },
         onPositionSelected = { positionId ->
             state = state.copy(selectedPositionId = positionId)
+        },
+        onOpenPreviousPageClick = {
+            state = state.copy(
+                selectedPositionId = null,
+                currentPage = resolveSavedPositionsCurrentPage(
+                    totalPositionsCount = state.positions.size,
+                    currentPage = state.currentPage - 1,
+                ),
+            )
+        },
+        onOpenNextPageClick = {
+            state = state.copy(
+                selectedPositionId = null,
+                currentPage = resolveSavedPositionsCurrentPage(
+                    totalPositionsCount = state.positions.size,
+                    currentPage = state.currentPage + 1,
+                ),
+            )
         },
         onPositionToDeleteChange = { position ->
             state = state.copy(positionToDelete = position)
@@ -134,6 +159,10 @@ fun SavedPositionsScreenContainer(
                         state = state,
                         deletedPosition = position,
                     ),
+                    currentPage = resolveSavedPositionsCurrentPage(
+                        totalPositionsCount = state.positions.size - 1,
+                        currentPage = state.currentPage,
+                    ),
                     positionToDelete = null,
                 )
             }
@@ -149,6 +178,8 @@ private fun SavedPositionsScreen(
     onNavigate: (ScreenType) -> Unit = {},
     onOpenSelectedPosition: (SavedPositionListItem) -> Unit = {},
     onPositionSelected: (Long) -> Unit = {},
+    onOpenPreviousPageClick: () -> Unit = {},
+    onOpenNextPageClick: () -> Unit = {},
     onPositionToDeleteChange: (SavedPositionListItem?) -> Unit = {},
     onSearchDialogVisibilityChange: (Boolean) -> Unit = {},
     onDraftFilterStateChange: (SavedPositionsFilterState) -> Unit = {},
@@ -157,8 +188,17 @@ private fun SavedPositionsScreen(
 ) {
     val selectedPosition = resolveSelectedPosition(state)
     val previewGameController = remember { GameController() }
-    val displayedPositions = resolveDisplayedPositions(
+    val currentPage = resolveSavedPositionsCurrentPage(
+        totalPositionsCount = state.positions.size,
+        currentPage = state.currentPage,
+    )
+    val totalPages = resolveSavedPositionsTotalPages(state.positions.size)
+    val pagePositions = resolveSavedPositionsPage(
         positions = state.positions,
+        currentPage = currentPage,
+    )
+    val displayedPositions = resolveDisplayedPositions(
+        positions = pagePositions,
         filterState = state.activeFilterState,
     )
 
@@ -194,7 +234,16 @@ private fun SavedPositionsScreen(
             SavedPositionsTopBar(
                 onBackClick = onBackClick,
                 selectedPosition = selectedPosition,
+                paginationState = SavedPositionsTopBarPaginationState(
+                    totalPositionsCount = state.positions.size,
+                    currentPage = currentPage,
+                    totalPages = totalPages,
+                    canOpenPreviousPage = currentPage > 1,
+                    canOpenNextPage = currentPage < totalPages,
+                ),
                 onSearchClick = { onSearchDialogVisibilityChange(true) },
+                onOpenPreviousPageClick = onOpenPreviousPageClick,
+                onOpenNextPageClick = onOpenNextPageClick,
                 onOpenSelectedPosition = onOpenSelectedPosition,
             )
         },
@@ -251,6 +300,30 @@ private fun RenderDeleteSavedPositionDialog(
 private fun resolveSelectedPosition(state: SavedPositionsState): SavedPositionListItem? {
     val selectedPositionId = state.selectedPositionId ?: return null
     return state.positions.firstOrNull { it.id == selectedPositionId }
+}
+
+private fun resolveSavedPositionsCurrentPage(
+    totalPositionsCount: Int,
+    currentPage: Int,
+): Int {
+    return currentPage.coerceIn(1, resolveSavedPositionsTotalPages(totalPositionsCount))
+}
+
+private fun resolveSavedPositionsTotalPages(totalPositionsCount: Int): Int {
+    if (totalPositionsCount == 0) {
+        return 1
+    }
+
+    return (totalPositionsCount + SavedPositionsPageLimit - 1) / SavedPositionsPageLimit
+}
+
+private fun resolveSavedPositionsPage(
+    positions: List<SavedPositionListItem>,
+    currentPage: Int,
+): List<SavedPositionListItem> {
+    return positions
+        .drop((currentPage - 1) * SavedPositionsPageLimit)
+        .take(SavedPositionsPageLimit)
 }
 
 private fun LazyListScope.renderSavedPositionsContent(
