@@ -9,6 +9,7 @@ const val PositionEditorBlackShortCastleTestTag = "position-editor-black-short-c
 const val PositionEditorBlackLongCastleTestTag = "position-editor-black-long-castle"
 const val PositionEditorListTestTag = "position-editor-list"
 const val PositionEditorSaveNameFieldTestTag = "position-editor-save-name-field"
+const val SavedPositionsContentTestTag = "saved-positions-content"
 const val GameEditorScrollContainerTestTag = "game-editor-scroll-container"
 const val GameEditorMoveSequenceSectionTestTag = "game-editor-move-sequence-section"
 const val EditTrainingListTestTag = "edit-training-list"

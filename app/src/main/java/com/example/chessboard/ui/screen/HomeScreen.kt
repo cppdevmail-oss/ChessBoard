@@ -88,6 +88,7 @@ fun HomeScreenContainer(
     onCreateTrainingClick: () -> Unit = {},
     onSmartTrainingClick: () -> Unit = { screenContext.onNavigate(ScreenType.SmartTraining) },
     onOpenPositionEditorClick: () -> Unit = {},
+    onOpenSavedPositionsClick: () -> Unit = { screenContext.onNavigate(ScreenType.SavedPositions) },
     modifier: Modifier = Modifier,
 ) {
     var trainings by remember { mutableStateOf<List<HomeTrainingItem>>(emptyList()) }
@@ -126,6 +127,7 @@ fun HomeScreenContainer(
         onCreateTrainingClick = onCreateTrainingClick,
         onSmartTrainingClick = onSmartTrainingClick,
         onOpenPositionEditorClick = onOpenPositionEditorClick,
+        onOpenSavedPositionsClick = onOpenSavedPositionsClick,
         onOpenBackupClick = { screenContext.onNavigate(ScreenType.Backup) },
         onExitClick = { activity.finishAffinity() },
         modifier = modifier
@@ -141,6 +143,7 @@ fun HomeScreen(
     onCreateTrainingClick: () -> Unit = {},
     onSmartTrainingClick: () -> Unit = {},
     onOpenPositionEditorClick: () -> Unit = {},
+    onOpenSavedPositionsClick: () -> Unit = {},
     onOpenBackupClick: () -> Unit = {},
     onExitClick: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -278,18 +281,27 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)
                 ) {
                     HomeActionCard(
+                        title = "Saved Positions",
+                        subtitle = "Open saved board positions",
+                        modifier = Modifier.weight(1f),
+                        onClick = onOpenSavedPositionsClick
+                    )
+                    HomeActionCard(
                         title = "Backup Games",
                         subtitle = "Export all games to a PGN file",
                         modifier = Modifier.weight(1f),
                         onClick = onOpenBackupClick
                     )
-                    HomeActionCard(
-                        title = "Exit",
-                        subtitle = "Close the application",
-                        modifier = Modifier.weight(1f),
-                        onClick = onExitClick
-                    )
                 }
+            }
+
+            item {
+                HomeActionCard(
+                    title = "Exit",
+                    subtitle = "Close the application",
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onExitClick
+                )
             }
         }
     }
