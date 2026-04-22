@@ -13,6 +13,7 @@ import com.example.chessboard.ui.screen.training.common.TrainingGameEditorItem
 
 import androidx.compose.runtime.Composable
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.rounded.PlayArrow
 import com.example.chessboard.ui.components.PrimaryButton
 
@@ -79,5 +80,22 @@ internal fun createEditTrainingPrimaryAction(
         },
         icon = Icons.Rounded.PlayArrow,
         contentDescription = "Start training"
+    )
+}
+
+internal fun createEditTrainingAnalyzeAction(
+    uciMoves: List<String>,
+    currentPly: Int,
+    requestLeave: (() -> Unit) -> Unit,
+    onAnalyzeGameClick: (List<String>, Int) -> Unit,
+): TrainingEditorPrimaryAction {
+    return TrainingEditorPrimaryAction(
+        onClick = {
+            requestLeave {
+                onAnalyzeGameClick(uciMoves, currentPly.coerceIn(0, uciMoves.size))
+            }
+        },
+        icon = Icons.Default.Analytics,
+        contentDescription = "Analyze game",
     )
 }

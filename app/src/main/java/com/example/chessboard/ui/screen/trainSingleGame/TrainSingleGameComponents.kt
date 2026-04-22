@@ -199,6 +199,13 @@ internal fun TrainingSingleGameActions(
             return
         }
 
+        IconButton(onClick = actions.onAnalyzeGameClick) {
+            Icon(
+                imageVector = Icons.Default.Analytics,
+                contentDescription = "Analyze game",
+                tint = TextColor.Primary
+            )
+        }
         IconButton(onClick = actions.onStopTrainingClick) {
             Icon(
                 imageVector = Icons.Default.Stop,

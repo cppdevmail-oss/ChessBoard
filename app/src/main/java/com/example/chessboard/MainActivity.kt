@@ -274,6 +274,13 @@ class MainActivity : ComponentActivity() {
                             runtimeContext.trainingOrderedGameIds = orderedGameIds
                             currentScreen = ScreenType.TrainSingleGame(screen.trainingId, gameId)
                         },
+                        onAnalyzeGameClick = { uciMoves, initialPly ->
+                            openGameAnalysis(
+                                uciMoves = uciMoves,
+                                initialPly = initialPly,
+                                backTarget = ScreenType.EditTraining(screen.trainingId),
+                            )
+                        },
                         onOpenGameEditorClick = { game ->
                             selectedGame = game
                             gameEditorOnBackClick = { currentScreen = ScreenType.EditTraining(screen.trainingId) }

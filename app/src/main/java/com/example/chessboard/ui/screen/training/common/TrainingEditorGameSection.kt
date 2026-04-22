@@ -85,8 +85,14 @@ internal fun TrainingEditorGameSection(
     state: TrainingEditorGameSectionState,
     actions: TrainingEditorGameSectionActions,
     primaryAction: TrainingEditorPrimaryAction? = null,
+    primaryActions: List<TrainingEditorPrimaryAction> = emptyList(),
     modifier: Modifier = Modifier,
 ) {
+    val visiblePrimaryActions = resolveVisiblePrimaryActions(
+        primaryAction = primaryAction,
+        primaryActions = primaryActions,
+    )
+
     Column(
         modifier = modifier.fillMaxWidth()
     ) {
@@ -106,9 +112,20 @@ internal fun TrainingEditorGameSection(
         TrainingEditorGameCard(
             state = state,
             actions = actions,
-            primaryAction = primaryAction
+            primaryActions = visiblePrimaryActions,
         )
     }
+}
+
+private fun resolveVisiblePrimaryActions(
+    primaryAction: TrainingEditorPrimaryAction?,
+    primaryActions: List<TrainingEditorPrimaryAction>,
+): List<TrainingEditorPrimaryAction> {
+    if (primaryActions.isNotEmpty()) {
+        return primaryActions
+    }
+
+    return listOfNotNull(primaryAction)
 }
 
 @Composable
@@ -196,7 +213,7 @@ private fun RenderTrainingGameEcoBadge(eco: String?) {
 private fun TrainingEditorGameCard(
     state: TrainingEditorGameSectionState,
     actions: TrainingEditorGameSectionActions,
-    primaryAction: TrainingEditorPrimaryAction?,
+    primaryActions: List<TrainingEditorPrimaryAction>,
 ) {
     val canUndo = state.isSelected && state.gameController.canUndo
     val canRedo = state.isSelected && state.gameController.canRedo
@@ -301,7 +318,7 @@ private fun TrainingEditorGameCard(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            RenderPrimaryGameActionButton(primaryAction = primaryAction)
+            RenderPrimaryGameActionButtons(primaryActions = primaryActions)
         }
 
         if (state.parsedGame == null) {
@@ -328,21 +345,30 @@ private fun TrainingEditorGameCard(
 }
 
 @Composable
-private fun RenderPrimaryGameActionButton(
-    primaryAction: TrainingEditorPrimaryAction?,
+private fun RenderPrimaryGameActionButtons(
+    primaryActions: List<TrainingEditorPrimaryAction>,
 ) {
-    val currentPrimaryAction = primaryAction ?: return
+    if (primaryActions.isEmpty()) {
+        return
+    }
 
-    IconButton(
-        onClick = currentPrimaryAction.onClick,
-        modifier = Modifier.size(36.dp)
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceXs),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            imageVector = currentPrimaryAction.icon,
-            contentDescription = currentPrimaryAction.contentDescription,
-            tint = currentPrimaryAction.tint,
-            modifier = Modifier.size(40.dp)
-        )
+        primaryActions.forEach { action ->
+            IconButton(
+                onClick = action.onClick,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = action.icon,
+                    contentDescription = action.contentDescription,
+                    tint = action.tint,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+        }
     }
 }
 

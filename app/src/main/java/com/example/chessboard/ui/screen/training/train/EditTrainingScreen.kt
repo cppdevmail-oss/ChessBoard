@@ -92,6 +92,7 @@ fun EditTrainingScreenContainer(
     orderGamesInTraining: RuntimeContext.OrderGamesInTraining,
     hideLinesWithWeightZero: Boolean = false,
     onStartGameTrainingClick: (Long, Int, Int, List<Long>) -> Unit = { _, _, _, _ -> },
+    onAnalyzeGameClick: (List<String>, Int) -> Unit = { _, _ -> },
     onOpenGameEditorClick: (GameEntity) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -140,6 +141,7 @@ fun EditTrainingScreenContainer(
         onBackClick = onBackClick,
         onNavigate = onNavigate,
         onStartGameTrainingClick = onStartGameTrainingClick,
+        onAnalyzeGameClick = onAnalyzeGameClick,
         onOpenGameEditorClick = createOpenEditTrainingGameEditorAction(
             allGamesById = loadState.allGamesById,
             onOpenGameEditorClick = onOpenGameEditorClick
@@ -181,6 +183,7 @@ fun EditTrainingScreen(
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
     onStartGameTrainingClick: (Long, Int, Int, List<Long>) -> Unit = { _, _, _, _ -> },
+    onAnalyzeGameClick: (List<String>, Int) -> Unit = { _, _ -> },
     onOpenGameEditorClick: (Long) -> Unit = {},
     onSaveTraining: (String, List<TrainingGameEditorItem>, Boolean, (() -> Unit)?) -> Unit = { _, _, _, _ -> },
     modifier: Modifier = Modifier
@@ -393,12 +396,22 @@ fun EditTrainingScreen(
                 },
                 onMovePlyClick = { ply -> boardSession.onMoveToPly(game.gameId, ply) },
             ),
-            primaryAction = createEditTrainingPrimaryAction(
-                gameId = game.gameId,
-                orderedGameIds = orderedGameIds,
-                moveRange = moveRange,
-                requestLeave = ::requestLeave,
-                onStartGameTrainingClick = onStartGameTrainingClick
+            primaryActions = listOfNotNull(
+                parsedGame?.let { currentParsedGame ->
+                    createEditTrainingAnalyzeAction(
+                        uciMoves = currentParsedGame.uciMoves,
+                        currentPly = if (isSelected) boardSession.gameController.currentMoveIndex else 0,
+                        requestLeave = ::requestLeave,
+                        onAnalyzeGameClick = onAnalyzeGameClick,
+                    )
+                },
+                createEditTrainingPrimaryAction(
+                    gameId = game.gameId,
+                    orderedGameIds = orderedGameIds,
+                    moveRange = moveRange,
+                    requestLeave = ::requestLeave,
+                    onStartGameTrainingClick = onStartGameTrainingClick
+                ),
             )
         )
     }
