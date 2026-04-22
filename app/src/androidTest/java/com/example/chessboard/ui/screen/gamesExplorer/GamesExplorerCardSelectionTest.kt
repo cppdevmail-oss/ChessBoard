@@ -49,6 +49,7 @@ class GamesExplorerCardSelectionTest {
                     onPrevClick = {},
                     onNextClick = {},
                     onResetClick = {},
+                    onAnalyzeClick = {},
                     onCloneClick = {},
                     onEditClick = {},
                     onDeleteClick = {}

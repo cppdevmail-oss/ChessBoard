@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
@@ -79,6 +80,7 @@ internal fun GameBlock(
     onPrevClick: () -> Unit,
     onNextClick: () -> Unit,
     onResetClick: () -> Unit,
+    onAnalyzeClick: () -> Unit,
     onCloneClick: () -> Unit,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
@@ -116,6 +118,7 @@ internal fun GameBlock(
                 onPrevClick = onPrevClick,
                 onResetClick = onResetClick,
                 onNextClick = onNextClick,
+                onAnalyzeClick = onAnalyzeClick,
                 onCloneClick = onCloneClick,
                 onEditClick = onEditClick,
                 onDeleteClick = onDeleteClick
@@ -140,6 +143,7 @@ private fun GamesExplorerActionRow(
     onPrevClick: () -> Unit,
     onResetClick: () -> Unit,
     onNextClick: () -> Unit,
+    onAnalyzeClick: () -> Unit,
     onCloneClick: () -> Unit,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
@@ -178,6 +182,11 @@ private fun GamesExplorerActionRow(
             horizontalArrangement = Arrangement.spacedBy(AppDimens.radiusXs),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            GameBlockActionButton(
+                imageVector = Icons.Default.Analytics,
+                contentDescription = "Analyze game",
+                onClick = onAnalyzeClick
+            )
             GameBlockActionButton(
                 imageVector = Icons.Default.ContentCopy,
                 contentDescription = "Clone game",

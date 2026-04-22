@@ -51,6 +51,7 @@ class GamesExplorerCloneTest {
                     onPrevClick = {},
                     onNextClick = {},
                     onResetClick = {},
+                    onAnalyzeClick = {},
                     onCloneClick = {
                         clonedGame = parsedGame.game
                     },
@@ -74,6 +75,53 @@ class GamesExplorerCloneTest {
             val clonedDraft = buildGameDraftFromSourceGame(clonedGame!!)
             assertEquals(0L, clonedDraft.game.id)
             assertEquals(sourceGame.pgn, clonedDraft.game.pgn)
+        }
+    }
+
+    @Test
+    fun gamesExplorer_analyzeGameButtonInvokesCallback() {
+        val sourceGame = GameEntity(
+            id = 43L,
+            event = "Italian Game",
+            eco = "C50",
+            pgn = "1. e2e4 e7e5 2. g1f3 *",
+            initialFen = "",
+            sideMask = SideMask.WHITE
+        )
+        val uciMoves = parsePgnMoves(sourceGame.pgn)
+        val parsedGame = ParsedGame(
+            game = sourceGame,
+            uciMoves = uciMoves,
+            moveLabels = buildMoveLabels(uciMoves)
+        )
+        var analyzeClicks = 0
+
+        composeRule.setContent {
+            ChessBoardTheme {
+                GameBlock(
+                    parsedGame = parsedGame,
+                    isSelected = true,
+                    currentPly = 2,
+                    onSelectClick = {},
+                    canUndo = false,
+                    canRedo = false,
+                    onMovePlyClick = {},
+                    onPrevClick = {},
+                    onNextClick = {},
+                    onResetClick = {},
+                    onAnalyzeClick = { analyzeClicks += 1 },
+                    onCloneClick = {},
+                    onEditClick = {},
+                    onDeleteClick = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Analyze game").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.runOnIdle {
+            assertEquals(1, analyzeClicks)
         }
     }
 }

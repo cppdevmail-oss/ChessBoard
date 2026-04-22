@@ -93,6 +93,38 @@ class TrainingEditorGameSectionTest {
     }
 
     @Test
+    fun trainingEditorGameSection_primaryActionsVisibleAndInvokeCallbacks() {
+        var analyzeClicks = 0
+        var startClicks = 0
+
+        setTrainingEditorGameSectionContent(
+            primaryAction = null,
+            primaryActions = listOf(
+                TrainingEditorPrimaryAction(
+                    onClick = { analyzeClicks += 1 },
+                    icon = Icons.Default.Add,
+                    contentDescription = "Analyze game",
+                ),
+                TrainingEditorPrimaryAction(
+                    onClick = { startClicks += 1 },
+                    icon = Icons.Default.Add,
+                    contentDescription = "Start training",
+                ),
+            ),
+        )
+
+        composeRule.onNodeWithContentDescription("Analyze game").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Start training").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Analyze game").performClick()
+        composeRule.onNodeWithContentDescription("Start training").performClick()
+
+        composeRule.runOnIdle {
+            assertEquals(1, analyzeClicks)
+            assertEquals(1, startClicks)
+        }
+    }
+
+    @Test
     fun trainingEditorGameSection_hidesOptionalSectionsWhenDataIsMissing() {
         setTrainingEditorGameSectionContent(
             state = createSectionState(parsedGame = null, isSelected = false),
@@ -125,13 +157,15 @@ class TrainingEditorGameSectionTest {
         state: TrainingEditorGameSectionState = createSectionState(),
         actions: TrainingEditorGameSectionActions = createSectionActions(),
         primaryAction: TrainingEditorPrimaryAction? = createPrimaryAction(),
+        primaryActions: List<TrainingEditorPrimaryAction> = emptyList(),
     ) {
         composeRule.setContent {
             ChessBoardTheme {
                 TrainingEditorGameSection(
                     state = state,
                     actions = actions,
-                    primaryAction = primaryAction
+                    primaryAction = primaryAction,
+                    primaryActions = primaryActions,
                 )
             }
         }
