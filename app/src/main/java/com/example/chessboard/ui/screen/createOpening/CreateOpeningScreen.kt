@@ -77,7 +77,7 @@ import com.example.chessboard.ui.components.ScreenSection
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.screen.EditableGameSide
 import com.example.chessboard.ui.screen.GameSideSelector
-import com.example.chessboard.ui.screen.training.ChessBoardSection
+import com.example.chessboard.ui.components.ChessBoardSection
 import com.example.chessboard.ui.screen.training.DarkInputField
 import com.example.chessboard.ui.components.MoveChip
 import com.example.chessboard.ui.theme.AppDimens
