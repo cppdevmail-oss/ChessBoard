@@ -150,6 +150,13 @@ class MainActivity : ComponentActivity() {
                             createOpeningOnBackClick = { currentScreen = ScreenType.GamesExplorer }
                             currentScreen = ScreenType.CreateOpening
                         },
+                        onAnalyzeGameClick = { uciMoves, initialPly ->
+                            openGameAnalysis(
+                                uciMoves = uciMoves,
+                                initialPly = initialPly,
+                                backTarget = ScreenType.GamesExplorer,
+                            )
+                        },
                         onOpenGameEditor = { game ->
                             selectedGame = game
                             gamesExplorerSelectedGameId = game.id

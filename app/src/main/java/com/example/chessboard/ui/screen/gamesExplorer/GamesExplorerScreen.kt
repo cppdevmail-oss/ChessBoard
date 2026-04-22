@@ -86,6 +86,7 @@ fun GamesExplorerScreenContainer(
     initialSelectedGameId: Long? = null,
     onOpenGameEditor: (GameEntity) -> Unit = {},
     onCloneGameClick: (GameDraft) -> Unit = {},
+    onAnalyzeGameClick: (List<String>, Int) -> Unit = { _, _ -> },
 ) {
     val inDbProvider = screenContext.inDbProvider
     val gameListService = remember { inDbProvider.createGameListService() }
@@ -157,6 +158,7 @@ fun GamesExplorerScreenContainer(
         onBackClick = screenContext.onBackClick,
         onNavigate = screenContext.onNavigate,
         onOpenGameEditor = onOpenGameEditor,
+        onAnalyzeGameClick = onAnalyzeGameClick,
         onOpenPreviousPageClick = { observableGamesPage.openPreviousPage() },
         onOpenNextPageClick = { observableGamesPage.openNextPage() },
         onCloneGameClick = { game ->
@@ -197,6 +199,7 @@ fun GamesExplorerScreen(
     onNavigate: (ScreenType) -> Unit = {},
     onOpenGameEditor: (GameEntity) -> Unit = {},
     onCloneGameClick: (GameEntity) -> Unit = {},
+    onAnalyzeGameClick: (List<String>, Int) -> Unit = { _, _ -> },
     onOpenPreviousPageClick: () -> Unit = {},
     onOpenNextPageClick: () -> Unit = {},
     onMovePlyClick: (gameIdx: Int, ply: Int) -> Unit = { _, _ -> },
@@ -402,6 +405,12 @@ fun GamesExplorerScreen(
                             onPrevClick = { gameController.undoMove() },
                             onNextClick = { gameController.redoMove() },
                             onResetClick = { onMovePlyClick(gameIdx, 0) },
+                            onAnalyzeClick = {
+                                onAnalyzeGameClick(
+                                    parsedGame.uciMoves,
+                                    currentPly.coerceIn(0, parsedGame.uciMoves.size),
+                                )
+                            },
                             onCloneClick = { onCloneGameClick(parsedGame.game) },
                             onEditClick = { onOpenGameEditor(parsedGame.game) },
                             onDeleteClick = { showDeleteDialog = true }
