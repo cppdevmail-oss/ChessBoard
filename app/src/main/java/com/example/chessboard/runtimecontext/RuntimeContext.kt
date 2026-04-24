@@ -1,4 +1,12 @@
-package com.example.chessboard
+package com.example.chessboard.runtimecontext
+
+/**
+ * Runtime state holder for screen-specific runtime contexts and session state.
+ *
+ * Keep runtime-only navigation/session state here when it must survive screen transitions
+ * within the running app process. Do not add database access, UI composables, or
+ * persistence-layer business logic here.
+ */
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
