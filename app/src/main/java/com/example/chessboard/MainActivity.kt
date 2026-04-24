@@ -44,7 +44,9 @@ import com.example.chessboard.ui.screen.training.CreateTrainingFromTemplateScree
 import com.example.chessboard.ui.screen.training.train.EditTrainingScreenContainer
 import com.example.chessboard.ui.screen.training.TrainingListScreenContainer
 import com.example.chessboard.ui.theme.ChessBoardTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
 
@@ -71,6 +73,7 @@ class MainActivity : ComponentActivity() {
                 var currentScreen by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
                 var selectedGame by remember { mutableStateOf<GameEntity?>(null) }
                 var gamesExplorerSelectedGameId by remember { mutableStateOf<Long?>(null) }
+                var gamesExplorerOnBackClick by remember { mutableStateOf<() -> Unit>({ currentScreen = ScreenType.Home }) }
                 var gameEditorOnBackClick by remember { mutableStateOf<() -> Unit>({ currentScreen = ScreenType.GamesExplorer }) }
                 var createOpeningDraft by remember { mutableStateOf(GameDraft()) }
                 var createOpeningOnBackClick by remember { mutableStateOf<() -> Unit>({ currentScreen = ScreenType.Home }) }
@@ -94,6 +97,22 @@ class MainActivity : ComponentActivity() {
                     scope.launch {
                         runtimeContext.gamesExplorer.loadAllGameIds(dbProvider)
                         gamesExplorerSelectedGameId = null
+                        gamesExplorerOnBackClick = { currentScreen = ScreenType.Home }
+                        currentScreen = ScreenType.GamesExplorer
+                    }
+                }
+
+                fun openGamesExplorerForOpeningDeviationBranch(branchFen: String) {
+                    scope.launch {
+                        val gameIds = withContext(Dispatchers.IO) {
+                            dbProvider.findGameIdsByFenWithoutMoveNumber(branchFen)
+                        }
+
+                        runtimeContext.gamesExplorer.setGameIds(gameIds)
+                        gamesExplorerSelectedGameId = null
+                        gamesExplorerOnBackClick = {
+                            currentScreen = ScreenType.ShowOpeningDeviation
+                        }
                         currentScreen = ScreenType.GamesExplorer
                     }
                 }
@@ -159,7 +178,7 @@ class MainActivity : ComponentActivity() {
                         observableGamesPage = runtimeContext.gamesExplorer,
                         initialSelectedGameId = gamesExplorerSelectedGameId,
                         screenContext = createScreenContext(
-                            onBackClick = { currentScreen = ScreenType.Home },
+                            onBackClick = { gamesExplorerOnBackClick() },
                         ),
                         onCloneGameClick = { draft ->
                             createOpeningDraft = draft
@@ -231,6 +250,13 @@ class MainActivity : ComponentActivity() {
                     ScreenType.ShowOpeningDeviation -> runtimeContext.openingDeviation.selectedDeviationItem()?.let { deviationItem ->
                         OpeningDeviationDisplayScreen(
                             deviationItem = deviationItem,
+                            selectedBranchIndex = runtimeContext.openingDeviation.selectedBranchIndex,
+                            onBranchSelected = { index ->
+                                runtimeContext.openingDeviation.selectBranch(index)
+                            },
+                            onOpenGamesClick = { branch ->
+                                openGamesExplorerForOpeningDeviationBranch(branch.resultFen)
+                            },
                             onBackClick = { currentScreen = ScreenType.SelectOpeningDeviationPosition },
                         )
                     } ?: run {

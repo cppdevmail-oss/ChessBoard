@@ -147,14 +147,14 @@ class OpeningDeviationDisplayScreenTest {
         composeRule.waitUntil(timeoutMillis = 5_000) {
             currentBoardFen(boardTag)?.let(::normalizeFenForAssertion) == normalizedExpectedFen
         }
-        composeRule.onNodeWithTag(boardTag).assert(
+        composeRule.onNodeWithTag(boardTag, useUnmergedTree = true).assert(
             fenStateDescriptionMatcher(expectedFen)
         )
     }
 
     private fun currentBoardFen(boardTag: String): String? {
         return runCatching {
-            composeRule.onNodeWithTag(boardTag)
+            composeRule.onNodeWithTag(boardTag, useUnmergedTree = true)
                 .fetchSemanticsNode()
                 .config
                 .getOrNull(SemanticsProperties.StateDescription)

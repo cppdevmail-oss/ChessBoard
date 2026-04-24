@@ -11,11 +11,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.ui.BoardOrientation
 import com.example.chessboard.ui.components.BodySecondaryText
@@ -24,6 +28,8 @@ import com.example.chessboard.ui.components.CardSurface
 import com.example.chessboard.ui.components.ChessBoardSection
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.theme.AppDimens
+import com.example.chessboard.ui.theme.Background
+import com.example.chessboard.ui.theme.TrainingAccentTeal
 
 @Composable
 internal fun OpeningDeviationBoardCard(
@@ -33,6 +39,8 @@ internal fun OpeningDeviationBoardCard(
     subtitle: String? = null,
     metaText: String? = null,
     boardTestTag: String? = null,
+    isSelected: Boolean = false,
+    onClick: (() -> Unit)? = null,
 ) {
     val gameController = remember { GameController() }
 
@@ -43,7 +51,19 @@ internal fun OpeningDeviationBoardCard(
     }
 
     CardSurface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics {
+                if (onClick != null) {
+                    selected = isSelected
+                }
+            },
+        color = resolveDeviationBoardCardColor(
+            isSelected = isSelected,
+            onClick = onClick,
+        ),
+        border = if (isSelected) BorderStroke(1.dp, TrainingAccentTeal) else null,
+        onClick = onClick,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(AppDimens.spaceXs)) {
             SectionTitleText(text = title)
@@ -60,6 +80,15 @@ internal fun OpeningDeviationBoardCard(
             )
         }
     }
+}
+
+private fun resolveDeviationBoardCardColor(
+    isSelected: Boolean,
+    onClick: (() -> Unit)?,
+) = when {
+    isSelected -> Background.CardDark
+    onClick != null -> Background.SurfaceDark
+    else -> Background.CardDark
 }
 
 private fun resolveDeviationBoardModifier(boardTestTag: String?): Modifier {
