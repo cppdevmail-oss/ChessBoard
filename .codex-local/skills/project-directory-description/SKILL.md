@@ -107,8 +107,25 @@ Follow these directory-role rules when adding or moving code in this project.
 - If the code exists mainly because one concrete screen must load, display, save, confirm, or navigate something, `ui/screen` is usually the right place.
 - If the code can be reused outside one screen or does not directly belong to screen orchestration, prefer moving it out of `ui/screen` into a more specific layer.
 
+
+## Runtime Context Role
+
+- `app/src/main/java/com/example/chessboard/runtimecontext` is for in-memory runtime state that should survive screen changes during the current app process.
+- This package contains the app-level runtime-context orchestrator and screen-specific runtime-context holders.
+- Typical examples for this directory:
+  - selected ids, page offsets, filters, and temporary navigation-return state
+  - screen session state that should be restored when returning to a screen
+  - validation-aware runtime models that exist only while the app is running
+- This layer is not for Room entities, DAO access, or persistence services.
+- This layer is not for composable UI rendering.
+- This layer is not for long-term storage; persisted data still belongs in repository/service/entity layers.
+
+## Runtime Context Practical Rule
+
+- If the state exists mainly to let the user leave a screen and come back to a still-valid in-memory session, `runtimecontext` is usually the right place.
+- If the state must survive app restart, it does not belong only in `runtimecontext`; persist it in the appropriate storage layer.
+
 ## File Move Practical Rule
 
 - When moving files that are already tracked by git, use `git mv` instead of plain `mv`.
 - In this project, `git mv` is preferred because it makes code review clearer and keeps file moves easier to read in diffs.
-

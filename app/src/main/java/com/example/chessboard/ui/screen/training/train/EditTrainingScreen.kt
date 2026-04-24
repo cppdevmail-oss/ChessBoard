@@ -25,7 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.example.chessboard.RuntimeContext
+import com.example.chessboard.runtimecontext.RuntimeContext
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.screen.ScreenContainerContext

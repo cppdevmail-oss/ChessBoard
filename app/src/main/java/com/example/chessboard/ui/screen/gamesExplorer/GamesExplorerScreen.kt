@@ -17,7 +17,7 @@ package com.example.chessboard.ui.screen.gamesExplorer
  * - unrelated search/filter helpers for other screens
  * - database logic beyond the narrow container orchestration for this screen
  */
-import com.example.chessboard.RuntimeContext
+import com.example.chessboard.runtimecontext.RuntimeContext
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
