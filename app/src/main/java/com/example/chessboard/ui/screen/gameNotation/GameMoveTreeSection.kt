@@ -104,6 +104,7 @@ internal fun GameMoveTreeSection(
             startFen = startFen,
         )
     }
+    val moveTreeContentModifier = rememberMoveTreeContentModifier(maxContentHeight)
 
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)) {
         SectionTitleText(text = "Move Tree", color = TrainingAccentTeal)
@@ -116,8 +117,7 @@ internal fun GameMoveTreeSection(
         ) {
             Column(
                 modifier = Modifier
-                    .resolveMoveTreeHeightModifier(maxContentHeight)
-                    .verticalScroll(rememberScrollState())
+                    .then(moveTreeContentModifier)
                     .padding(14.dp)
                     .testTag(MoveTreeContentTestTag),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -217,10 +217,13 @@ private fun TreeMoveChip(label: String, isSelected: Boolean, onClick: () -> Unit
     )
 }
 
-private fun Modifier.resolveMoveTreeHeightModifier(maxContentHeight: Dp?): Modifier {
+@Composable
+private fun rememberMoveTreeContentModifier(maxContentHeight: Dp?): Modifier {
     if (maxContentHeight == null) {
-        return this
+        return Modifier
     }
 
-    return this.heightIn(max = maxContentHeight)
+    return Modifier
+        .heightIn(max = maxContentHeight)
+        .verticalScroll(rememberScrollState())
 }
