@@ -1,8 +1,15 @@
 package com.example.chessboard.ui.screen.trainSingleGame
 
-// Orchestrates the single-game training session.
-// This file owns screen-level state, lifecycle reactions, navigation callbacks,
-// and bridges pure training logic to render components.
+/**
+ * File role: groups the screen-level orchestration for a single-game training session.
+ * Allowed here:
+ * - Compose state, lifecycle effects, runtime-session restoration, and training callbacks
+ * - wiring between pure training logic and rendered training UI
+ * Not allowed here:
+ * - reusable generic UI components that belong outside this screen package
+ * - persistence helpers or database-facing logic unrelated to this screen flow
+ * Validation date: 2026-04-25
+ */
 
 import android.util.Log
 import androidx.compose.material.icons.Icons
@@ -30,6 +37,7 @@ import androidx.compose.ui.Modifier
 import com.example.chessboard.boardmodel.GameDraft
 import com.example.chessboard.boardmodel.buildGameDraftFromSourceGame
 import com.example.chessboard.boardmodel.GameController
+import com.example.chessboard.runtimecontext.TrainingRuntimeContext
 import com.example.chessboard.ui.BoardOrientation
 import com.example.chessboard.ui.components.AppBottomNavigation
 import com.example.chessboard.ui.components.AppScreenScaffold
@@ -51,6 +59,7 @@ fun TrainSingleGameScreenContainer(
     gameId: Long,
     trainingId: Long,
     trainingGameData: TrainSingleGameData,
+    trainingRuntimeContext: TrainingRuntimeContext,
     keepLineIfZero: Boolean = false,
     hasNextTrainingGame: Boolean = false,
     sessionCurrent: Int = 0,
@@ -71,6 +80,7 @@ fun TrainSingleGameScreenContainer(
         gameId = gameId,
         trainingId = trainingId,
         trainingGameData = trainingGameData,
+        trainingRuntimeContext = trainingRuntimeContext,
         hasNextTrainingGame = hasNextTrainingGame,
         sessionCurrent = sessionCurrent,
         sessionTotal = sessionTotal,
@@ -123,6 +133,7 @@ private fun TrainSingleGameScreen(
     gameId: Long,
     trainingId: Long,
     trainingGameData: TrainSingleGameData,
+    trainingRuntimeContext: TrainingRuntimeContext,
     hasNextTrainingGame: Boolean = false,
     sessionCurrent: Int = 0,
     sessionTotal: Int = 0,
@@ -144,6 +155,7 @@ private fun TrainSingleGameScreen(
     val hasMoveCap = trainingGameData.hasMoveCap
     val moveLabels = remember(uciMoves) { buildMoveLabels(uciMoves) }
     var uiState by remember(loadedGame.id) { mutableStateOf(TrainSingleGameUiState()) }
+    var hasInitializedSession by remember(loadedGame.id) { mutableStateOf(false) }
     var showLineJob by remember { mutableStateOf<Job?>(null) }
     val scope = rememberCoroutineScope()
     val trainingSides = remember(loadedGame.sideMask) {
@@ -185,6 +197,8 @@ private fun TrainSingleGameScreen(
                 trainingId = trainingId,
                 mistakesCount = uiState.mistakesCount,
             )
+            hasInitializedSession = false
+            trainingRuntimeContext.clearGameProgress(trainingId, gameId)
             uiState = uiState.copy(completionDialog = null)
             onNextTrainingClick(result)
         }
@@ -193,12 +207,22 @@ private fun TrainSingleGameScreen(
     LaunchedEffect(gameController, loadedGame.id) {
         showLineJob?.cancel()
         showLineJob = null
+        val savedProgress = trainingRuntimeContext.restoreGameProgress(trainingId, loadedGame.id)
+        if (savedProgress != null) {
+            gameController.loadFromUciMoves(
+                uciMoves = uciMoves,
+                targetPly = savedProgress.currentPly,
+                startFen = startFen,
+            )
+            uiState = savedProgress.uiState
+            hasInitializedSession = true
+            return@LaunchedEffect
+        }
+
         resetToTrainingStart()
         val resetState = resetSessionState(uiState)
-        // Start training immediately after opening the screen.
-        // This preserves the requested flow where choosing a game enters an active
-        // training session without an extra tap on the play button.
         uiState = startTrainingSession(resetState)
+        hasInitializedSession = true
     }
 
     SideEffect {
@@ -228,6 +252,19 @@ private fun TrainSingleGameScreen(
             sidesCount = trainingSides.size,
             startFen = startFen,
             hasMoveCap = hasMoveCap,
+        )
+    }
+
+    LaunchedEffect(uiState, gameController.currentMoveIndex, trainingId, loadedGame.id) {
+        if (!hasInitializedSession) {
+            return@LaunchedEffect
+        }
+
+        trainingRuntimeContext.saveGameProgress(
+            trainingId = trainingId,
+            gameId = loadedGame.id,
+            currentPly = gameController.currentMoveIndex,
+            uiState = uiState,
         )
     }
 
@@ -416,6 +453,11 @@ private fun TrainSingleGameScreen(
                 uiState = buildRepeatVariationState(uiState)
             },
             onFinishClick = {
+                val isFinalCompletion = uiState.completionDialog?.hasNextSide != true
+                if (isFinalCompletion) {
+                    hasInitializedSession = false
+                    trainingRuntimeContext.clearGameProgress(trainingId, gameId)
+                }
                 uiState = handleCompletionFinish(
                     uiState = uiState,
                     gameId = gameId,

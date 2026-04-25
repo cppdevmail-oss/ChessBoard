@@ -1,8 +1,15 @@
 package com.example.chessboard.ui.screen.trainSingleGame
 
-// Entry/loading layer for single-game training.
-// This file stays separate so screen startup, error routing, and data preloading
-// do not leak into the actual training screen rendering.
+/**
+ * File role: groups the launch/loading layer for a single-game training screen.
+ * Allowed here:
+ * - training-game data loading, launch-time validation, and error routing
+ * - wiring from loaded launch data into the actual training screen container
+ * Not allowed here:
+ * - long-lived session state that belongs in runtimecontext
+ * - detailed training-screen interaction logic that belongs in TrainSingleGameScreen
+ * Validation date: 2026-04-25
+ */
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -13,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.example.chessboard.boardmodel.GameDraft
 import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.runtimecontext.TrainingRuntimeContext
 import com.example.chessboard.service.parsePgnMoves
 import com.example.chessboard.service.uciMovesToMoves
 import com.example.chessboard.ui.components.AppMessageDialog
@@ -36,6 +44,7 @@ fun TrainSingleGameLauncherScreenContainer(
     gameId: Long,
     moveFrom: Int = 1,
     moveTo: Int = 0,
+    trainingRuntimeContext: TrainingRuntimeContext,
     keepLineIfZero: Boolean = false,
     hasNextTrainingGame: Boolean = false,
     sessionCurrent: Int = 0,
@@ -117,6 +126,7 @@ fun TrainSingleGameLauncherScreenContainer(
         gameId = gameId,
         trainingId = trainingId,
         trainingGameData = readyState.trainingGameData,
+        trainingRuntimeContext = trainingRuntimeContext,
         keepLineIfZero = keepLineIfZero,
         hasNextTrainingGame = hasNextTrainingGame,
         sessionCurrent = sessionCurrent,

@@ -1,11 +1,14 @@
 package com.example.chessboard.runtimecontext
 
 /**
- * Runtime state holder for screen-specific runtime contexts and session state.
- *
- * Keep runtime-only navigation/session state here when it must survive screen transitions
- * within the running app process. Do not add database access, UI composables, or
- * persistence-layer business logic here.
+ * File role: groups app-level runtime contexts and cross-screen in-memory session state.
+ * Allowed here:
+ * - screen runtime-context holders and app-process session state
+ * - runtime-only helpers that preserve navigation or editor/training context
+ * Not allowed here:
+ * - composable UI, screen rendering, or layout code
+ * - database access, persistence helpers, or repository/business logic
+ * Validation date: 2026-04-25
  */
 
 import androidx.compose.runtime.getValue
@@ -22,10 +25,10 @@ class RuntimeContext {
     val gamesExplorer = ObservableGamesPage(GamesExplorerPageLimit)
     val openingDeviation = OpeningDeviation()
     val orderGamesInTraining = OrderGamesInTraining()
+    internal val trainingSession = TrainingRuntimeContext()
     val positionEditor = PositionEditor()
     var trainingMoveFrom: Int = 1
     var trainingMoveTo: Int = 0
-    var trainingOrderedGameIds: List<Long> = emptyList()
     var smartTrainingQueue: List<SmartGamePair> = emptyList()
 
     fun resolveNextSmartGamePair(currentGameId: Long): SmartGamePair? {
@@ -34,13 +37,8 @@ class RuntimeContext {
         return smartTrainingQueue.getOrNull(index + 1)
     }
 
-    fun resolveNextTrainingGameId(currentGameId: Long): Long? {
-        val currentIndex = trainingOrderedGameIds.indexOf(currentGameId)
-        if (currentIndex < 0) {
-            return null
-        }
-
-        return trainingOrderedGameIds.getOrNull(currentIndex + 1)
+    fun resolveNextTrainingGameId(trainingId: Long, currentGameId: Long): Long? {
+        return trainingSession.resolveNextGameId(trainingId, currentGameId)
     }
 
     companion object {

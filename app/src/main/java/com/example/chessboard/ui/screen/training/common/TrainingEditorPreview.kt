@@ -1,11 +1,14 @@
 package com.example.chessboard.ui.screen.training.common
 
-/*
- * Shared preview-session logic for training-like editors.
- *
- * Keep move parsing, selected-game board state, and preview-board orientation
- * helpers here so training and template editors can reuse them. Do not add
- * screen scaffolds, save flows, or card layout code to this file.
+/**
+ * File role: groups reusable preview-session helpers for training-like editors.
+ * Allowed here:
+ * - parsed move previews, selected-game board state, and preview-board helpers
+ * - editor-session utilities reused by training and template editors
+ * Not allowed here:
+ * - screen scaffolds, save flows, or card layout logic
+ * - persistence helpers or training launch orchestration
+ * Validation date: 2026-04-25
  */
 
 import androidx.compose.runtime.Composable
@@ -37,7 +40,8 @@ internal data class TrainingEditorBoardSession(
 
 @Composable
 internal fun rememberTrainingEditorBoardSession(
-    games: List<TrainingGameEditorItem>
+    games: List<TrainingGameEditorItem>,
+    initialSelectedGameId: Long? = null,
 ): TrainingEditorBoardSession {
     val gameController = remember { GameController() }
     val gameIds = remember(games) { games.map { it.gameId } }
@@ -54,7 +58,9 @@ internal fun rememberTrainingEditorBoardSession(
             )
         }
     }
-    var selectedGameId by remember(gameIds) { mutableStateOf(games.firstOrNull()?.gameId) }
+    var selectedGameId by remember(gameIds, initialSelectedGameId) {
+        mutableStateOf(initialSelectedGameId?.takeIf { it in gameIds } ?: games.firstOrNull()?.gameId)
+    }
 
     fun loadGameAtPly(gameId: Long, ply: Int) {
         val game = gamesById[gameId] ?: return
