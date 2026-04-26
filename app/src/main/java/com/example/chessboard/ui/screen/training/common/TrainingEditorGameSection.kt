@@ -59,6 +59,7 @@ internal data class TrainingEditorGameSectionState(
     val isSelected: Boolean,
     val gameController: GameController,
     val currentPly: Int,
+    val simpleViewEnabled: Boolean = false,
 )
 
 internal data class TrainingEditorGameSectionActions(
@@ -97,6 +98,7 @@ internal fun TrainingEditorGameSection(
     ) {
         TrainingEditorGameHeader(
             game = state.game,
+            simpleViewEnabled = state.simpleViewEnabled,
             onDecreaseWeightClick = actions.onDecreaseWeightClick,
             onIncreaseWeightClick = actions.onIncreaseWeightClick
         )
@@ -130,6 +132,7 @@ private fun resolveVisiblePrimaryActions(
 @Composable
 private fun TrainingEditorGameHeader(
     game: TrainingGameEditorItem,
+    simpleViewEnabled: Boolean,
     onDecreaseWeightClick: () -> Unit,
     onIncreaseWeightClick: () -> Unit,
 ) {
@@ -146,43 +149,45 @@ private fun TrainingEditorGameHeader(
             )
             RenderTrainingGameEcoBadge(game.eco)
         }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            IconButton(
-                onClick = onDecreaseWeightClick,
-                modifier = Modifier.size(32.dp)
+        if (!simpleViewEnabled) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Remove,
-                    contentDescription = "Decrease",
-                    tint = TrainingAccentTeal,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "${game.weight}",
-                    color = TextColor.Primary,
-                    style = MaterialTheme.typography.titleSmall
-                )
-                Text(
-                    text = "reps",
-                    color = TextColor.Secondary,
-                    style = MaterialTheme.typography.labelSmall
-                )
-            }
-            IconButton(
-                onClick = onIncreaseWeightClick,
-                modifier = Modifier.size(32.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Increase",
-                    tint = TrainingAccentTeal,
-                    modifier = Modifier.size(16.dp)
-                )
+                IconButton(
+                    onClick = onDecreaseWeightClick,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Remove,
+                        contentDescription = "Decrease",
+                        tint = TrainingAccentTeal,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "${game.weight}",
+                        color = TextColor.Primary,
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    Text(
+                        text = "reps",
+                        color = TextColor.Secondary,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+                IconButton(
+                    onClick = onIncreaseWeightClick,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Increase",
+                        tint = TrainingAccentTeal,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
             }
         }
     }

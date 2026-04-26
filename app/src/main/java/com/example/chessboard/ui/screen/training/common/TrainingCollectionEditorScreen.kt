@@ -53,6 +53,7 @@ internal fun TrainingCollectionEditorScreen(
     onSaveClick: () -> Unit,
     onNavigate: (ScreenType) -> Unit,
     modifier: Modifier = Modifier,
+    simpleViewEnabled: Boolean = false,
     listTestTag: String = EditTrainingListTestTag,
     autoScrollToGameIndex: Int? = null,
     headerContent: (@Composable () -> Unit)? = null,
@@ -76,12 +77,14 @@ internal fun TrainingCollectionEditorScreen(
                 onBackClick = onBackClick,
                 actions = {
                     topBarActions()
-                    IconButton(onClick = onSaveClick) {
-                        Icon(
-                            imageVector = Icons.Default.Save,
-                            contentDescription = "Save",
-                            tint = TrainingAccentTeal
-                        )
+                    if (!simpleViewEnabled) {
+                        IconButton(onClick = onSaveClick) {
+                            Icon(
+                                imageVector = Icons.Default.Save,
+                                contentDescription = "Save",
+                                tint = TrainingAccentTeal
+                            )
+                        }
                     }
                 }
             )

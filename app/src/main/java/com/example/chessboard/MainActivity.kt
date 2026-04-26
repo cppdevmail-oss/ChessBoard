@@ -347,6 +347,7 @@ class MainActivity : ComponentActivity() {
                         ),
                         orderGamesInTraining = runtimeContext.orderGamesInTraining,
                         hideLinesWithWeightZero = hideLinesWithWeightZero,
+                        simpleViewEnabled = simpleViewEnabled,
                         onStartGameTrainingClick = { gameId, orderedGameIds ->
                             runtimeContext.trainingOrderedGameIds = orderedGameIds
                             currentScreen = ScreenType.TrainSingleGame(screen.trainingId, gameId)

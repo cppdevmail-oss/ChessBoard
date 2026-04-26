@@ -96,6 +96,7 @@ fun EditTrainingScreenContainer(
     screenContext: ScreenContainerContext,
     orderGamesInTraining: RuntimeContext.OrderGamesInTraining,
     hideLinesWithWeightZero: Boolean = false,
+    simpleViewEnabled: Boolean = false,
     onStartGameTrainingClick: (Long, List<Long>) -> Unit = { _, _ -> },
     onAnalyzeGameClick: (List<String>, Int) -> Unit = { _, _ -> },
     onOpenGameEditorClick: (GameEntity) -> Unit = {},
@@ -144,6 +145,7 @@ fun EditTrainingScreenContainer(
         initialTrainingName = loadState.trainingName,
         gamesForTraining = visibleGamesForTraining,
         orderGamesInTraining = orderGamesInTraining,
+        simpleViewEnabled = simpleViewEnabled,
         onBackClick = onBackClick,
         onNavigate = onNavigate,
         onStartGameTrainingClick = onStartGameTrainingClick,
@@ -187,6 +189,7 @@ fun EditTrainingScreen(
     initialTrainingName: String = DEFAULT_TRAINING_NAME,
     gamesForTraining: List<TrainingGameEditorItem> = emptyList(),
     orderGamesInTraining: RuntimeContext.OrderGamesInTraining,
+    simpleViewEnabled: Boolean = false,
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
     onStartGameTrainingClick: (Long, List<Long>) -> Unit = { _, _ -> },
@@ -336,6 +339,7 @@ fun EditTrainingScreen(
             }
         },
         modifier = modifier,
+        simpleViewEnabled = simpleViewEnabled,
         autoScrollToGameIndex = autoScrollToGameIndex,
         topBarActions = {
             IconButton(onClick = onOpenSettingsClick) {
@@ -345,13 +349,15 @@ fun EditTrainingScreen(
                     tint = TrainingAccentTeal
                 )
             }
-            TrainingCollectionRemoveAction(
-                selectedGame = selectedGame,
-                collectionLabel = "training",
-                onConfirmRemove = ::removeGameFromTraining,
-            )
-            if (selectedGame != null) {
-                Spacer(modifier = Modifier.width(AppDimens.spaceSm))
+            if (!simpleViewEnabled) {
+                TrainingCollectionRemoveAction(
+                    selectedGame = selectedGame,
+                    collectionLabel = "training",
+                    onConfirmRemove = ::removeGameFromTraining,
+                )
+                if (selectedGame != null) {
+                    Spacer(modifier = Modifier.width(AppDimens.spaceSm))
+                }
             }
         }
     ) { game ->
@@ -365,6 +371,7 @@ fun EditTrainingScreen(
                 isSelected = isSelected,
                 gameController = boardSession.gameController,
                 currentPly = if (isSelected) boardSession.gameController.currentMoveIndex else 0,
+                simpleViewEnabled = simpleViewEnabled,
             ),
             actions = TrainingEditorGameSectionActions(
                 onDecreaseWeightClick = {
