@@ -37,9 +37,10 @@ Android chess opening trainer. Users save games (openings) and review/train them
 | `GamesExplorerScreen.kt` | Loads all saved games, shows each as a `GameBlock` (title + move-chip row + nav). Clicking any chip loads that game at that ply on the shared board. |
 | `GameEditorScreen.kt` | Loads a single `GameEntity`, replays its PGN, shows move-chip row, allows undo/redo/save/delete. |
 | `TrainingComponents.kt` | Shared composables and pure helpers reused by both training-related and editor screens (see below). |
-| `ScrenTypes.kt` | `sealed class ScreenType` - Home, Training, GamesExplorer, CreateOpening, CreateTraining, EditTraining, GameEditor, TrainSingleGame, Stats, Profile. |
+| `ScrenTypes.kt` | `sealed class ScreenType` - Home, Training, GamesExplorer, CreateOpening, CreateTraining, EditTraining, GameEditor, TrainSingleGame, Stats, Profile, Settings, SmartTraining, SmartSettings, SmartTrainGame, and more. |
 | `ProfileScreen.kt` | Profile screen - hero card with avatar/level/progress, quick stats, achievements list, settings/clear-data action rows. Container + Stateless pattern backed by `ProfileViewModel`. |
 | `ProfileViewModel.kt` | Holds `ProfileState` (userName, level, totalMoves, accuracy, bestStreak, achievements) via `StateFlow`. No DB access - state is static defaults for now. |
+| `SmartSettingsScreen.kt` | Smart Training session settings: Max Lines stepper and Only Games with Mistakes toggle. Container loads/saves values from `UserProfileEntity` via `UserProfileService.updateSmartSettings`. Navigated to from the gear icon in `SmartTrainingScreen`; back returns to `SmartTraining`. |
 
 ### Single-game training (`ui/screen/trainSingleGame/`)
 | File | Role |
@@ -49,6 +50,21 @@ Android chess opening trainer. Users save games (openings) and review/train them
 | `TrainSingleGameLogic.kt` | Training session flow helpers and state transitions. |
 | `TrainSingleGameComponents.kt` | UI composables for the single-game training screen. |
 | `TemporaryWrongWayStartOneSingleTraining.kt` | Temporary launcher that resolves the first valid training/game pair before opening `TrainSingleGameScreen`. |
+
+### Shared UI components (`ui/components/`)
+| File | Role |
+|---|---|
+| `AppIcons.kt` | **All shared styled icon composables live here.** Currently: `SettingsIconButton` (Settings icon, `TrainingAccentTeal` tint). Add new icon composables here before defining them inline in a screen. |
+| `AppTopBar.kt` | Standard top bar with title, optional subtitle, and back button. |
+| `AppBottomNavigation.kt` | Bottom nav bar; `defaultAppBottomNavigationItems()` returns the standard item list. |
+| `AppScreenScaffold.kt` | Screen scaffold wrapper used by all screens. |
+| `Buttons.kt` | `PrimaryButton`, destructive button, and other shared button composables. |
+| `Surfaces.kt` | `CardSurface` and other surface/card wrappers. |
+| `Texts.kt` | `CardMetaText` and other shared text composables. |
+| `Inputs.kt` | `AppSearchField` and other input composables. |
+| `AppDialogs.kt` | `AppMessageDialog` and other dialog composables. |
+| `MoveChip.kt` | Move chip composable (teal when selected). |
+| `ChessBoardSection.kt` | Square-aspect-ratio board with rounded corners. |
 
 ### Board (`ui/`)
 | File | Role |
@@ -69,7 +85,7 @@ Android chess opening trainer. Users save games (openings) and review/train them
 | `GamePositionEntity` | `game_positions` | gameId, positionId, ply |
 | `TrainingTemplateEntity` | `training_templates` | id, name, gamesJson |
 | `TrainingEntity` | `trainings` | id, name, gamesJson (copy of template, weights decremented as user completes games) |
-| `UserProfileEntity` | `user_profile` | id (always 1), rankTier, rankTitle, simpleViewEnabled, dontRemoveLineIfRepIsZero, hideLinesWithWeightZero |
+| `UserProfileEntity` | `user_profile` | id (always 1), rankTier, rankTitle, simpleViewEnabled, removeLineIfRepIsZero, hideLinesWithWeightZero, hideSmartTrainingInfoCard, smartMaxLines (default 10), smartOnlyWithMistakes (default false) |
 
 ### Repository (`repository/`)
 | File | Role |
@@ -87,6 +103,7 @@ Android chess opening trainer. Users save games (openings) and review/train them
 | `PgnImportService.kt` | Extracts PGN headers, expands nested PGN variations into separate playable lines, converts SAN text into UCI moves, and builds stored PGN/move lists for `CreateOpeningScreen`. |
 | `TrainingService.kt` | Creates trainings from game lists, lists trainings, validates training integrity, decreases line weight after completion. |
 | `TrainSingleGameService.kt` | Loads game data for single-game training, finishes a trained line, resolves first launchable training/game pair. |
+| `UserProfileService.kt` | Reads and writes `UserProfileEntity`. Key methods: `getProfile()`, `updateSettings(...)`, `updateSmartSettings(maxLines, onlyWithMistakes)`, `setHideSmartTrainingInfoCard(hide)`, `updateRankTitle(tier, title)`. |
 
 ---
 
@@ -246,6 +263,7 @@ MainActivity
 - Don't add comments or docstrings to code you didn't change
 - Don't over-engineer; solve only what was asked
 - Don't put business logic in screens - if a container does more than load state and call a service, extract the logic
+- Don't define styled icon composables inline in screens — add them to `ui/components/AppIcons.kt` and import from there
 
 ### Keeping this file up to date
 After any non-trivial change update the relevant section above - correct file paths, API signatures, or add to Recent Changes.
@@ -253,6 +271,10 @@ After any non-trivial change update the relevant section above - correct file pa
 ---
 
 ## Recent Changes
+
+- **`SmartSettingsScreen.kt` added; `SmartTraining` settings moved to DB** - `smartMaxLines` (default 10) and `smartOnlyWithMistakes` (default false) added to `UserProfileEntity`. DB migrated 13→14 via two `ALTER TABLE ADD COLUMN` statements. `UserProfileService.updateSmartSettings(maxLines, onlyWithMistakes)` saves both fields atomically. `SmartSettingsScreenContainer` loads the profile on launch and writes on every change (no save button). `SmartTrainingScreenContainer` now reads these values from the profile and uses them when building the training queue; the Max Lines stepper and Only Games with Mistakes toggle are removed from `SmartTrainingScreen`. A teal gear `SettingsIconButton` in the Smart Training top bar navigates to `ScreenType.SmartSettings`.
+
+- **`ui/components/AppIcons.kt` created** - Canonical home for all shared styled icon composables. Currently contains `SettingsIconButton` (Settings icon, `TrainingAccentTeal` tint). Both `SmartTrainingScreen` and `EditTrainingScreen` now use it. Always check this file before defining an icon composable inline.
 
 - **`CreateTrainingScreen.kt` cleaned up to creation-only** - Removed all edit-mode leftovers: `trainingId` param, `buildTrainingEditorItems`, `resolveCreateTrainingTitle`, `resolveRandomTrainingGameId`, `saveTraining` helper, `CreateTrainingScreenData`, `MissingTrainingDialog`, `TrainingSaveSuccess.wasUpdated`, `onStartGameTrainingClick`, `isEditMode` branches, and `showStartButton` from `TrainingGamesPage`/`TrainingGamePageRow`. `CreateTrainingScreenContainer` now calls `createTrainingFromGames` directly. Save success dialog always says "Training Created".
 
