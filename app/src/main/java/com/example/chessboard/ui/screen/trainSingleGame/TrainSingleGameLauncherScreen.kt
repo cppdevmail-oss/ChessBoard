@@ -63,6 +63,7 @@ fun TrainSingleGameLauncherScreenContainer(
     onCloneGameClick: (GameDraft) -> Unit = {},
     onSearchByPositionClick: (String) -> Unit = {},
     onAnalyzeGameClick: (List<String>, Int) -> Unit = { _, _ -> },
+    simpleViewEnabled: Boolean = false,
     screenContext: ScreenContainerContext,
     modifier: Modifier = Modifier,
 ) {
@@ -180,6 +181,7 @@ fun TrainSingleGameLauncherScreenContainer(
         onCloneGameClick = { onCloneGameClick(it) },
         onSearchByPositionClick = onSearchByPositionClick,
         onAnalyzeGameClick = onAnalyzeGameClick,
+        simpleViewEnabled = simpleViewEnabled,
         screenContext = screenContext,
         modifier = modifier,
     )

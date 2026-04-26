@@ -37,6 +37,7 @@ import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.ui.ChessBoardWithCoordinates
 import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.components.AppMessageDialogAction
+import com.example.chessboard.ui.components.AppProgressCard
 import com.example.chessboard.ui.components.AppTextField
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.PrimaryButton
@@ -71,6 +72,7 @@ internal fun TrainSingleGameContent(
     state: TrainSingleGameContentState,
     gameController: GameController,
     actions: TrainSingleGameContentActions,
+    simpleViewEnabled: Boolean = false,
 ) {
     ScreenSection {
         Column {
@@ -82,24 +84,27 @@ internal fun TrainSingleGameContent(
                 state = resolveTrainingSingleGameActionsState(state.phase),
                 contentState = state,
                 actions = actions,
+                simpleViewEnabled = simpleViewEnabled,
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
-            TrainingSessionInfoRow(state = state)
-            Spacer(modifier = Modifier.height(AppDimens.spaceLg))
-            val visibleMoveLabels = resolveVisibleTrainingMoveLabels(state)
-            if (visibleMoveLabels.isNotEmpty()) {
-                TrainingMovesLegend(
-                    moveLabels = visibleMoveLabels,
-                    currentPly = state.currentPly,
-                    isSelectionEnabled = state.showLineCompleted,
-                    canUndo = state.showLineCompleted && state.currentPly > 0,
-                    canRedo = state.showLineCompleted && state.currentPly < state.moveLabels.size,
-                    onMovePlyClick = actions.onMovePlyClick,
-                    onPrevMoveClick = actions.onPrevMoveClick,
-                    onNextMoveClick = actions.onNextMoveClick,
-                    onResetMovesClick = actions.onResetMovesClick
-                )
+            TrainingSessionInfoRow(state = state, simpleViewEnabled = simpleViewEnabled)
+            if (!simpleViewEnabled) {
+                Spacer(modifier = Modifier.height(AppDimens.spaceLg))
+                val visibleMoveLabels = resolveVisibleTrainingMoveLabels(state)
+                if (visibleMoveLabels.isNotEmpty()) {
+                    TrainingMovesLegend(
+                        moveLabels = visibleMoveLabels,
+                        currentPly = state.currentPly,
+                        isSelectionEnabled = state.showLineCompleted,
+                        canUndo = state.showLineCompleted && state.currentPly > 0,
+                        canRedo = state.showLineCompleted && state.currentPly < state.moveLabels.size,
+                        onMovePlyClick = actions.onMovePlyClick,
+                        onPrevMoveClick = actions.onPrevMoveClick,
+                        onNextMoveClick = actions.onNextMoveClick,
+                        onResetMovesClick = actions.onResetMovesClick
+                    )
+                }
             }
         }
     }
@@ -118,8 +123,18 @@ internal fun TrainingGameHeader(
 @Composable
 private fun TrainingSessionInfoRow(
     state: TrainSingleGameContentState,
+    simpleViewEnabled: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
+    if (simpleViewEnabled) {
+        AppProgressCard(
+            label = "Lines completed",
+            progress = (state.sessionCurrent - 1).coerceAtLeast(0),
+            total = state.sessionTotal,
+            modifier = modifier,
+        )
+        return
+    }
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceLg),
@@ -284,6 +299,7 @@ internal fun TrainingSingleGameActions(
     state: TrainingSingleGameActionsState,
     contentState: TrainSingleGameContentState,
     actions: TrainSingleGameContentActions,
+    simpleViewEnabled: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val compactIconButtonSize = 40.dp
@@ -390,6 +406,17 @@ internal fun TrainingSingleGameActions(
     }
 
     Column(modifier = modifier) {
+        if (simpleViewEnabled) {
+            if (state == TrainingSingleGameActionsState.Mistake) {
+                PrimaryButton(
+                    text = "Make correct move",
+                    onClick = actions.onMakeCorrectMoveClick,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            return@Column
+        }
+
         if (state == TrainingSingleGameActionsState.ShowingLine) {
             PrimaryButton(
                 text = "Stop show line",

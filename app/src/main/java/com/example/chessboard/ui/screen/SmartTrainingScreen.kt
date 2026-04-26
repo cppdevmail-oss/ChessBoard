@@ -50,6 +50,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.ui.components.AppBottomNavigation
 import com.example.chessboard.ui.components.AppDivider
+import com.example.chessboard.ui.components.AppProgressCard
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppSearchField
 import com.example.chessboard.ui.components.PrimaryButton
@@ -90,7 +91,7 @@ fun SmartTrainingScreenContainer(
     val trainingService = remember(inDbProvider) { inDbProvider.createTrainingService() }
     val smartTrainingService = remember(inDbProvider) { inDbProvider.createSmartTrainingService() }
 
-    var infoCardHidden by remember { mutableStateOf(false) }
+    var infoCardHidden by remember { mutableStateOf(true) }
     var smartMaxLines by remember { mutableStateOf(10) }
     var smartOnlyWithMistakes by remember { mutableStateOf(false) }
     var trainings by remember { mutableStateOf<List<SmartTrainingItem>>(emptyList()) }
@@ -243,10 +244,11 @@ fun SmartTrainingScreen(
 
             if (progressTotal > 0) {
                 item {
-                    SmartTrainingProgressCard(
-                        mastered = progressMastered,
-                        total = progressTotal,
+                    AppProgressCard(
                         label = if (selectedIds.value.isEmpty()) "All lines" else "Selected openings",
+                        progress = progressMastered,
+                        total = progressTotal,
+                        progressLabel = "mastered",
                     )
                 }
             }
@@ -500,57 +502,6 @@ private fun SelectOpeningsHeader(
     }
 }
 
-@Composable
-private fun SmartTrainingProgressCard(
-    mastered: Int,
-    total: Int,
-    label: String,
-    modifier: Modifier = Modifier,
-) {
-    val fraction = if (total > 0) mastered.toFloat() / total else 0f
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(AppDimens.radiusMd))
-            .background(SmartTrainingItemBg)
-            .border(1.dp, SmartTrainingItemBorder, RoundedCornerShape(AppDimens.radiusMd))
-            .padding(horizontal = AppDimens.spaceLg, vertical = AppDimens.spaceMd),
-        verticalArrangement = Arrangement.spacedBy(AppDimens.spaceSm),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.titleSmall,
-                color = TextColor.Primary,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text(
-                text = "$mastered / $total mastered",
-                style = MaterialTheme.typography.bodySmall,
-                color = TextColor.Secondary,
-            )
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(6.dp)
-                .clip(RoundedCornerShape(AppDimens.radiusPill))
-                .background(SmartTrainingItemBorder),
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(fraction)
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(AppDimens.radiusPill))
-                    .background(TrainingAccentTeal),
-            )
-        }
-    }
-}
 
 @Composable
 private fun TrainingSelectRow(

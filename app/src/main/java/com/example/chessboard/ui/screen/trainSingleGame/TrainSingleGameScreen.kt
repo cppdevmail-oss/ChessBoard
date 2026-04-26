@@ -70,6 +70,7 @@ fun TrainSingleGameScreenContainer(
     onCloneGameClick: (GameDraft) -> Unit = {},
     onSearchByPositionClick: (String) -> Unit = {},
     onAnalyzeGameClick: (List<String>, Int) -> Unit = { _, _ -> },
+    simpleViewEnabled: Boolean = false,
     screenContext: ScreenContainerContext,
     modifier: Modifier = Modifier,
 ) {
@@ -124,6 +125,7 @@ fun TrainSingleGameScreenContainer(
         onCloneGameClick = onCloneGameClick,
         onSearchByPositionClick = onSearchByPositionClick,
         onAnalyzeGameClick = onAnalyzeGameClick,
+        simpleViewEnabled = simpleViewEnabled,
         modifier = modifier
     )
 }
@@ -146,6 +148,7 @@ private fun TrainSingleGameScreen(
     onCloneGameClick: (GameDraft) -> Unit = {},
     onSearchByPositionClick: (String) -> Unit = {},
     onAnalyzeGameClick: (List<String>, Int) -> Unit = { _, _ -> },
+    simpleViewEnabled: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
@@ -417,36 +420,38 @@ private fun TrainSingleGameScreen(
                     title = "Train Game",
                     onBackClick = onBackClick,
                     actions = {
-                        IconButton(
-                            onClick = {
-                                onSearchByPositionClick(gameController.getFen())
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = "Search by position",
-                                tint = TrainingTextPrimary
-                            )
-                        }
-                        IconButton(
-                            onClick = {
-                                onCloneGameClick(
-                                    buildGameDraftFromSourceGame(loadedGame)
+                        if (!simpleViewEnabled) {
+                            IconButton(
+                                onClick = {
+                                    onSearchByPositionClick(gameController.getFen())
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = "Search by position",
+                                    tint = TrainingTextPrimary
                                 )
                             }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ContentCopy,
-                                contentDescription = "Clone game",
-                                tint = TrainingTextPrimary
-                            )
-                        }
-                        IconButton(onClick = onOpenGameEditorClick) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = "Edit game",
-                                tint = TrainingTextPrimary
-                            )
+                            IconButton(
+                                onClick = {
+                                    onCloneGameClick(
+                                        buildGameDraftFromSourceGame(loadedGame)
+                                    )
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ContentCopy,
+                                    contentDescription = "Clone game",
+                                    tint = TrainingTextPrimary
+                                )
+                            }
+                            IconButton(onClick = onOpenGameEditorClick) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Edit game",
+                                    tint = TrainingTextPrimary
+                                )
+                            }
                         }
                     }
                 )
@@ -493,6 +498,7 @@ private fun TrainSingleGameScreen(
         ) {
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
             TrainSingleGameContent(
+                simpleViewEnabled = simpleViewEnabled,
                 state = TrainSingleGameContentState(
                     gameId = gameId,
                     trainingId = trainingId,

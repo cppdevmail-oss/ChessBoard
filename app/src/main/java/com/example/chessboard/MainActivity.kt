@@ -470,6 +470,7 @@ class MainActivity : ComponentActivity() {
                         moveFrom = runtimeContext.trainingMoveFrom,
                         moveTo = runtimeContext.trainingMoveTo,
                         keepLineIfZero = !removeLineIfRepIsZero,
+                        simpleViewEnabled = simpleViewEnabled,
                         trainingRuntimeContext = runtimeContext.trainingSession,
                         hasNextTrainingGame = regularTrainingFlow.hasNextGame(
                             trainingId = screen.trainingId,
@@ -645,6 +646,7 @@ class MainActivity : ComponentActivity() {
                         trainingId = screen.trainingId,
                         gameId = screen.gameId,
                         keepLineIfZero = !removeLineIfRepIsZero,
+                        simpleViewEnabled = simpleViewEnabled,
                         trainingRuntimeContext = runtimeContext.trainingSession,
                         hasNextTrainingGame = smartTrainingFlow.hasNextGame(screen.gameId),
                         sessionCurrent = smartTrainingFlow.sessionCurrent(screen.gameId),
