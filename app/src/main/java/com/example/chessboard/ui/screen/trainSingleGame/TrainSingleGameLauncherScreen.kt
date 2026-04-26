@@ -21,6 +21,13 @@ import androidx.compose.ui.Modifier
 import com.example.chessboard.boardmodel.GameDraft
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.runtimecontext.TrainingRuntimeContext
+import com.example.chessboard.service.TrainSingleGameService
+import com.example.chessboard.service.TrainingGameLaunchBrokenTrainingDeleted
+import com.example.chessboard.service.TrainingGameLaunchGameNotFound
+import com.example.chessboard.service.TrainingGameLaunchGameRemovedFromTraining
+import com.example.chessboard.service.TrainingGameLaunchNoTrainings
+import com.example.chessboard.service.TrainingGameLaunchReady
+import com.example.chessboard.service.TrainingGameLaunchTrainingNotFound
 import com.example.chessboard.service.parsePgnMoves
 import com.example.chessboard.service.uciMovesToMoves
 import com.example.chessboard.ui.components.AppMessageDialog
@@ -35,6 +42,7 @@ private sealed interface TrainSingleGameLaunchState {
     data class Ready(val trainingGameData: TrainSingleGameData) : TrainSingleGameLaunchState
     data object TrainingNotFound : TrainSingleGameLaunchState
     data object GameNotFound : TrainSingleGameLaunchState
+    data object GameRemovedFromTraining : TrainSingleGameLaunchState
 }
 
 @Composable
@@ -59,50 +67,70 @@ fun TrainSingleGameLauncherScreenContainer(
     modifier: Modifier = Modifier,
 ) {
     val inDbProvider = screenContext.inDbProvider
-    val trainingService = remember(inDbProvider) { inDbProvider.createTrainingService() }
+    val trainSingleGameService = remember(inDbProvider) {
+        inDbProvider.createTrainSingleGameService()
+    }
     var launchState by remember { mutableStateOf<TrainSingleGameLaunchState>(TrainSingleGameLaunchState.Loading) }
+
+    fun clearInvalidTrainingRuntimeState() {
+        trainingRuntimeContext.clearGameProgress(trainingId, gameId)
+        if (trainingRuntimeContext.activeGameId(trainingId) == gameId) {
+            trainingRuntimeContext.setCurrentGameId(trainingId, null)
+        }
+    }
 
     LaunchedEffect(trainingId, gameId) {
         launchState = TrainSingleGameLaunchState.Loading
 
-        val training = withContext(Dispatchers.IO) {
-            trainingService.getTrainingById(trainingId)
-        }
-        if (training == null) {
-            launchState = TrainSingleGameLaunchState.TrainingNotFound
-            return@LaunchedEffect
-        }
-
         launchState = withContext(Dispatchers.IO) {
-            val game = inDbProvider.loadTrainingGame(gameId)
-            if (game == null) {
-                return@withContext TrainSingleGameLaunchState.GameNotFound
-            }
+            when (val launchData = trainSingleGameService.getTrainingGameLaunchData(trainingId, gameId)) {
+                is TrainingGameLaunchTrainingNotFound,
+                is TrainingGameLaunchBrokenTrainingDeleted,
+                TrainingGameLaunchNoTrainings -> {
+                    return@withContext TrainSingleGameLaunchState.TrainingNotFound
+                }
 
-            val allMoves = parsePgnMoves(game.pgn)
-            val startPly = ((moveFrom - 1) * 2).coerceAtMost(allMoves.size)
-            val endPly = if (moveTo > 0) (moveTo * 2).coerceAtMost(allMoves.size) else allMoves.size
-            val moves = allMoves.subList(startPly, endPly)
-            val startFen = if (startPly == 0) null else {
-                val board = Board()
-                uciMovesToMoves(allMoves.take(startPly)).forEach { board.doMove(it) }
-                board.fen
-            }
+                is TrainingGameLaunchGameNotFound -> {
+                    return@withContext TrainSingleGameLaunchState.GameNotFound
+                }
 
-            TrainSingleGameLaunchState.Ready(
-                trainingGameData = TrainSingleGameData(
-                    game = game,
-                    uciMoves = moves,
-                    startFen = startFen,
-                    hasMoveCap = moveTo > 0,
-                    analysisUciMoves = allMoves,
-                    analysisStartPly = startPly,
-                )
-            )
+                is TrainingGameLaunchGameRemovedFromTraining -> {
+                    return@withContext TrainSingleGameLaunchState.GameRemovedFromTraining
+                }
+
+                is TrainingGameLaunchReady -> {
+                    val game = trainSingleGameService.loadGame(launchData.launchData.gameId)
+                        ?: return@withContext TrainSingleGameLaunchState.GameNotFound
+
+                    val allMoves = parsePgnMoves(game.pgn)
+                    val startPly = ((moveFrom - 1) * 2).coerceAtMost(allMoves.size)
+                    val endPly = if (moveTo > 0) (moveTo * 2).coerceAtMost(allMoves.size) else allMoves.size
+                    val moves = allMoves.subList(startPly, endPly)
+                    val startFen = if (startPly == 0) null else {
+                        val board = Board()
+                        uciMovesToMoves(allMoves.take(startPly)).forEach { board.doMove(it) }
+                        board.fen
+                    }
+
+                    return@withContext TrainSingleGameLaunchState.Ready(
+                        trainingGameData = TrainSingleGameData(
+                            game = game,
+                            uciMoves = moves,
+                            startFen = startFen,
+                            hasMoveCap = moveTo > 0,
+                            analysisUciMoves = allMoves,
+                            analysisStartPly = startPly,
+                        )
+                    )
+                }
+            }
         }
     }
 
     if (launchState is TrainSingleGameLaunchState.TrainingNotFound) {
+        LaunchedEffect(launchState) {
+            clearInvalidTrainingRuntimeState()
+        }
         TrainingLaunchErrorDialog(
             title = "Training not found",
             message = "The selected training is unavailable to start.",
@@ -112,9 +140,24 @@ fun TrainSingleGameLauncherScreenContainer(
     }
 
     if (launchState is TrainSingleGameLaunchState.GameNotFound) {
+        LaunchedEffect(launchState) {
+            clearInvalidTrainingRuntimeState()
+        }
         TrainingLaunchErrorDialog(
             title = "Game not found",
             message = "The selected game is unavailable to start.",
+            onDismiss = { screenContext.onNavigate(ScreenType.EditTraining(trainingId)) },
+        )
+        return
+    }
+
+    if (launchState is TrainSingleGameLaunchState.GameRemovedFromTraining) {
+        LaunchedEffect(launchState) {
+            clearInvalidTrainingRuntimeState()
+        }
+        TrainingLaunchErrorDialog(
+            title = "Game removed from training",
+            message = "The selected game no longer belongs to this training.",
             onDismiss = { screenContext.onNavigate(ScreenType.EditTraining(trainingId)) },
         )
         return

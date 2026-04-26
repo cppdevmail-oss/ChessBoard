@@ -114,6 +114,10 @@ class DatabaseProvider private constructor(
         return GameSaver(database)
     }
 
+    fun createTrainSingleGameService(): TrainSingleGameService {
+        return TrainSingleGameService(database)
+    }
+
     suspend fun findGameIdsByFenWithoutMoveNumber(fen: String): List<Long> {
         val positionService = PositionService(database)
         return positionService.findGameIdsByFenWithoutMoveNumber(fen)
