@@ -44,6 +44,7 @@ import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.boardmodel.GameVariationLineState
 import com.example.chessboard.boardmodel.InitialBoardFen
 import com.example.chessboard.ui.GameAnalysisContentTestTag
+import com.example.chessboard.ui.GameAnalysisMoveControlsTestTag
 import com.example.chessboard.ui.GameAnalysisNextMoveTestTag
 import com.example.chessboard.ui.GameAnalysisPreviousMoveTestTag
 import com.example.chessboard.ui.GameAnalysisResetMovesTestTag
@@ -268,7 +269,9 @@ private fun GameAnalysisMoveControls(
     modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag(GameAnalysisMoveControlsTestTag),
         contentAlignment = Alignment.Center,
     ) {
         Surface(
