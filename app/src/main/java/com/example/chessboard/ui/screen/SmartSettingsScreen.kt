@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -33,11 +34,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chessboard.ui.components.AppBottomNavigation
+import com.example.chessboard.ui.components.AppNumberSlider
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.CardMetaText
@@ -54,7 +55,6 @@ private const val SmartMaxLinesMin = 1
 private const val SmartMaxLinesMax = 50
 
 private val SmartSettingsIconBg = Color(0xFF1A3A28)
-private val SmartSettingsStepperBg = Color(0xFF179A6F)
 
 @Composable
 fun SmartSettingsScreenContainer(
@@ -78,17 +78,9 @@ fun SmartSettingsScreenContainer(
     SmartSettingsScreen(
         maxLines = maxLines,
         onlyWithMistakes = onlyWithMistakes,
-        onMaxLinesDecrement = {
-            if (maxLines > SmartMaxLinesMin) {
-                maxLines--
-                scope.launch(Dispatchers.IO) { userProfileService.updateSmartSettings(maxLines, onlyWithMistakes) }
-            }
-        },
-        onMaxLinesIncrement = {
-            if (maxLines < SmartMaxLinesMax) {
-                maxLines++
-                scope.launch(Dispatchers.IO) { userProfileService.updateSmartSettings(maxLines, onlyWithMistakes) }
-            }
+        onMaxLinesChange = { newValue ->
+            maxLines = newValue
+            scope.launch(Dispatchers.IO) { userProfileService.updateSmartSettings(newValue, onlyWithMistakes) }
         },
         onOnlyWithMistakesChange = { newValue ->
             onlyWithMistakes = newValue
@@ -104,8 +96,7 @@ fun SmartSettingsScreenContainer(
 fun SmartSettingsScreen(
     maxLines: Int = 10,
     onlyWithMistakes: Boolean = false,
-    onMaxLinesDecrement: () -> Unit = {},
-    onMaxLinesIncrement: () -> Unit = {},
+    onMaxLinesChange: (Int) -> Unit = {},
     onOnlyWithMistakesChange: (Boolean) -> Unit = {},
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
@@ -139,8 +130,7 @@ fun SmartSettingsScreen(
             SmartSessionSection(
                 maxLines = maxLines,
                 onlyWithMistakes = onlyWithMistakes,
-                onMaxLinesDecrement = onMaxLinesDecrement,
-                onMaxLinesIncrement = onMaxLinesIncrement,
+                onMaxLinesChange = onMaxLinesChange,
                 onOnlyWithMistakesChange = onOnlyWithMistakesChange,
             )
         }
@@ -151,8 +141,7 @@ fun SmartSettingsScreen(
 private fun SmartSessionSection(
     maxLines: Int,
     onlyWithMistakes: Boolean,
-    onMaxLinesDecrement: () -> Unit,
-    onMaxLinesIncrement: () -> Unit,
+    onMaxLinesChange: (Int) -> Unit,
     onOnlyWithMistakesChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -175,8 +164,7 @@ private fun SmartSessionSection(
         )
         MaxLinesRow(
             value = maxLines,
-            onDecrement = onMaxLinesDecrement,
-            onIncrement = onMaxLinesIncrement,
+            onValueChange = onMaxLinesChange,
         )
         OnlyWithMistakesRow(
             checked = onlyWithMistakes,
@@ -188,87 +176,49 @@ private fun SmartSessionSection(
 @Composable
 private fun MaxLinesRow(
     value: Int,
-    onDecrement: () -> Unit,
-    onIncrement: () -> Unit,
+    onValueChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .padding(AppDimens.spaceLg),
-        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier = Modifier
-                .size(44.dp)
-                .clip(RoundedCornerShape(AppDimens.radiusLg))
-                .background(SmartSettingsIconBg),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = Icons.Filled.FormatListNumbered,
-                contentDescription = null,
-                tint = TrainingAccentTeal,
-                modifier = Modifier.size(22.dp),
-            )
-        }
-        Spacer(modifier = Modifier.width(AppDimens.spaceLg))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = "Max Lines",
-                style = MaterialTheme.typography.bodyMedium,
-                color = TextColor.Primary,
-                fontWeight = FontWeight.SemiBold,
-            )
-            CardMetaText(
-                text = "Lines to train per session",
-                color = TextColor.Secondary,
-            )
-        }
-        Spacer(modifier = Modifier.width(AppDimens.spaceMd))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            StepperButton(
-                label = "−",
-                enabled = value > SmartMaxLinesMin,
-                onClick = onDecrement,
-            )
-            Text(
-                text = "$value",
-                style = MaterialTheme.typography.titleMedium,
-                color = TextColor.Primary,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.width(40.dp),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            )
-            StepperButton(
-                label = "+",
-                enabled = value < SmartMaxLinesMax,
-                onClick = onIncrement,
-            )
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(AppDimens.radiusLg))
+                    .background(SmartSettingsIconBg),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.FormatListNumbered,
+                    contentDescription = null,
+                    tint = TrainingAccentTeal,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
+            Spacer(modifier = Modifier.width(AppDimens.spaceLg))
+            Column {
+                Text(
+                    text = "Max Lines",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextColor.Primary,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                CardMetaText(
+                    text = "Lines to train per session",
+                    color = TextColor.Secondary,
+                )
+            }
         }
-    }
-}
-
-@Composable
-private fun StepperButton(
-    label: String,
-    enabled: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier = modifier
-            .size(32.dp)
-            .clip(RoundedCornerShape(AppDimens.radiusSm))
-            .background(SmartSettingsStepperBg.copy(alpha = if (enabled) 1f else 0.3f))
-            .clickable(enabled = enabled, onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = label,
-            color = Color.White,
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
+        Spacer(modifier = Modifier.height(AppDimens.spaceMd))
+        AppNumberSlider(
+            value = value,
+            min = SmartMaxLinesMin,
+            max = SmartMaxLinesMax,
+            onValueChange = onValueChange,
         )
     }
 }

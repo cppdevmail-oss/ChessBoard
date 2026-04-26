@@ -55,6 +55,7 @@ Android chess opening trainer. Users save games (openings) and review/train them
 | File | Role |
 |---|---|
 | `AppIcons.kt` | **All shared styled icon composables live here.** Currently: `SettingsIconButton` (Settings icon, `TrainingAccentTeal` tint). Add new icon composables here before defining them inline in a screen. |
+| `AppSlider.kt` | `AppNumberSlider(value, min, max, onValueChange)` — single-thumb slider styled with teal accent: current value label centered above the thumb, `Slider`, min/max edge labels below. Matches `EditTrainingMoveRangeSection` visual style. Use for any integer-value picker. |
 | `AppTopBar.kt` | Standard top bar with title, optional subtitle, and back button. |
 | `AppBottomNavigation.kt` | Bottom nav bar; `defaultAppBottomNavigationItems()` returns the standard item list. |
 | `AppScreenScaffold.kt` | Screen scaffold wrapper used by all screens. |
