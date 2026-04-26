@@ -15,6 +15,7 @@ import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.testing.fenStateDescriptionMatcher
 import com.example.chessboard.testing.normalizeFenForAssertion
 import com.example.chessboard.ui.GameAnalysisContentTestTag
+import com.example.chessboard.ui.GameAnalysisMoveControlsTestTag
 import com.example.chessboard.ui.InteractiveChessBoardTestTag
 import com.example.chessboard.ui.MoveTreeBoxTestTag
 import com.example.chessboard.ui.screen.ScreenContainerContext
@@ -33,6 +34,8 @@ class GameAnalysisScreenTest {
 
         composeRule.onNodeWithText("Analyze Game").assertIsDisplayed()
         composeRule.onNodeWithTag(GameAnalysisContentTestTag).assertIsDisplayed()
+        scrollToTag(GameAnalysisMoveControlsTestTag)
+        composeRule.onNodeWithTag(GameAnalysisMoveControlsTestTag).assertIsDisplayed()
         composeRule.onNodeWithText("♔").assertIsDisplayed()
         composeRule.onNodeWithText("♚").assertIsDisplayed()
         composeRule.onNodeWithTag(InteractiveChessBoardTestTag).assert(

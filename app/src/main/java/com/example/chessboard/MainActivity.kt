@@ -1,5 +1,18 @@
 package com.example.chessboard
 
+/**
+ * Legacy mixed-responsibility file.
+ * Current role: groups the app entry activity, app-level screen switching, and cross-flow navigation wiring.
+ * This file is not cleanly scoped and should not be treated as a good target for new unrelated logic.
+ * Allowed here for now:
+ * - top-level activity setup and app-shell screen dispatch
+ * - thin adapters that map flow results onto app-owned state such as current screen or shared drafts
+ * Prefer not to add here:
+ * - new training-flow transition rules or runtime bookkeeping
+ * - screen-specific business logic that belongs in dedicated screen or flow files
+ * Validation date: 2026-04-26
+ */
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -42,6 +55,9 @@ import com.example.chessboard.ui.screen.training.template.EditTrainingTemplateSc
 import com.example.chessboard.ui.screen.training.CreateTrainingFromAllGamesScreenContainer
 import com.example.chessboard.ui.screen.training.CreateTrainingFromGameIdsScreenContainer
 import com.example.chessboard.ui.screen.training.CreateTrainingFromTemplateScreenContainer
+import com.example.chessboard.ui.screen.training.flow.RegularTrainingFlowCoordinator
+import com.example.chessboard.ui.screen.training.flow.SmartTrainingFlowCoordinator
+import com.example.chessboard.ui.screen.training.flow.TrainingFlowResult
 import com.example.chessboard.ui.screen.training.train.EditTrainingScreenContainer
 import com.example.chessboard.ui.screen.training.train.TrainingSettingsScreenContainer
 import com.example.chessboard.ui.screen.training.TrainingListScreenContainer
@@ -84,6 +100,12 @@ class MainActivity : ComponentActivity() {
                 var hideLinesWithWeightZero by remember { mutableStateOf(false) }
                 var profileLoaded by remember { mutableStateOf(false) }
                 val runtimeContext = remember { RuntimeContext() }
+                val regularTrainingFlow = remember(runtimeContext) {
+                    RegularTrainingFlowCoordinator(runtimeContext)
+                }
+                val smartTrainingFlow = remember(runtimeContext) {
+                    SmartTrainingFlowCoordinator(runtimeContext)
+                }
                 val scope = rememberCoroutineScope()
                 val userProfileService = remember { dbProvider.createUserProfileService() }
 
@@ -149,6 +171,42 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
+                fun applyTrainingFlowResult(result: TrainingFlowResult) {
+                    when (result) {
+                        is TrainingFlowResult.Navigate -> {
+                            currentScreen = result.screen
+                        }
+
+                        is TrainingFlowResult.OpenGameEditor -> {
+                            selectedGame = result.game
+                            gameEditorOnBackClick = { currentScreen = result.backTarget }
+                            currentScreen = ScreenType.GameEditor
+                        }
+
+                        is TrainingFlowResult.OpenCreateOpening -> {
+                            createOpeningDraft = result.draft
+                            createOpeningOnBackClick = { currentScreen = result.backTarget }
+                            currentScreen = ScreenType.CreateOpening
+                        }
+
+                        is TrainingFlowResult.OpenPositionEditor -> {
+                            runtimeContext.positionEditor.initialFen = result.initialFen
+                            runtimeContext.positionEditor.onBackClick = {
+                                currentScreen = result.backTarget
+                            }
+                            currentScreen = ScreenType.PositionEditor
+                        }
+
+                        is TrainingFlowResult.OpenAnalysis -> {
+                            openGameAnalysis(
+                                uciMoves = result.uciMoves,
+                                initialPly = result.initialPly,
+                                backTarget = result.backTarget,
+                            )
+                        }
+                    }
+                }
+
                 fun navigateToOpeningDeviationSelection() {
                     currentScreen = ScreenType.SelectOpeningDeviationPosition
                 }
@@ -171,8 +229,9 @@ class MainActivity : ComponentActivity() {
                             onBackClick = { currentScreen = ScreenType.Home },
                         ),
                         onOpenTraining = { trainingId ->
-                            runtimeContext.orderGamesInTraining.reset()
-                            currentScreen = ScreenType.EditTraining(trainingId)
+                            applyTrainingFlowResult(
+                                regularTrainingFlow.openTraining(trainingId)
+                            )
                         },
                     )
 
@@ -346,33 +405,50 @@ class MainActivity : ComponentActivity() {
                             onBackClick = { currentScreen = ScreenType.Training },
                         ),
                         orderGamesInTraining = runtimeContext.orderGamesInTraining,
+                        trainingRuntimeContext = runtimeContext.trainingSession,
                         hideLinesWithWeightZero = hideLinesWithWeightZero,
                         simpleViewEnabled = simpleViewEnabled,
                         onStartGameTrainingClick = { gameId, orderedGameIds ->
-                            runtimeContext.trainingOrderedGameIds = orderedGameIds
-                            currentScreen = ScreenType.TrainSingleGame(screen.trainingId, gameId)
+                            applyTrainingFlowResult(
+                                regularTrainingFlow.startGame(
+                                    trainingId = screen.trainingId,
+                                    gameId = gameId,
+                                    orderedGameIds = orderedGameIds,
+                                )
+                            )
                         },
                         onAnalyzeGameClick = { uciMoves, initialPly ->
-                            openGameAnalysis(
-                                uciMoves = uciMoves,
-                                initialPly = initialPly,
-                                backTarget = ScreenType.EditTraining(screen.trainingId),
+                            applyTrainingFlowResult(
+                                regularTrainingFlow.openAnalysisFromEditor(
+                                    trainingId = screen.trainingId,
+                                    uciMoves = uciMoves,
+                                    initialPly = initialPly,
+                                )
                             )
                         },
                         onOpenGameEditorClick = { game ->
-                            selectedGame = game
-                            gameEditorOnBackClick = { currentScreen = ScreenType.EditTraining(screen.trainingId) }
-                            currentScreen = ScreenType.GameEditor
+                            applyTrainingFlowResult(
+                                regularTrainingFlow.openGameEditorFromEditor(
+                                    game = game,
+                                    trainingId = screen.trainingId,
+                                )
+                            )
                         },
                         onOpenSettingsClick = {
-                            currentScreen = ScreenType.TrainingSettings(screen.trainingId)
+                            applyTrainingFlowResult(
+                                regularTrainingFlow.openSettings(screen.trainingId)
+                            )
                         },
                     )
 
                     is ScreenType.TrainingSettings -> TrainingSettingsScreenContainer(
                         trainingId = screen.trainingId,
                         screenContext = createScreenContext(
-                            onBackClick = { currentScreen = ScreenType.EditTraining(screen.trainingId) },
+                            onBackClick = {
+                                applyTrainingFlowResult(
+                                    regularTrainingFlow.closeSettings(screen.trainingId)
+                                )
+                            },
                         ),
                         initialMoveFrom = runtimeContext.trainingMoveFrom,
                         initialMoveTo = runtimeContext.trainingMoveTo,
@@ -380,7 +456,11 @@ class MainActivity : ComponentActivity() {
                             runtimeContext.trainingMoveFrom = from
                             runtimeContext.trainingMoveTo = to
                         },
-                        onBackClick = { currentScreen = ScreenType.EditTraining(screen.trainingId) },
+                        onBackClick = {
+                            applyTrainingFlowResult(
+                                regularTrainingFlow.closeSettings(screen.trainingId)
+                            )
+                        },
                     )
 
                     is ScreenType.TrainSingleGame -> TrainSingleGameLauncherScreenContainer(
@@ -389,60 +469,61 @@ class MainActivity : ComponentActivity() {
                         moveFrom = runtimeContext.trainingMoveFrom,
                         moveTo = runtimeContext.trainingMoveTo,
                         keepLineIfZero = !removeLineIfRepIsZero,
-                        hasNextTrainingGame = runtimeContext.resolveNextTrainingGameId(screen.gameId) != null,
-                        sessionCurrent = runtimeContext.trainingOrderedGameIds.indexOf(screen.gameId).coerceAtLeast(0) + 1,
-                        sessionTotal = runtimeContext.trainingOrderedGameIds.size,
+                        trainingRuntimeContext = runtimeContext.trainingSession,
+                        hasNextTrainingGame = regularTrainingFlow.hasNextGame(
+                            trainingId = screen.trainingId,
+                            gameId = screen.gameId,
+                        ),
+                        sessionCurrent = regularTrainingFlow.sessionCurrent(
+                            trainingId = screen.trainingId,
+                            gameId = screen.gameId,
+                        ),
+                        sessionTotal = regularTrainingFlow.sessionTotal(screen.trainingId),
                         onTrainingFinished = { result ->
-                            runtimeContext.orderGamesInTraining.markGameCompleted(
-                                gameId = result.gameId
+                            applyTrainingFlowResult(
+                                regularTrainingFlow.finishGame(result)
                             )
-                            currentScreen = ScreenType.EditTraining(screen.trainingId)
                         },
                         onNextTrainingClick = { result ->
-                            runtimeContext.orderGamesInTraining.markGameCompleted(
-                                gameId = result.gameId
+                            applyTrainingFlowResult(
+                                regularTrainingFlow.openNextGame(result)
                             )
-                            val nextGameId = runtimeContext.resolveNextTrainingGameId(result.gameId)
-                            currentScreen = ScreenType.EditTraining(screen.trainingId)
-                            if (nextGameId != null) {
-                                currentScreen = ScreenType.TrainSingleGame(screen.trainingId, nextGameId)
-                            }
                         },
                         onOpenGameEditorClick = { game ->
-                            selectedGame = game
-                            gameEditorOnBackClick = {
-                                currentScreen = ScreenType.TrainSingleGame(screen.trainingId, screen.gameId)
-                            }
-                            currentScreen = ScreenType.GameEditor
+                            applyTrainingFlowResult(
+                                regularTrainingFlow.openGameEditorFromTraining(
+                                    game = game,
+                                    trainingId = screen.trainingId,
+                                    gameId = screen.gameId,
+                                )
+                            )
                         },
                         onCloneGameClick = { draft ->
-                            createOpeningDraft = draft
-                            createOpeningOnBackClick = {
-                                currentScreen = ScreenType.TrainSingleGame(
-                                    screen.trainingId,
-                                    screen.gameId
+                            applyTrainingFlowResult(
+                                regularTrainingFlow.openCreateOpeningFromTraining(
+                                    draft = draft,
+                                    trainingId = screen.trainingId,
+                                    gameId = screen.gameId,
                                 )
-                            }
-                            currentScreen = ScreenType.CreateOpening
+                            )
                         },
                         onSearchByPositionClick = { fen ->
-                            runtimeContext.positionEditor.initialFen = fen
-                            runtimeContext.positionEditor.onBackClick = {
-                                currentScreen = ScreenType.TrainSingleGame(
-                                    screen.trainingId,
-                                    screen.gameId
+                            applyTrainingFlowResult(
+                                regularTrainingFlow.openPositionEditorFromTraining(
+                                    fen = fen,
+                                    trainingId = screen.trainingId,
+                                    gameId = screen.gameId,
                                 )
-                            }
-                            currentScreen = ScreenType.PositionEditor
+                            )
                         },
                         onAnalyzeGameClick = { uciMoves, initialPly ->
-                            openGameAnalysis(
-                                uciMoves = uciMoves,
-                                initialPly = initialPly,
-                                backTarget = ScreenType.TrainSingleGame(
-                                    screen.trainingId,
-                                    screen.gameId,
-                                ),
+                            applyTrainingFlowResult(
+                                regularTrainingFlow.openAnalysisFromTraining(
+                                    trainingId = screen.trainingId,
+                                    gameId = screen.gameId,
+                                    uciMoves = uciMoves,
+                                    initialPly = initialPly,
+                                )
                             )
                         },
                         screenContext = createScreenContext(
@@ -546,10 +627,9 @@ class MainActivity : ComponentActivity() {
                             onBackClick = { currentScreen = ScreenType.Home },
                         ),
                         onStartTraining = { queue ->
-                            val first = queue.firstOrNull()
-                            if (first != null) {
-                                runtimeContext.smartTrainingQueue = queue
-                                currentScreen = ScreenType.SmartTrainGame(first.trainingId, first.gameId)
+                            val result = smartTrainingFlow.startTraining(queue)
+                            if (result != null) {
+                                applyTrainingFlowResult(result)
                             }
                         },
                     )
@@ -558,49 +638,51 @@ class MainActivity : ComponentActivity() {
                         trainingId = screen.trainingId,
                         gameId = screen.gameId,
                         keepLineIfZero = !removeLineIfRepIsZero,
-                        hasNextTrainingGame = runtimeContext.resolveNextSmartGamePair(screen.gameId) != null,
-                        sessionCurrent = runtimeContext.smartTrainingQueue.indexOfFirst { it.gameId == screen.gameId }.coerceAtLeast(0) + 1,
-                        sessionTotal = runtimeContext.smartTrainingQueue.size,
+                        trainingRuntimeContext = runtimeContext.trainingSession,
+                        hasNextTrainingGame = smartTrainingFlow.hasNextGame(screen.gameId),
+                        sessionCurrent = smartTrainingFlow.sessionCurrent(screen.gameId),
+                        sessionTotal = smartTrainingFlow.sessionTotal(),
                         onTrainingFinished = {
-                            currentScreen = ScreenType.SmartTraining
+                            applyTrainingFlowResult(smartTrainingFlow.finishGame())
                         },
                         onNextTrainingClick = { result ->
-                            val next = runtimeContext.resolveNextSmartGamePair(result.gameId)
-                            if (next != null) {
-                                currentScreen = ScreenType.SmartTrainGame(next.trainingId, next.gameId)
-                            } else {
-                                currentScreen = ScreenType.SmartTraining
-                            }
+                            applyTrainingFlowResult(smartTrainingFlow.openNextGame(result))
                         },
                         onOpenGameEditorClick = { game ->
-                            selectedGame = game
-                            gameEditorOnBackClick = {
-                                currentScreen = ScreenType.SmartTrainGame(screen.trainingId, screen.gameId)
-                            }
-                            currentScreen = ScreenType.GameEditor
+                            applyTrainingFlowResult(
+                                smartTrainingFlow.openGameEditor(
+                                    game = game,
+                                    trainingId = screen.trainingId,
+                                    gameId = screen.gameId,
+                                )
+                            )
                         },
                         onCloneGameClick = { draft ->
-                            createOpeningDraft = draft
-                            createOpeningOnBackClick = {
-                                currentScreen = ScreenType.SmartTrainGame(screen.trainingId, screen.gameId)
-                            }
-                            currentScreen = ScreenType.CreateOpening
+                            applyTrainingFlowResult(
+                                smartTrainingFlow.openCreateOpening(
+                                    draft = draft,
+                                    trainingId = screen.trainingId,
+                                    gameId = screen.gameId,
+                                )
+                            )
                         },
                         onSearchByPositionClick = { fen ->
-                            runtimeContext.positionEditor.initialFen = fen
-                            runtimeContext.positionEditor.onBackClick = {
-                                currentScreen = ScreenType.SmartTrainGame(screen.trainingId, screen.gameId)
-                            }
-                            currentScreen = ScreenType.PositionEditor
+                            applyTrainingFlowResult(
+                                smartTrainingFlow.openPositionEditor(
+                                    fen = fen,
+                                    trainingId = screen.trainingId,
+                                    gameId = screen.gameId,
+                                )
+                            )
                         },
                         onAnalyzeGameClick = { uciMoves, initialPly ->
-                            openGameAnalysis(
-                                uciMoves = uciMoves,
-                                initialPly = initialPly,
-                                backTarget = ScreenType.SmartTrainGame(
-                                    screen.trainingId,
-                                    screen.gameId,
-                                ),
+                            applyTrainingFlowResult(
+                                smartTrainingFlow.openAnalysis(
+                                    trainingId = screen.trainingId,
+                                    gameId = screen.gameId,
+                                    uciMoves = uciMoves,
+                                    initialPly = initialPly,
+                                )
                             )
                         },
                         screenContext = createScreenContext(

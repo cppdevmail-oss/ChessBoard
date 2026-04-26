@@ -1,4 +1,15 @@
 package com.example.chessboard.ui.screen.training.train
+
+/**
+ * File role: groups the training-specific editor screen and its launch orchestration.
+ * Allowed here:
+ * - screen state, unsaved-changes flow, and training launch wiring for one training
+ * - screen-specific callbacks that connect the editor to navigation and runtime context
+ * Not allowed here:
+ * - reusable generic editor UI that belongs in shared training/common files
+ * - persistence helpers unrelated to this concrete screen flow
+ * Validation date: 2026-04-25
+ */
 import com.example.chessboard.ui.screen.training.common.CreateTrainingEditorState
 import com.example.chessboard.ui.screen.training.common.DEFAULT_TRAINING_NAME
 import com.example.chessboard.ui.screen.training.common.TrainingCollectionEditorScreen
@@ -30,6 +41,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.example.chessboard.runtimecontext.RuntimeContext
+import com.example.chessboard.runtimecontext.TrainingRuntimeContext
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.screen.ScreenContainerContext
@@ -95,6 +107,7 @@ fun EditTrainingScreenContainer(
     trainingId: Long,
     screenContext: ScreenContainerContext,
     orderGamesInTraining: RuntimeContext.OrderGamesInTraining,
+    trainingRuntimeContext: TrainingRuntimeContext,
     hideLinesWithWeightZero: Boolean = false,
     simpleViewEnabled: Boolean = false,
     onStartGameTrainingClick: (Long, List<Long>) -> Unit = { _, _ -> },
@@ -146,6 +159,7 @@ fun EditTrainingScreenContainer(
         gamesForTraining = visibleGamesForTraining,
         orderGamesInTraining = orderGamesInTraining,
         simpleViewEnabled = simpleViewEnabled,
+        initialSelectedGameId = trainingRuntimeContext.activeGameId(trainingId),
         onBackClick = onBackClick,
         onNavigate = onNavigate,
         onStartGameTrainingClick = onStartGameTrainingClick,
@@ -190,6 +204,7 @@ fun EditTrainingScreen(
     gamesForTraining: List<TrainingGameEditorItem> = emptyList(),
     orderGamesInTraining: RuntimeContext.OrderGamesInTraining,
     simpleViewEnabled: Boolean = false,
+    initialSelectedGameId: Long? = null,
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
     onStartGameTrainingClick: (Long, List<Long>) -> Unit = { _, _ -> },
@@ -200,7 +215,9 @@ fun EditTrainingScreen(
     modifier: Modifier = Modifier
 ) {
     var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
-    var hasUserSelectedGame by remember { mutableStateOf(false) }
+    var hasUserSelectedGame by remember(initialSelectedGameId) {
+        mutableStateOf(initialSelectedGameId != null)
+    }
     var editorState by remember(initialTrainingName, gamesForTraining) {
         mutableStateOf(
             CreateTrainingEditorState(
@@ -221,7 +238,10 @@ fun EditTrainingScreen(
     }
     val currentGamesById = editorState.editableGamesForTraining.associateBy { it.gameId }
     val orderedGamesForTraining = orderedGameIds.mapNotNull { currentGamesById[it] }
-    val boardSession = rememberTrainingEditorBoardSession(orderedGamesForTraining)
+    val boardSession = rememberTrainingEditorBoardSession(
+        games = orderedGamesForTraining,
+        initialSelectedGameId = initialSelectedGameId,
+    )
     val selectedGame = editorState.editableGamesForTraining.firstOrNull { game ->
         game.gameId == boardSession.selectedGameId
     }

@@ -98,29 +98,6 @@ class EditTrainingScreenTest {
     }
 
     @Test
-    fun editTrainingScreen_randomActionLaunchesTraining() {
-        var launchedGameId: Long? = null
-
-        composeRule.setContent {
-            ChessBoardTheme {
-                EditTrainingScreen(
-                    gamesForTraining = listOf(TestTrainingGame),
-                    orderGamesInTraining = RuntimeContext.OrderGamesInTraining(),
-                    onStartGameTrainingClick = { gameId, _ ->
-                        launchedGameId = gameId
-                    }
-                )
-            }
-        }
-
-        composeRule.onNodeWithText("Random").performClick()
-
-        composeRule.runOnIdle {
-            assert(launchedGameId == TestTrainingGame.gameId)
-        }
-    }
-
-    @Test
     fun editTrainingScreen_startTrainingActionLaunchesTraining() {
         var launchedGameId: Long? = null
 

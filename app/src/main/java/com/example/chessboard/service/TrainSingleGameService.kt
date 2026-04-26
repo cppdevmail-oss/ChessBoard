@@ -30,6 +30,16 @@ data class TrainingGameLaunchTrainingNotFound(
     val trainingId: Long
 ) : TrainingGameLaunchResult
 
+data class TrainingGameLaunchGameNotFound(
+    val trainingId: Long,
+    val gameId: Long,
+) : TrainingGameLaunchResult
+
+data class TrainingGameLaunchGameRemovedFromTraining(
+    val trainingId: Long,
+    val gameId: Long,
+) : TrainingGameLaunchResult
+
 // Encapsulates the database operations needed by the single-game training flow.
 class TrainSingleGameService(
     private val database: AppDatabase
@@ -77,6 +87,40 @@ class TrainSingleGameService(
             ?: return TrainingGameLaunchTrainingNotFound(trainingId)
 
         return resolveTrainingLaunchData(training)
+    }
+
+    suspend fun getTrainingGameLaunchData(
+        trainingId: Long,
+        gameId: Long,
+    ): TrainingGameLaunchResult {
+        val training = database.trainingDao().getById(trainingId)
+            ?: return TrainingGameLaunchTrainingNotFound(trainingId)
+
+        val validatedTraining = validateTraining(training)
+            ?: return TrainingGameLaunchBrokenTrainingDeleted(training.id)
+
+        val trainingGames = OneGameTrainingData.fromJson(validatedTraining.gamesJson)
+        if (trainingGames.none { it.gameId == gameId }) {
+            return TrainingGameLaunchGameRemovedFromTraining(
+                trainingId = validatedTraining.id,
+                gameId = gameId,
+            )
+        }
+
+        val game = loadGame(gameId)
+        if (game == null) {
+            return TrainingGameLaunchGameNotFound(
+                trainingId = validatedTraining.id,
+                gameId = gameId,
+            )
+        }
+
+        return TrainingGameLaunchReady(
+            launchData = TrainingGameLaunchData(
+                trainingId = validatedTraining.id,
+                gameId = game.id,
+            )
+        )
     }
 
     private suspend fun resolveTrainingLaunchData(training: TrainingEntity): TrainingGameLaunchResult {
