@@ -21,6 +21,14 @@ class RegularTrainingFlowCoordinator(
     private val runtimeContext: RuntimeContext,
 ) {
     fun openTraining(trainingId: Long): TrainingFlowResult {
+        val startedGameId = runtimeContext.trainingSession.firstStartedGameId(trainingId)
+        if (startedGameId != null) {
+            runtimeContext.trainingSession.setCurrentGameId(trainingId, startedGameId)
+            return TrainingFlowResult.Navigate(
+                ScreenType.TrainSingleGame(trainingId, startedGameId)
+            )
+        }
+
         runtimeContext.orderGamesInTraining.reset()
         return TrainingFlowResult.Navigate(ScreenType.EditTraining(trainingId))
     }

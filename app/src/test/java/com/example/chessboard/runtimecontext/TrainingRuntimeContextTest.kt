@@ -59,6 +59,25 @@ class TrainingRuntimeContextTest {
     }
 
     @Test
+    fun `firstStartedGameId returns null for unknown training`() {
+        val runtimeContext = TrainingRuntimeContext()
+
+        assertNull(runtimeContext.firstStartedGameId(99L))
+    }
+
+    @Test
+    fun `firstStartedGameId returns null when session has no saved progress`() {
+        val runtimeContext = TrainingRuntimeContext()
+        runtimeContext.rememberLaunch(
+            trainingId = 1L,
+            gameId = 20L,
+            orderedGameIds = listOf(10L, 20L, 30L),
+        )
+
+        assertNull(runtimeContext.firstStartedGameId(1L))
+    }
+
+    @Test
     fun `resolveNextGameId returns next item in ordered list`() {
         val runtimeContext = TrainingRuntimeContext()
         runtimeContext.rememberLaunch(
@@ -176,6 +195,32 @@ class TrainingRuntimeContextTest {
         assertEquals(4, restored?.currentPly)
         assertEquals("line-a", restored?.lineFingerprint)
         assertEquals(uiState, restored?.uiState)
+    }
+
+    @Test
+    fun `firstStartedGameId returns first started game by stored order`() {
+        val runtimeContext = TrainingRuntimeContext()
+        runtimeContext.rememberLaunch(
+            trainingId = 1L,
+            gameId = 30L,
+            orderedGameIds = listOf(10L, 20L, 30L),
+        )
+        runtimeContext.saveGameProgress(
+            trainingId = 1L,
+            gameId = 30L,
+            currentPly = 5,
+            lineFingerprint = "line-c",
+            uiState = trainUiState(expectedPly = 5),
+        )
+        runtimeContext.saveGameProgress(
+            trainingId = 1L,
+            gameId = 20L,
+            currentPly = 3,
+            lineFingerprint = "line-b",
+            uiState = trainUiState(expectedPly = 3),
+        )
+
+        assertEquals(20L, runtimeContext.firstStartedGameId(1L))
     }
 
     @Test

@@ -53,6 +53,39 @@ class RegularTrainingFlowCoordinatorTest {
     }
 
     @Test
+    fun `openTraining navigates directly to first started game by stored order`() {
+        val runtimeContext = RuntimeContext()
+        val coordinator = RegularTrainingFlowCoordinator(runtimeContext)
+        runtimeContext.trainingSession.rememberLaunch(
+            trainingId = 5L,
+            gameId = 30L,
+            orderedGameIds = listOf(10L, 20L, 30L),
+        )
+        runtimeContext.trainingSession.saveGameProgress(
+            trainingId = 5L,
+            gameId = 30L,
+            currentPly = 4,
+            lineFingerprint = "line-c",
+            uiState = trainUiState(expectedPly = 4),
+        )
+        runtimeContext.trainingSession.saveGameProgress(
+            trainingId = 5L,
+            gameId = 20L,
+            currentPly = 2,
+            lineFingerprint = "line-b",
+            uiState = trainUiState(expectedPly = 2),
+        )
+
+        val result = coordinator.openTraining(trainingId = 5L)
+
+        assertEquals(20L, runtimeContext.trainingSession.activeGameId(5L))
+        assertEquals(
+            TrainingFlowResult.Navigate(ScreenType.TrainSingleGame(5L, 20L)),
+            result,
+        )
+    }
+
+    @Test
     fun `startGame remembers launch and navigates to single game`() {
         val runtimeContext = RuntimeContext()
         val coordinator = RegularTrainingFlowCoordinator(runtimeContext)

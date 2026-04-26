@@ -49,6 +49,27 @@ class TrainingRuntimeContext {
         return sessionsByTrainingId[trainingId]?.currentGameId
     }
 
+    fun firstStartedGameId(trainingId: Long): Long? {
+        val session = sessionsByTrainingId[trainingId] ?: return null
+        if (session.gameProgressById.isEmpty()) {
+            return null
+        }
+
+        val firstStartedOrderedGameId = session.orderedGameIds.firstOrNull { gameId ->
+            session.gameProgressById.containsKey(gameId)
+        }
+        if (firstStartedOrderedGameId != null) {
+            return firstStartedOrderedGameId
+        }
+
+        val activeGameId = session.currentGameId
+        if (activeGameId != null && session.gameProgressById.containsKey(activeGameId)) {
+            return activeGameId
+        }
+
+        return session.gameProgressById.keys.firstOrNull()
+    }
+
     fun setCurrentGameId(trainingId: Long, gameId: Long?) {
         val currentSession = sessionsByTrainingId[trainingId] ?: return
         sessionsByTrainingId[trainingId] = currentSession.copy(currentGameId = gameId)
