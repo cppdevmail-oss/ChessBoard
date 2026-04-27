@@ -47,15 +47,16 @@ Follow these directory-role rules when adding or moving code in this project.
 
 ## Entity Layer Role
 
-- `app/src/main/java/com/example/chessboard/entity` is for database storage models and closely related persistence value types.
-- This directory contains Room entities and small persistence-facing types that are part of stored records, such as side-mask constants used by stored data.
+- `app/src/main/java/com/example/chessboard/entity` is for Room storage models and small persistence-facing value definitions.
+- This directory contains `@Entity` classes that describe database tables, their stored fields, indexes, primary keys, defaults, and closely related persistence constants or masks used by those records.
 - Typical examples for this directory:
   - `@Entity` data classes that describe database tables
-  - small persistence-related value definitions used by entities
-  - fields and defaults that exist because of how data is stored in Room
+  - storage-only fields such as serialized JSON columns, timestamps, hashes, and side masks
+  - small persistence-related constants or value definitions that exist because of the database model
 - This layer is not for DAO interfaces.
 - This layer is not for persistence orchestration or validation logic.
 - This layer is not for UI-facing view models or screen state.
+- This layer is not for domain models that are independent from storage.
 
 ## Entity Practical Rule
 
