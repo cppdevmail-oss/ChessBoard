@@ -398,22 +398,8 @@ private fun TrainSingleGameScreen(
             },
             onShowLineMoveDelayInputChange = { input ->
                 uiState = uiState.copy(
-                    showLineMoveDelayInput = input.filter(Char::isDigit)
-                )
-            },
-            onDecreaseShowLineMoveDelayClick = {
-                uiState = uiState.copy(
-                    showLineMoveDelayInput = changeShowLineMoveDelay(
-                        input = uiState.showLineMoveDelayInput,
-                        delta = -ShowLineMoveDelayStepMs
-                    )
-                )
-            },
-            onIncreaseShowLineMoveDelayClick = {
-                uiState = uiState.copy(
-                    showLineMoveDelayInput = changeShowLineMoveDelay(
-                        input = uiState.showLineMoveDelayInput,
-                        delta = ShowLineMoveDelayStepMs
+                    showLineMoveDelayInput = formatShowLineMoveDelayInput(
+                        input.toLongOrNull() ?: ShowLineMoveDelayMs
                     )
                 )
             },
