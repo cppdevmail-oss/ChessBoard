@@ -31,7 +31,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
@@ -51,6 +50,7 @@ import com.example.chessboard.ui.components.AppTextField
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.CardMetaText
 import com.example.chessboard.ui.components.CardSurface
+import com.example.chessboard.ui.components.DeleteIconButton
 import com.example.chessboard.ui.components.IconMd
 import com.example.chessboard.ui.components.MoveChip
 import com.example.chessboard.ui.components.PrimaryButton
@@ -59,7 +59,6 @@ import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingErrorRed
 import com.example.chessboard.ui.theme.TrainingIconInactive
 import com.example.chessboard.ui.theme.TrainingTextPrimary
 
@@ -148,6 +147,9 @@ private fun GamesExplorerActionRow(
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
+    val undoTint = resolveGamesExplorerActionTint(canUndo)
+    val redoTint = resolveGamesExplorerActionTint(canRedo)
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -161,7 +163,7 @@ private fun GamesExplorerActionRow(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                 contentDescription = "Previous",
                 onClick = onPrevClick,
-                tint = if (canUndo) TrainingTextPrimary else TrainingIconInactive,
+                tint = undoTint,
                 isEnabled = canUndo
             )
             GameBlockActionButton(
@@ -173,7 +175,7 @@ private fun GamesExplorerActionRow(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = "Next",
                 onClick = onNextClick,
-                tint = if (canRedo) TrainingTextPrimary else TrainingIconInactive,
+                tint = redoTint,
                 isEnabled = canRedo
             )
         }
@@ -197,14 +199,21 @@ private fun GamesExplorerActionRow(
                 contentDescription = "Edit game",
                 onClick = onEditClick
             )
-            GameBlockActionButton(
-                imageVector = Icons.Default.Delete,
+            DeleteIconButton(
                 contentDescription = "Delete game",
-                tint = TrainingErrorRed,
-                onClick = onDeleteClick
+                onClick = onDeleteClick,
+                modifier = Modifier.size(40.dp),
             )
         }
     }
+}
+
+private fun resolveGamesExplorerActionTint(isEnabled: Boolean): Color {
+    if (isEnabled) {
+        return TrainingTextPrimary
+    }
+
+    return TrainingIconInactive
 }
 
 @Composable

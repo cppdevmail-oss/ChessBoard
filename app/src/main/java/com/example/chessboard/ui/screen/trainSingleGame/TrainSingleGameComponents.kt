@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -42,6 +41,7 @@ import com.example.chessboard.ui.components.AppNumberSlider
 import com.example.chessboard.ui.components.AppProgressCard
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.HintIconButton
+import com.example.chessboard.ui.components.IconSm
 import com.example.chessboard.ui.components.MoveSequenceSection
 import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.ScreenSection
@@ -297,10 +297,9 @@ internal fun TrainingSingleGameActions(
                 onClick = actions.onAnalyzeGameClick,
                 modifier = Modifier.size(compactIconButtonSize)
             ) {
-                Icon(
+                IconSm(
                     imageVector = Icons.Default.Analytics,
                     contentDescription = "Analyze game",
-                    tint = TextColor.Primary,
                     modifier = Modifier.size(compactIconSize)
                 )
             }
@@ -308,10 +307,9 @@ internal fun TrainingSingleGameActions(
                 onClick = actions.onStartTrainingClick,
                 modifier = Modifier.size(compactIconButtonSize)
             ) {
-                Icon(
+                IconSm(
                     imageVector = Icons.Default.PlayArrow,
                     contentDescription = "Start training",
-                    tint = TextColor.Primary,
                     modifier = Modifier.size(compactIconSize)
                 )
             }
@@ -329,10 +327,9 @@ internal fun TrainingSingleGameActions(
             onClick = actions.onAnalyzeGameClick,
             modifier = Modifier.size(compactIconButtonSize)
         ) {
-            Icon(
+            IconSm(
                 imageVector = Icons.Default.Analytics,
                 contentDescription = "Analyze game",
-                tint = TextColor.Primary,
                 modifier = Modifier.size(compactIconSize)
             )
         }
@@ -340,10 +337,9 @@ internal fun TrainingSingleGameActions(
             onClick = actions.onStopTrainingClick,
             modifier = Modifier.size(compactIconButtonSize)
         ) {
-            Icon(
+            IconSm(
                 imageVector = Icons.Default.Stop,
                 contentDescription = "Stop training",
-                tint = TextColor.Primary,
                 modifier = Modifier.size(compactIconSize)
             )
         }

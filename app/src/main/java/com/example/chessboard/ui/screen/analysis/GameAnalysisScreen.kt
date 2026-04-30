@@ -211,7 +211,6 @@ internal fun GameAnalysisScreen(
                         IconMd(
                             imageVector = Icons.Default.Search,
                             contentDescription = "Search by position",
-                            tint = TrainingTextPrimary,
                         )
                     }
                 },
