@@ -405,6 +405,7 @@ fun EditTrainingScreen(
                 onMovePlyClick = { ply -> boardSession.onMoveToPly(game.gameId, ply) },
                 onRemoveClick = { removeGameFromTraining(game.gameId) },
             ),
+            removeCollectionLabel = "training",
             primaryActions = listOfNotNull(
                 parsedGame?.let { currentParsedGame ->
                     createEditTrainingAnalyzeAction(
