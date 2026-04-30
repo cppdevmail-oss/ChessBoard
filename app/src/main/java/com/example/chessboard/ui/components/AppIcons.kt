@@ -6,7 +6,6 @@ import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -17,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import com.example.chessboard.ui.theme.TrainingErrorRed
+import com.example.chessboard.ui.theme.TrainingTextPrimary
 
 object AppIconSizes {
     val Xs = 16.dp
@@ -31,7 +31,7 @@ private fun AppSizedIcon(
     contentDescription: String?,
     size: Dp,
     modifier: Modifier = Modifier,
-    tint: Color = LocalContentColor.current,
+    tint: Color = TrainingTextPrimary,
 ) {
     Icon(
         imageVector = imageVector,
@@ -46,7 +46,7 @@ fun IconXs(
     imageVector: ImageVector,
     contentDescription: String?,
     modifier: Modifier = Modifier,
-    tint: Color = LocalContentColor.current,
+    tint: Color = TrainingTextPrimary,
 ) {
     AppSizedIcon(
         imageVector = imageVector,
@@ -62,7 +62,7 @@ fun IconSm(
     imageVector: ImageVector,
     contentDescription: String?,
     modifier: Modifier = Modifier,
-    tint: Color = LocalContentColor.current,
+    tint: Color = TrainingTextPrimary,
 ) {
     AppSizedIcon(
         imageVector = imageVector,
@@ -78,7 +78,7 @@ fun IconMd(
     imageVector: ImageVector,
     contentDescription: String?,
     modifier: Modifier = Modifier,
-    tint: Color = LocalContentColor.current,
+    tint: Color = TrainingTextPrimary,
 ) {
     AppSizedIcon(
         imageVector = imageVector,
@@ -94,7 +94,7 @@ fun IconLg(
     imageVector: ImageVector,
     contentDescription: String?,
     modifier: Modifier = Modifier,
-    tint: Color = LocalContentColor.current,
+    tint: Color = TrainingTextPrimary,
 ) {
     AppSizedIcon(
         imageVector = imageVector,

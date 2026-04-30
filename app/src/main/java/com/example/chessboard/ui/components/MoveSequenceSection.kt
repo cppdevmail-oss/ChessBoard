@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -107,6 +108,8 @@ fun MoveSequenceSection(
             if (!showNavControls) return@Column
 
             Spacer(modifier = Modifier.height(AppDimens.spaceMd))
+            val previousMoveTint = resolveMoveSequenceNavigationTint(canUndo)
+            val nextMoveTint = resolveMoveSequenceNavigationTint(canRedo)
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -123,7 +126,7 @@ fun MoveSequenceSection(
                     IconLg(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                         contentDescription = null,
-                        tint = if (canUndo) TextColor.Primary else TrainingIconInactive,
+                        tint = previousMoveTint,
                     )
                 }
                 TextButton(onClick = onResetMovesClick, enabled = canUndo) {
@@ -142,10 +145,18 @@ fun MoveSequenceSection(
                     IconLg(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                         contentDescription = null,
-                        tint = if (canRedo) TextColor.Primary else TrainingIconInactive,
+                        tint = nextMoveTint,
                     )
                 }
             }
         }
     }
+}
+
+private fun resolveMoveSequenceNavigationTint(isEnabled: Boolean): Color {
+    if (isEnabled) {
+        return TextColor.Primary
+    }
+
+    return TrainingIconInactive
 }

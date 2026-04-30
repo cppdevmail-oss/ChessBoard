@@ -42,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.ui.EditTrainingMoveLegendSectionTestTag
@@ -52,8 +53,6 @@ import com.example.chessboard.ui.components.AppIconSizes
 import com.example.chessboard.ui.components.CardSurface
 import com.example.chessboard.ui.components.DeleteIconButton
 import com.example.chessboard.ui.components.ChessBoardSection
-import com.example.chessboard.ui.components.IconLg
-import com.example.chessboard.ui.components.IconMd
 import com.example.chessboard.ui.components.IconSm
 import com.example.chessboard.ui.components.IconXs
 import com.example.chessboard.ui.components.MoveSequenceSection
@@ -88,7 +87,7 @@ internal data class TrainingEditorPrimaryAction(
     val onClick: () -> Unit,
     val icon: ImageVector,
     val contentDescription: String,
-    val tint: Color = TrainingAccentTeal,
+    val tint: Color = TextColor.Primary,
 )
 
 @Composable
@@ -257,6 +256,7 @@ private fun TrainingEditorGameCard(
     actions: TrainingEditorGameSectionActions,
     primaryActions: List<TrainingEditorPrimaryAction>,
 ) {
+    val cardActionButtonSize = AppDimens.iconButtonSize
     val canUndo = state.isSelected && state.gameController.canUndo
     val canRedo = state.isSelected && state.gameController.canRedo
 
@@ -280,22 +280,25 @@ private fun TrainingEditorGameCard(
                 onResetClick = actions.onResetClick,
                 onPrevClick = actions.onPrevClick,
                 onNextClick = actions.onNextClick,
+                buttonSize = cardActionButtonSize,
             )
 
             Spacer(modifier = Modifier.width(AppDimens.spaceSm))
 
             IconButton(
                 onClick = actions.onEditGameClick,
-                modifier = Modifier.size(AppIconSizes.Lg)
+                modifier = Modifier.size(cardActionButtonSize)
             ) {
-                IconLg(
+                IconSm(
                     imageVector = Icons.Default.Edit,
                     contentDescription = "Edit game",
-                    tint = TrainingAccentTeal,
                 )
             }
 
-            RenderPrimaryGameActionButtons(primaryActions = primaryActions)
+            RenderPrimaryGameActionButtons(
+                primaryActions = primaryActions,
+                buttonSize = cardActionButtonSize,
+            )
         }
 
         if (state.parsedGame == null) {
@@ -324,8 +327,10 @@ private fun TrainingEditorMoveControls(
     onResetClick: () -> Unit,
     onPrevClick: () -> Unit,
     onNextClick: () -> Unit,
+    buttonSize: Dp,
 ) {
-    val moveControlButtonSize = 54.dp
+    val undoTint = resolveTrainingEditorMoveControlTint(canUndo)
+    val redoTint = resolveTrainingEditorMoveControlTint(canRedo)
 
     Surface(
         shape = RoundedCornerShape(50),
@@ -335,45 +340,54 @@ private fun TrainingEditorMoveControls(
             IconButton(
                 onClick = onResetClick,
                 enabled = canUndo,
-                modifier = Modifier.size(moveControlButtonSize)
+                modifier = Modifier.size(buttonSize)
             ) {
                 IconSm(
                     imageVector = Icons.Default.Refresh,
                     contentDescription = "Reset",
-                    tint = if (canUndo) TextColor.Primary else TrainingIconInactive,
+                    tint = undoTint,
                 )
             }
             IconButton(
                 onClick = onPrevClick,
                 enabled = canUndo,
-                modifier = Modifier.size(moveControlButtonSize)
+                modifier = Modifier.size(buttonSize)
             ) {
-                IconMd(
+                IconSm(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                     contentDescription = "Previous move",
-                    tint = if (canUndo) TextColor.Primary else TrainingIconInactive,
+                    tint = undoTint,
                 )
             }
             IconButton(
                 onClick = onNextClick,
                 enabled = canRedo,
                 modifier = Modifier
-                    .size(moveControlButtonSize)
+                    .size(buttonSize)
                     .testTag(MoveLegendNextTestTag)
             ) {
-                IconMd(
+                IconSm(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = "Next move",
-                    tint = if (canRedo) TextColor.Primary else TrainingIconInactive,
+                    tint = redoTint,
                 )
             }
         }
     }
 }
 
+private fun resolveTrainingEditorMoveControlTint(isEnabled: Boolean): Color {
+    if (isEnabled) {
+        return TextColor.Primary
+    }
+
+    return TrainingIconInactive
+}
+
 @Composable
 private fun RenderPrimaryGameActionButtons(
     primaryActions: List<TrainingEditorPrimaryAction>,
+    buttonSize: Dp,
 ) {
     if (primaryActions.isEmpty()) {
         return
@@ -386,9 +400,9 @@ private fun RenderPrimaryGameActionButtons(
         primaryActions.forEach { action ->
             IconButton(
                 onClick = action.onClick,
-                modifier = Modifier.size(AppIconSizes.Lg)
+                modifier = Modifier.size(buttonSize)
             ) {
-                IconLg(
+                IconSm(
                     imageVector = action.icon,
                     contentDescription = action.contentDescription,
                     tint = action.tint,

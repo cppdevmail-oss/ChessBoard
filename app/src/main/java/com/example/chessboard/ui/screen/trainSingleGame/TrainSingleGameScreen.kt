@@ -48,7 +48,6 @@ import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.theme.AppDimens
-import com.example.chessboard.ui.theme.TrainingTextPrimary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -447,7 +446,6 @@ private fun TrainSingleGameScreen(
                                 IconMd(
                                     imageVector = Icons.Default.Search,
                                     contentDescription = "Search by position",
-                                    tint = TrainingTextPrimary,
                                 )
                             }
                             IconButton(
@@ -460,14 +458,12 @@ private fun TrainSingleGameScreen(
                                 IconMd(
                                     imageVector = Icons.Default.ContentCopy,
                                     contentDescription = "Clone game",
-                                    tint = TrainingTextPrimary,
                                 )
                             }
                             IconButton(onClick = onOpenGameEditorClick) {
                                 IconMd(
                                     imageVector = Icons.Default.Edit,
                                     contentDescription = "Edit game",
-                                    tint = TrainingTextPrimary,
                                 )
                             }
                         }
@@ -475,7 +471,6 @@ private fun TrainSingleGameScreen(
                             IconMd(
                                 imageVector = Icons.Default.Refresh,
                                 contentDescription = "Interrupt training",
-                                tint = TrainingTextPrimary,
                             )
                         }
                     }
