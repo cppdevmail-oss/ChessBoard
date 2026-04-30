@@ -97,6 +97,7 @@ internal fun TrainingEditorGameSection(
     actions: TrainingEditorGameSectionActions,
     primaryAction: TrainingEditorPrimaryAction? = null,
     primaryActions: List<TrainingEditorPrimaryAction> = emptyList(),
+    removeCollectionLabel: String = "training",
     modifier: Modifier = Modifier,
 ) {
     val visiblePrimaryActions = resolveVisiblePrimaryActions(
@@ -108,7 +109,7 @@ internal fun TrainingEditorGameSection(
     if (showRemoveConfirm) {
         AppConfirmDialog(
             title = "Remove Game",
-            message = "Remove \"${state.game.title}\" from training?",
+            message = "Remove \"${state.game.title}\" from $removeCollectionLabel?",
             onDismiss = { showRemoveConfirm = false },
             onConfirm = {
                 showRemoveConfirm = false
@@ -130,6 +131,7 @@ internal fun TrainingEditorGameSection(
             onRemoveClick = if (actions.onRemoveClick != null) {
                 { showRemoveConfirm = true }
             } else null,
+            removeCollectionLabel = removeCollectionLabel,
         )
 
         Spacer(modifier = Modifier.height(AppDimens.spaceSm))
@@ -165,6 +167,7 @@ private fun TrainingEditorGameHeader(
     onDecreaseWeightClick: () -> Unit,
     onIncreaseWeightClick: () -> Unit,
     onRemoveClick: (() -> Unit)? = null,
+    removeCollectionLabel: String = "training",
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -220,7 +223,7 @@ private fun TrainingEditorGameHeader(
             if (onRemoveClick != null) {
                 DeleteIconButton(
                     onClick = onRemoveClick,
-                    contentDescription = "Remove from training",
+                    contentDescription = "Remove game from $removeCollectionLabel",
                     modifier = Modifier.size(AppIconSizes.Lg),
                 )
             }

@@ -351,6 +351,7 @@ fun EditTrainingTemplateScreen(
                 onMovePlyClick = { ply -> boardSession.onMoveToPly(game.gameId, ply) },
                 onRemoveClick = { removeGameFromTemplate(game.gameId) },
             ),
+            removeCollectionLabel = "template",
         )
     }
 }
