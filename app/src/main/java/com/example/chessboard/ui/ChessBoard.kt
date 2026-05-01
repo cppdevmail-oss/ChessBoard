@@ -332,11 +332,6 @@ fun PositionEditorBoardWithCoordinates(
 
                             val movedDistance = (latestPosition - startPosition).getDistance()
                             if (!isDragging && hasPieceOnStartSquare && movedDistance > touchSlop) {
-                                val dx = kotlin.math.abs(latestPosition.x - startPosition.x)
-                                val dy = kotlin.math.abs(latestPosition.y - startPosition.y)
-                                if (dy > dx) {
-                                    return@awaitEachGesture
-                                }
                                 isDragging = true
                                 dragFromSquare = startSquare
                                 dragOffset = latestPosition
@@ -451,12 +446,6 @@ fun ChessBoardWithCoordinates(
                             val moved = (latestPos - startPos).getDistance()
 
                             if (!isDragging && canDrag && moved > touchSlop) {
-                                val dx = kotlin.math.abs(latestPos.x - startPos.x)
-                                val dy = kotlin.math.abs(latestPos.y - startPos.y)
-                                if (dy > dx) {
-                                    // Primarily vertical — yield to parent scroll
-                                    return@awaitEachGesture
-                                }
                                 // Transition to drag mode
                                 isDragging = true
                                 dragFromSquare = startSquare
