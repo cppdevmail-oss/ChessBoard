@@ -6,6 +6,7 @@ package com.example.chessboard.ui.screen.positions
  * Keep card layout, selection styling, and card-local buttons here. Do not add screen loading or service logic.
  */
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -49,9 +50,7 @@ internal fun SavedPositionCard(
 ) {
     CardSurface(
         modifier = modifier
-            .fillMaxWidth()
-            .testTag(savedPositionCardTestTag(position.id))
-            .semantics { selected = isSelected },
+            .fillMaxWidth(),
         color = if (isSelected) Background.CardDark else Background.SurfaceDark,
         border = if (isSelected) BorderStroke(1.dp, TrainingAccentTeal) else null,
         onClick = onClick,
@@ -62,7 +61,11 @@ internal fun SavedPositionCard(
             verticalAlignment = Alignment.Top,
         ) {
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(onClick = onClick)
+                    .testTag(savedPositionCardTestTag(position.id))
+                    .semantics { selected = isSelected },
                 verticalArrangement = Arrangement.spacedBy(AppDimens.spaceXs),
             ) {
                 ScreenTitleText(text = position.name)
