@@ -384,7 +384,23 @@ private fun SavedPositionsScreen(
     onShowOpeningDeviationSelection: (SavedPositionsDeviationDialog) -> Unit,
 ) {
     val selectedPosition = resolveSelectedPosition(state)
-    val previewGameController = remember { GameController() }
+    val previewGameController = remember(
+        selectedPosition?.id,
+        selectedPosition?.fenForSearch,
+        selectedPosition?.fenFull,
+    ) {
+        selectedPosition?.let { position ->
+            GameController().also { controller ->
+                controller.loadPreviewFen(
+                    toLoadableSavedPositionFen(resolveDisplayedFen(position))
+                )
+                controller.setOrientation(
+                    resolveSavedPositionBoardOrientation(position)
+                )
+                controller.setUserMovesEnabled(false)
+            }
+        }
+    }
     val currentPage = resolveSavedPositionsCurrentPage(
         totalPositionsCount = state.listState.positions.size,
         currentPage = state.listState.currentPage,
@@ -398,17 +414,6 @@ private fun SavedPositionsScreen(
         positions = pagePositions,
         filterState = state.searchState.activeFilterState,
     )
-
-    LaunchedEffect(selectedPosition?.id, selectedPosition?.fenForSearch, selectedPosition?.fenFull) {
-        val position = selectedPosition ?: return@LaunchedEffect
-        previewGameController.loadPreviewFen(
-            toLoadableSavedPositionFen(resolveDisplayedFen(position))
-        )
-        previewGameController.setOrientation(
-            resolveSavedPositionBoardOrientation(position)
-        )
-        previewGameController.setUserMovesEnabled(false)
-    }
 
     RenderDeleteSavedPositionDialog(
         positionToDelete = state.positionToDelete,
@@ -595,7 +600,7 @@ private fun LazyListScope.renderSavedPositionsContent(
     state: SavedPositionsState,
     displayedPositions: List<SavedPositionListItem>,
     selectedPosition: SavedPositionListItem?,
-    previewGameController: GameController,
+    previewGameController: GameController?,
     onOpenPosition: (SavedPositionListItem) -> Unit,
     onPositionSelected: (Long) -> Unit,
     onCreateFromPositionClick: (SavedPositionListItem) -> Unit,
@@ -627,7 +632,7 @@ private fun LazyListScope.renderSavedPositionsContent(
         if (position.id == selectedPosition?.id) {
             SavedPositionBoardPreview(
                 position = position,
-                gameController = previewGameController,
+                gameController = previewGameController ?: return@items,
             )
             Spacer(modifier = Modifier.height(AppDimens.spaceMd))
         }
