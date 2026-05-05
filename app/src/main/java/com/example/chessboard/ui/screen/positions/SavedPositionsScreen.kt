@@ -482,7 +482,7 @@ private fun SavedPositionsScreen(
             bottomBar = {
                 AppBottomNavigation(
                     items = defaultAppBottomNavigationItems(),
-                    selectedItem = ScreenType.Home,
+                    selectedItem = ScreenType.PositionEditor,
                     onItemSelected = onNavigate,
                 )
             },

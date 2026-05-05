@@ -46,6 +46,7 @@ import com.example.chessboard.ui.screen.SmartSettingsScreenContainer
 import com.example.chessboard.ui.screen.SmartTrainingScreenContainer
 import com.example.chessboard.ui.screen.home.HomeScreenContainer
 import com.example.chessboard.ui.screen.positions.PositionEditorScreenContainer
+import com.example.chessboard.ui.screen.positions.PositionSearchSettingsScreenContainer
 import com.example.chessboard.ui.screen.positions.SavedPositionsScreenContainer
 import com.example.chessboard.ui.screen.trainSingleGame.TrainSingleGameLauncherScreenContainer
 import com.example.chessboard.ui.screen.training.CreateTrainingByStatisticsScreenContainer
@@ -147,6 +148,13 @@ class MainActivity : ComponentActivity() {
                     onNavigate: (ScreenType) -> Unit = navigation@ { screenType ->
                         if (screenType == ScreenType.GamesExplorer) {
                             openGamesExplorer()
+                            return@navigation
+                        }
+
+                        if (screenType == ScreenType.PositionEditor) {
+                            runtimeContext.positionEditor.resetToInitialPosition()
+                            runtimeContext.positionEditor.onBackClick = { currentScreen = ScreenType.Home }
+                            currentScreen = ScreenType.PositionEditor
                             return@navigation
                         }
 
@@ -274,6 +282,18 @@ class MainActivity : ComponentActivity() {
                         initialFen = runtimeContext.positionEditor.initialFen,
                         screenContext = createScreenContext(
                             onBackClick = { runtimeContext.positionEditor.onBackClick() },
+                        ),
+                        onNavigateToSettings = { currentFen ->
+                            runtimeContext.positionEditor.initialFen = currentFen
+                            currentScreen = ScreenType.PositionSearchSettings
+                        }
+                    )
+
+                    ScreenType.PositionSearchSettings -> PositionSearchSettingsScreenContainer(
+                        currentFen = runtimeContext.positionEditor.initialFen,
+                        onFenChange = { newFen -> runtimeContext.positionEditor.initialFen = newFen },
+                        screenContext = createScreenContext(
+                            onBackClick = { currentScreen = ScreenType.PositionEditor },
                         ),
                     )
 

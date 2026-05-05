@@ -18,7 +18,6 @@ package com.example.chessboard.ui.screen.createOpening
  * - navigation decisions beyond invoking callbacks passed from the container
  * - post-save business flow for creating trainings or templates
  */
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,25 +28,20 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -55,28 +49,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
-import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.ChessBoardSection
 import com.example.chessboard.ui.components.IconLg
 import com.example.chessboard.ui.components.IconMd
-import com.example.chessboard.ui.components.IconXs
+import com.example.chessboard.ui.components.PasteInputBlock
 import com.example.chessboard.ui.components.ScreenSection
-import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.screen.EditableGameSide
 import com.example.chessboard.ui.screen.GameSideSelector
 import com.example.chessboard.ui.screen.gameNotation.GameMoveTreeSection
 import com.example.chessboard.ui.screen.training.DarkInputField
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.Background
-import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import com.example.chessboard.ui.theme.TrainingIconInactive
 import com.example.chessboard.ui.theme.TrainingTextPrimary
@@ -186,11 +174,13 @@ internal fun CreateOpeningScreen(
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
 
             ScreenSection {
-                ImportFromPgnBlock(
-                    pgnText = pgnText,
-                    onPgnTextChange = onPgnTextChange,
-                    onImportFromFileClick = onImportFromFileClick,
-                    importedChapterCount = importedChapterCount
+                PasteInputBlock(
+                    title = "Import from PGN",
+                    text = pgnText,
+                    onTextChange = onPgnTextChange,
+                    placeholder = "Paste PGN here... e.g., 1. e4 e5 2. Nf3 Nc6 3. Bb5",
+                    badge = if (importedChapterCount > 1) "$importedChapterCount chapters" else null,
+                    onImportFromFileClick = onImportFromFileClick
                 )
             }
 
@@ -344,98 +334,3 @@ private fun PillDivider() {
     )
 }
 
-@Composable
-private fun ImportFromPgnBlock(
-    pgnText: String,
-    onPgnTextChange: (String) -> Unit,
-    onImportFromFileClick: () -> Unit,
-    importedChapterCount: Int,
-    modifier: Modifier = Modifier
-) {
-    val pgnScrollState = rememberScrollState()
-    val maxPgnFieldHeight = LocalConfiguration.current.screenHeightDp.dp / 4
-
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceSm)
-        ) {
-            SectionTitleText(text = "Import from PGN", color = TrainingAccentTeal)
-            if (importedChapterCount > 1) {
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = TrainingAccentTeal.copy(alpha = 0.15f)
-                ) {
-                    Text(
-                        text = "$importedChapterCount chapters",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TrainingAccentTeal,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                    )
-                }
-            }
-        }
-
-        Surface(
-            shape = RoundedCornerShape(AppDimens.radiusMd),
-            color = Background.SurfaceDark,
-            border = BorderStroke(1.dp, TrainingAccentTeal),
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 112.dp, max = maxPgnFieldHeight)
-        ) {
-            BasicTextField(
-                value = pgnText,
-                onValueChange = onPgnTextChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxSize()
-                    .verticalScroll(pgnScrollState)
-                    .padding(horizontal = 14.dp, vertical = AppDimens.spaceMd),
-                textStyle = MaterialTheme.typography.bodyMedium.merge(
-                    TextStyle(color = TextColor.Primary)
-                ),
-                cursorBrush = SolidColor(TrainingAccentTeal),
-                minLines = 4,
-                decorationBox = { innerTextField ->
-                    if (pgnText.isEmpty()) {
-                        BodySecondaryText(
-                            text = "Paste PGN here... e.g., 1. e4 e5 2. Nf3 Nc6 3. Bb5",
-                            color = TrainingIconInactive
-                        )
-                    }
-                    innerTextField()
-                }
-            )
-        }
-
-        Surface(
-            onClick = onImportFromFileClick,
-            shape = RoundedCornerShape(AppDimens.radiusMd),
-            color = Background.SurfaceDark,
-            border = BorderStroke(1.dp, TrainingAccentTeal),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = AppDimens.spaceMd, vertical = 12.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconXs(
-                    imageVector = Icons.Default.FolderOpen,
-                    contentDescription = null,
-                    tint = TrainingAccentTeal,
-                )
-                Spacer(modifier = Modifier.width(AppDimens.spaceXs))
-                Text(
-                    text = "From File",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = TrainingAccentTeal
-                )
-            }
-        }
-    }
-}

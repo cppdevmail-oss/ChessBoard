@@ -43,50 +43,39 @@ class PositionEditorScreenTest {
         // Home content depends on async startup work, including reading persisted profile settings.
         // On a slow emulator the card may not exist yet when the test starts, so wait for it
         // before clicking instead of assuming the first frame is already stable.
-        waitForTextDisplayed("Position Editor")
-        composeRule.onNodeWithText("Position Editor").performClick()
+        waitForTextDisplayed("Position Search")
+        composeRule.onNodeWithText("Position Search").performClick()
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithTag(PositionEditorListTestTag)
-            .performScrollToNode(hasTestTag(PositionEditorInitialPositionTestTag))
-        waitForNodeDisplayed(PositionEditorInitialPositionTestTag)
-        composeRule.onNodeWithTag(PositionEditorInitialPositionTestTag).performClick()
-        composeRule.waitForIdle()
-        assertBoardFen(InitialBoardFen)
-
-        composeRule.onNodeWithTag(PositionEditorListTestTag)
-            .performScrollToNode(hasTestTag(PositionEditorClearBoardTestTag))
         waitForNodeDisplayed(PositionEditorClearBoardTestTag)
         composeRule.onNodeWithTag(PositionEditorClearBoardTestTag).performClick()
         composeRule.waitForIdle()
+
         assertBoardFen("8/8/8/8/8/8/8/8 w - - 0 1")
     }
 
     @Test
     fun positionEditorScreen_castlingCheckboxUpdatesVisibleFen() {
-        waitForTextDisplayed("Position Editor")
-        composeRule.onNodeWithText("Position Editor").performClick()
+        waitForTextDisplayed("Position Search")
+        composeRule.onNodeWithText("Position Search").performClick()
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithTag(PositionEditorListTestTag)
-            .performScrollToNode(hasTestTag(PositionEditorInitialPositionTestTag))
-        waitForNodeDisplayed(PositionEditorInitialPositionTestTag)
-        composeRule.onNodeWithTag(PositionEditorInitialPositionTestTag).performClick()
-        composeRule.waitForIdle()
-        assertBoardFen(InitialBoardFen)
+        composeRule.onNodeWithContentDescription("Settings").performClick()
+        waitForTextDisplayed("Position Search Settings")
 
-        composeRule.onNodeWithTag(PositionEditorListTestTag)
-            .performScrollToNode(hasTestTag(PositionEditorWhiteShortCastleTestTag))
         waitForNodeDisplayed(PositionEditorWhiteShortCastleTestTag)
         composeRule.onNodeWithTag(PositionEditorWhiteShortCastleTestTag).performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("Back").performClick()
         composeRule.waitForIdle()
         assertBoardFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w Qkq - 0 1")
     }
 
     @Test
     fun positionEditorScreen_saveButtonOpensSaveDialog() {
-        waitForTextDisplayed("Position Editor")
-        composeRule.onNodeWithText("Position Editor").performClick()
+        waitForTextDisplayed("Position Search")
+        composeRule.onNodeWithText("Position Search").performClick()
         composeRule.waitForIdle()
 
         composeRule.onNodeWithContentDescription("Save").performClick()
@@ -192,8 +181,8 @@ class PositionEditorScreenTest {
     }
 
     private fun openPositionEditorSaveDialog() {
-        waitForTextDisplayed("Position Editor")
-        composeRule.onNodeWithText("Position Editor").performClick()
+        waitForTextDisplayed("Position Search")
+        composeRule.onNodeWithText("Position Search").performClick()
         composeRule.waitForIdle()
 
         composeRule.onNodeWithContentDescription("Save").performClick()

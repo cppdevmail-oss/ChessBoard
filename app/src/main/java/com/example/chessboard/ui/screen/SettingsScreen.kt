@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -30,13 +29,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.chessboard.ui.components.AppBottomNavigation
-import com.example.chessboard.ui.components.AppScreenScaffold
-import com.example.chessboard.ui.components.AppTopBar
+import com.example.chessboard.ui.components.AppSettingsScaffold
 import com.example.chessboard.ui.components.CardMetaText
 import com.example.chessboard.ui.components.CardSurface
 import com.example.chessboard.ui.components.IconSm
-import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.ChessBoardTheme
 import com.example.chessboard.ui.theme.TextColor
@@ -81,42 +77,25 @@ fun SettingsScreen(
     onNavigate: (ScreenType) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    AppScreenScaffold(
-        modifier = modifier.fillMaxSize(),
-        topBar = {
-            AppTopBar(
-                title = "Settings",
-                subtitle = "Customize your experience",
-                onBackClick = onBackClick,
-                filledBackButton = true,
-            )
-        },
-        bottomBar = {
-            AppBottomNavigation(
-                items = defaultAppBottomNavigationItems(),
-                selectedItem = ScreenType.Settings,
-                onItemSelected = onNavigate,
-            )
-        },
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(AppDimens.spaceLg),
-            verticalArrangement = Arrangement.spacedBy(AppDimens.spaceLg),
-        ) {
-            DisplaySection(
-                simpleViewEnabled = simpleViewEnabled,
-                onSimpleViewToggle = onSimpleViewToggle,
-            )
-            TrainingSection(
-                removeLineIfRepIsZero = removeLineIfRepIsZero,
-                onRemoveLineIfRepIsZeroToggle = onRemoveLineIfRepIsZeroToggle,
-                hideLinesWithWeightZero = hideLinesWithWeightZero,
-                onHideLinesWithWeightZeroToggle = onHideLinesWithWeightZeroToggle,
-            )
-        }
+    AppSettingsScaffold(
+        title = "Settings",
+        subtitle = "Customize your experience",
+        selectedNavItem = ScreenType.Settings,
+        onBackClick = onBackClick,
+        onNavigate = onNavigate,
+        filledBackButton = true,
+        modifier = modifier,
+    ) {
+        DisplaySection(
+            simpleViewEnabled = simpleViewEnabled,
+            onSimpleViewToggle = onSimpleViewToggle,
+        )
+        TrainingSection(
+            removeLineIfRepIsZero = removeLineIfRepIsZero,
+            onRemoveLineIfRepIsZeroToggle = onRemoveLineIfRepIsZeroToggle,
+            hideLinesWithWeightZero = hideLinesWithWeightZero,
+            onHideLinesWithWeightZeroToggle = onHideLinesWithWeightZeroToggle,
+        )
     }
 }
 

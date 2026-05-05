@@ -26,6 +26,7 @@ sealed class ScreenType(val title: String) {
     data class TrainingSettings(val trainingId: Long) : ScreenType("TrainingSettings")
     object CreateOpening : ScreenType("CreateOpening")
     object PositionEditor : ScreenType("PositionEditor")
+    object PositionSearchSettings : ScreenType("PositionSearchSettings")
     object SavedPositions : ScreenType("Saved Positions")
     object SelectOpeningDeviationPosition : ScreenType("SelectOpeningDeviationPosition")
     object ShowOpeningDeviation : ScreenType("ShowOpeningDeviation")

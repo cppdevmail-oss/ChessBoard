@@ -70,12 +70,15 @@ internal fun replacePositionEditorFenCastlingPart(
 internal fun PositionEditorCastlesSection(
     castlingState: PositionEditorCastlingState,
     onCastlingStateChange: (PositionEditorCastlingState) -> Unit,
+    showTitle: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     ScreenSection(modifier = modifier) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            SectionTitleText(text = "Castling", color = TextColor.Secondary)
-            Spacer(modifier = Modifier.height(AppDimens.spaceMd))
+            if (showTitle) {
+                SectionTitleText(text = "Castling", color = TextColor.Secondary)
+                Spacer(modifier = Modifier.height(AppDimens.spaceMd))
+            }
 
             PositionEditorCastlingRow(
                 kingLetter = 'K',

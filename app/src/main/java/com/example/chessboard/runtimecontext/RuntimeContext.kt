@@ -109,7 +109,7 @@ class RuntimeContext {
     class PositionEditor {
         private val defaultInitialFen = InitialBoardFenWithoutMoveNumbers
 
-        var initialFen: String = defaultInitialFen
+        var initialFen by mutableStateOf(defaultInitialFen)
         var onBackClick: () -> Unit = {}
 
         fun resetToInitialPosition() {

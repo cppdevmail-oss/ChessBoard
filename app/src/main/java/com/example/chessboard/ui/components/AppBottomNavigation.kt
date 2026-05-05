@@ -16,9 +16,11 @@ import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -56,6 +58,12 @@ fun defaultAppBottomNavigationItems(): List<AppBottomNavigationItem<ScreenType>>
             iconSelected = Icons.AutoMirrored.Filled.MenuBook
         ),
         AppBottomNavigationItem(
+            value = ScreenType.PositionEditor,
+            label = "Search",
+            iconUnselected = Icons.Outlined.Search,
+            iconSelected = Icons.Filled.Search
+        ),
+        AppBottomNavigationItem(
             value = ScreenType.Profile,
             label = ScreenType.Profile.toString(),
             iconUnselected = Icons.Outlined.Person,
@@ -77,7 +85,7 @@ fun <T> AppBottomNavigation(
     selectedItem: T,
     onItemSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
-    maxVisibleItems: Int = 4,
+    maxVisibleItems: Int = 5,
     showTopDivider: Boolean = true,
 ) {
     Surface(

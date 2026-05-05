@@ -195,11 +195,11 @@ class SavedPositionsNavigationTest {
         composeRule.onNodeWithText("Saved Positions").performClick()
 
         waitForTextDisplayed("Editor Position")
-        composeRule.onNodeWithText("Position Editor").assertDoesNotExist()
+        composeRule.onNodeWithText("Position Search").assertDoesNotExist()
 
         composeRule.onNodeWithTag(savedPositionOpenButtonTestTag(positionId)).performClick()
 
-        waitForTextDisplayed("Position Editor")
+        waitForTextDisplayed("Position Search")
     }
 
     @Test

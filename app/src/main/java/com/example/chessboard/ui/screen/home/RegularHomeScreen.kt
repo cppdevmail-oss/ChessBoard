@@ -155,7 +155,7 @@ internal fun RegularHomeScreen(
                         onClick = onCreateOpeningClick,
                     )
                     HomeActionCard(
-                        title = "Position Editor",
+                        title = "Position Search",
                         subtitle = "Set up a custom board position",
                         modifier = Modifier.weight(1f),
                         onClick = onOpenPositionEditorClick,

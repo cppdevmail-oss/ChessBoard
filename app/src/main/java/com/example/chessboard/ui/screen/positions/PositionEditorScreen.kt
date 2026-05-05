@@ -14,15 +14,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,8 +37,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.boardmodel.BoardPiece
@@ -54,24 +57,24 @@ import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.BodySecondaryText
+import com.example.chessboard.ui.components.IconLg
 import com.example.chessboard.ui.components.IconMd
+import com.example.chessboard.ui.components.PasteInputBlock
 import com.example.chessboard.ui.components.ScreenSection
-import com.example.chessboard.ui.components.SecondaryButton
+import com.example.chessboard.ui.components.SettingsIconButton
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.resolvePieceGlyph
 import com.example.chessboard.ui.resolvePieceTint
 import com.example.chessboard.ui.screen.EditableGameSide
 import com.example.chessboard.ui.screen.GameSideSelector
-import com.example.chessboard.ui.screen.PositionEditorCastlesSection
-import com.example.chessboard.ui.screen.PositionEditorCastlingState
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.screen.SideButtonSelectedBg
-import com.example.chessboard.ui.screen.replacePositionEditorFenCastlingPart
-import com.example.chessboard.ui.screen.resolvePositionEditorCastlingState
 import com.example.chessboard.ui.theme.AppDimens
-import com.example.chessboard.ui.theme.TextColor
+import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TrainingAccentTeal
+import com.example.chessboard.ui.theme.TrainingErrorRed
+import com.example.chessboard.ui.theme.TrainingIconInactive
 import com.example.chessboard.ui.theme.TrainingTextPrimary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -136,9 +139,6 @@ internal data class PositionEditorScreenActions(
     data class Position(
         val onFenTextChange: (String) -> Unit,
         val onSideSelected: (EditableGameSide) -> Unit,
-        val onCastlingStateChange: (PositionEditorCastlingState) -> Unit,
-        val onClearBoardClick: () -> Unit,
-        val onSetInitialPositionClick: () -> Unit
     )
 
     data class Board(
@@ -148,9 +148,10 @@ internal data class PositionEditorScreenActions(
     )
 
     data class TopBar(
-        val onApplyFenClick: () -> Unit,
         val onSavePositionClick: () -> Unit,
-        val onFindGamesClick: () -> Unit
+        val onFindGamesClick: () -> Unit,
+        val onClearBoardClick: () -> Unit,
+        val onSetInitialPositionClick: () -> Unit,
     )
 
     data class SaveDialog(
@@ -167,13 +168,15 @@ internal data class PositionEditorScreenActions(
 
 private data class PositionEditorNavigationActions(
     val onBackClick: () -> Unit = {},
-    val onNavigate: (ScreenType) -> Unit = {}
+    val onNavigate: (ScreenType) -> Unit = {},
+    val onSettingsClick: () -> Unit = {}
 )
 
 @Composable
 fun PositionEditorScreenContainer(
     initialFen: String = InitialBoardFenWithoutMoveNumbers,
     screenContext: ScreenContainerContext,
+    onNavigateToSettings: (currentFen: String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
@@ -330,7 +333,11 @@ fun PositionEditorScreenContainer(
         ),
         actions = PositionEditorScreenActions(
             position = PositionEditorScreenActions.Position(
-                onFenTextChange = { uiState = uiState.copy(fenText = it) },
+                onFenTextChange = { newFen ->
+                    val normalizedFen = normalizePositionEditorFen(newFen, uiState.selectedSide)
+                    gameController.loadPreviewFen(toLoadableFen(normalizedFen))
+                    uiState = uiState.copy(fenText = newFen, fenError = null)
+                },
                 onSideSelected = { selectedSide ->
                     val updatedFen = replaceFenSide(
                         fen = uiState.fenText,
@@ -342,30 +349,6 @@ fun PositionEditorScreenContainer(
                         foundGameIds = uiState.foundGameIds
                     )
                 },
-                onCastlingStateChange = { castlingState ->
-                    val normalizedFen = normalizePositionEditorFen(
-                        fen = uiState.fenText,
-                        selectedSide = uiState.selectedSide
-                    )
-                    updatePositionEditorPreview(
-                        fen = replacePositionEditorFenCastlingPart(
-                            fen = normalizedFen,
-                            castlingState = castlingState
-                        ),
-                        foundGameIds = uiState.foundGameIds
-                    )
-                },
-                onClearBoardClick = {
-                    val updatedFen = resolveEmptyBoardFen(uiState.selectedSide)
-                    updatePositionEditorPreview(updatedFen)
-                },
-                onSetInitialPositionClick = {
-                    val updatedFen = replaceFenSide(
-                        fen = InitialBoardFenWithoutMoveNumbers,
-                        selectedSide = uiState.selectedSide
-                    )
-                    updatePositionEditorPreview(updatedFen)
-                }
             ),
             board = PositionEditorScreenActions.Board(
                 onPieceSelected = { uiState = uiState.copy(selectedPiece = it) },
@@ -387,8 +370,14 @@ fun PositionEditorScreenContainer(
                 }
             ),
             topBar = PositionEditorScreenActions.TopBar(
-                onApplyFenClick = {
-                    applyPositionEditorFen(uiState.fenText)
+                onClearBoardClick = {
+                    updatePositionEditorPreview(resolveEmptyBoardFen(uiState.selectedSide), uiState.selectedSide)
+                },
+                onSetInitialPositionClick = {
+                    val parts = InitialBoardFenWithoutMoveNumbers.trim()
+                        .split(Regex("\\s+")).toMutableList()
+                    if (parts.size >= 2) parts[1] = resolveFenSideToken(uiState.selectedSide)
+                    updatePositionEditorPreview(parts.joinToString(" "), uiState.selectedSide)
                 },
                 onSavePositionClick = {
                     if (applyPositionEditorFen(uiState.fenText)) {
@@ -490,7 +479,8 @@ fun PositionEditorScreenContainer(
         ),
         navigation = PositionEditorNavigationActions(
             onBackClick = screenContext.onBackClick,
-            onNavigate = screenContext.onNavigate
+            onNavigate = screenContext.onNavigate,
+            onSettingsClick = { onNavigateToSettings(uiState.fenText) }
         ),
         modifier = modifier
     )
@@ -525,25 +515,18 @@ private fun PositionEditorScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             AppTopBar(
-                title = "Position Editor",
+                title = "Position Search",
                 onBackClick = navigation.onBackClick,
                 actions = {
-                    SecondaryButton(
-                        text = "Apply FEN",
-                        onClick = actions.topBar.onApplyFenClick
-                    )
-                    IconButton(
-                        onClick = actions.topBar.onSavePositionClick
-                    ) {
+                    SettingsIconButton(onClick = navigation.onSettingsClick)
+                    IconButton(onClick = actions.topBar.onSavePositionClick) {
                         IconMd(
                             imageVector = Icons.Default.Save,
                             contentDescription = "Save",
                             tint = TrainingAccentTeal,
                         )
                     }
-                    IconButton(
-                        onClick = actions.topBar.onFindGamesClick
-                    ) {
+                    IconButton(onClick = actions.topBar.onFindGamesClick) {
                         IconMd(
                             imageVector = Icons.Default.Search,
                             contentDescription = "Find Games",
@@ -556,7 +539,7 @@ private fun PositionEditorScreen(
         bottomBar = {
             AppBottomNavigation(
                 items = defaultAppBottomNavigationItems(),
-                selectedItem = ScreenType.Home,
+                selectedItem = ScreenType.PositionEditor,
                 onItemSelected = navigation.onNavigate
             )
         }
@@ -574,17 +557,15 @@ private fun PositionEditorScreen(
             }
 
             item {
-                PositionEditorFenSection(
-                    fenText = state.editor.fenText,
-                    onFenTextChange = actions.position.onFenTextChange
-                )
-            }
-
-            item {
-                PositionEditorCastlesSection(
-                    castlingState = resolvePositionEditorCastlingState(state.editor.fenText),
-                    onCastlingStateChange = actions.position.onCastlingStateChange
-                )
+                ScreenSection {
+                    PasteInputBlock(
+                        title = "FEN",
+                        text = state.editor.fenText,
+                        onTextChange = actions.position.onFenTextChange,
+                        placeholder = "Paste FEN string here...",
+                        minLines = 2
+                    )
+                }
             }
 
             item {
@@ -596,10 +577,14 @@ private fun PositionEditorScreen(
             }
 
             item {
-                PositionEditorControlsSection(
-                    selectedSide = state.editor.selectedSide,
-                    actions = actions.position
-                )
+                ScreenSection {
+                    PositionEditorBoardControlRow(
+                        selectedSide = state.editor.selectedSide,
+                        onSideSelected = actions.position.onSideSelected,
+                        onResetClick = actions.topBar.onSetInitialPositionClick,
+                        onClearBoardClick = actions.topBar.onClearBoardClick,
+                    )
+                }
             }
 
             item {
@@ -646,40 +631,6 @@ private fun RenderPositionEditorFenError(
     )
 }
 
-@Composable
-private fun PositionEditorFenSection(
-    fenText: String,
-    onFenTextChange: (String) -> Unit
-) {
-    ScreenSection {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            BasicTextField(
-                value = fenText,
-                onValueChange = onFenTextChange,
-                textStyle = MaterialTheme.typography.bodyLarge.copy(
-                    color = TextColor.Primary
-                ),
-                cursorBrush = SolidColor(TrainingAccentTeal),
-                modifier = Modifier.fillMaxWidth(),
-                decorationBox = { innerTextField ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                horizontal = AppDimens.spaceMd,
-                                vertical = AppDimens.spaceMd
-                            )
-                    ) {
-                        if (fenText.isBlank()) {
-                            BodySecondaryText(text = "Enter a FEN string")
-                        }
-                        innerTextField()
-                    }
-                }
-            )
-        }
-    }
-}
 
 @Composable
 private fun PositionEditorBoardSection(
@@ -707,56 +658,6 @@ private fun PositionEditorBoardSection(
     }
 }
 
-@Composable
-private fun PositionEditorControlsSection(
-    selectedSide: EditableGameSide,
-    actions: PositionEditorScreenActions.Position
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd),
-        verticalAlignment = Alignment.Top
-    ) {
-        GameSideSelector(
-            selectedSide = selectedSide,
-            onSideSelected = actions.onSideSelected,
-            modifier = Modifier.weight(1f)
-        )
-
-        PositionEditorActionButtons(
-            onClearBoardClick = actions.onClearBoardClick,
-            onSetInitialPositionClick = actions.onSetInitialPositionClick,
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
-
-@Composable
-private fun PositionEditorActionButtons(
-    onClearBoardClick: () -> Unit,
-    onSetInitialPositionClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)
-    ) {
-        SecondaryButton(
-            text = "Clear board",
-            onClick = onClearBoardClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag(PositionEditorClearBoardTestTag)
-        )
-        SecondaryButton(
-            text = "Initial position",
-            onClick = onSetInitialPositionClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag(PositionEditorInitialPositionTestTag)
-        )
-    }
-}
 
 @Composable
 private fun PositionEditorPaletteSection(
@@ -823,6 +724,80 @@ private fun PositionEditorPieceIcon(
             style = MaterialTheme.typography.titleLarge
         )
     }
+}
+
+@Composable
+private fun PositionEditorBoardControlRow(
+    selectedSide: EditableGameSide,
+    onSideSelected: (EditableGameSide) -> Unit,
+    onResetClick: () -> Unit,
+    onClearBoardClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(50),
+        color = Background.SurfaceDark,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = AppDimens.spaceMd),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier.weight(1.2f),
+                contentAlignment = Alignment.Center,
+            ) {
+                GameSideSelector(
+                    selectedSide = selectedSide,
+                    onSideSelected = onSideSelected,
+                    showTitle = false,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            PositionControlPillDivider()
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(RoundedCornerShape(50))
+                    .testTag(PositionEditorInitialPositionTestTag)
+                    .clickable(onClick = onResetClick),
+                contentAlignment = Alignment.Center,
+            ) {
+                IconLg(
+                    imageVector = Icons.Filled.Refresh,
+                    contentDescription = "Initial position",
+                    tint = TrainingTextPrimary,
+                )
+            }
+            PositionControlPillDivider()
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(RoundedCornerShape(50))
+                    .testTag(PositionEditorClearBoardTestTag)
+                    .clickable(onClick = onClearBoardClick),
+                contentAlignment = Alignment.Center,
+            ) {
+                IconLg(
+                    imageVector = Icons.Filled.Delete,
+                    contentDescription = "Clear board",
+                    tint = TrainingErrorRed,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PositionControlPillDivider() {
+    Box(
+        modifier = Modifier
+            .width(1.dp)
+            .height(40.dp)
+            .background(TrainingIconInactive.copy(alpha = 0.4f))
+    )
 }
 
 private fun normalizePositionEditorFen(
