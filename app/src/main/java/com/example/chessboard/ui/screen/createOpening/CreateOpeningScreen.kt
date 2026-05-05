@@ -70,46 +70,54 @@ import com.example.chessboard.ui.theme.TrainingIconInactive
 import com.example.chessboard.ui.theme.TrainingTextPrimary
 import kotlinx.coroutines.launch
 
+internal data class CreateOpeningScreenState(
+    val selectedSide: EditableGameSide,
+    val openingName: String,
+    val ecoCode: String,
+    val showOpeningNameError: Boolean,
+    val pgnText: String,
+    val importedUciLines: List<List<String>>,
+    val importedChapterCount: Int,
+    val pgnImportError: String?,
+    val saveError: String?,
+)
+
+internal data class CreateOpeningScreenActions(
+    val onSideSelected: (EditableGameSide) -> Unit,
+    val onBackClick: () -> Unit,
+    val onOpeningNameChange: (String) -> Unit,
+    val onEcoCodeChange: (String) -> Unit,
+    val onPgnTextChange: (String) -> Unit,
+    val onPgnImportErrorDismiss: () -> Unit,
+    val onSaveErrorDismiss: () -> Unit,
+    val onImportFromFileClick: () -> Unit,
+    val onSave: (scrollToNameField: () -> Unit) -> Unit,
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun CreateOpeningScreen(
     gameController: GameController,
-    selectedSide: EditableGameSide,
-    onSideSelected: (EditableGameSide) -> Unit,
-    onBackClick: () -> Unit = {},
-    openingName: String,
-    onOpeningNameChange: (String) -> Unit,
-    ecoCode: String,
-    onEcoCodeChange: (String) -> Unit,
-    nameError: Boolean,
-    pgnText: String,
-    onPgnTextChange: (String) -> Unit,
-    importedUciLines: List<List<String>>,
-    importedChapterCount: Int,
-    pgnImportError: String?,
-    onPgnImportErrorDismiss: () -> Unit,
-    saveError: String?,
-    onSaveErrorDismiss: () -> Unit,
-    onImportFromFileClick: () -> Unit,
-    onSave: (scrollToNameField: () -> Unit) -> Unit,
+    state: CreateOpeningScreenState,
+    actions: CreateOpeningScreenActions,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
     val nameFocusRequester = remember { FocusRequester() }
     val coroutineScope = rememberCoroutineScope()
 
-    if (pgnImportError != null) {
+    if (state.pgnImportError != null) {
         AppMessageDialog(
             title = "Import Failed",
-            message = pgnImportError,
-            onDismiss = onPgnImportErrorDismiss
+            message = state.pgnImportError,
+            onDismiss = actions.onPgnImportErrorDismiss
         )
     }
-    if (saveError != null) {
+    if (state.saveError != null) {
         AppMessageDialog(
             title = "Save Failed",
-            message = saveError,
-            onDismiss = onSaveErrorDismiss
+            message = state.saveError,
+            onDismiss = actions.onSaveErrorDismiss
         )
     }
 
@@ -119,10 +127,10 @@ internal fun CreateOpeningScreen(
             AppTopBar(
                 title = "Create Opening",
                 subtitle = "Build your custom opening",
-                onBackClick = onBackClick,
+                onBackClick = actions.onBackClick,
                 actions = {
                     IconButton(onClick = {
-                        onSave {
+                        actions.onSave {
                             coroutineScope.launch {
                                 scrollState.animateScrollTo(0)
                                 nameFocusRequester.requestFocus()
@@ -153,17 +161,17 @@ internal fun CreateOpeningScreen(
                     verticalAlignment = Alignment.Bottom
                 ) {
                     DarkInputField(
-                        value = openingName,
-                        onValueChange = onOpeningNameChange,
+                        value = state.openingName,
+                        onValueChange = actions.onOpeningNameChange,
                         placeholder = "e.g., Sicilian Defense",
                         label = "Opening Name *",
-                        isError = nameError,
+                        isError = state.showOpeningNameError,
                         focusRequester = nameFocusRequester,
                         modifier = Modifier.weight(1f)
                     )
                     DarkInputField(
-                        value = ecoCode,
-                        onValueChange = onEcoCodeChange,
+                        value = state.ecoCode,
+                        onValueChange = actions.onEcoCodeChange,
                         placeholder = "e.g., B20",
                         label = "ECO Code",
                         modifier = Modifier.width(96.dp)
@@ -176,11 +184,12 @@ internal fun CreateOpeningScreen(
             ScreenSection {
                 PasteInputBlock(
                     title = "Import from PGN",
-                    text = pgnText,
-                    onTextChange = onPgnTextChange,
+                    text = state.pgnText,
+                    onTextChange = actions.onPgnTextChange,
                     placeholder = "Paste PGN here... e.g., 1. e4 e5 2. Nf3 Nc6 3. Bb5",
                     badge = if (importedChapterCount > 1) "$importedChapterCount chapters" else null,
-                    onImportFromFileClick = onImportFromFileClick
+                    onImportFromFileClick = actions.onImportFromFileClick,
+                    importedChapterCount = state.importedChapterCount
                 )
             }
 
@@ -199,8 +208,8 @@ internal fun CreateOpeningScreen(
                 contentAlignment = Alignment.Center
             ) {
                 BoardControlRow(
-                    selectedSide = selectedSide,
-                    onSideSelected = onSideSelected,
+                    selectedSide = state.selectedSide,
+                    onSideSelected = actions.onSideSelected,
                     canUndo = gameController.canUndo,
                     canRedo = gameController.canRedo,
                     onUndoClick = { gameController.undoMove() },
@@ -212,7 +221,7 @@ internal fun CreateOpeningScreen(
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
             ScreenSection {
                 GameMoveTreeSection(
-                    importedUciLines = importedUciLines,
+                    importedUciLines = state.importedUciLines,
                     gameController = gameController
                 )
             }
