@@ -1,25 +1,18 @@
 package com.example.chessboard.ui.screen.createOpening
 
 /**
- * Stateful container for the create-opening screen.
- *
- * Keep in this file:
- * - screen-level state
- * - wiring between UI callbacks and services
- * - import/save orchestration needed to prepare data for the UI and post-save flow
- * - navigation callbacks owned by the screen container
- *
- * It is acceptable to add here:
- * - additional screen state fields
- * - state transformations for this screen
- * - calls that prepare data snapshots before passing control to services or dialogs
- *
- * Do not add here:
- * - large chunks of presentational UI markup that belong in CreateOpeningScreen.kt
- * - reusable post-save training/template logic that belongs in CreateOpeningPostSaveFlow.kt
- * - generic repository or service code unrelated to this screen container
+ * File role: groups the create-opening screen container and its compose-side orchestration.
+ * Allowed here:
+ * - screen state, effects, launcher wiring, and UI callback orchestration
+ * - short transitions between compose state and create-opening helper files
+ * - navigation callbacks owned by this screen container
+ * Not allowed here:
+ * - large presentational UI blocks that belong in CreateOpeningScreen.kt
+ * - long PGN import parsing helpers or save-mapping logic that belong in create-opening helper files
+ * Validation date: 2026-05-05
  */
 import android.app.Activity
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -34,13 +27,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.boardmodel.GameDraft
 import com.example.chessboard.entity.GameEntity
-import com.example.chessboard.service.OneGameTrainingData
-import com.example.chessboard.service.buildStoredPgnFromUci
-import com.example.chessboard.service.extractPgnHeaders
 import com.example.chessboard.service.parsePgnMoves
-import com.example.chessboard.service.parsePgnToUciLines
-import com.example.chessboard.service.splitPgnChapters
-import com.example.chessboard.service.uciMovesToMoves
 import com.example.chessboard.ui.screen.EditableGameSide
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import kotlinx.coroutines.Dispatchers
@@ -48,20 +35,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** One parsed chapter: its PGN headers and the expanded UCI lines. */
-internal data class ImportedChapter(
-    val headers: Map<String, String>,
-    val uciLines: List<List<String>>,
-) {
-    /** Best human-readable name for this chapter (ChapterName → Event → StudyName → null). */
-    val chapterName: String?
-        get() = headers["ChapterName"]?.takeIf { it.isNotBlank() && it != "?" }
-            ?: headers["Event"]?.takeIf { it.isNotBlank() && it != "?" }
-            ?: headers["StudyName"]?.takeIf { it.isNotBlank() && it != "?" }
-}
+private const val PgnImportDebounceMs = 600L
 
 @Composable
-fun CreateOpeningScreenContainer(
+internal fun CreateOpeningScreenContainer(
     activity: Activity,
     screenContext: ScreenContainerContext,
     initialDraft: GameDraft = GameDraft(),
@@ -85,35 +62,17 @@ fun CreateOpeningScreenContainer(
         simpleViewEnabled = withContext(Dispatchers.IO) { userProfileService.getProfile().simpleViewEnabled }
     }
 
-    fun updateDraftGame(
-        transform: (GameEntity) -> GameEntity
-    ) {
-        gameDraft = gameDraft.copy(game = transform(gameDraft.game))
-    }
-
     // Derived: move-tree display always follows the first chapter
     val importedUciLines = importedChapters.firstOrNull()?.uciLines ?: emptyList()
 
     LaunchedEffect(initialDraft) {
-        fun loadDraftPosition() {
-            if (initialDraft.game.pgn.isBlank()) {
-                gameController.resetToStartPosition()
-                return
-            }
-
-            val uciMoves = parsePgnMoves(initialDraft.game.pgn)
-            if (uciMoves.isEmpty()) {
-                gameController.resetToStartPosition()
-                return
-            }
-
-            gameController.loadFromUciMoves(uciMoves)
-        }
-
         gameDraft = initialDraft
         importedChapters = emptyList()
         pgnText = ""
-        loadDraftPosition()
+        loadDraftPosition(
+            initialDraft = initialDraft,
+            gameController = gameController,
+        )
     }
 
     LaunchedEffect(gameDraft.game.sideMask) {
@@ -123,37 +82,31 @@ fun CreateOpeningScreenContainer(
     LaunchedEffect(pgnText) {
         if (pgnText.isBlank()) {
             importedChapters = emptyList()
+            pgnImportError = null
             return@LaunchedEffect
         }
-        delay(600)
+
+        // Debounce PGN parsing so we do not re-parse on every keystroke while the user is still typing.
+        delay(PgnImportDebounceMs)
+
         try {
-            val chapters = withContext(Dispatchers.Default) {
-                splitPgnChapters(pgnText).mapNotNull { chapterPgn ->
-                    val headers = extractPgnHeaders(chapterPgn)
-                    val uciLines = parsePgnToUciLines(chapterPgn)
-                    if (uciLines.isEmpty()) null
-                    else ImportedChapter(headers = headers, uciLines = uciLines)
-                }
-            }
+            val chapters = withContext(Dispatchers.Default) { parseImportedChapters(pgnText) }
             if (chapters.isEmpty()) {
+                importedChapters = emptyList()
                 pgnImportError = "No valid moves found in PGN text"
-            } else {
-                val first = chapters.first()
-                first.headers["Event"]
-                    ?.takeIf { it.isNotBlank() && it != "?" }
-                    ?.let { event ->
-                        updateDraftGame { draftGame -> draftGame.copy(event = event) }
-                    }
-                first.headers["ECO"]
-                    ?.takeIf { it.isNotBlank() && it != "?" }
-                    ?.let { eco ->
-                        updateDraftGame { draftGame -> draftGame.copy(eco = eco) }
-                    }
-                importedChapters = chapters
-                gameController.loadFromUciMoves(first.uciLines.first())
-                pgnImportError = null
+                return@LaunchedEffect
             }
+
+            val firstChapter = chapters.first()
+            gameDraft = applyImportedChapterToDraft(
+                gameDraft = gameDraft,
+                importedChapter = firstChapter,
+            )
+            importedChapters = chapters
+            gameController.loadFromUciMoves(firstChapter.uciLines.first())
+            pgnImportError = null
         } catch (_: Exception) {
+            importedChapters = emptyList()
             pgnImportError = "Failed to parse PGN"
         }
     }
@@ -161,23 +114,26 @@ fun CreateOpeningScreenContainer(
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
         onResult = { uri ->
-            if (uri != null) {
-                (activity as? LifecycleOwner)?.lifecycleScope?.launch(Dispatchers.IO) {
-                    try {
-                        val content = activity.contentResolver.openInputStream(uri)
-                            ?.bufferedReader()
-                            ?.use { it.readText() }
-                        withContext(Dispatchers.Main) {
-                            if (content != null) {
-                                pgnText = content
-                            } else {
-                                pgnImportError = "Could not read the selected file"
-                            }
+            val lifecycleOwner = activity as? LifecycleOwner ?: return@rememberLauncherForActivityResult
+            val selectedUri = uri ?: return@rememberLauncherForActivityResult
+
+            lifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    val content = readImportedPgnText(
+                        activity = activity,
+                        uri = selectedUri,
+                    )
+                    withContext(Dispatchers.Main) {
+                        if (content == null) {
+                            pgnImportError = "Could not read the selected file"
+                            return@withContext
                         }
-                    } catch (_: Exception) {
-                        withContext(Dispatchers.Main) {
-                            pgnImportError = "Failed to read file"
-                        }
+
+                        pgnText = content
+                    }
+                } catch (_: Exception) {
+                    withContext(Dispatchers.Main) {
+                        pgnImportError = "Failed to read file"
                     }
                 }
             }
@@ -203,21 +159,21 @@ fun CreateOpeningScreenContainer(
         gameController = gameController,
         selectedSide = EditableGameSide.fromSideMask(gameDraft.game.sideMask),
         onSideSelected = { selectedSide ->
-            updateDraftGame { draftGame ->
+            gameDraft = updateDraftGame(gameDraft) { draftGame ->
                 draftGame.copy(sideMask = selectedSide.sideMask)
             }
         },
         onBackClick = screenContext.onBackClick,
         openingName = gameDraft.game.event.orEmpty(),
         onOpeningNameChange = {
-            updateDraftGame { draftGame ->
+            gameDraft = updateDraftGame(gameDraft) { draftGame ->
                 draftGame.copy(event = it)
             }
             nameError = false
         },
         ecoCode = gameDraft.game.eco.orEmpty(),
         onEcoCodeChange = { eco ->
-            updateDraftGame { draftGame ->
+            gameDraft = updateDraftGame(gameDraft) { draftGame ->
                 draftGame.copy(eco = eco)
             }
         },
@@ -226,6 +182,7 @@ fun CreateOpeningScreenContainer(
         onPgnTextChange = {
             pgnText = it
             importedChapters = emptyList()
+            pgnImportError = null
         },
         importedUciLines = importedUciLines,
         importedChapterCount = importedChapters.size,
@@ -242,161 +199,102 @@ fun CreateOpeningScreenContainer(
                 return@CreateOpeningScreen
             }
 
-            if (isMultiChapter) {
-                val chaptersSnapshot = importedChapters
-                val ecoCodeSnapshot = gameDraft.game.eco.orEmpty()
-                val selectedSideSnapshot = EditableGameSide.fromSideMask(gameDraft.game.sideMask)
+            val lifecycleOwner = activity as? LifecycleOwner ?: return@CreateOpeningScreen
+            val saveSnapshot = buildCreateOpeningSaveSnapshot(
+                gameDraft = gameDraft,
+                importedChapters = importedChapters,
+                gameController = gameController,
+                simpleViewEnabled = simpleViewEnabled,
+            )
 
-                (activity as? LifecycleOwner)?.lifecycleScope?.launch(Dispatchers.IO) {
-                    var savedChaptersCount = 0
-
-                    for ((chapterIndex, chapter) in chaptersSnapshot.withIndex()) {
-                        val chapterName = chapter.chapterName
-                            ?: gameDraft.game.event.orEmpty().ifBlank { null }
-                            ?: "Chapter ${chapterIndex + 1}"
-                        val chapterEco = ecoCodeSnapshot.ifBlank {
-                            chapter.headers["ECO"]?.takeIf { it.isNotBlank() && it != "?" }
-                        }
-                        val whiteName = chapter.headers["White"]
-                            ?.takeIf { it.isNotBlank() && it != "?" } ?: "White"
-                        val blackName = chapter.headers["Black"]
-                            ?.takeIf { it.isNotBlank() && it != "?" } ?: "Black"
-
-                        val savedIds = buildList {
-                            chapter.uciLines.forEachIndexed { index, uciMoves ->
-                                val eventName = buildImportedLineEventName(
-                                    baseName = chapterName,
-                                    index = index,
-                                    total = chapter.uciLines.size,
-                                )
-                                val entity = GameEntity(
-                                    white = whiteName.takeIf { it != "White" },
-                                    black = blackName.takeIf { it != "Black" },
-                                    result = chapter.headers["Result"]
-                                        ?.takeIf { it.isNotBlank() && it != "?" },
-                                    event = eventName,
-                                    eco = chapterEco,
-                                    pgn = buildStoredPgnFromUci(
-                                        uciMoves = uciMoves,
-                                        event = eventName ?: chapterName,
-                                        whiteName = whiteName,
-                                        blackName = blackName,
-                                    ),
-                                    initialFen = "",
-                                    sideMask = selectedSideSnapshot.sideMask,
-                                )
-                                gameSaver.saveOrGetExistingGameId(entity, uciMovesToMoves(uciMoves), entity.sideMask)
-                                    ?.let { add(it) }
-                            }
-                        }
-
-                        if (savedIds.isNotEmpty()) {
-                            trainingService.createTrainingFromGames(
-                                name = chapterName,
-                                games = savedIds.map { OneGameTrainingData(gameId = it, weight = 1) },
-                            )
-                            savedChaptersCount++
-                        }
-                    }
-
-                    withContext(Dispatchers.Main) {
-                        if (savedChaptersCount > 0) {
-                            screenContext.onBackClick()
-                        } else {
-                            saveError = "None of the imported chapters could be saved"
-                        }
-                    }
-                }
-            } else {
-                val firstChapter = importedChapters.firstOrNull()
-                val importedHeaders = firstChapter?.headers ?: emptyMap()
-                val importedLines = firstChapter?.uciLines ?: emptyList()
-                val openingNameSnapshot = gameDraft.game.event.orEmpty()
-                val ecoCodeSnapshot = gameDraft.game.eco.orEmpty()
-                val selectedSideSnapshot = EditableGameSide.fromSideMask(gameDraft.game.sideMask)
-                val movesSnapshot = gameController.getMovesCopy()
-                val generatedPgnSnapshot = if (importedLines.isEmpty()) {
-                    gameController.generatePgn(event = openingNameSnapshot.ifBlank { "Opening" })
-                } else {
-                    null
-                }
-
-                (activity as? LifecycleOwner)?.lifecycleScope?.launch(Dispatchers.IO) {
-                    val savedGameIds = if (importedLines.isEmpty()) {
-                        val entity = GameEntity(
-                            event = openingNameSnapshot.ifBlank { null },
-                            eco = ecoCodeSnapshot.ifBlank { null },
-                            pgn = generatedPgnSnapshot ?: "",
-                            initialFen = "",
-                            sideMask = selectedSideSnapshot.sideMask,
-                        )
-                        listOfNotNull(gameSaver.saveGame(entity, movesSnapshot, entity.sideMask))
-                    } else {
-                        buildList {
-                            importedLines.forEachIndexed { index, uciMoves ->
-                                val eventName = buildImportedLineEventName(
-                                    baseName = openingNameSnapshot,
-                                    index = index,
-                                    total = importedLines.size,
-                                )
-                                val entity = GameEntity(
-                                    white = importedHeaders["White"]
-                                        ?.takeIf { it.isNotBlank() && it != "?" },
-                                    black = importedHeaders["Black"]
-                                        ?.takeIf { it.isNotBlank() && it != "?" },
-                                    result = importedHeaders["Result"]
-                                        ?.takeIf { it.isNotBlank() && it != "?" },
-                                    site = importedHeaders["Site"]
-                                        ?.takeIf { it.isNotBlank() && it != "?" },
-                                    round = importedHeaders["Round"]
-                                        ?.takeIf { it.isNotBlank() && it != "?" },
-                                    event = eventName,
-                                    eco = ecoCodeSnapshot.ifBlank { null },
-                                    pgn = buildStoredPgnFromUci(
-                                        uciMoves = uciMoves,
-                                        event = eventName ?: "Opening",
-                                        whiteName = importedHeaders["White"]
-                                            ?.takeIf { it.isNotBlank() && it != "?" } ?: "White",
-                                        blackName = importedHeaders["Black"]
-                                            ?.takeIf { it.isNotBlank() && it != "?" } ?: "Black",
-                                    ),
-                                    initialFen = "",
-                                    sideMask = selectedSideSnapshot.sideMask,
-                                )
-                                gameSaver.saveOrGetExistingGameId(entity, uciMovesToMoves(uciMoves), entity.sideMask)
-                                    ?.let { add(it) }
-                            }
-                        }
-                    }
-
-                    if (savedGameIds.isNotEmpty() && simpleViewEnabled) {
-                        createOpeningTraining(
-                            dbProvider = dbProvider,
-                            savedGames = SavedOpeningGames(
-                                name = openingNameSnapshot.ifBlank { "Opening" },
-                                gameIds = savedGameIds,
-                            ),
-                        )
-                        withContext(Dispatchers.Main) { screenContext.onBackClick() }
-                    } else {
-                        withContext(Dispatchers.Main) {
-                            if (savedGameIds.isNotEmpty()) {
-                                postSaveState = startCreateOpeningPostSaveFlow(
-                                    openingName = openingNameSnapshot,
-                                    savedGameIds = savedGameIds,
-                                )
-                            } else {
-                                saveError = if (importedLines.isEmpty()) {
-                                    "Failed to save opening"
-                                } else {
-                                    "None of the imported lines could be saved"
-                                }
-                            }
-                        }
-                    }
+            lifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                val saveResult = saveOpening(
+                    snapshot = saveSnapshot,
+                    dbProvider = dbProvider,
+                    gameSaver = gameSaver,
+                    trainingService = trainingService,
+                )
+                withContext(Dispatchers.Main) {
+                    applyCreateOpeningSaveResult(
+                        saveResult = saveResult,
+                        onBackClick = screenContext.onBackClick,
+                        onPostSaveStateChange = { postSaveState = it },
+                        onSaveError = { message -> saveError = message },
+                    )
                 }
             }
         },
         modifier = modifier,
     )
+}
+
+private fun buildCreateOpeningSaveSnapshot(
+    gameDraft: GameDraft,
+    importedChapters: List<ImportedChapter>,
+    gameController: GameController,
+    simpleViewEnabled: Boolean,
+): CreateOpeningSaveSnapshot {
+    val openingName = gameDraft.game.event.orEmpty()
+    val generatedPgn = if (importedChapters.isEmpty()) {
+        gameController.generatePgn(event = openingName.ifBlank { "Opening" })
+    } else {
+        ""
+    }
+
+    return CreateOpeningSaveSnapshot(
+        openingName = openingName,
+        ecoCode = gameDraft.game.eco.orEmpty(),
+        selectedSide = EditableGameSide.fromSideMask(gameDraft.game.sideMask),
+        importedChapters = importedChapters,
+        movesSnapshot = gameController.getMovesCopy(),
+        generatedPgn = generatedPgn,
+        simpleViewEnabled = simpleViewEnabled,
+    )
+}
+
+private fun applyCreateOpeningSaveResult(
+    saveResult: CreateOpeningSaveResult,
+    onBackClick: () -> Unit,
+    onPostSaveStateChange: (CreateOpeningPostSaveState) -> Unit,
+    onSaveError: (String) -> Unit,
+) {
+    when (saveResult) {
+        CreateOpeningSaveResult.NavigateBack -> onBackClick()
+        is CreateOpeningSaveResult.OpenPostSaveFlow -> onPostSaveStateChange(saveResult.state)
+        is CreateOpeningSaveResult.ShowError -> onSaveError(saveResult.message)
+    }
+}
+
+private fun loadDraftPosition(
+    initialDraft: GameDraft,
+    gameController: GameController,
+) {
+    if (initialDraft.game.pgn.isBlank()) {
+        gameController.resetToStartPosition()
+        return
+    }
+
+    val uciMoves = parsePgnMoves(initialDraft.game.pgn)
+    if (uciMoves.isEmpty()) {
+        gameController.resetToStartPosition()
+        return
+    }
+
+    gameController.loadFromUciMoves(uciMoves)
+}
+
+private fun readImportedPgnText(
+    activity: Activity,
+    uri: Uri,
+): String? {
+    return activity.contentResolver.openInputStream(uri)
+        ?.bufferedReader()
+        ?.use { reader -> reader.readText() }
+}
+
+private fun updateDraftGame(
+    gameDraft: GameDraft,
+    transform: (GameEntity) -> GameEntity,
+): GameDraft {
+    return gameDraft.copy(game = transform(gameDraft.game))
 }
