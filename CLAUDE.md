@@ -36,8 +36,11 @@ Android chess opening trainer. Users save games (openings) and review/train them
 | `TrainingListScreen.kt` | Loads and displays all saved trainings as cards with name, training ID, and games count. |
 | `GamesExplorerScreen.kt` | Loads all saved games, shows each as a `GameBlock` (title + move-chip row + nav). Clicking any chip loads that game at that ply on the shared board. |
 | `GameEditorScreen.kt` | Loads a single `GameEntity`, replays its PGN, shows move-chip row, allows undo/redo/save/delete. |
+| `positions/PositionSearchScreen.kt` | Position search screen. Lets users move existing board pieces by default, optionally select palette pieces for placement, edit side/castling/FEN, save positions, and navigate edit history from the bottom action bar. |
+| `positions/PositionSearchSaveDialog.kt` | Save-position dialog and state for `PositionSearchScreen`. |
+| `PositionSearchCastles.kt` | Castling-right controls used by position search. |
 | `TrainingComponents.kt` | Shared composables and pure helpers reused by both training-related and editor screens (see below). |
-| `ScrenTypes.kt` | `sealed class ScreenType` - Home, Training, GamesExplorer, CreateOpening, CreateTraining, EditTraining, GameEditor, TrainSingleGame, Stats, Profile, Settings, SmartTraining, SmartSettings, SmartTrainGame, and more. |
+| `ScrenTypes.kt` | `sealed class ScreenType` - Home, Training, GamesExplorer, CreateOpening, PositionSearch, CreateTraining, EditTraining, GameEditor, TrainSingleGame, Stats, Profile, Settings, SmartTraining, SmartSettings, SmartTrainGame, and more. |
 | `ProfileScreen.kt` | Profile screen - hero card with avatar/level/progress, quick stats, achievements list, settings/clear-data action rows. Container + Stateless pattern backed by `ProfileViewModel`. |
 | `ProfileViewModel.kt` | Holds `ProfileState` (userName, level, totalMoves, accuracy, bestStreak, achievements) via `StateFlow`. No DB access - state is static defaults for now. |
 | `SmartSettingsScreen.kt` | Smart Training session settings: Max Lines stepper and Only Games with Mistakes toggle. Container loads/saves values from `UserProfileEntity` via `UserProfileService.updateSmartSettings`. Navigated to from the gear icon in `SmartTrainingScreen`; back returns to `SmartTraining`. |
@@ -58,10 +61,11 @@ Android chess opening trainer. Users save games (openings) and review/train them
 | `AppSlider.kt` | `AppNumberSlider(value, min, max, onValueChange)` — single-thumb slider styled with teal accent: current value label centered above the thumb, `Slider`, min/max edge labels below. Matches `EditTrainingMoveRangeSection` visual style. Use for any integer-value picker. |
 | `AppTopBar.kt` | Standard top bar with title, optional subtitle, and back button. |
 | `AppBottomNavigation.kt` | Bottom nav bar; `defaultAppBottomNavigationItems()` returns the standard item list. |
+| `BoardActionNavigationBar.kt` | Shared bottom action bar for board screens. Matches app bottom-navigation sizing/styling and exposes `BoardActionNavigationItem(modifier, selected, enabled, onClick, content)` for action buttons and test tags. |
 | `AppScreenScaffold.kt` | Screen scaffold wrapper used by all screens. |
 | `Buttons.kt` | `PrimaryButton`, destructive button, and other shared button composables. |
 | `Surfaces.kt` | `CardSurface` and other surface/card wrappers. |
-| `Texts.kt` | `CardMetaText` and other shared text composables. |
+| `Texts.kt` | `CardMetaText`, `NavLabelText(maxLines = 1)`, and other shared text composables. |
 | `Inputs.kt` | `AppSearchField` and other input composables. |
 | `AppDialogs.kt` | `AppMessageDialog` and other dialog composables. |
 | `MoveChip.kt` | Move chip composable (teal when selected). |
@@ -105,6 +109,13 @@ Android chess opening trainer. Users save games (openings) and review/train them
 | `TrainingService.kt` | Creates trainings from game lists, lists trainings, validates training integrity, decreases line weight after completion. |
 | `TrainSingleGameService.kt` | Loads game data for single-game training, finishes a trained line, resolves first launchable training/game pair. |
 | `UserProfileService.kt` | Reads and writes `UserProfileEntity`. Key methods: `getProfile()`, `updateSettings(...)`, `updateSmartSettings(maxLines, onlyWithMistakes)`, `setHideSmartTrainingInfoCard(hide)`, `updateRankTitle(tier, title)`. |
+
+### Global errors (`ui/error/`)
+| File | Role |
+|---|---|
+| `AppErrorReporter.kt` | Global unexpected-error reporter. `AppErrorReporter.report` rethrows `CancellationException`, logs unexpected errors with tag `ChessBoardAppError`, and exposes `AppErrorUiState` for the shell dialog. `CoroutineScope.launchAppCatching` wraps app-shell jobs. |
+
+Expected, user-facing validation errors stay local to the screen. Unexpected shell-level coroutine failures should go through `AppErrorReporter`.
 
 ---
 
@@ -272,6 +283,18 @@ After any non-trivial change update the relevant section above - correct file pa
 ---
 
 ## Recent Changes
+
+- **Position search naming completed** - The position-search route, containers, dialogs, test tags, runtime context, and training-flow callbacks now consistently use `PositionSearch` / `positionSearch` / `OpenPositionSearch` naming. Files include `positions/PositionSearchScreen.kt`, `positions/PositionSearchSaveDialog.kt`, and `PositionSearchCastles.kt`.
+
+- **Position search board controls moved to the shared bottom action bar** - The old in-content position controls were removed. `PositionSearchBoardControlsBar` now uses `BoardActionNavigationBar` with White, Black, Reset, Clear, Back, and Forward actions. Back/Forward use `PositionSearchSnapshot` / `PositionSearchHistory` to undo and redo board edits, side changes, reset, and clear.
+
+- **Position search placement defaults fixed** - No palette piece is selected by default, so tapping an empty board no longer places a white king. Existing pieces can be moved immediately. Selecting a palette piece enables placement; tapping the selected palette piece again unselects it. The selected-piece text label under the board was removed, palette pieces render with the same canvas glyph renderer as board pieces, and the FEN block is three rows tall.
+
+- **Create opening bottom controls use shared navigation styling** - `CreateOpeningBoardControlsBar` now uses `BoardActionNavigationBar` with White, Black, Reset, Back, and Forward actions. Undo/Redo labels and content descriptions were renamed to Back/Forward. White/Black use the shared king vector icon to avoid glyph clipping.
+
+- **Global unexpected-error handling added** - `ui/error/AppErrorReporter.kt` centralizes app-shell error reporting. `MainActivity` owns global `appError` state and shows `AppMessageDialog` for reported failures. Shell coroutines use `launchAppCatching`; expected screen validation errors remain handled locally.
+
+- **Targeted test fixes** - `PositionSearchScreenTest.openPositionSearchSaveDialog()` waits for the initial FEN before saving duplicate positions, avoiding the duplicate-position race. `GamesExplorerCardSelectionTest.gameBlock_clickingCardSelectsGameAtInitialPly` clicks the tagged card near its top-left corner so child move chips do not consume the card-selection click.
 
 - **`SmartSettingsScreen.kt` added; `SmartTraining` settings moved to DB** - `smartMaxLines` (default 10) and `smartOnlyWithMistakes` (default false) added to `UserProfileEntity`. DB migrated 13→14 via two `ALTER TABLE ADD COLUMN` statements. `UserProfileService.updateSmartSettings(maxLines, onlyWithMistakes)` saves both fields atomically. `SmartSettingsScreenContainer` loads the profile on launch and writes on every change (no save button). `SmartTrainingScreenContainer` now reads these values from the profile and uses them when building the training queue; the Max Lines stepper and Only Games with Mistakes toggle are removed from `SmartTrainingScreen`. A teal gear `SettingsIconButton` in the Smart Training top bar navigates to `ScreenType.SmartSettings`.
 

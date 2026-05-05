@@ -1,9 +1,13 @@
 package com.example.chessboard.ui.screen.gamesExplorer
 
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.click
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.entity.SideMask
 import com.example.chessboard.service.ParsedGame
@@ -15,6 +19,7 @@ import org.junit.Rule
 import org.junit.Test
 
 class GamesExplorerCardSelectionTest {
+    private val gameBlockTestTag = "game-block-initial-ply-selection"
 
     @get:Rule
     val composeRule = createAndroidComposeRule<ComponentActivity>()
@@ -52,12 +57,15 @@ class GamesExplorerCardSelectionTest {
                     onAnalyzeClick = {},
                     onCloneClick = {},
                     onEditClick = {},
-                    onDeleteClick = {}
+                    onDeleteClick = {},
+                    modifier = Modifier.testTag(gameBlockTestTag),
                 )
             }
         }
 
-        composeRule.onNodeWithText("Sicilian Defense").performClick()
+        composeRule.onNodeWithTag(gameBlockTestTag).performTouchInput {
+            click(Offset(24f, 24f))
+        }
         composeRule.waitForIdle()
 
         composeRule.runOnIdle {

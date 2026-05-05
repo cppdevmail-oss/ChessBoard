@@ -2,24 +2,20 @@ package com.example.chessboard.ui.screen
 
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.performScrollToNode
 import com.example.chessboard.MainActivity
 import com.example.chessboard.boardmodel.InitialBoardFen
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.testing.fenStateDescriptionMatcher
 import com.example.chessboard.ui.InteractiveChessBoardTestTag
-import com.example.chessboard.ui.PositionSearchListTestTag
+import com.example.chessboard.ui.PositionSearchClearBoardTestTag
 import com.example.chessboard.ui.PositionSearchSaveNameFieldTestTag
 import com.example.chessboard.ui.PositionSearchWhiteShortCastleTestTag
-import com.example.chessboard.ui.PositionSearchClearBoardTestTag
-import com.example.chessboard.ui.PositionSearchInitialPositionTestTag
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
@@ -184,6 +180,7 @@ class PositionSearchScreenTest {
         waitForTextDisplayed("Position Search")
         composeRule.onNodeWithText("Position Search").performClick()
         composeRule.waitForIdle()
+        assertBoardFen(InitialBoardFen)
 
         composeRule.onNodeWithContentDescription("Save").performClick()
 
