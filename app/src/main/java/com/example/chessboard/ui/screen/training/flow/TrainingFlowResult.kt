@@ -28,7 +28,7 @@ sealed interface TrainingFlowResult {
         val backTarget: ScreenType,
     ) : TrainingFlowResult
 
-    data class OpenPositionEditor(
+    data class OpenPositionSearch(
         val initialFen: String,
         val backTarget: ScreenType,
     ) : TrainingFlowResult

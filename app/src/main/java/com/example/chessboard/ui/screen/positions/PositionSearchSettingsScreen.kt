@@ -12,12 +12,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chessboard.ui.components.AppSettingsScaffold
 import com.example.chessboard.ui.components.CardSurface
-import com.example.chessboard.ui.screen.PositionEditorCastlesSection
-import com.example.chessboard.ui.screen.PositionEditorCastlingState
+import com.example.chessboard.ui.screen.PositionSearchCastlesSection
+import com.example.chessboard.ui.screen.PositionSearchCastlingState
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
-import com.example.chessboard.ui.screen.replacePositionEditorFenCastlingPart
-import com.example.chessboard.ui.screen.resolvePositionEditorCastlingState
+import com.example.chessboard.ui.screen.replacePositionSearchFenCastlingPart
+import com.example.chessboard.ui.screen.resolvePositionSearchCastlingState
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TextColor
 
@@ -28,12 +28,12 @@ fun PositionSearchSettingsScreenContainer(
     screenContext: ScreenContainerContext,
     modifier: Modifier = Modifier
 ) {
-    val castlingState = resolvePositionEditorCastlingState(currentFen)
+    val castlingState = resolvePositionSearchCastlingState(currentFen)
 
     PositionSearchSettingsScreen(
         castlingState = castlingState,
         onCastlingStateChange = { newState ->
-            onFenChange(replacePositionEditorFenCastlingPart(currentFen, newState))
+            onFenChange(replacePositionSearchFenCastlingPart(currentFen, newState))
         },
         onBackClick = screenContext.onBackClick,
         onNavigate = screenContext.onNavigate,
@@ -43,15 +43,15 @@ fun PositionSearchSettingsScreenContainer(
 
 @Composable
 private fun PositionSearchSettingsScreen(
-    castlingState: PositionEditorCastlingState,
-    onCastlingStateChange: (PositionEditorCastlingState) -> Unit,
+    castlingState: PositionSearchCastlingState,
+    onCastlingStateChange: (PositionSearchCastlingState) -> Unit,
     onBackClick: () -> Unit,
     onNavigate: (ScreenType) -> Unit,
     modifier: Modifier = Modifier
 ) {
     AppSettingsScaffold(
         title = "Position Search Settings",
-        selectedNavItem = ScreenType.PositionEditor,
+        selectedNavItem = ScreenType.PositionSearch,
         onBackClick = onBackClick,
         onNavigate = onNavigate,
         modifier = modifier,
@@ -73,7 +73,7 @@ private fun PositionSearchSettingsScreen(
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 1.sp,
             )
-            PositionEditorCastlesSection(
+            PositionSearchCastlesSection(
                 castlingState = castlingState,
                 onCastlingStateChange = onCastlingStateChange,
                 showTitle = false,

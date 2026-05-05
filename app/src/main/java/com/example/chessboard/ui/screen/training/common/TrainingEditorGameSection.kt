@@ -8,10 +8,8 @@ package com.example.chessboard.ui.screen.training.common
  * loading, save flows, or list scaffolds to this file.
  */
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -50,7 +48,8 @@ import com.example.chessboard.ui.MoveLegendNextTestTag
 import com.example.chessboard.ui.TrainingEditorGameCardTestTag
 import com.example.chessboard.ui.components.AppConfirmDialog
 import com.example.chessboard.ui.components.AppIconSizes
-import com.example.chessboard.ui.components.CardSurface
+import com.example.chessboard.ui.components.BoardActionBlock
+import com.example.chessboard.ui.components.BoardActionButtonGroup
 import com.example.chessboard.ui.components.DeleteIconButton
 import com.example.chessboard.ui.components.ChessBoardSection
 import com.example.chessboard.ui.components.IconSm
@@ -260,13 +259,11 @@ private fun TrainingEditorGameCard(
     val canUndo = state.isSelected && state.gameController.canUndo
     val canRedo = state.isSelected && state.gameController.canRedo
 
-    CardSurface(
+    BoardActionBlock(
         modifier = Modifier
             .fillMaxWidth()
             .testTag(TrainingEditorGameCardTestTag),
-        color = if (state.isSelected) Background.CardDark else Background.SurfaceDark,
-        border = if (state.isSelected) BorderStroke(1.dp, TrainingAccentTeal) else null,
-        contentPadding = PaddingValues(AppDimens.spaceMd),
+        highlighted = state.isSelected,
         onClick = if (state.isSelected) null else actions.onSelect
     ) {
         Row(
@@ -302,7 +299,7 @@ private fun TrainingEditorGameCard(
         }
 
         if (state.parsedGame == null) {
-            return@CardSurface
+            return@BoardActionBlock
         }
 
         Spacer(modifier = Modifier.height(AppDimens.spaceMd))
@@ -332,46 +329,41 @@ private fun TrainingEditorMoveControls(
     val undoTint = resolveTrainingEditorMoveControlTint(canUndo)
     val redoTint = resolveTrainingEditorMoveControlTint(canRedo)
 
-    Surface(
-        shape = RoundedCornerShape(50),
-        color = Background.ScreenDark
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(
-                onClick = onResetClick,
-                enabled = canUndo,
-                modifier = Modifier.size(buttonSize)
-            ) {
-                IconSm(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = "Reset",
-                    tint = undoTint,
-                )
-            }
-            IconButton(
-                onClick = onPrevClick,
-                enabled = canUndo,
-                modifier = Modifier.size(buttonSize)
-            ) {
-                IconSm(
-                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                    contentDescription = "Previous move",
-                    tint = undoTint,
-                )
-            }
-            IconButton(
-                onClick = onNextClick,
-                enabled = canRedo,
-                modifier = Modifier
-                    .size(buttonSize)
-                    .testTag(MoveLegendNextTestTag)
-            ) {
-                IconSm(
-                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = "Next move",
-                    tint = redoTint,
-                )
-            }
+    BoardActionButtonGroup {
+        IconButton(
+            onClick = onResetClick,
+            enabled = canUndo,
+            modifier = Modifier.size(buttonSize)
+        ) {
+            IconSm(
+                imageVector = Icons.Default.Refresh,
+                contentDescription = "Reset",
+                tint = undoTint,
+            )
+        }
+        IconButton(
+            onClick = onPrevClick,
+            enabled = canUndo,
+            modifier = Modifier.size(buttonSize)
+        ) {
+            IconSm(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                contentDescription = "Previous move",
+                tint = undoTint,
+            )
+        }
+        IconButton(
+            onClick = onNextClick,
+            enabled = canRedo,
+            modifier = Modifier
+                .size(buttonSize)
+                .testTag(MoveLegendNextTestTag)
+        ) {
+            IconSm(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = "Next move",
+                tint = redoTint,
+            )
         }
     }
 }

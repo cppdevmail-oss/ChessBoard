@@ -1,6 +1,7 @@
 package com.example.chessboard.ui.screen.positions
 
 import android.util.Log
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,19 +15,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,10 +37,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.example.chessboard.R
 import com.example.chessboard.boardmodel.BoardPiece
 import com.example.chessboard.boardmodel.BoardPosition
 import com.example.chessboard.boardmodel.ChesslibMapper
@@ -48,32 +49,27 @@ import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.boardmodel.InitialBoardFenWithoutMoveNumbers
 import com.example.chessboard.service.SaveSavedSearchPositionResult
 import com.example.chessboard.service.calculateFenHashWithoutMoveNumbers
-import com.example.chessboard.ui.PositionEditorBoardWithCoordinates
-import com.example.chessboard.ui.PositionEditorClearBoardTestTag
-import com.example.chessboard.ui.PositionEditorInitialPositionTestTag
-import com.example.chessboard.ui.PositionEditorListTestTag
-import com.example.chessboard.ui.components.AppBottomNavigation
+import com.example.chessboard.ui.PositionSearchBoardWithCoordinates
+import com.example.chessboard.ui.PositionSearchClearBoardTestTag
+import com.example.chessboard.ui.PositionSearchInitialPositionTestTag
+import com.example.chessboard.ui.PositionSearchListTestTag
+import com.example.chessboard.ui.components.AppIconSizes
 import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
-import com.example.chessboard.ui.components.BodySecondaryText
-import com.example.chessboard.ui.components.IconLg
+import com.example.chessboard.ui.components.BoardActionNavigationBar
+import com.example.chessboard.ui.components.BoardActionNavigationItem
 import com.example.chessboard.ui.components.IconMd
 import com.example.chessboard.ui.components.PasteInputBlock
 import com.example.chessboard.ui.components.ScreenSection
 import com.example.chessboard.ui.components.SettingsIconButton
-import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
-import com.example.chessboard.ui.resolvePieceGlyph
-import com.example.chessboard.ui.resolvePieceTint
+import com.example.chessboard.ui.drawPieceGlyph
 import com.example.chessboard.ui.screen.EditableGameSide
-import com.example.chessboard.ui.screen.GameSideSelector
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.screen.SideButtonSelectedBg
 import com.example.chessboard.ui.theme.AppDimens
-import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingErrorRed
 import com.example.chessboard.ui.theme.TrainingIconInactive
 import com.example.chessboard.ui.theme.TrainingTextPrimary
 import kotlinx.coroutines.Dispatchers
@@ -82,53 +78,56 @@ import kotlinx.coroutines.withContext
 
 private const val EmptyBoardBoardPart = "8/8/8/8/8/8/8/8"
 private const val EmptyBoardFen = "$EmptyBoardBoardPart w - -"
-private const val PositionEditorLogTag = "PositionEditor"
+private const val PositionSearchLogTag = "PositionSearch"
+private val PositionSearchPalettePieceSize = 44.dp
 
-internal data class PositionEditorPieceOption(
+internal data class PositionSearchPieceOption(
     val letter: Char,
     val label: String
 )
 
-private val PositionEditorPieceOptions = listOf(
-    PositionEditorPieceOption('K', "White King"),
-    PositionEditorPieceOption('Q', "White Queen"),
-    PositionEditorPieceOption('R', "White Rook"),
-    PositionEditorPieceOption('B', "White Bishop"),
-    PositionEditorPieceOption('N', "White Knight"),
-    PositionEditorPieceOption('P', "White Pawn"),
-    PositionEditorPieceOption('k', "Black King"),
-    PositionEditorPieceOption('q', "Black Queen"),
-    PositionEditorPieceOption('r', "Black Rook"),
-    PositionEditorPieceOption('b', "Black Bishop"),
-    PositionEditorPieceOption('n', "Black Knight"),
-    PositionEditorPieceOption('p', "Black Pawn")
+private val PositionSearchPieceOptions = listOf(
+    PositionSearchPieceOption('K', "White King"),
+    PositionSearchPieceOption('Q', "White Queen"),
+    PositionSearchPieceOption('R', "White Rook"),
+    PositionSearchPieceOption('B', "White Bishop"),
+    PositionSearchPieceOption('N', "White Knight"),
+    PositionSearchPieceOption('P', "White Pawn"),
+    PositionSearchPieceOption('k', "Black King"),
+    PositionSearchPieceOption('q', "Black Queen"),
+    PositionSearchPieceOption('r', "Black Rook"),
+    PositionSearchPieceOption('b', "Black Bishop"),
+    PositionSearchPieceOption('n', "Black Knight"),
+    PositionSearchPieceOption('p', "Black Pawn")
 )
 
-private data class PositionEditorUiState(
+private data class PositionSearchUiState(
     val fenText: String = EmptyBoardFen,
     val selectedSide: EditableGameSide = EditableGameSide.AS_WHITE,
-    val selectedPiece: PositionEditorPieceOption = PositionEditorPieceOptions.first(),
+    val selectedPiece: PositionSearchPieceOption? = null,
     val fenError: String? = null,
     val foundGameIds: List<Long>? = null,
-    val infoDialog: PositionEditorInfoDialog? = null
+    val infoDialog: PositionSearchInfoDialog? = null
 )
 
-private data class PositionEditorInfoDialog(
+private data class PositionSearchInfoDialog(
     val title: String,
     val message: String
 )
 
-internal data class PositionEditorSaveDialogState(
+internal data class PositionSearchSaveDialogState(
     val positionName: String = "",
     val errorMessage: String? = null
 )
 
-private data class PositionEditorScreenState(
-    val editor: PositionEditorUiState,
-    val saveDialog: PositionEditorSaveDialogState?
+private data class PositionSearchScreenState(
+    val search: PositionSearchUiState,
+    val saveDialog: PositionSearchSaveDialogState?,
+    val canGoBack: Boolean,
+    val canGoForward: Boolean,
 )
 
-internal data class PositionEditorScreenActions(
+internal data class PositionSearchScreenActions(
     val position: Position,
     val board: Board,
     val topBar: TopBar,
@@ -142,7 +141,7 @@ internal data class PositionEditorScreenActions(
     )
 
     data class Board(
-        val onPieceSelected: (PositionEditorPieceOption) -> Unit,
+        val onPieceSelected: (PositionSearchPieceOption) -> Unit,
         val onBoardSquareClick: (String) -> Unit,
         val onBoardPieceMove: (String, String) -> Unit
     )
@@ -152,6 +151,8 @@ internal data class PositionEditorScreenActions(
         val onFindGamesClick: () -> Unit,
         val onClearBoardClick: () -> Unit,
         val onSetInitialPositionClick: () -> Unit,
+        val onHistoryBackClick: () -> Unit,
+        val onHistoryForwardClick: () -> Unit,
     )
 
     data class SaveDialog(
@@ -166,14 +167,24 @@ internal data class PositionEditorScreenActions(
     )
 }
 
-private data class PositionEditorNavigationActions(
+private data class PositionSearchNavigationActions(
     val onBackClick: () -> Unit = {},
     val onNavigate: (ScreenType) -> Unit = {},
     val onSettingsClick: () -> Unit = {}
 )
 
+private data class PositionSearchSnapshot(
+    val fenText: String,
+    val selectedSide: EditableGameSide,
+)
+
+private data class PositionSearchHistory(
+    val past: List<PositionSearchSnapshot> = emptyList(),
+    val future: List<PositionSearchSnapshot> = emptyList(),
+)
+
 @Composable
-fun PositionEditorScreenContainer(
+fun PositionSearchScreenContainer(
     initialFen: String = InitialBoardFenWithoutMoveNumbers,
     screenContext: ScreenContainerContext,
     onNavigateToSettings: (currentFen: String) -> Unit = {},
@@ -188,9 +199,10 @@ fun PositionEditorScreenContainer(
             controller.loadPreviewFen(toLoadableFen(EmptyBoardFen))
         }
     }
-    var uiState by remember { mutableStateOf(PositionEditorUiState()) }
-    var saveDialogState by remember { mutableStateOf<PositionEditorSaveDialogState?>(null) }
+    var uiState by remember { mutableStateOf(PositionSearchUiState()) }
+    var saveDialogState by remember { mutableStateOf<PositionSearchSaveDialogState?>(null) }
     var templateNameDialogState by remember { mutableStateOf<PositionTemplateNameDialogState?>(null) }
+    var positionHistory by remember { mutableStateOf(PositionSearchHistory()) }
 
     fun resolveSelectedSide(fen: String): EditableGameSide {
         val sideToken = fen.trim().split(Regex("\\s+")).getOrNull(1)
@@ -201,15 +213,28 @@ fun PositionEditorScreenContainer(
         return EditableGameSide.AS_WHITE
     }
 
-    fun updatePositionEditorPreview(
+    fun updatePositionSearchPreview(
         fen: String,
         selectedSide: EditableGameSide = uiState.selectedSide,
-        foundGameIds: List<Long>? = uiState.foundGameIds
+        foundGameIds: List<Long>? = uiState.foundGameIds,
+        recordHistory: Boolean = true,
     ) {
-        val normalizedFen = normalizePositionEditorFen(
+        val normalizedFen = normalizePositionSearchFen(
             fen = fen,
             selectedSide = selectedSide
         )
+        if (
+            recordHistory &&
+            (normalizedFen != uiState.fenText || selectedSide != uiState.selectedSide)
+        ) {
+            positionHistory = positionHistory.copy(
+                past = positionHistory.past + PositionSearchSnapshot(
+                    fenText = uiState.fenText,
+                    selectedSide = uiState.selectedSide,
+                ),
+                future = emptyList(),
+            )
+        }
         gameController.loadPreviewFen(toLoadableFen(normalizedFen))
         uiState = uiState.copy(
             fenText = normalizedFen,
@@ -219,12 +244,12 @@ fun PositionEditorScreenContainer(
         )
     }
 
-    fun applyPositionEditorFen(
+    fun applyPositionSearchFen(
         fen: String,
         selectedSide: EditableGameSide = uiState.selectedSide,
         foundGameIds: List<Long>? = null
     ): Boolean {
-        val normalizedFen = normalizePositionEditorFen(
+        val normalizedFen = normalizePositionSearchFen(
             fen = fen,
             selectedSide = selectedSide
         )
@@ -235,7 +260,7 @@ fun PositionEditorScreenContainer(
         }
 
         uiState = uiState.copy(
-            fenText = normalizePositionEditorFen(
+            fenText = normalizePositionSearchFen(
                 fen = gameController.getFen(),
                 selectedSide = selectedSide
             ),
@@ -244,6 +269,41 @@ fun PositionEditorScreenContainer(
             foundGameIds = foundGameIds
         )
         return true
+    }
+
+    fun applyPositionSearchSnapshot(snapshot: PositionSearchSnapshot) {
+        gameController.loadPreviewFen(toLoadableFen(snapshot.fenText))
+        uiState = uiState.copy(
+            fenText = snapshot.fenText,
+            selectedSide = snapshot.selectedSide,
+            fenError = null,
+            foundGameIds = null,
+        )
+    }
+
+    fun currentPositionSearchSnapshot(): PositionSearchSnapshot {
+        return PositionSearchSnapshot(
+            fenText = uiState.fenText,
+            selectedSide = uiState.selectedSide,
+        )
+    }
+
+    fun goBackInPositionHistory() {
+        val previousSnapshot = positionHistory.past.lastOrNull() ?: return
+        positionHistory = PositionSearchHistory(
+            past = positionHistory.past.dropLast(1),
+            future = listOf(currentPositionSearchSnapshot()) + positionHistory.future,
+        )
+        applyPositionSearchSnapshot(previousSnapshot)
+    }
+
+    fun goForwardInPositionHistory() {
+        val nextSnapshot = positionHistory.future.firstOrNull() ?: return
+        positionHistory = PositionSearchHistory(
+            past = positionHistory.past + currentPositionSearchSnapshot(),
+            future = positionHistory.future.drop(1),
+        )
+        applyPositionSearchSnapshot(nextSnapshot)
     }
 
     fun openTemplateNameDialog() {
@@ -267,7 +327,7 @@ fun PositionEditorScreenContainer(
 
             if (templateId != null) {
                 uiState = uiState.copy(
-                    infoDialog = PositionEditorInfoDialog(
+                    infoDialog = PositionSearchInfoDialog(
                         title = "Template Created",
                         message = "Template ID: $templateId\nGames added: ${currentDialogState.gameIds.size}"
                     ),
@@ -277,7 +337,7 @@ fun PositionEditorScreenContainer(
             }
 
             uiState = uiState.copy(
-                infoDialog = PositionEditorInfoDialog(
+                infoDialog = PositionSearchInfoDialog(
                     title = "Template Error",
                     message = "Found games could not be saved as a template."
                 ),
@@ -318,23 +378,27 @@ fun PositionEditorScreenContainer(
 
     LaunchedEffect(initialFen) {
         val selectedSide = resolveSelectedSide(initialFen)
-        updatePositionEditorPreview(
+        updatePositionSearchPreview(
             fen = initialFen,
             selectedSide = selectedSide,
-            foundGameIds = null
+            foundGameIds = null,
+            recordHistory = false,
         )
+        positionHistory = PositionSearchHistory()
     }
 
-    PositionEditorScreen(
+    PositionSearchScreen(
         gameController = gameController,
-        state = PositionEditorScreenState(
-            editor = uiState,
-            saveDialog = saveDialogState
+        state = PositionSearchScreenState(
+            search = uiState,
+            saveDialog = saveDialogState,
+            canGoBack = positionHistory.past.isNotEmpty(),
+            canGoForward = positionHistory.future.isNotEmpty(),
         ),
-        actions = PositionEditorScreenActions(
-            position = PositionEditorScreenActions.Position(
+        actions = PositionSearchScreenActions(
+            position = PositionSearchScreenActions.Position(
                 onFenTextChange = { newFen ->
-                    val normalizedFen = normalizePositionEditorFen(newFen, uiState.selectedSide)
+                    val normalizedFen = normalizePositionSearchFen(newFen, uiState.selectedSide)
                     gameController.loadPreviewFen(toLoadableFen(normalizedFen))
                     uiState = uiState.copy(fenText = newFen, fenError = null)
                 },
@@ -343,22 +407,27 @@ fun PositionEditorScreenContainer(
                         fen = uiState.fenText,
                         selectedSide = selectedSide
                     )
-                    updatePositionEditorPreview(
+                    updatePositionSearchPreview(
                         fen = updatedFen,
                         selectedSide = selectedSide,
                         foundGameIds = uiState.foundGameIds
                     )
                 },
             ),
-            board = PositionEditorScreenActions.Board(
-                onPieceSelected = { uiState = uiState.copy(selectedPiece = it) },
-                onBoardSquareClick = { square ->
+            board = PositionSearchScreenActions.Board(
+                onPieceSelected = { selectedPiece ->
+                    uiState = uiState.copy(
+                        selectedPiece = if (uiState.selectedPiece == selectedPiece) null else selectedPiece
+                    )
+                },
+                onBoardSquareClick = onBoardSquareClick@{ square ->
+                    val selectedPiece = uiState.selectedPiece ?: return@onBoardSquareClick
                     val updatedFen = placePieceOnFen(
                         fen = gameController.getFen(),
                         square = square,
-                        pieceLetter = uiState.selectedPiece.letter
+                        pieceLetter = selectedPiece.letter
                     )
-                    updatePositionEditorPreview(updatedFen)
+                    updatePositionSearchPreview(updatedFen)
                 },
                 onBoardPieceMove = { fromSquare, toSquare ->
                     val updatedFen = movePieceOnFen(
@@ -366,32 +435,34 @@ fun PositionEditorScreenContainer(
                         fromSquare = fromSquare,
                         toSquare = toSquare
                     )
-                    updatePositionEditorPreview(updatedFen)
+                    updatePositionSearchPreview(updatedFen)
                 }
             ),
-            topBar = PositionEditorScreenActions.TopBar(
+            topBar = PositionSearchScreenActions.TopBar(
                 onClearBoardClick = {
-                    updatePositionEditorPreview(resolveEmptyBoardFen(uiState.selectedSide), uiState.selectedSide)
+                    updatePositionSearchPreview(resolveEmptyBoardFen(uiState.selectedSide), uiState.selectedSide)
                 },
                 onSetInitialPositionClick = {
                     val parts = InitialBoardFenWithoutMoveNumbers.trim()
                         .split(Regex("\\s+")).toMutableList()
                     if (parts.size >= 2) parts[1] = resolveFenSideToken(uiState.selectedSide)
-                    updatePositionEditorPreview(parts.joinToString(" "), uiState.selectedSide)
+                    updatePositionSearchPreview(parts.joinToString(" "), uiState.selectedSide)
                 },
+                onHistoryBackClick = ::goBackInPositionHistory,
+                onHistoryForwardClick = ::goForwardInPositionHistory,
                 onSavePositionClick = {
-                    if (applyPositionEditorFen(uiState.fenText)) {
-                        saveDialogState = PositionEditorSaveDialogState()
+                    if (applyPositionSearchFen(uiState.fenText)) {
+                        saveDialogState = PositionSearchSaveDialogState()
                     }
                 },
                 onFindGamesClick = {
                     scope.launch {
-                        if (!applyPositionEditorFen(uiState.fenText)) {
+                        if (!applyPositionSearchFen(uiState.fenText)) {
                             return@launch
                         }
 
                         Log.d(
-                            PositionEditorLogTag,
+                            PositionSearchLogTag,
                             "findGames fen=${gameController.getFen()} hash=${calculateFenHashWithoutMoveNumbers(gameController.getFen())}"
                         )
                         val foundGameIds = withContext(Dispatchers.IO) {
@@ -407,7 +478,7 @@ fun PositionEditorScreenContainer(
                     }
                 }
             ),
-            saveDialog = PositionEditorScreenActions.SaveDialog(
+            saveDialog = PositionSearchScreenActions.SaveDialog(
                 onDismiss = { saveDialogState = null },
                 onPositionNameChange = { updatedName ->
                     saveDialogState = saveDialogState?.copy(
@@ -423,7 +494,7 @@ fun PositionEditorScreenContainer(
                             updateSaveDialogError("Position name is required.")
                         } else {
                             scope.launch {
-                                if (!applyPositionEditorFen(uiState.fenText)) {
+                                if (!applyPositionSearchFen(uiState.fenText)) {
                                     return@launch
                                 }
 
@@ -444,7 +515,7 @@ fun PositionEditorScreenContainer(
                                 val savedPositionId = (saveResult as SaveSavedSearchPositionResult.Success).id
                                 saveDialogState = null
                                 uiState = uiState.copy(
-                                    infoDialog = PositionEditorInfoDialog(
+                                    infoDialog = PositionSearchInfoDialog(
                                         title = "Position Saved",
                                         message = "Position \"$trimmedName\" saved.\nID: $savedPositionId"
                                     ),
@@ -472,12 +543,12 @@ fun PositionEditorScreenContainer(
                 onTemplateNameDismiss = { templateNameDialogState = null },
                 onConfirmTemplateName = ::createTemplateFromFoundGames,
             ),
-            feedback = PositionEditorScreenActions.Feedback(
+            feedback = PositionSearchScreenActions.Feedback(
                 onFenErrorDismiss = { uiState = uiState.copy(fenError = null) },
                 onInfoDialogDismiss = { uiState = uiState.copy(infoDialog = null) }
             )
         ),
-        navigation = PositionEditorNavigationActions(
+        navigation = PositionSearchNavigationActions(
             onBackClick = screenContext.onBackClick,
             onNavigate = screenContext.onNavigate,
             onSettingsClick = { onNavigateToSettings(uiState.fenText) }
@@ -487,26 +558,26 @@ fun PositionEditorScreenContainer(
 }
 
 @Composable
-private fun PositionEditorScreen(
+private fun PositionSearchScreen(
     gameController: GameController,
-    state: PositionEditorScreenState,
-    actions: PositionEditorScreenActions,
-    navigation: PositionEditorNavigationActions = PositionEditorNavigationActions(),
+    state: PositionSearchScreenState,
+    actions: PositionSearchScreenActions,
+    navigation: PositionSearchNavigationActions = PositionSearchNavigationActions(),
     modifier: Modifier = Modifier
 ) {
-    RenderPositionEditorFenError(
-        fenError = state.editor.fenError,
+    RenderPositionSearchFenError(
+        fenError = state.search.fenError,
         onDismiss = actions.feedback.onFenErrorDismiss
     )
     RenderPositionSearchResultDialog(
-        foundGameIds = state.editor.foundGameIds,
+        foundGameIds = state.search.foundGameIds,
         actions = actions.foundGamesDialog
     )
-    RenderPositionEditorInfoDialog(
-        infoDialog = state.editor.infoDialog,
+    RenderPositionSearchInfoDialog(
+        infoDialog = state.search.infoDialog,
         onDismiss = actions.feedback.onInfoDialogDismiss
     )
-    RenderPositionEditorSaveDialog(
+    RenderPositionSearchSaveDialog(
         saveDialogState = state.saveDialog,
         actions = actions.saveDialog
     )
@@ -537,10 +608,15 @@ private fun PositionEditorScreen(
             )
         },
         bottomBar = {
-            AppBottomNavigation(
-                items = defaultAppBottomNavigationItems(),
-                selectedItem = ScreenType.PositionEditor,
-                onItemSelected = navigation.onNavigate
+            PositionSearchBoardControlsBar(
+                selectedSide = state.search.selectedSide,
+                canGoBack = state.canGoBack,
+                canGoForward = state.canGoForward,
+                onSideSelected = actions.position.onSideSelected,
+                onResetClick = actions.topBar.onSetInitialPositionClick,
+                onClearBoardClick = actions.topBar.onClearBoardClick,
+                onBackClick = actions.topBar.onHistoryBackClick,
+                onForwardClick = actions.topBar.onHistoryForwardClick,
             )
         }
     ) { paddingValues ->
@@ -548,7 +624,7 @@ private fun PositionEditorScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .testTag(PositionEditorListTestTag),
+                .testTag(PositionSearchListTestTag),
             contentPadding = PaddingValues(horizontal = AppDimens.spaceLg),
             verticalArrangement = Arrangement.spacedBy(AppDimens.spaceLg)
         ) {
@@ -560,16 +636,16 @@ private fun PositionEditorScreen(
                 ScreenSection {
                     PasteInputBlock(
                         title = "FEN",
-                        text = state.editor.fenText,
+                        text = state.search.fenText,
                         onTextChange = actions.position.onFenTextChange,
                         placeholder = "Paste FEN string here...",
-                        minLines = 2
+                        minLines = 3
                     )
                 }
             }
 
             item {
-                PositionEditorBoardSection(
+                PositionSearchBoardSection(
                     gameController = gameController,
                     onBoardSquareClick = actions.board.onBoardSquareClick,
                     onBoardPieceMove = actions.board.onBoardPieceMove
@@ -577,19 +653,8 @@ private fun PositionEditorScreen(
             }
 
             item {
-                ScreenSection {
-                    PositionEditorBoardControlRow(
-                        selectedSide = state.editor.selectedSide,
-                        onSideSelected = actions.position.onSideSelected,
-                        onResetClick = actions.topBar.onSetInitialPositionClick,
-                        onClearBoardClick = actions.topBar.onClearBoardClick,
-                    )
-                }
-            }
-
-            item {
-                PositionEditorPaletteSection(
-                    selectedPiece = state.editor.selectedPiece,
+                PositionSearchPaletteSection(
+                    selectedPiece = state.search.selectedPiece,
                     onPieceSelected = actions.board.onPieceSelected
                 )
             }
@@ -602,8 +667,8 @@ private fun PositionEditorScreen(
 }
 
 @Composable
-private fun RenderPositionEditorInfoDialog(
-    infoDialog: PositionEditorInfoDialog?,
+private fun RenderPositionSearchInfoDialog(
+    infoDialog: PositionSearchInfoDialog?,
     onDismiss: () -> Unit
 ) {
     val currentDialog = infoDialog ?: return
@@ -616,7 +681,7 @@ private fun RenderPositionEditorInfoDialog(
 }
 
 @Composable
-private fun RenderPositionEditorFenError(
+private fun RenderPositionSearchFenError(
     fenError: String?,
     onDismiss: () -> Unit
 ) {
@@ -633,7 +698,7 @@ private fun RenderPositionEditorFenError(
 
 
 @Composable
-private fun PositionEditorBoardSection(
+private fun PositionSearchBoardSection(
     gameController: GameController,
     onBoardSquareClick: (String) -> Unit,
     onBoardPieceMove: (String, String) -> Unit
@@ -647,7 +712,7 @@ private fun PositionEditorBoardSection(
                 .aspectRatio(1f)
         ) {
             key(boardState) {
-                PositionEditorBoardWithCoordinates(
+                PositionSearchBoardWithCoordinates(
                     gameController = gameController,
                     onSquareClick = onBoardSquareClick,
                     onPieceMove = onBoardPieceMove,
@@ -660,18 +725,14 @@ private fun PositionEditorBoardSection(
 
 
 @Composable
-private fun PositionEditorPaletteSection(
-    selectedPiece: PositionEditorPieceOption,
-    onPieceSelected: (PositionEditorPieceOption) -> Unit,
+private fun PositionSearchPaletteSection(
+    selectedPiece: PositionSearchPieceOption?,
+    onPieceSelected: (PositionSearchPieceOption) -> Unit,
     modifier: Modifier = Modifier
 ) {
     ScreenSection(modifier = modifier) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            Spacer(modifier = Modifier.height(AppDimens.spaceSm))
-            BodySecondaryText(text = selectedPiece.label)
-            Spacer(modifier = Modifier.height(AppDimens.spaceMd))
-
-            PositionEditorPieceGrid(
+            PositionSearchPieceGrid(
                 selectedPiece = selectedPiece,
                 onPieceSelected = onPieceSelected
             )
@@ -680,18 +741,18 @@ private fun PositionEditorPaletteSection(
 }
 
 @Composable
-private fun PositionEditorPieceGrid(
-    selectedPiece: PositionEditorPieceOption,
-    onPieceSelected: (PositionEditorPieceOption) -> Unit
+private fun PositionSearchPieceGrid(
+    selectedPiece: PositionSearchPieceOption?,
+    onPieceSelected: (PositionSearchPieceOption) -> Unit
 ) {
-    PositionEditorPieceOptions.chunked(6).forEach { rowOptions ->
+    PositionSearchPieceOptions.chunked(6).forEach { rowOptions ->
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             rowOptions.forEach { pieceOption ->
-                PositionEditorPieceIcon(
+                PositionSearchPieceIcon(
                     pieceOption = pieceOption,
                     isSelected = pieceOption == selectedPiece,
                     onClick = { onPieceSelected(pieceOption) }
@@ -703,14 +764,14 @@ private fun PositionEditorPieceGrid(
 }
 
 @Composable
-private fun PositionEditorPieceIcon(
-    pieceOption: PositionEditorPieceOption,
+private fun PositionSearchPieceIcon(
+    pieceOption: PositionSearchPieceOption,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
-            .size(48.dp)
+            .size(PositionSearchPalettePieceSize)
             .background(
                 color = if (isSelected) SideButtonSelectedBg else Color.Transparent,
                 shape = RoundedCornerShape(50)
@@ -718,89 +779,115 @@ private fun PositionEditorPieceIcon(
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = resolvePieceGlyph(pieceOption.letter) ?: pieceOption.letter.toString(),
-            color = resolvePieceTint(pieceOption.letter),
-            style = MaterialTheme.typography.titleLarge
+        PositionSearchPalettePiece(letter = pieceOption.letter)
+    }
+}
+
+@Composable
+private fun PositionSearchPalettePiece(
+    letter: Char,
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier.fillMaxSize()) {
+        drawPieceGlyph(
+            letter = letter,
+            left = 0f,
+            top = 0f,
+            squareSize = size.minDimension,
         )
     }
 }
 
 @Composable
-private fun PositionEditorBoardControlRow(
+private fun PositionSearchBoardControlsBar(
     selectedSide: EditableGameSide,
+    canGoBack: Boolean,
+    canGoForward: Boolean,
     onSideSelected: (EditableGameSide) -> Unit,
     onResetClick: () -> Unit,
     onClearBoardClick: () -> Unit,
+    onBackClick: () -> Unit,
+    onForwardClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(50),
-        color = Background.SurfaceDark,
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = AppDimens.spaceMd),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier.weight(1.2f),
-                contentAlignment = Alignment.Center,
+    BoardActionNavigationBar(
+        modifier = modifier,
+        maxVisibleItems = 6,
+        items = EditableGameSide.entries.map { side ->
+            BoardActionNavigationItem(
+                label = if (side == EditableGameSide.AS_WHITE) "White" else "Black",
+                selected = side == selectedSide,
+                onClick = { onSideSelected(side) },
             ) {
-                GameSideSelector(
-                    selectedSide = selectedSide,
-                    onSideSelected = onSideSelected,
-                    showTitle = false,
-                    modifier = Modifier.fillMaxWidth(),
+                PositionSearchSideIcon(
+                    side = side,
+                    selected = side == selectedSide,
                 )
             }
-            PositionControlPillDivider()
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(50))
-                    .testTag(PositionEditorInitialPositionTestTag)
-                    .clickable(onClick = onResetClick),
-                contentAlignment = Alignment.Center,
+        } + listOf(
+            BoardActionNavigationItem(
+                label = "Reset",
+                modifier = Modifier.testTag(PositionSearchInitialPositionTestTag),
+                onClick = onResetClick,
             ) {
-                IconLg(
+                IconMd(
                     imageVector = Icons.Filled.Refresh,
                     contentDescription = "Initial position",
-                    tint = TrainingTextPrimary,
+                    tint = TrainingIconInactive,
                 )
-            }
-            PositionControlPillDivider()
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(50))
-                    .testTag(PositionEditorClearBoardTestTag)
-                    .clickable(onClick = onClearBoardClick),
-                contentAlignment = Alignment.Center,
+            },
+            BoardActionNavigationItem(
+                label = "Clear",
+                modifier = Modifier.testTag(PositionSearchClearBoardTestTag),
+                onClick = onClearBoardClick,
             ) {
-                IconLg(
+                IconMd(
                     imageVector = Icons.Filled.Delete,
                     contentDescription = "Clear board",
-                    tint = TrainingErrorRed,
+                    tint = TrainingIconInactive,
                 )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PositionControlPillDivider() {
-    Box(
-        modifier = Modifier
-            .width(1.dp)
-            .height(40.dp)
-            .background(TrainingIconInactive.copy(alpha = 0.4f))
+            },
+            BoardActionNavigationItem(
+                label = "Back",
+                enabled = canGoBack,
+                onClick = onBackClick,
+            ) {
+                IconMd(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                    contentDescription = "Back",
+                    tint = if (canGoBack) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
+                )
+            },
+            BoardActionNavigationItem(
+                label = "Forward",
+                enabled = canGoForward,
+                onClick = onForwardClick,
+            ) {
+                IconMd(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = "Forward",
+                    tint = if (canGoForward) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
+                )
+            },
+        ),
     )
 }
 
-private fun normalizePositionEditorFen(
+@Composable
+private fun PositionSearchSideIcon(
+    side: EditableGameSide,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Icon(
+        painter = painterResource(R.drawable.ic_king),
+        contentDescription = side.toDisplayText(),
+        tint = if (selected) TrainingAccentTeal else TrainingIconInactive,
+        modifier = modifier.size(AppIconSizes.Lg),
+    )
+}
+
+private fun normalizePositionSearchFen(
     fen: String,
     selectedSide: EditableGameSide
 ): String {
@@ -811,7 +898,7 @@ private fun normalizePositionEditorFen(
 
     val fenParts = trimmedFen.split(Regex("\\s+"))
     if (fenParts.size == 1) {
-        return buildPositionEditorFen(
+        return buildPositionSearchFen(
             boardPart = fenParts.first(),
             sidePart = resolveFenSideToken(selectedSide),
             castlingPart = "-",
@@ -819,7 +906,7 @@ private fun normalizePositionEditorFen(
         )
     }
 
-    return buildPositionEditorFen(
+    return buildPositionSearchFen(
         boardPart = fenParts[0],
         sidePart = fenParts.getOrNull(1)?.takeIf { it == "w" || it == "b" }
             ?: resolveFenSideToken(selectedSide),
@@ -832,13 +919,13 @@ private fun replaceFenSide(
     fen: String,
     selectedSide: EditableGameSide
 ): String {
-    val normalizedFen = normalizePositionEditorFen(
+    val normalizedFen = normalizePositionSearchFen(
         fen = fen,
         selectedSide = selectedSide
     )
     val fenParts = normalizedFen.split(Regex("\\s+"))
 
-    return buildPositionEditorFen(
+    return buildPositionSearchFen(
         boardPart = fenParts[0],
         sidePart = resolveFenSideToken(selectedSide),
         castlingPart = fenParts[2],
@@ -847,7 +934,7 @@ private fun replaceFenSide(
 }
 
 private fun resolveEmptyBoardFen(selectedSide: EditableGameSide): String {
-    return buildPositionEditorFen(
+    return buildPositionSearchFen(
         boardPart = EmptyBoardBoardPart,
         sidePart = resolveFenSideToken(selectedSide),
         castlingPart = "-",
@@ -863,7 +950,7 @@ private fun resolveFenSideToken(selectedSide: EditableGameSide): String {
     return "w"
 }
 
-private fun buildPositionEditorFen(
+private fun buildPositionSearchFen(
     boardPart: String,
     sidePart: String,
     castlingPart: String,
@@ -877,8 +964,8 @@ private fun buildPositionEditorFen(
     ).joinToString(separator = " ")
 }
 
-private fun toLoadableFen(editorFen: String): String {
-    val normalizedFen = editorFen.trim()
+private fun toLoadableFen(positionFen: String): String {
+    val normalizedFen = positionFen.trim()
     val fenParts = normalizedFen.split(Regex("\\s+"))
 
     if (fenParts.size >= 6) {

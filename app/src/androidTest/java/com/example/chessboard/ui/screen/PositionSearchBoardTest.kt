@@ -18,25 +18,25 @@ import androidx.compose.ui.test.performTouchInput
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.boardmodel.InitialBoardFen
 import com.example.chessboard.ui.InteractiveChessBoardTestTag
-import com.example.chessboard.ui.PositionEditorBoardWithCoordinates
+import com.example.chessboard.ui.PositionSearchBoardWithCoordinates
 import com.example.chessboard.ui.components.SecondaryButton
 import com.example.chessboard.ui.theme.ChessBoardTheme
 import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
 
-class PositionEditorBoardTest {
+class PositionSearchBoardTest {
 
     @get:Rule
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun positionEditorBoard_updatesVisibleFenWhenPreviewPositionChanges() {
+    fun positionSearchBoard_updatesVisibleFenWhenPreviewPositionChanges() {
         val gameController = GameController()
 
         composeRule.setContent {
             ChessBoardTheme {
-                PositionEditorBoardHost(gameController = gameController)
+                PositionSearchBoardHost(gameController = gameController)
             }
         }
 
@@ -55,12 +55,12 @@ class PositionEditorBoardTest {
 
 
     @Test
-    fun positionEditorBoard_dragAndDropUpdatesVisibleFen() {
+    fun positionSearchBoard_dragAndDropUpdatesVisibleFen() {
         val gameController = GameController()
 
         composeRule.setContent {
             ChessBoardTheme {
-                PositionEditorInteractiveBoardHost(gameController = gameController)
+                PositionSearchInteractiveBoardHost(gameController = gameController)
             }
         }
 
@@ -84,12 +84,12 @@ class PositionEditorBoardTest {
 
 
     @Test
-    fun positionEditorBoard_tapPlacesPieceAndUpdatesVisibleFen() {
+    fun positionSearchBoard_tapPlacesPieceAndUpdatesVisibleFen() {
         val gameController = GameController()
 
         composeRule.setContent {
             ChessBoardTheme {
-                PositionEditorPlacementBoardHost(gameController = gameController)
+                PositionSearchPlacementBoardHost(gameController = gameController)
             }
         }
 
@@ -109,12 +109,12 @@ class PositionEditorBoardTest {
 
 
     @Test
-    fun positionEditorBoard_clearBoardButtonUpdatesVisibleFen() {
+    fun positionSearchBoard_clearBoardButtonUpdatesVisibleFen() {
         val gameController = GameController()
 
         composeRule.setContent {
             ChessBoardTheme {
-                PositionEditorClearBoardHost(gameController = gameController)
+                PositionSearchClearBoardHost(gameController = gameController)
             }
         }
 
@@ -125,12 +125,12 @@ class PositionEditorBoardTest {
 
 
     @Test
-    fun positionEditorBoard_initialPositionButtonUpdatesVisibleFen() {
+    fun positionSearchBoard_initialPositionButtonUpdatesVisibleFen() {
         val gameController = GameController()
 
         composeRule.setContent {
             ChessBoardTheme {
-                PositionEditorInitialPositionHost(gameController = gameController)
+                PositionSearchInitialPositionHost(gameController = gameController)
             }
         }
 
@@ -151,11 +151,11 @@ class PositionEditorBoardTest {
 }
 
 @Composable
-private fun PositionEditorBoardHost(gameController: GameController) {
+private fun PositionSearchBoardHost(gameController: GameController) {
     val boardState = gameController.boardState
 
     key(boardState) {
-        PositionEditorBoardWithCoordinates(
+        PositionSearchBoardWithCoordinates(
             gameController = gameController,
             onSquareClick = {},
             onPieceMove = { _, _ -> },
@@ -165,11 +165,11 @@ private fun PositionEditorBoardHost(gameController: GameController) {
 }
 
 @Composable
-private fun PositionEditorInteractiveBoardHost(gameController: GameController) {
+private fun PositionSearchInteractiveBoardHost(gameController: GameController) {
     val boardState = gameController.boardState
 
     key(boardState) {
-        PositionEditorBoardWithCoordinates(
+        PositionSearchBoardWithCoordinates(
             gameController = gameController,
             onSquareClick = {},
             onPieceMove = { fromSquare, toSquare ->
@@ -186,11 +186,11 @@ private fun PositionEditorInteractiveBoardHost(gameController: GameController) {
 }
 
 @Composable
-private fun PositionEditorPlacementBoardHost(gameController: GameController) {
+private fun PositionSearchPlacementBoardHost(gameController: GameController) {
     val boardState = gameController.boardState
 
     key(boardState) {
-        PositionEditorBoardWithCoordinates(
+        PositionSearchBoardWithCoordinates(
             gameController = gameController,
             onSquareClick = { square ->
                 val updatedFen = placePieceInPreviewFen(
@@ -207,7 +207,7 @@ private fun PositionEditorPlacementBoardHost(gameController: GameController) {
 }
 
 @Composable
-private fun PositionEditorClearBoardHost(gameController: GameController) {
+private fun PositionSearchClearBoardHost(gameController: GameController) {
     Column {
         SecondaryButton(
             text = "Clear board",
@@ -218,7 +218,7 @@ private fun PositionEditorClearBoardHost(gameController: GameController) {
 
         val boardState = gameController.boardState
         key(boardState) {
-            PositionEditorBoardWithCoordinates(
+            PositionSearchBoardWithCoordinates(
                 gameController = gameController,
                 onSquareClick = {},
                 onPieceMove = { _, _ -> },
@@ -229,7 +229,7 @@ private fun PositionEditorClearBoardHost(gameController: GameController) {
 }
 
 @Composable
-private fun PositionEditorInitialPositionHost(gameController: GameController) {
+private fun PositionSearchInitialPositionHost(gameController: GameController) {
     Column {
         SecondaryButton(
             text = "Initial position",
@@ -240,7 +240,7 @@ private fun PositionEditorInitialPositionHost(gameController: GameController) {
 
         val boardState = gameController.boardState
         key(boardState) {
-            PositionEditorBoardWithCoordinates(
+            PositionSearchBoardWithCoordinates(
                 gameController = gameController,
                 onSquareClick = {},
                 onPieceMove = { _, _ -> },

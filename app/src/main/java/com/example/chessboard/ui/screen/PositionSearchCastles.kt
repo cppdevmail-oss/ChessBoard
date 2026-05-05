@@ -14,10 +14,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import com.example.chessboard.ui.PositionEditorBlackLongCastleTestTag
-import com.example.chessboard.ui.PositionEditorBlackShortCastleTestTag
-import com.example.chessboard.ui.PositionEditorWhiteLongCastleTestTag
-import com.example.chessboard.ui.PositionEditorWhiteShortCastleTestTag
+import com.example.chessboard.ui.PositionSearchBlackLongCastleTestTag
+import com.example.chessboard.ui.PositionSearchBlackShortCastleTestTag
+import com.example.chessboard.ui.PositionSearchWhiteLongCastleTestTag
+import com.example.chessboard.ui.PositionSearchWhiteShortCastleTestTag
 import com.example.chessboard.ui.components.AppIconSizes
 import com.example.chessboard.ui.components.ScreenSection
 import com.example.chessboard.ui.components.SectionTitleText
@@ -26,22 +26,22 @@ import com.example.chessboard.ui.resolvePieceTint
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TextColor
 
-internal data class PositionEditorCastlingState(
+internal data class PositionSearchCastlingState(
     val whiteShortCastleAvailable: Boolean = false,
     val whiteLongCastleAvailable: Boolean = false,
     val blackShortCastleAvailable: Boolean = false,
     val blackLongCastleAvailable: Boolean = false
 )
 
-internal fun resolvePositionEditorCastlingState(
+internal fun resolvePositionSearchCastlingState(
     fen: String
-): PositionEditorCastlingState {
+): PositionSearchCastlingState {
     val castlingPart = fen.trim()
         .split(Regex("\\s+"))
         .getOrNull(2)
         .orEmpty()
 
-    return PositionEditorCastlingState(
+    return PositionSearchCastlingState(
         whiteShortCastleAvailable = 'K' in castlingPart,
         whiteLongCastleAvailable = 'Q' in castlingPart,
         blackShortCastleAvailable = 'k' in castlingPart,
@@ -49,9 +49,9 @@ internal fun resolvePositionEditorCastlingState(
     )
 }
 
-internal fun replacePositionEditorFenCastlingPart(
+internal fun replacePositionSearchFenCastlingPart(
     fen: String,
-    castlingState: PositionEditorCastlingState
+    castlingState: PositionSearchCastlingState
 ): String {
     val fenParts = fen.trim().split(Regex("\\s+"))
     if (fenParts.isEmpty()) {
@@ -67,9 +67,9 @@ internal fun replacePositionEditorFenCastlingPart(
 }
 
 @Composable
-internal fun PositionEditorCastlesSection(
-    castlingState: PositionEditorCastlingState,
-    onCastlingStateChange: (PositionEditorCastlingState) -> Unit,
+internal fun PositionSearchCastlesSection(
+    castlingState: PositionSearchCastlingState,
+    onCastlingStateChange: (PositionSearchCastlingState) -> Unit,
     showTitle: Boolean = true,
     modifier: Modifier = Modifier
 ) {
@@ -80,7 +80,7 @@ internal fun PositionEditorCastlesSection(
                 Spacer(modifier = Modifier.height(AppDimens.spaceMd))
             }
 
-            PositionEditorCastlingRow(
+            PositionSearchCastlingRow(
                 kingLetter = 'K',
                 shortCastleEnabled = castlingState.whiteShortCastleAvailable,
                 longCastleEnabled = castlingState.whiteLongCastleAvailable,
@@ -94,13 +94,13 @@ internal fun PositionEditorCastlesSection(
                         castlingState.copy(whiteLongCastleAvailable = isEnabled)
                     )
                 },
-                shortCastleTestTag = PositionEditorWhiteShortCastleTestTag,
-                longCastleTestTag = PositionEditorWhiteLongCastleTestTag
+                shortCastleTestTag = PositionSearchWhiteShortCastleTestTag,
+                longCastleTestTag = PositionSearchWhiteLongCastleTestTag
             )
 
             Spacer(modifier = Modifier.height(AppDimens.spaceSm))
 
-            PositionEditorCastlingRow(
+            PositionSearchCastlingRow(
                 kingLetter = 'k',
                 shortCastleEnabled = castlingState.blackShortCastleAvailable,
                 longCastleEnabled = castlingState.blackLongCastleAvailable,
@@ -114,15 +114,15 @@ internal fun PositionEditorCastlesSection(
                         castlingState.copy(blackLongCastleAvailable = isEnabled)
                     )
                 },
-                shortCastleTestTag = PositionEditorBlackShortCastleTestTag,
-                longCastleTestTag = PositionEditorBlackLongCastleTestTag
+                shortCastleTestTag = PositionSearchBlackShortCastleTestTag,
+                longCastleTestTag = PositionSearchBlackLongCastleTestTag
             )
         }
     }
 }
 
 @Composable
-private fun PositionEditorCastlingRow(
+private fun PositionSearchCastlingRow(
     kingLetter: Char,
     shortCastleEnabled: Boolean,
     longCastleEnabled: Boolean,
@@ -143,7 +143,7 @@ private fun PositionEditorCastlingRow(
             modifier = Modifier.size(AppIconSizes.Lg)
         )
 
-        PositionEditorCastleCheckbox(
+        PositionSearchCastleCheckbox(
             label = "0-0",
             checked = shortCastleEnabled,
             onCheckedChange = onShortCastleChange,
@@ -151,7 +151,7 @@ private fun PositionEditorCastlingRow(
             modifier = Modifier.weight(1f)
         )
 
-        PositionEditorCastleCheckbox(
+        PositionSearchCastleCheckbox(
             label = "0-0-0",
             checked = longCastleEnabled,
             onCheckedChange = onLongCastleChange,
@@ -162,7 +162,7 @@ private fun PositionEditorCastlingRow(
 }
 
 @Composable
-private fun PositionEditorCastleCheckbox(
+private fun PositionSearchCastleCheckbox(
     label: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
@@ -187,7 +187,7 @@ private fun PositionEditorCastleCheckbox(
     }
 }
 
-private fun PositionEditorCastlingState.toFenToken(): String {
+private fun PositionSearchCastlingState.toFenToken(): String {
     return buildString {
         if (whiteShortCastleAvailable) {
             append('K')

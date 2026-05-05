@@ -142,12 +142,12 @@ class RegularTrainingFlowCoordinator(
         )
     }
 
-    fun openPositionEditorFromTraining(
+    fun openPositionSearchFromTraining(
         fen: String,
         trainingId: Long,
         gameId: Long,
     ): TrainingFlowResult {
-        return TrainingFlowResult.OpenPositionEditor(
+        return TrainingFlowResult.OpenPositionSearch(
             initialFen = fen,
             backTarget = ScreenType.TrainSingleGame(trainingId, gameId),
         )

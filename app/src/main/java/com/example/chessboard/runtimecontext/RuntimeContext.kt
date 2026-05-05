@@ -26,7 +26,7 @@ class RuntimeContext {
     val openingDeviation = OpeningDeviation()
     val orderGamesInTraining = OrderGamesInTraining()
     internal val trainingSession = TrainingRuntimeContext()
-    val positionEditor = PositionEditor()
+    val positionSearch = PositionSearch()
     var trainingMoveFrom: Int = 1
     var trainingMoveTo: Int = 0
     var smartTrainingQueue: List<SmartGamePair> = emptyList()
@@ -106,7 +106,7 @@ class RuntimeContext {
         }
     }
 
-    class PositionEditor {
+    class PositionSearch {
         private val defaultInitialFen = InitialBoardFenWithoutMoveNumbers
 
         var initialFen by mutableStateOf(defaultInitialFen)

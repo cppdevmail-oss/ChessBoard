@@ -156,11 +156,11 @@ class SmartTrainingFlowCoordinatorTest {
             ),
         )
         assertEquals(
-            TrainingFlowResult.OpenPositionEditor(
+            TrainingFlowResult.OpenPositionSearch(
                 initialFen = "fen",
                 backTarget = ScreenType.SmartTrainGame(5L, 30L),
             ),
-            coordinator.openPositionEditor(
+            coordinator.openPositionSearch(
                 fen = "fen",
                 trainingId = 5L,
                 gameId = 30L,

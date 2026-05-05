@@ -282,7 +282,7 @@ fun ChessBoard(
 // ──────────────────────────────────────────────────────────────────────────────
 
 @Composable
-fun PositionEditorBoardWithCoordinates(
+fun PositionSearchBoardWithCoordinates(
     gameController: GameController,
     onSquareClick: (String) -> Unit,
     onPieceMove: (String, String) -> Unit,

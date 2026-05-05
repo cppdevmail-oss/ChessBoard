@@ -311,11 +311,11 @@ class RegularTrainingFlowCoordinatorTest {
             ),
         )
         assertEquals(
-            TrainingFlowResult.OpenPositionEditor(
+            TrainingFlowResult.OpenPositionSearch(
                 initialFen = "fen",
                 backTarget = ScreenType.TrainSingleGame(8L, 60L),
             ),
-            coordinator.openPositionEditorFromTraining(
+            coordinator.openPositionSearchFromTraining(
                 fen = "fen",
                 trainingId = 8L,
                 gameId = 60L,

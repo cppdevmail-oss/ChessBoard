@@ -95,7 +95,8 @@ fun NavLabelText(
     modifier: Modifier = Modifier,
     color: Color = TextColor.Secondary,
     fontWeight: FontWeight = FontWeight.Medium,
-    textAlign: TextAlign? = null
+    textAlign: TextAlign? = null,
+    maxLines: Int = Int.MAX_VALUE,
 ) {
     Text(
         text = text,
@@ -103,6 +104,7 @@ fun NavLabelText(
         style = MaterialTheme.typography.labelSmall,
         color = color,
         fontWeight = fontWeight,
-        textAlign = textAlign
+        textAlign = textAlign,
+        maxLines = maxLines,
     )
 }

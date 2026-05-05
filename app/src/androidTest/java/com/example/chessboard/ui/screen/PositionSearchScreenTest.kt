@@ -15,17 +15,17 @@ import com.example.chessboard.boardmodel.InitialBoardFen
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.testing.fenStateDescriptionMatcher
 import com.example.chessboard.ui.InteractiveChessBoardTestTag
-import com.example.chessboard.ui.PositionEditorListTestTag
-import com.example.chessboard.ui.PositionEditorSaveNameFieldTestTag
-import com.example.chessboard.ui.PositionEditorWhiteShortCastleTestTag
-import com.example.chessboard.ui.PositionEditorClearBoardTestTag
-import com.example.chessboard.ui.PositionEditorInitialPositionTestTag
+import com.example.chessboard.ui.PositionSearchListTestTag
+import com.example.chessboard.ui.PositionSearchSaveNameFieldTestTag
+import com.example.chessboard.ui.PositionSearchWhiteShortCastleTestTag
+import com.example.chessboard.ui.PositionSearchClearBoardTestTag
+import com.example.chessboard.ui.PositionSearchInitialPositionTestTag
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
-class PositionEditorScreenTest {
+class PositionSearchScreenTest {
 
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
@@ -39,7 +39,7 @@ class PositionEditorScreenTest {
     }
 
     @Test
-    fun positionEditorScreen_clearBoardButtonUpdatesVisibleFen() {
+    fun positionSearchScreen_clearBoardButtonUpdatesVisibleFen() {
         // Home content depends on async startup work, including reading persisted profile settings.
         // On a slow emulator the card may not exist yet when the test starts, so wait for it
         // before clicking instead of assuming the first frame is already stable.
@@ -47,15 +47,15 @@ class PositionEditorScreenTest {
         composeRule.onNodeWithText("Position Search").performClick()
         composeRule.waitForIdle()
 
-        waitForNodeDisplayed(PositionEditorClearBoardTestTag)
-        composeRule.onNodeWithTag(PositionEditorClearBoardTestTag).performClick()
+        waitForNodeDisplayed(PositionSearchClearBoardTestTag)
+        composeRule.onNodeWithTag(PositionSearchClearBoardTestTag).performClick()
         composeRule.waitForIdle()
 
         assertBoardFen("8/8/8/8/8/8/8/8 w - - 0 1")
     }
 
     @Test
-    fun positionEditorScreen_castlingCheckboxUpdatesVisibleFen() {
+    fun positionSearchScreen_castlingCheckboxUpdatesVisibleFen() {
         waitForTextDisplayed("Position Search")
         composeRule.onNodeWithText("Position Search").performClick()
         composeRule.waitForIdle()
@@ -63,8 +63,8 @@ class PositionEditorScreenTest {
         composeRule.onNodeWithContentDescription("Settings").performClick()
         waitForTextDisplayed("Position Search Settings")
 
-        waitForNodeDisplayed(PositionEditorWhiteShortCastleTestTag)
-        composeRule.onNodeWithTag(PositionEditorWhiteShortCastleTestTag).performClick()
+        waitForNodeDisplayed(PositionSearchWhiteShortCastleTestTag)
+        composeRule.onNodeWithTag(PositionSearchWhiteShortCastleTestTag).performClick()
         composeRule.waitForIdle()
 
         composeRule.onNodeWithContentDescription("Back").performClick()
@@ -73,7 +73,7 @@ class PositionEditorScreenTest {
     }
 
     @Test
-    fun positionEditorScreen_saveButtonOpensSaveDialog() {
+    fun positionSearchScreen_saveButtonOpensSaveDialog() {
         waitForTextDisplayed("Position Search")
         composeRule.onNodeWithText("Position Search").performClick()
         composeRule.waitForIdle()
@@ -81,24 +81,24 @@ class PositionEditorScreenTest {
         composeRule.onNodeWithContentDescription("Save").performClick()
 
         waitForTextDisplayed("Save Position")
-        composeRule.onNodeWithTag(PositionEditorSaveNameFieldTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(PositionSearchSaveNameFieldTestTag).assertIsDisplayed()
     }
 
     @Test
-    fun positionEditorScreen_saveConfirmWithBlankNameShowsValidationError() {
-        openPositionEditorSaveDialog()
+    fun positionSearchScreen_saveConfirmWithBlankNameShowsValidationError() {
+        openPositionSearchSaveDialog()
 
         composeRule.onNodeWithText("Save").performClick()
 
         waitForTextDisplayed("Position name is required.")
-        composeRule.onNodeWithTag(PositionEditorSaveNameFieldTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(PositionSearchSaveNameFieldTestTag).assertIsDisplayed()
     }
 
     @Test
-    fun positionEditorScreen_saveConfirmPersistsPositionAndShowsSuccessDialog() {
-        openPositionEditorSaveDialog()
+    fun positionSearchScreen_saveConfirmPersistsPositionAndShowsSuccessDialog() {
+        openPositionSearchSaveDialog()
 
-        composeRule.onNodeWithTag(PositionEditorSaveNameFieldTestTag)
+        composeRule.onNodeWithTag(PositionSearchSaveNameFieldTestTag)
             .performTextInput("Test Position")
         composeRule.onNodeWithText("Save").performClick()
 
@@ -117,7 +117,7 @@ class PositionEditorScreenTest {
     }
 
     @Test
-    fun positionEditorScreen_saveConfirmWithDuplicateNameShowsDuplicateNameError() {
+    fun positionSearchScreen_saveConfirmWithDuplicateNameShowsDuplicateNameError() {
         runBlocking {
             dbProvider.createSavedSearchPositionService().create(
                 name = "Duplicate Position",
@@ -126,17 +126,17 @@ class PositionEditorScreenTest {
             )
         }
 
-        openPositionEditorSaveDialog()
-        composeRule.onNodeWithTag(PositionEditorSaveNameFieldTestTag)
+        openPositionSearchSaveDialog()
+        composeRule.onNodeWithTag(PositionSearchSaveNameFieldTestTag)
             .performTextInput("Duplicate Position")
         composeRule.onNodeWithText("Save").performClick()
 
         waitForTextDisplayed("Position name already exists.")
-        composeRule.onNodeWithTag(PositionEditorSaveNameFieldTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(PositionSearchSaveNameFieldTestTag).assertIsDisplayed()
     }
 
     @Test
-    fun positionEditorScreen_saveConfirmWithDuplicatePositionShowsDuplicatePositionError() {
+    fun positionSearchScreen_saveConfirmWithDuplicatePositionShowsDuplicatePositionError() {
         runBlocking {
             dbProvider.createSavedSearchPositionService().create(
                 name = "Existing Position",
@@ -145,13 +145,13 @@ class PositionEditorScreenTest {
             )
         }
 
-        openPositionEditorSaveDialog()
-        composeRule.onNodeWithTag(PositionEditorSaveNameFieldTestTag)
+        openPositionSearchSaveDialog()
+        composeRule.onNodeWithTag(PositionSearchSaveNameFieldTestTag)
             .performTextInput("New Position Name")
         composeRule.onNodeWithText("Save").performClick()
 
         waitForTextDisplayed("This search position has already been saved.")
-        composeRule.onNodeWithTag(PositionEditorSaveNameFieldTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(PositionSearchSaveNameFieldTestTag).assertIsDisplayed()
     }
 
 
@@ -180,7 +180,7 @@ class PositionEditorScreenTest {
         )
     }
 
-    private fun openPositionEditorSaveDialog() {
+    private fun openPositionSearchSaveDialog() {
         waitForTextDisplayed("Position Search")
         composeRule.onNodeWithText("Position Search").performClick()
         composeRule.waitForIdle()
@@ -188,6 +188,6 @@ class PositionEditorScreenTest {
         composeRule.onNodeWithContentDescription("Save").performClick()
 
         waitForTextDisplayed("Save Position")
-        composeRule.onNodeWithTag(PositionEditorSaveNameFieldTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(PositionSearchSaveNameFieldTestTag).assertIsDisplayed()
     }
 }

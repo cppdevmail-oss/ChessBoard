@@ -44,7 +44,7 @@ internal fun RegularHomeScreen(
     onNavigate: (ScreenType) -> Unit = {},
     onCreateOpeningClick: () -> Unit = { onNavigate(ScreenType.CreateOpening) },
     onCreateTrainingClick: () -> Unit = {},
-    onOpenPositionEditorClick: () -> Unit = {},
+    onOpenPositionSearchClick: () -> Unit = {},
     onOpenSavedPositionsClick: () -> Unit = {},
     onOpenBackupClick: () -> Unit = {},
     onExitClick: () -> Unit = {},
@@ -158,7 +158,7 @@ internal fun RegularHomeScreen(
                         title = "Position Search",
                         subtitle = "Set up a custom board position",
                         modifier = Modifier.weight(1f),
-                        onClick = onOpenPositionEditorClick,
+                        onClick = onOpenPositionSearchClick,
                     )
                 }
             }

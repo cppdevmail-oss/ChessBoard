@@ -30,6 +30,7 @@ import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.service.parsePgnMoves
 import com.example.chessboard.ui.screen.EditableGameSide
 import com.example.chessboard.ui.screen.ScreenContainerContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -105,6 +106,8 @@ internal fun CreateOpeningScreenContainer(
             importedChapters = chapters
             gameController.loadFromUciMoves(firstChapter.uciLines.first())
             pgnImportError = null
+        } catch (error: CancellationException) {
+            throw error
         } catch (_: Exception) {
             importedChapters = emptyList()
             pgnImportError = "Failed to parse PGN"
@@ -131,6 +134,8 @@ internal fun CreateOpeningScreenContainer(
 
                         pgnText = content
                     }
+                } catch (error: CancellationException) {
+                    throw error
                 } catch (_: Exception) {
                     withContext(Dispatchers.Main) {
                         pgnImportError = "Failed to read file"

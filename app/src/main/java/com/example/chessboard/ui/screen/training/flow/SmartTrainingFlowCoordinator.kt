@@ -86,12 +86,12 @@ class SmartTrainingFlowCoordinator(
         )
     }
 
-    fun openPositionEditor(
+    fun openPositionSearch(
         fen: String,
         trainingId: Long,
         gameId: Long,
     ): TrainingFlowResult {
-        return TrainingFlowResult.OpenPositionEditor(
+        return TrainingFlowResult.OpenPositionSearch(
             initialFen = fen,
             backTarget = ScreenType.SmartTrainGame(trainingId, gameId),
         )

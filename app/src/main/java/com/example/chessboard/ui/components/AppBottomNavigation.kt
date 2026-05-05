@@ -58,7 +58,7 @@ fun defaultAppBottomNavigationItems(): List<AppBottomNavigationItem<ScreenType>>
             iconSelected = Icons.AutoMirrored.Filled.MenuBook
         ),
         AppBottomNavigationItem(
-            value = ScreenType.PositionEditor,
+            value = ScreenType.PositionSearch,
             label = "Search",
             iconUnselected = Icons.Outlined.Search,
             iconSelected = Icons.Filled.Search

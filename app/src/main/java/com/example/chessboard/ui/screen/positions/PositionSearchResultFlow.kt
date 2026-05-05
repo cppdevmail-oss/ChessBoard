@@ -4,7 +4,7 @@ package com.example.chessboard.ui.screen.positions
  * Shared position-search result flow for screens that search games by board position.
  *
  * Keep reusable found-games dialogs and create-template helpers here. Do not add screen layout,
- * card rendering, or position-editor board editing logic to this file.
+ * card rendering, or position-search board editing logic to this file.
  */
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

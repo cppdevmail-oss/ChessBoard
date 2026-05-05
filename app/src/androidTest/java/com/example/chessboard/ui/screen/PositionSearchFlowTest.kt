@@ -32,7 +32,7 @@ import com.example.chessboard.testing.fenStateDescriptionMatcher
 import com.example.chessboard.ui.ChessBoardWithCoordinates
 import com.example.chessboard.ui.InteractiveChessBoardTestTag
 import com.example.chessboard.ui.BoardOrientation
-import com.example.chessboard.ui.screen.positions.PositionEditorScreenContainer
+import com.example.chessboard.ui.screen.positions.PositionSearchScreenContainer
 import com.example.chessboard.ui.screen.trainSingleGame.TrainSingleGamePhase
 import com.example.chessboard.ui.screen.trainSingleGame.TrainSingleGameUiState
 import com.example.chessboard.ui.screen.trainSingleGame.advanceProgramMoves
@@ -89,13 +89,13 @@ class PositionSearchFlowTest {
     }
 
     @Test
-    fun positionEditorScreenContainer_usesPassedInitialFen() {
+    fun positionSearchScreenContainer_usesPassedInitialFen() {
         val dbProvider = DatabaseProvider.createInstance(composeRule.activity)
         val initialFen = "4k3/8/8/8/8/8/8/4K3 b - -"
 
         composeRule.setContent {
             ChessBoardTheme {
-                PositionEditorScreenContainer(
+                PositionSearchScreenContainer(
                     initialFen = initialFen,
                     screenContext = ScreenContainerContext(inDbProvider = dbProvider),
                 )

@@ -104,7 +104,7 @@ internal data class SavedPositionListItem(
 internal fun SavedPositionsScreenContainer(
     screenContext: ScreenContainerContext,
     modifier: Modifier = Modifier,
-    onOpenPositionEditor: (String) -> Unit,
+    onOpenPositionSearch: (String) -> Unit,
     onShowOpeningDeviationSelection: (String, List<OpeningDeviationItem>) -> Unit,
 ) {
     val savedSearchPositionService = remember(screenContext.inDbProvider) {
@@ -231,7 +231,7 @@ internal fun SavedPositionsScreenContainer(
         onBackClick = screenContext.onBackClick,
         onNavigate = screenContext.onNavigate,
         onOpenPosition = { position ->
-            onOpenPositionEditor(resolveDisplayedFen(position))
+            onOpenPositionSearch(resolveDisplayedFen(position))
         },
         onPositionSelected = { positionId ->
             state = state.copy(selectedPositionId = positionId)
@@ -482,7 +482,7 @@ private fun SavedPositionsScreen(
             bottomBar = {
                 AppBottomNavigation(
                     items = defaultAppBottomNavigationItems(),
-                    selectedItem = ScreenType.PositionEditor,
+                    selectedItem = ScreenType.PositionSearch,
                     onItemSelected = onNavigate,
                 )
             },

@@ -18,10 +18,7 @@ package com.example.chessboard.ui.screen.createOpening
  * - navigation decisions beyond invoking callbacks passed from the container
  * - post-save business flow for creating trainings or templates
  */
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,25 +26,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.boardmodel.GameController
@@ -55,19 +45,14 @@ import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.ChessBoardSection
-import com.example.chessboard.ui.components.IconLg
 import com.example.chessboard.ui.components.IconMd
 import com.example.chessboard.ui.components.PasteInputBlock
 import com.example.chessboard.ui.components.ScreenSection
 import com.example.chessboard.ui.screen.EditableGameSide
-import com.example.chessboard.ui.screen.GameSideSelector
 import com.example.chessboard.ui.screen.gameNotation.GameMoveTreeSection
 import com.example.chessboard.ui.screen.training.DarkInputField
 import com.example.chessboard.ui.theme.AppDimens
-import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingIconInactive
-import com.example.chessboard.ui.theme.TrainingTextPrimary
 import kotlinx.coroutines.launch
 
 internal data class CreateOpeningScreenState(
@@ -145,7 +130,18 @@ internal fun CreateOpeningScreen(
                     }
                 }
             )
-        }
+        },
+        bottomBar = {
+            CreateOpeningBoardControlsBar(
+                selectedSide = state.selectedSide,
+                onSideSelected = actions.onSideSelected,
+                canUndo = gameController.canUndo,
+                canRedo = gameController.canRedo,
+                onUndoClick = { gameController.undoMove() },
+                onResetClick = { gameController.resetToStartPosition() },
+                onRedoClick = { gameController.redoMove() },
+            )
+        },
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -187,9 +183,8 @@ internal fun CreateOpeningScreen(
                     text = state.pgnText,
                     onTextChange = actions.onPgnTextChange,
                     placeholder = "Paste PGN here... e.g., 1. e4 e5 2. Nf3 Nc6 3. Bb5",
-                    badge = if (importedChapterCount > 1) "$importedChapterCount chapters" else null,
+                    badge = if (state.importedChapterCount > 1) "${state.importedChapterCount} chapters" else null,
                     onImportFromFileClick = actions.onImportFromFileClick,
-                    importedChapterCount = state.importedChapterCount
                 )
             }
 
@@ -201,24 +196,6 @@ internal fun CreateOpeningScreen(
 
             Spacer(modifier = Modifier.height(AppDimens.spaceXs))
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = AppDimens.spaceLg),
-                contentAlignment = Alignment.Center
-            ) {
-                BoardControlRow(
-                    selectedSide = state.selectedSide,
-                    onSideSelected = actions.onSideSelected,
-                    canUndo = gameController.canUndo,
-                    canRedo = gameController.canRedo,
-                    onUndoClick = { gameController.undoMove() },
-                    onResetClick = { gameController.resetToStartPosition() },
-                    onRedoClick = { gameController.redoMove() }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(AppDimens.spaceLg))
             ScreenSection {
                 GameMoveTreeSection(
                     importedUciLines = state.importedUciLines,
@@ -244,102 +221,4 @@ internal fun buildImportedLineEventName(
     return "$resolvedBaseName (Line ${index + 1})"
 }
 
-@Composable
-private fun BoardControlRow(
-    selectedSide: EditableGameSide,
-    onSideSelected: (EditableGameSide) -> Unit,
-    canUndo: Boolean,
-    canRedo: Boolean,
-    onUndoClick: () -> Unit,
-    onResetClick: () -> Unit,
-    onRedoClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(50),
-        color = Background.SurfaceDark
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = AppDimens.spaceMd),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier.weight(1.2f),
-                contentAlignment = Alignment.Center
-            ) {
-                GameSideSelector(
-                    selectedSide = selectedSide,
-                    onSideSelected = onSideSelected,
-                    showTitle = false,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            PillDivider()
-
-            // Reset
-            Box(
-                modifier = Modifier
-                    .weight(0.6f)
-                    .clip(RoundedCornerShape(50))
-                    .clickable(onClick = onResetClick)
-                    .padding(vertical = AppDimens.spaceSm),
-                contentAlignment = Alignment.Center
-            ) {
-                IconLg(
-                    imageVector = Icons.Filled.Refresh,
-                    contentDescription = "Reset",
-                    tint = TrainingTextPrimary,
-                )
-            }
-
-            PillDivider()
-
-            // Undo / Redo
-            Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clickable(enabled = canUndo, onClick = onUndoClick),
-                    contentAlignment = Alignment.Center
-                ) {
-                    IconLg(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                        contentDescription = "Undo",
-                        tint = if (canUndo) TrainingTextPrimary else TrainingIconInactive,
-                    )
-                }
-                Box(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clickable(enabled = canRedo, onClick = onRedoClick),
-                    contentAlignment = Alignment.Center
-                ) {
-                    IconLg(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = "Redo",
-                        tint = if (canRedo) TrainingTextPrimary else TrainingIconInactive,
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PillDivider() {
-    Box(
-        modifier = Modifier
-            .width(1.dp)
-            .height(40.dp)
-            .background(TrainingIconInactive.copy(alpha = 0.4f))
-    )
-}
 

@@ -30,6 +30,10 @@ import com.example.chessboard.boardmodel.GameDraft
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.runtimecontext.RuntimeContext
+import com.example.chessboard.ui.components.AppMessageDialog
+import com.example.chessboard.ui.error.AppErrorReporter
+import com.example.chessboard.ui.error.AppErrorUiState
+import com.example.chessboard.ui.error.launchAppCatching
 import com.example.chessboard.ui.screen.analysis.GameAnalysisInitialPosition
 import com.example.chessboard.ui.screen.analysis.GameAnalysisScreenContainer
 import com.example.chessboard.ui.screen.createOpening.CreateOpeningScreenContainer
@@ -45,7 +49,7 @@ import com.example.chessboard.ui.screen.SettingsScreenContainer
 import com.example.chessboard.ui.screen.SmartSettingsScreenContainer
 import com.example.chessboard.ui.screen.SmartTrainingScreenContainer
 import com.example.chessboard.ui.screen.home.HomeScreenContainer
-import com.example.chessboard.ui.screen.positions.PositionEditorScreenContainer
+import com.example.chessboard.ui.screen.positions.PositionSearchScreenContainer
 import com.example.chessboard.ui.screen.positions.PositionSearchSettingsScreenContainer
 import com.example.chessboard.ui.screen.positions.SavedPositionsScreenContainer
 import com.example.chessboard.ui.screen.trainSingleGame.TrainSingleGameLauncherScreenContainer
@@ -64,6 +68,7 @@ import com.example.chessboard.ui.screen.training.train.EditTrainingScreenContain
 import com.example.chessboard.ui.screen.training.train.TrainingSettingsScreenContainer
 import com.example.chessboard.ui.screen.training.TrainingListScreenContainer
 import com.example.chessboard.ui.theme.ChessBoardTheme
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -101,6 +106,7 @@ class MainActivity : ComponentActivity() {
                 var removeLineIfRepIsZero by remember { mutableStateOf(true) }
                 var hideLinesWithWeightZero by remember { mutableStateOf(false) }
                 var profileLoaded by remember { mutableStateOf(false) }
+                var appError by remember { mutableStateOf<AppErrorUiState?>(null) }
                 val runtimeContext = remember { RuntimeContext() }
                 val regularTrainingFlow = remember(runtimeContext) {
                     RegularTrainingFlowCoordinator(runtimeContext)
@@ -110,17 +116,42 @@ class MainActivity : ComponentActivity() {
                 }
                 val scope = rememberCoroutineScope()
                 val userProfileService = remember { dbProvider.createUserProfileService() }
+                val errorReporter = remember(scope) {
+                    AppErrorReporter { errorState ->
+                        scope.launch {
+                            appError = errorState
+                        }
+                    }
+                }
+
+                appError?.let { errorState ->
+                    AppMessageDialog(
+                        title = errorState.title,
+                        message = errorState.message,
+                        onDismiss = { appError = null },
+                    )
+                }
 
                 LaunchedEffect(Unit) {
-                    val profile = userProfileService.getProfile()
-                    simpleViewEnabled = profile.simpleViewEnabled
-                    removeLineIfRepIsZero = profile.removeLineIfRepIsZero
-                    hideLinesWithWeightZero = profile.hideLinesWithWeightZero
-                    profileLoaded = true
+                    try {
+                        val profile = userProfileService.getProfile()
+                        simpleViewEnabled = profile.simpleViewEnabled
+                        removeLineIfRepIsZero = profile.removeLineIfRepIsZero
+                        hideLinesWithWeightZero = profile.hideLinesWithWeightZero
+                        profileLoaded = true
+                    } catch (error: CancellationException) {
+                        throw error
+                    } catch (error: Exception) {
+                        errorReporter.report(error, "Failed to load app settings.")
+                        profileLoaded = true
+                    }
                 }
 
                 fun openGamesExplorer() {
-                    scope.launch {
+                    scope.launchAppCatching(
+                        errorReporter = errorReporter,
+                        message = "Failed to open games.",
+                    ) {
                         runtimeContext.gamesExplorer.loadAllGameIds(dbProvider)
                         gamesExplorerSelectedGameId = null
                         gamesExplorerOnBackClick = { currentScreen = ScreenType.Home }
@@ -129,7 +160,10 @@ class MainActivity : ComponentActivity() {
                 }
 
                 fun openGamesExplorerForOpeningDeviationBranch(branchFen: String) {
-                    scope.launch {
+                    scope.launchAppCatching(
+                        errorReporter = errorReporter,
+                        message = "Failed to open matching games.",
+                    ) {
                         val gameIds = withContext(Dispatchers.IO) {
                             dbProvider.findGameIdsByFenWithoutMoveNumber(branchFen)
                         }
@@ -145,16 +179,16 @@ class MainActivity : ComponentActivity() {
 
                 fun createScreenContext(
                     onBackClick: () -> Unit = {},
-                    onNavigate: (ScreenType) -> Unit = navigation@ { screenType ->
+                        onNavigate: (ScreenType) -> Unit = navigation@ { screenType ->
                         if (screenType == ScreenType.GamesExplorer) {
                             openGamesExplorer()
                             return@navigation
                         }
 
-                        if (screenType == ScreenType.PositionEditor) {
-                            runtimeContext.positionEditor.resetToInitialPosition()
-                            runtimeContext.positionEditor.onBackClick = { currentScreen = ScreenType.Home }
-                            currentScreen = ScreenType.PositionEditor
+                        if (screenType == ScreenType.PositionSearch) {
+                            runtimeContext.positionSearch.resetToInitialPosition()
+                            runtimeContext.positionSearch.onBackClick = { currentScreen = ScreenType.Home }
+                            currentScreen = ScreenType.PositionSearch
                             return@navigation
                         }
 
@@ -165,6 +199,7 @@ class MainActivity : ComponentActivity() {
                         onBackClick = onBackClick,
                         onNavigate = onNavigate,
                         inDbProvider = dbProvider,
+                        errorReporter = errorReporter,
                     )
                 }
 
@@ -198,12 +233,12 @@ class MainActivity : ComponentActivity() {
                             currentScreen = ScreenType.CreateOpening
                         }
 
-                        is TrainingFlowResult.OpenPositionEditor -> {
-                            runtimeContext.positionEditor.initialFen = result.initialFen
-                            runtimeContext.positionEditor.onBackClick = {
+                        is TrainingFlowResult.OpenPositionSearch -> {
+                            runtimeContext.positionSearch.initialFen = result.initialFen
+                            runtimeContext.positionSearch.onBackClick = {
                                 currentScreen = result.backTarget
                             }
-                            currentScreen = ScreenType.PositionEditor
+                            currentScreen = ScreenType.PositionSearch
                         }
 
                         is TrainingFlowResult.OpenAnalysis -> {
@@ -278,22 +313,22 @@ class MainActivity : ComponentActivity() {
                         initialDraft = createOpeningDraft,
                     )
 
-                    ScreenType.PositionEditor -> PositionEditorScreenContainer(
-                        initialFen = runtimeContext.positionEditor.initialFen,
+                    ScreenType.PositionSearch -> PositionSearchScreenContainer(
+                        initialFen = runtimeContext.positionSearch.initialFen,
                         screenContext = createScreenContext(
-                            onBackClick = { runtimeContext.positionEditor.onBackClick() },
+                            onBackClick = { runtimeContext.positionSearch.onBackClick() },
                         ),
                         onNavigateToSettings = { currentFen ->
-                            runtimeContext.positionEditor.initialFen = currentFen
+                            runtimeContext.positionSearch.initialFen = currentFen
                             currentScreen = ScreenType.PositionSearchSettings
                         }
                     )
 
                     ScreenType.PositionSearchSettings -> PositionSearchSettingsScreenContainer(
-                        currentFen = runtimeContext.positionEditor.initialFen,
-                        onFenChange = { newFen -> runtimeContext.positionEditor.initialFen = newFen },
+                        currentFen = runtimeContext.positionSearch.initialFen,
+                        onFenChange = { newFen -> runtimeContext.positionSearch.initialFen = newFen },
                         screenContext = createScreenContext(
-                            onBackClick = { currentScreen = ScreenType.PositionEditor },
+                            onBackClick = { currentScreen = ScreenType.PositionSearch },
                         ),
                     )
 
@@ -301,12 +336,12 @@ class MainActivity : ComponentActivity() {
                         screenContext = createScreenContext(
                             onBackClick = { currentScreen = ScreenType.Home },
                         ),
-                        onOpenPositionEditor = { fen ->
-                            runtimeContext.positionEditor.initialFen = fen
-                            runtimeContext.positionEditor.onBackClick = {
+                        onOpenPositionSearch = { fen ->
+                            runtimeContext.positionSearch.initialFen = fen
+                            runtimeContext.positionSearch.onBackClick = {
                                 currentScreen = ScreenType.SavedPositions
                             }
-                            currentScreen = ScreenType.PositionEditor
+                            currentScreen = ScreenType.PositionSearch
                         },
                         onShowOpeningDeviationSelection = { sourcePositionFen, deviationItems ->
                             runtimeContext.openingDeviation.setDeviationItems(
@@ -536,7 +571,7 @@ class MainActivity : ComponentActivity() {
                         },
                         onSearchByPositionClick = { fen ->
                             applyTrainingFlowResult(
-                                regularTrainingFlow.openPositionEditorFromTraining(
+                                regularTrainingFlow.openPositionSearchFromTraining(
                                     fen = fen,
                                     trainingId = screen.trainingId,
                                     gameId = screen.gameId,
@@ -569,11 +604,11 @@ class MainActivity : ComponentActivity() {
                             initialPly = screen.initialPly,
                         ),
                         onSearchByPositionClick = { fen ->
-                            runtimeContext.positionEditor.initialFen = fen
-                            runtimeContext.positionEditor.onBackClick = {
+                            runtimeContext.positionSearch.initialFen = fen
+                            runtimeContext.positionSearch.onBackClick = {
                                 currentScreen = screen
                             }
-                            currentScreen = ScreenType.PositionEditor
+                            currentScreen = ScreenType.PositionSearch
                         },
                     )
 
@@ -603,10 +638,10 @@ class MainActivity : ComponentActivity() {
                         onCreateTrainingClick = {
                             currentScreen = ScreenType.CreateTrainingChoice
                         },
-                        onOpenPositionEditorClick = {
-                            runtimeContext.positionEditor.resetToInitialPosition()
-                            runtimeContext.positionEditor.onBackClick = { currentScreen = ScreenType.Home }
-                            currentScreen = ScreenType.PositionEditor
+                        onOpenPositionSearchClick = {
+                            runtimeContext.positionSearch.resetToInitialPosition()
+                            runtimeContext.positionSearch.onBackClick = { currentScreen = ScreenType.Home }
+                            currentScreen = ScreenType.PositionSearch
                         },
                     )
 
@@ -620,7 +655,10 @@ class MainActivity : ComponentActivity() {
                         simpleViewEnabled = simpleViewEnabled,
                         onSimpleViewToggle = { newValue ->
                             simpleViewEnabled = newValue
-                            scope.launch {
+                            scope.launchAppCatching(
+                                errorReporter = errorReporter,
+                                message = "Failed to save settings.",
+                            ) {
                                 userProfileService.updateSettings(
                                     simpleViewEnabled = newValue,
                                     removeLineIfRepIsZero = removeLineIfRepIsZero,
@@ -631,7 +669,10 @@ class MainActivity : ComponentActivity() {
                         removeLineIfRepIsZero = removeLineIfRepIsZero,
                         onRemoveLineIfRepIsZeroToggle = { newValue ->
                             removeLineIfRepIsZero = newValue
-                            scope.launch {
+                            scope.launchAppCatching(
+                                errorReporter = errorReporter,
+                                message = "Failed to save settings.",
+                            ) {
                                 userProfileService.updateSettings(
                                     simpleViewEnabled = simpleViewEnabled,
                                     removeLineIfRepIsZero = newValue,
@@ -642,7 +683,10 @@ class MainActivity : ComponentActivity() {
                         hideLinesWithWeightZero = hideLinesWithWeightZero,
                         onHideLinesWithWeightZeroToggle = { newValue ->
                             hideLinesWithWeightZero = newValue
-                            scope.launch {
+                            scope.launchAppCatching(
+                                errorReporter = errorReporter,
+                                message = "Failed to save settings.",
+                            ) {
                                 userProfileService.updateSettings(
                                     simpleViewEnabled = simpleViewEnabled,
                                     removeLineIfRepIsZero = removeLineIfRepIsZero,
@@ -709,7 +753,7 @@ class MainActivity : ComponentActivity() {
                         },
                         onSearchByPositionClick = { fen ->
                             applyTrainingFlowResult(
-                                smartTrainingFlow.openPositionEditor(
+                                smartTrainingFlow.openPositionSearch(
                                     fen = fen,
                                     trainingId = screen.trainingId,
                                     gameId = screen.gameId,
