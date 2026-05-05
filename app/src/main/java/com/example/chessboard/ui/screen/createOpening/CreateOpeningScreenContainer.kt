@@ -50,7 +50,7 @@ internal fun CreateOpeningScreenContainer(
     val userProfileService = remember(dbProvider) { dbProvider.createUserProfileService() }
     val gameController = remember { GameController() }
     var gameDraft by remember(initialDraft) { mutableStateOf(initialDraft) }
-    var nameError by remember { mutableStateOf(false) }
+    var showOpeningNameError by remember { mutableStateOf(false) }
     var pgnText by remember { mutableStateOf("") }
     var pgnImportError by remember { mutableStateOf<String?>(null) }
     var saveError by remember { mutableStateOf<String?>(null) }
@@ -157,73 +157,77 @@ internal fun CreateOpeningScreenContainer(
 
     CreateOpeningScreen(
         gameController = gameController,
-        selectedSide = EditableGameSide.fromSideMask(gameDraft.game.sideMask),
-        onSideSelected = { selectedSide ->
-            gameDraft = updateDraftGame(gameDraft) { draftGame ->
-                draftGame.copy(sideMask = selectedSide.sideMask)
-            }
-        },
-        onBackClick = screenContext.onBackClick,
-        openingName = gameDraft.game.event.orEmpty(),
-        onOpeningNameChange = {
-            gameDraft = updateDraftGame(gameDraft) { draftGame ->
-                draftGame.copy(event = it)
-            }
-            nameError = false
-        },
-        ecoCode = gameDraft.game.eco.orEmpty(),
-        onEcoCodeChange = { eco ->
-            gameDraft = updateDraftGame(gameDraft) { draftGame ->
-                draftGame.copy(eco = eco)
-            }
-        },
-        nameError = nameError,
-        pgnText = pgnText,
-        onPgnTextChange = {
-            pgnText = it
-            importedChapters = emptyList()
-            pgnImportError = null
-        },
-        importedUciLines = importedUciLines,
-        importedChapterCount = importedChapters.size,
-        pgnImportError = pgnImportError,
-        onPgnImportErrorDismiss = { pgnImportError = null },
-        saveError = saveError,
-        onSaveErrorDismiss = { saveError = null },
-        onImportFromFileClick = { filePickerLauncher.launch(arrayOf("*/*")) },
-        onSave = { scrollToNameField ->
-            val isMultiChapter = importedChapters.size > 1
-            if (!isMultiChapter && gameDraft.game.event.isNullOrBlank()) {
-                nameError = true
-                scrollToNameField()
-                return@CreateOpeningScreen
-            }
+        state = CreateOpeningScreenState(
+            selectedSide = EditableGameSide.fromSideMask(gameDraft.game.sideMask),
+            openingName = gameDraft.game.event.orEmpty(),
+            ecoCode = gameDraft.game.eco.orEmpty(),
+            showOpeningNameError = showOpeningNameError,
+            pgnText = pgnText,
+            importedUciLines = importedUciLines,
+            importedChapterCount = importedChapters.size,
+            pgnImportError = pgnImportError,
+            saveError = saveError,
+        ),
+        actions = CreateOpeningScreenActions(
+            onSideSelected = { selectedSide ->
+                gameDraft = updateDraftGame(gameDraft) { draftGame ->
+                    draftGame.copy(sideMask = selectedSide.sideMask)
+                }
+            },
+            onBackClick = screenContext.onBackClick,
+            onOpeningNameChange = {
+                gameDraft = updateDraftGame(gameDraft) { draftGame ->
+                    draftGame.copy(event = it)
+                }
+                showOpeningNameError = false
+            },
+            onEcoCodeChange = { eco ->
+                gameDraft = updateDraftGame(gameDraft) { draftGame ->
+                    draftGame.copy(eco = eco)
+                }
+            },
+            onPgnTextChange = {
+                pgnText = it
+                importedChapters = emptyList()
+                pgnImportError = null
+            },
+            onPgnImportErrorDismiss = { pgnImportError = null },
+            onSaveErrorDismiss = { saveError = null },
+            onImportFromFileClick = { filePickerLauncher.launch(arrayOf("*/*")) },
+            onSave = onSaveAction@{ scrollToNameField ->
+                val isMultiChapter = importedChapters.size > 1
+                if (!isMultiChapter && gameDraft.game.event.isNullOrBlank()) {
+                    showOpeningNameError = true
+                    scrollToNameField()
+                    return@onSaveAction
+                }
 
-            val lifecycleOwner = activity as? LifecycleOwner ?: return@CreateOpeningScreen
-            val saveSnapshot = buildCreateOpeningSaveSnapshot(
-                gameDraft = gameDraft,
-                importedChapters = importedChapters,
-                gameController = gameController,
-                simpleViewEnabled = simpleViewEnabled,
-            )
-
-            lifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-                val saveResult = saveOpening(
-                    snapshot = saveSnapshot,
-                    dbProvider = dbProvider,
-                    gameSaver = gameSaver,
-                    trainingService = trainingService,
+                val lifecycleOwner = activity as? LifecycleOwner ?: return@onSaveAction
+                val saveSnapshot = buildCreateOpeningSaveSnapshot(
+                    gameDraft = gameDraft,
+                    importedChapters = importedChapters,
+                    gameController = gameController,
+                    simpleViewEnabled = simpleViewEnabled,
                 )
-                withContext(Dispatchers.Main) {
-                    applyCreateOpeningSaveResult(
-                        saveResult = saveResult,
-                        onBackClick = screenContext.onBackClick,
-                        onPostSaveStateChange = { postSaveState = it },
-                        onSaveError = { message -> saveError = message },
+
+                lifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                    val saveResult = saveOpening(
+                        snapshot = saveSnapshot,
+                        dbProvider = dbProvider,
+                        gameSaver = gameSaver,
+                        trainingService = trainingService,
                     )
+                    withContext(Dispatchers.Main) {
+                        applyCreateOpeningSaveResult(
+                            saveResult = saveResult,
+                            onBackClick = screenContext.onBackClick,
+                            onPostSaveStateChange = { postSaveState = it },
+                            onSaveError = { message -> saveError = message },
+                        )
+                    }
                 }
             }
-        },
+        ),
         modifier = modifier,
     )
 }
