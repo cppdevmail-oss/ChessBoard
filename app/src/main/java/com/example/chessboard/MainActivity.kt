@@ -187,7 +187,8 @@ class MainActivity : ComponentActivity() {
 
                         if (screenType == ScreenType.PositionSearch) {
                             runtimeContext.positionSearch.resetToInitialPosition()
-                            runtimeContext.positionSearch.onBackClick = { currentScreen = ScreenType.Home }
+                            val previousScreen = currentScreen
+                            runtimeContext.positionSearch.onBackClick = { currentScreen = previousScreen }
                             currentScreen = ScreenType.PositionSearch
                             return@navigation
                         }

@@ -59,6 +59,7 @@ import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.BoardActionNavigationBar
 import com.example.chessboard.ui.components.BoardActionNavigationItem
+import com.example.chessboard.ui.components.HomeIconButton
 import com.example.chessboard.ui.components.IconMd
 import com.example.chessboard.ui.components.PasteInputBlock
 import com.example.chessboard.ui.components.ScreenSection
@@ -169,6 +170,7 @@ internal data class PositionSearchScreenActions(
 
 private data class PositionSearchNavigationActions(
     val onBackClick: () -> Unit = {},
+    val onHomeClick: () -> Unit = {},
     val onNavigate: (ScreenType) -> Unit = {},
     val onSettingsClick: () -> Unit = {}
 )
@@ -550,6 +552,7 @@ fun PositionSearchScreenContainer(
         ),
         navigation = PositionSearchNavigationActions(
             onBackClick = screenContext.onBackClick,
+            onHomeClick = { screenContext.onNavigate(ScreenType.Home) },
             onNavigate = screenContext.onNavigate,
             onSettingsClick = { onNavigateToSettings(uiState.fenText) }
         ),
@@ -589,6 +592,7 @@ private fun PositionSearchScreen(
                 title = "Position Search",
                 onBackClick = navigation.onBackClick,
                 actions = {
+                    HomeIconButton(onClick = navigation.onHomeClick)
                     SettingsIconButton(onClick = navigation.onSettingsClick)
                     IconButton(onClick = actions.topBar.onSavePositionClick) {
                         IconMd(
