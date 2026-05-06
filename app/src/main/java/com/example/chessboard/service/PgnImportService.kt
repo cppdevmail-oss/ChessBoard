@@ -186,11 +186,11 @@ private fun parseSanLineToUci(tokens: List<String>): List<String> {
         val fullMove = index / 2 + 1
         val side = if (index % 2 == 0) "White" else "Black"
         val uci = sanToUci(token, board)
-            ?: throw IllegalArgumentException("Unrecognized notation \"$token\" (move $fullMove, $side)")
+            ?: throw IllegalArgumentException("Can't play $token (move $fullMove, $side): unrecognized notation")
         val move = uciToMove(uci, board)
 
         if (!board.legalMoves().contains(move)) {
-            throw IllegalArgumentException("Illegal move \"$token\" (move $fullMove, $side)")
+            throw IllegalArgumentException("Can't play $token (move $fullMove, $side): illegal move")
         }
 
         board.doMove(move)
