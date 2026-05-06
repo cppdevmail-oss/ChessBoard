@@ -364,14 +364,32 @@ internal fun TrainingSingleGameActions(
 
     Column(modifier = modifier) {
         if (simpleViewEnabled) {
-            if (state == TrainingSingleGameActionsState.Training) {
-                HintIconButton(
-                    onClick = actions.onHintClick,
-                    iconSize = compactIconSize,
-                    buttonSize = compactIconButtonSize,
-                )
+            if (state != TrainingSingleGameActionsState.ShowingLine) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(compactActionSpacing),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                ) {
+                    if (state == TrainingSingleGameActionsState.Training) {
+                        HintIconButton(
+                            onClick = actions.onHintClick,
+                            iconSize = compactIconSize,
+                            buttonSize = compactIconButtonSize,
+                        )
+                    }
+                    IconButton(
+                        onClick = actions.onAnalyzeGameClick,
+                        modifier = Modifier.size(compactIconButtonSize)
+                    ) {
+                        IconSm(
+                            imageVector = Icons.Default.Analytics,
+                            contentDescription = "Analyze game",
+                            modifier = Modifier.size(compactIconSize)
+                        )
+                    }
+                }
             }
             if (state == TrainingSingleGameActionsState.Mistake) {
+                Spacer(modifier = Modifier.height(AppDimens.spaceMd))
                 PrimaryButton(
                     text = "Make correct move",
                     onClick = actions.onMakeCorrectMoveClick,

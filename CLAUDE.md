@@ -269,6 +269,10 @@ MainActivity
 - **Always ask clarifying questions before taking big actions** — if the task is ambiguous, multi-step, or touches several files, ask first instead of diving in
 - When the user says "continue", ask what they want to continue rather than inferring from memory and acting immediately
 
+### Agent and tool discipline
+- **Never spawn the Explore agent when the target files are already known** — the File Map above lists every key file; read them directly with the Read tool instead. Explore is only for genuinely unknown locations.
+- **Never spawn any agent just to read files you could read yourself** — agents cost 3-5× more tokens than direct reads and add latency. Use agents only for open-ended searches across many unknown files.
+
 ### Don't
 - Don't duplicate logic that belongs in `TrainingComponents.kt`
 - Don't create new files unless no existing file is a reasonable home

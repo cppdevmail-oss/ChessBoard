@@ -37,10 +37,9 @@ class GameAnalysisScreenTest {
 
         composeRule.onNodeWithText("Analyze Game").assertIsDisplayed()
         composeRule.onNodeWithTag(GameAnalysisContentTestTag).assertIsDisplayed()
-        scrollToTag(GameAnalysisMoveControlsTestTag)
         composeRule.onNodeWithTag(GameAnalysisMoveControlsTestTag).assertIsDisplayed()
-        composeRule.onNodeWithText("♔").assertIsDisplayed()
-        composeRule.onNodeWithText("♚").assertIsDisplayed()
+        composeRule.onNodeWithText("White").assertIsDisplayed()
+        composeRule.onNodeWithText("Black").assertIsDisplayed()
         composeRule.onNodeWithTag(InteractiveChessBoardTestTag).assert(
             fenStateDescriptionMatcher(InitialBoardFen)
         )
