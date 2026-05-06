@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -62,7 +63,6 @@ import com.example.chessboard.ui.components.BoardActionNavigationItem
 import com.example.chessboard.ui.components.HomeIconButton
 import com.example.chessboard.ui.components.IconMd
 import com.example.chessboard.ui.components.PasteInputBlock
-import com.example.chessboard.ui.components.ScreenSection
 import com.example.chessboard.ui.components.SettingsIconButton
 import com.example.chessboard.ui.drawPieceGlyph
 import com.example.chessboard.ui.screen.EditableGameSide
@@ -637,15 +637,13 @@ private fun PositionSearchScreen(
             }
 
             item {
-                ScreenSection {
-                    PasteInputBlock(
-                        title = "FEN",
-                        text = state.search.fenText,
-                        onTextChange = actions.position.onFenTextChange,
-                        placeholder = "Paste FEN string here...",
-                        minLines = 3
-                    )
-                }
+                PasteInputBlock(
+                    title = "FEN",
+                    text = state.search.fenText,
+                    onTextChange = actions.position.onFenTextChange,
+                    placeholder = "Paste FEN string here...",
+                    minLines = 3
+                )
             }
 
             item {
@@ -709,20 +707,19 @@ private fun PositionSearchBoardSection(
 ) {
     val boardState = gameController.boardState
 
-    ScreenSection {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
-        ) {
-            key(boardState) {
-                PositionSearchBoardWithCoordinates(
-                    gameController = gameController,
-                    onSquareClick = onBoardSquareClick,
-                    onPieceMove = onBoardPieceMove,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(AppDimens.radiusXl))
+    ) {
+        key(boardState) {
+            PositionSearchBoardWithCoordinates(
+                gameController = gameController,
+                onSquareClick = onBoardSquareClick,
+                onPieceMove = onBoardPieceMove,
+                modifier = Modifier.fillMaxSize()
+            )
         }
     }
 }
@@ -734,13 +731,11 @@ private fun PositionSearchPaletteSection(
     onPieceSelected: (PositionSearchPieceOption) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    ScreenSection(modifier = modifier) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            PositionSearchPieceGrid(
-                selectedPiece = selectedPiece,
-                onPieceSelected = onPieceSelected
-            )
-        }
+    Column(modifier = modifier.fillMaxWidth()) {
+        PositionSearchPieceGrid(
+            selectedPiece = selectedPiece,
+            onPieceSelected = onPieceSelected
+        )
     }
 }
 

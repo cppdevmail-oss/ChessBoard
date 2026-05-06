@@ -40,6 +40,7 @@ import com.example.chessboard.ui.GameEditorPreviousTestTag
 import com.example.chessboard.ui.GameEditorScrollContainerTestTag
 import com.example.chessboard.ui.components.AppConfirmDialog
 import com.example.chessboard.ui.components.AppDivider
+import com.example.chessboard.ui.components.HomeIconButton
 import com.example.chessboard.ui.components.BoardActionNavigationBar
 import com.example.chessboard.ui.components.BoardActionNavigationItem
 import com.example.chessboard.ui.components.AppScreenScaffold
@@ -142,6 +143,7 @@ fun GameEditorScreenContainer(
         moveLabels = moveLabels,
         isLoading = isLoading,
         onBackClick = screenContext.onBackClick,
+        onHomeClick = { screenContext.onNavigate(ScreenType.Home) },
         onNavigate = screenContext.onNavigate,
         onSave = { name, eco, selectedSide ->
             val idx = gameController.currentMoveIndex
@@ -289,6 +291,7 @@ fun GameEditorScreen(
     moveLabels: List<String>,
     isLoading: Boolean,
     onBackClick: () -> Unit = {},
+    onHomeClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
     onSave: (name: String, eco: String, selectedSide: EditableGameSide) -> Unit,
     onDelete: () -> Unit = {},
@@ -324,6 +327,7 @@ fun GameEditorScreen(
                 subtitle = editedEco.ifBlank { null },
                 onBackClick = onBackClick,
                 actions = {
+                    HomeIconButton(onClick = onHomeClick)
                     DeleteIconButton(onClick = { showDeleteDialog = true })
                     IconButton(onClick = { onSave(editedName, editedEco, selectedSide) }) {
                         IconMd(
