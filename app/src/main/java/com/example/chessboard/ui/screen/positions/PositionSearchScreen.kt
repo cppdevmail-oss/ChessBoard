@@ -190,6 +190,7 @@ fun PositionSearchScreenContainer(
     initialFen: String = InitialBoardFenWithoutMoveNumbers,
     screenContext: ScreenContainerContext,
     onNavigateToSettings: (currentFen: String) -> Unit = {},
+    onShowFoundGamesClick: (gameIds: List<Long>, currentFen: String) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
@@ -536,6 +537,12 @@ fun PositionSearchScreenContainer(
                     uiState = uiState.copy(foundGameIds = null)
                 },
                 onCreateTemplateClick = ::openTemplateNameDialog,
+                onShowLinesClick = showLinesFromFoundGames@{
+                    val foundGameIds = uiState.foundGameIds ?: return@showLinesFromFoundGames
+                    val currentFen = uiState.fenText
+                    uiState = uiState.copy(foundGameIds = null)
+                    onShowFoundGamesClick(foundGameIds, currentFen)
+                },
                 templateNameDialogState = templateNameDialogState,
                 onTemplateNameChange = { templateName ->
                     templateNameDialogState?.let { currentDialogState ->

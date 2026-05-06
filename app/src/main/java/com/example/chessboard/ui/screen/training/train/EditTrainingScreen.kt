@@ -219,28 +219,6 @@ private fun EditTrainingBoardControlsBar(
                 )
             },
             BoardActionNavigationItem(
-                label = "Back",
-                enabled = canUndo,
-                onClick = onPrevClick,
-            ) {
-                IconMd(
-                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                    contentDescription = "Previous move",
-                    tint = if (canUndo) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
-                )
-            },
-            BoardActionNavigationItem(
-                label = "Forward",
-                enabled = canRedo,
-                onClick = onNextClick,
-            ) {
-                IconMd(
-                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = "Next move",
-                    tint = if (canRedo) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
-                )
-            },
-            BoardActionNavigationItem(
                 label = "Edit",
                 enabled = hasSelection,
                 onClick = onEditClick,
@@ -260,6 +238,28 @@ private fun EditTrainingBoardControlsBar(
                     imageVector = Icons.Rounded.PlayArrow,
                     contentDescription = "Start training",
                     tint = if (hasSelection) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
+                )
+            },
+            BoardActionNavigationItem(
+                label = "Back",
+                enabled = canUndo,
+                onClick = onPrevClick,
+            ) {
+                IconMd(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                    contentDescription = "Previous move",
+                    tint = if (canUndo) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
+                )
+            },
+            BoardActionNavigationItem(
+                label = "Forward",
+                enabled = canRedo,
+                onClick = onNextClick,
+            ) {
+                IconMd(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = "Next move",
+                    tint = if (canRedo) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
                 )
             },
         ),

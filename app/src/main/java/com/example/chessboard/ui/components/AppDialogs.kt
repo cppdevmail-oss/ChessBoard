@@ -1,7 +1,7 @@
 package com.example.chessboard.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -53,9 +53,9 @@ fun AppMessageDialog(
                 return Modifier.testTag(testTag)
             }
 
-            FlowRow(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                verticalArrangement = Arrangement.spacedBy(AppDimens.spaceXs)
             ) {
                 actions.forEach { action ->
                     TextButton(

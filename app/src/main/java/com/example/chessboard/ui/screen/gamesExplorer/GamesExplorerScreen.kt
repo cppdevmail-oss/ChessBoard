@@ -59,14 +59,12 @@ import com.example.chessboard.service.ParsedGame
 import com.example.chessboard.service.buildMoveLabels
 import com.example.chessboard.service.parsePgnMoves
 import com.example.chessboard.ui.BoardOrientation
-import com.example.chessboard.ui.components.AppBottomNavigation
 import com.example.chessboard.ui.components.AppConfirmDialog
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.ChessBoardSection
 import com.example.chessboard.ui.components.IconMd
-import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.theme.AppDimens
@@ -85,6 +83,7 @@ fun GamesExplorerScreenContainer(
     modifier: Modifier = Modifier,
     screenContext: ScreenContainerContext,
     initialSelectedGameId: Long? = null,
+    simpleViewEnabled: Boolean = false,
     onOpenGameEditor: (GameEntity) -> Unit = {},
     onCloneGameClick: (GameDraft) -> Unit = {},
     onAnalyzeGameClick: (List<String>, Int) -> Unit,
@@ -210,6 +209,7 @@ fun GamesExplorerScreenContainer(
         totalPages = totalPages,
         canOpenPreviousPage = canOpenPreviousPage,
         canOpenNextPage = canOpenNextPage,
+        simpleViewEnabled = simpleViewEnabled,
         modifier = modifier,
         onBackClick = screenContext.onBackClick,
         onNavigate = screenContext.onNavigate,
@@ -274,6 +274,7 @@ internal fun GamesExplorerScreen(
     totalPages: Int = 1,
     canOpenPreviousPage: Boolean = false,
     canOpenNextPage: Boolean = false,
+    simpleViewEnabled: Boolean = false,
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
@@ -309,6 +310,7 @@ internal fun GamesExplorerScreen(
         displayedGames = displayedGames,
         selectedGameIdx = selectedGameIdx
     )
+    val hasSelectedGame = selectedGame != null && selectedGameIdx >= 0
     var showDeleteDialog by remember(selectedGame?.game?.id) { mutableStateOf(false) }
 
     SideEffect {
@@ -395,10 +397,37 @@ internal fun GamesExplorerScreen(
             )
         },
         bottomBar = {
-            AppBottomNavigation(
-                items = defaultAppBottomNavigationItems(),
-                selectedItem = ScreenType.GamesExplorer,
-                onItemSelected = onNavigate
+            GamesExplorerBoardControlsBar(
+                canUndo = gameController.canUndo,
+                canRedo = gameController.canRedo,
+                hasSelection = hasSelectedGame,
+                simpleViewEnabled = simpleViewEnabled,
+                onPrevClick = { gameController.undoMove() },
+                onResetClick = {
+                    if (hasSelectedGame) {
+                        onMovePlyClick(selectedGameIdx, 0)
+                    }
+                },
+                onNextClick = { gameController.redoMove() },
+                onAnalyzeClick = {
+                    selectedGame?.let { game ->
+                        onAnalyzeGameClick(
+                            game.uciMoves,
+                            currentPly.coerceIn(0, game.uciMoves.size),
+                        )
+                    }
+                },
+                onCloneClick = {
+                    selectedGame?.let { game -> onCloneGameClick(game.game) }
+                },
+                onEditClick = {
+                    selectedGame?.let { game -> onOpenGameEditor(game.game) }
+                },
+                onDeleteClick = {
+                    if (hasSelectedGame) {
+                        showDeleteDialog = true
+                    }
+                },
             )
         }
     ) { paddingValues ->
@@ -463,23 +492,9 @@ internal fun GamesExplorerScreen(
                         GameBlock(
                             parsedGame = parsedGame,
                             isSelected = isSelected,
-                            currentPly = if (isSelected) currentPly else 0,
+                            gameController = gameController,
                             onSelectClick = { onMovePlyClick(gameIdx, 0) },
-                            canUndo = isSelected && gameController.canUndo,
-                            canRedo = isSelected && gameController.canRedo,
                             onMovePlyClick = { ply -> onMovePlyClick(gameIdx, ply) },
-                            onPrevClick = { gameController.undoMove() },
-                            onNextClick = { gameController.redoMove() },
-                            onResetClick = { onMovePlyClick(gameIdx, 0) },
-                            onAnalyzeClick = {
-                                onAnalyzeGameClick(
-                                    parsedGame.uciMoves,
-                                    currentPly.coerceIn(0, parsedGame.uciMoves.size),
-                                )
-                            },
-                            onCloneClick = { onCloneGameClick(parsedGame.game) },
-                            onEditClick = { onOpenGameEditor(parsedGame.game) },
-                            onDeleteClick = { showDeleteDialog = true }
                         )
                         Spacer(modifier = Modifier.height(AppDimens.spaceMd))
                     }

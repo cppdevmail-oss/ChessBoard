@@ -283,6 +283,7 @@ class MainActivity : ComponentActivity() {
                     ScreenType.GamesExplorer -> GamesExplorerScreenContainer(
                         observableGamesPage = runtimeContext.gamesExplorer,
                         initialSelectedGameId = gamesExplorerSelectedGameId,
+                        simpleViewEnabled = simpleViewEnabled,
                         screenContext = createScreenContext(
                             onBackClick = { gamesExplorerOnBackClick() },
                         ),
@@ -322,6 +323,13 @@ class MainActivity : ComponentActivity() {
                         onNavigateToSettings = { currentFen ->
                             runtimeContext.positionSearch.initialFen = currentFen
                             currentScreen = ScreenType.PositionSearchSettings
+                        },
+                        onShowFoundGamesClick = { foundGameIds, currentFen ->
+                            runtimeContext.positionSearch.initialFen = currentFen
+                            runtimeContext.gamesExplorer.setGameIds(foundGameIds)
+                            gamesExplorerSelectedGameId = null
+                            gamesExplorerOnBackClick = { currentScreen = ScreenType.PositionSearch }
+                            currentScreen = ScreenType.GamesExplorer
                         }
                     )
 

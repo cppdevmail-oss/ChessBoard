@@ -36,4 +36,5 @@
 - добавить линии для симпл вью
 - баг, если меняешь линии, при загрузке пгн таких же линий - 1 загружаются все. 2 новые изменяются -
 мб проблема в полуходе, добавил ход за черных и эта линия появилась в новой тренировке
-- move sequance replace to move tree on train game screen
+- move sequence replace to move tree on train game screen
+- replace games with line everywhere

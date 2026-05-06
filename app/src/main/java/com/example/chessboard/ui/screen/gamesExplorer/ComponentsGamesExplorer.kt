@@ -17,50 +17,43 @@ package com.example.chessboard.ui.screen.gamesExplorer
  * - logic for unrelated screens
  * - broad app-wide UI utilities
  */
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.service.ParsedGame
 import com.example.chessboard.ui.components.AppTextField
-import com.example.chessboard.ui.components.BodySecondaryText
+import com.example.chessboard.ui.components.BoardActionNavigationBar
+import com.example.chessboard.ui.components.BoardActionNavigationItem
 import com.example.chessboard.ui.components.CardMetaText
 import com.example.chessboard.ui.components.CardSurface
-import com.example.chessboard.ui.components.DeleteIconButton
+import com.example.chessboard.ui.components.GameMoveTreeSection
 import com.example.chessboard.ui.components.IconMd
-import com.example.chessboard.ui.components.MoveChip
 import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TextColor
-import com.example.chessboard.ui.theme.TrainingAccentTeal
 import com.example.chessboard.ui.theme.TrainingIconInactive
-import com.example.chessboard.ui.theme.TrainingTextPrimary
 
 internal data class GamesExplorerFilterState(
     val query: String = "",
@@ -71,24 +64,25 @@ internal data class GamesExplorerFilterState(
 internal fun GameBlock(
     parsedGame: ParsedGame,
     isSelected: Boolean,
-    currentPly: Int,
+    gameController: GameController,
     onSelectClick: () -> Unit,
-    canUndo: Boolean,
-    canRedo: Boolean,
     onMovePlyClick: (ply: Int) -> Unit,
-    onPrevClick: () -> Unit,
-    onNextClick: () -> Unit,
-    onResetClick: () -> Unit,
-    onAnalyzeClick: () -> Unit,
-    onCloneClick: () -> Unit,
-    onEditClick: () -> Unit,
-    onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    if (isSelected) {
+        GameMoveTreeSection(
+            importedUciLines = listOf(parsedGame.uciMoves),
+            gameController = gameController,
+            modifier = modifier.fillMaxWidth(),
+            onMoveSelected = { _, targetPly -> onMovePlyClick(targetPly) },
+        )
+        return
+    }
+
     CardSurface(
         modifier = modifier.fillMaxWidth(),
-        color = if (isSelected) Background.CardDark else Background.SurfaceDark,
-        border = if (isSelected) BorderStroke(1.dp, TrainingAccentTeal) else null,
+        color = Background.SurfaceDark,
+        border = null,
         onClick = onSelectClick
     ) {
         Row(
@@ -107,38 +101,15 @@ internal fun GameBlock(
             }
             CardMetaText(text = "${parsedGame.moveLabels.size} moves")
         }
-
-        Spacer(modifier = Modifier.size(AppDimens.spaceSm))
-
-        if (isSelected) {
-            GamesExplorerActionRow(
-                canUndo = canUndo,
-                canRedo = canRedo,
-                onPrevClick = onPrevClick,
-                onResetClick = onResetClick,
-                onNextClick = onNextClick,
-                onAnalyzeClick = onAnalyzeClick,
-                onCloneClick = onCloneClick,
-                onEditClick = onEditClick,
-                onDeleteClick = onDeleteClick
-            )
-
-            Spacer(modifier = Modifier.size(AppDimens.spaceSm))
-        }
-
-        GameMoveChips(
-            moveLabels = parsedGame.moveLabels,
-            isSelected = isSelected,
-            currentPly = currentPly,
-            onMovePlyClick = onMovePlyClick
-        )
     }
 }
 
 @Composable
-private fun GamesExplorerActionRow(
+internal fun GamesExplorerBoardControlsBar(
     canUndo: Boolean,
     canRedo: Boolean,
+    hasSelection: Boolean,
+    simpleViewEnabled: Boolean = false,
     onPrevClick: () -> Unit,
     onResetClick: () -> Unit,
     onNextClick: () -> Unit,
@@ -147,94 +118,143 @@ private fun GamesExplorerActionRow(
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
-    val undoTint = resolveGamesExplorerActionTint(canUndo)
-    val redoTint = resolveGamesExplorerActionTint(canRedo)
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(AppDimens.radiusXs),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            GameBlockActionButton(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                contentDescription = "Previous",
-                onClick = onPrevClick,
-                tint = undoTint,
-                isEnabled = canUndo
+    BoardActionNavigationBar(
+        maxVisibleItems = if (simpleViewEnabled) 4 else 7,
+        items = if (simpleViewEnabled) {
+            listOf(
+                BoardActionNavigationItem(
+                    label = "Edit",
+                    enabled = hasSelection,
+                    onClick = onEditClick,
+                ) {
+                    IconMd(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit game",
+                        tint = resolveGamesExplorerActionTint(hasSelection),
+                    )
+                },
+                BoardActionNavigationItem(
+                    label = "Delete",
+                    enabled = hasSelection,
+                    onClick = onDeleteClick,
+                ) {
+                    IconMd(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete game",
+                        tint = resolveGamesExplorerActionTint(hasSelection),
+                    )
+                },
+                BoardActionNavigationItem(
+                    label = "Back",
+                    enabled = canUndo,
+                    onClick = onPrevClick,
+                ) {
+                    IconMd(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                        contentDescription = "Previous",
+                        tint = resolveGamesExplorerActionTint(canUndo),
+                    )
+                },
+                BoardActionNavigationItem(
+                    label = "Forward",
+                    enabled = canRedo,
+                    onClick = onNextClick,
+                ) {
+                    IconMd(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = "Next",
+                        tint = resolveGamesExplorerActionTint(canRedo),
+                    )
+                },
             )
-            GameBlockActionButton(
-                imageVector = Icons.Default.Refresh,
-                contentDescription = "Reset",
-                onClick = onResetClick
-            )
-            GameBlockActionButton(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = "Next",
-                onClick = onNextClick,
-                tint = redoTint,
-                isEnabled = canRedo
-            )
-        }
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(AppDimens.radiusXs),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            GameBlockActionButton(
-                imageVector = Icons.Default.Analytics,
-                contentDescription = "Analyze game",
-                onClick = onAnalyzeClick
-            )
-            GameBlockActionButton(
-                imageVector = Icons.Default.ContentCopy,
-                contentDescription = "Clone game",
-                onClick = onCloneClick
-            )
-            GameBlockActionButton(
-                imageVector = Icons.Default.Edit,
-                contentDescription = "Edit game",
-                onClick = onEditClick
-            )
-            DeleteIconButton(
-                contentDescription = "Delete game",
+        } else listOf(
+            BoardActionNavigationItem(
+                label = "Reset",
+                enabled = hasSelection,
+                onClick = onResetClick,
+            ) {
+                IconMd(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "Reset",
+                    tint = resolveGamesExplorerActionTint(hasSelection),
+                )
+            },
+            BoardActionNavigationItem(
+                label = "Analyze",
+                enabled = hasSelection,
+                onClick = onAnalyzeClick,
+            ) {
+                IconMd(
+                    imageVector = Icons.Default.Analytics,
+                    contentDescription = "Analyze game",
+                    tint = resolveGamesExplorerActionTint(hasSelection),
+                )
+            },
+            BoardActionNavigationItem(
+                label = "Clone",
+                enabled = hasSelection,
+                onClick = onCloneClick,
+            ) {
+                IconMd(
+                    imageVector = Icons.Default.ContentCopy,
+                    contentDescription = "Clone game",
+                    tint = resolveGamesExplorerActionTint(hasSelection),
+                )
+            },
+            BoardActionNavigationItem(
+                label = "Edit",
+                enabled = hasSelection,
+                onClick = onEditClick,
+            ) {
+                IconMd(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Edit game",
+                    tint = resolveGamesExplorerActionTint(hasSelection),
+                )
+            },
+            BoardActionNavigationItem(
+                label = "Delete",
+                enabled = hasSelection,
                 onClick = onDeleteClick,
-                modifier = Modifier.size(40.dp),
-            )
-        }
-    }
+            ) {
+                IconMd(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Delete game",
+                    tint = resolveGamesExplorerActionTint(hasSelection),
+                )
+            },
+            BoardActionNavigationItem(
+                label = "Back",
+                enabled = canUndo,
+                onClick = onPrevClick,
+            ) {
+                IconMd(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                    contentDescription = "Previous",
+                    tint = resolveGamesExplorerActionTint(canUndo),
+                )
+            },
+            BoardActionNavigationItem(
+                label = "Forward",
+                enabled = canRedo,
+                onClick = onNextClick,
+            ) {
+                IconMd(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = "Next",
+                    tint = resolveGamesExplorerActionTint(canRedo),
+                )
+            },
+        ),
+    )
 }
 
 private fun resolveGamesExplorerActionTint(isEnabled: Boolean): Color {
     if (isEnabled) {
-        return TrainingTextPrimary
+        return TrainingIconInactive
     }
 
-    return TrainingIconInactive
-}
-
-@Composable
-private fun GameBlockActionButton(
-    imageVector: ImageVector,
-    contentDescription: String,
-    onClick: () -> Unit,
-    tint: Color = TrainingTextPrimary,
-    isEnabled: Boolean = true
-) {
-    IconButton(
-        onClick = onClick,
-        enabled = isEnabled,
-        modifier = Modifier.size(40.dp)
-    ) {
-        IconMd(
-            imageVector = imageVector,
-            contentDescription = contentDescription,
-            tint = tint,
-        )
-    }
+    return TrainingIconInactive.copy(alpha = 0.5f)
 }
 
 @Composable
@@ -251,38 +271,6 @@ private fun GameBlockMetaRow(
         }
 
         CardMetaText(text = "ID: $gameId")
-    }
-}
-
-@Composable
-private fun GameMoveChips(
-    moveLabels: List<String>,
-    isSelected: Boolean,
-    currentPly: Int,
-    onMovePlyClick: (Int) -> Unit
-) {
-    if (moveLabels.isEmpty()) {
-        BodySecondaryText(text = "No moves recorded")
-        return
-    }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(AppDimens.radiusXs),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        moveLabels.forEachIndexed { index, label ->
-            val ply = index + 1
-            val moveNumber = index / 2 + 1
-            val prefix = if (index % 2 == 0) "$moveNumber." else "$moveNumber..."
-            MoveChip(
-                label = "$prefix$label",
-                isSelected = isSelected && ply == currentPly,
-                onClick = { onMovePlyClick(ply) }
-            )
-        }
     }
 }
 

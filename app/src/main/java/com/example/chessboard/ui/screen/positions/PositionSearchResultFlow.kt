@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.testTag
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.ui.PositionTemplateNameConfirmTestTag
 import com.example.chessboard.service.OneGameTrainingData
+import com.example.chessboard.ui.PositionSearchResultShowLinesActionTestTag
 import com.example.chessboard.ui.PositionSearchResultTemplateActionTestTag
 import com.example.chessboard.ui.PositionSearchResultTrainingActionTestTag
 import com.example.chessboard.ui.components.AppTextField
@@ -39,6 +40,7 @@ internal data class PositionSearchResultDialogActions(
     val onDismiss: () -> Unit,
     val onCreateTrainingClick: () -> Unit,
     val onCreateTemplateClick: () -> Unit,
+    val onShowLinesClick: (() -> Unit)? = null,
     val templateNameDialogState: PositionTemplateNameDialogState? = null,
     val onTemplateNameChange: (String) -> Unit = {},
     val onTemplateNameDismiss: () -> Unit = {},
@@ -70,28 +72,38 @@ internal fun RenderPositionSearchResultDialog(
         return
     }
 
-    AppMessageDialog(
-        title = resolveFoundGameIdsTitle(foundGameIds),
-        message = resolveFoundGameIdsMessage(foundGameIds),
-        onDismiss = actions.onDismiss,
-        actions = listOf(
-            AppMessageDialogAction(
-                text = "Close",
-                onClick = actions.onDismiss,
-            ),
+    val resultActions = buildList {
+        actions.onShowLinesClick?.let { onShowLinesClick ->
+            add(
+                AppMessageDialogAction(
+                    text = "Show Lines",
+                    onClick = onShowLinesClick,
+                    testTag = PositionSearchResultShowLinesActionTestTag,
+                )
+            )
+        }
+        add(
             AppMessageDialogAction(
                 text = "Template",
                 onClick = actions.onCreateTemplateClick,
                 testTag = PositionSearchResultTemplateActionTestTag,
-            ),
+            )
+        )
+        add(
             AppMessageDialogAction(
                 text = "Training",
                 onClick = actions.onCreateTrainingClick,
                 testTag = PositionSearchResultTrainingActionTestTag,
-            ),
-        ),
-    )
+            )
+        )
+    }
 
+    AppMessageDialog(
+        title = resolveFoundGameIdsTitle(foundGameIds),
+        message = resolveFoundGameIdsMessage(foundGameIds),
+        onDismiss = actions.onDismiss,
+        actions = resultActions,
+    )
 }
 
 internal suspend fun createPositionTemplateFromGameIds(
