@@ -15,20 +15,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import com.example.chessboard.R
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
@@ -39,9 +39,9 @@ import com.example.chessboard.ui.GameEditorNextTestTag
 import com.example.chessboard.ui.GameEditorPreviousTestTag
 import com.example.chessboard.ui.GameEditorScrollContainerTestTag
 import com.example.chessboard.ui.components.AppConfirmDialog
-import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
-import com.example.chessboard.ui.components.AppBottomNavigation
 import com.example.chessboard.ui.components.AppDivider
+import com.example.chessboard.ui.components.BoardActionNavigationBar
+import com.example.chessboard.ui.components.BoardActionNavigationItem
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.CardMetaText
@@ -50,7 +50,6 @@ import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import com.example.chessboard.ui.theme.TrainingIconInactive
-import com.example.chessboard.ui.theme.TrainingTextPrimary
 import com.example.chessboard.ui.components.ChessBoardSection
 import com.example.chessboard.ui.screen.training.DarkInputField
 import com.example.chessboard.ui.components.MoveChip
@@ -215,95 +214,71 @@ private fun goToStart(
     )
 }
 
-private fun goToEnd(
-    gameController: GameController,
-    currentPly: Int,
-    totalPly: Int
-) {
-    if (currentPly == totalPly) {
-        return
-    }
-
-    goToPly(
-        gameController = gameController,
-        currentPly = currentPly,
-        targetPly = totalPly
-    )
-}
 
 @Composable
-private fun GameEditorMoveControls(
-    gameController: GameController,
-    currentPly: Int,
-    totalPly: Int,
-    modifier: Modifier = Modifier
+private fun GameEditorBoardControlsBar(
+    selectedSide: EditableGameSide,
+    onSideSelected: (EditableGameSide) -> Unit,
+    canUndo: Boolean,
+    canRedo: Boolean,
+    onResetClick: () -> Unit,
+    onBackClick: () -> Unit,
+    onForwardClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Row(
+    BoardActionNavigationBar(
         modifier = modifier,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(
-            onClick = { gameController.undoMove() },
-            enabled = gameController.canUndo,
-            modifier = Modifier
-                .testTag(GameEditorPreviousTestTag)
-                .semantics { contentDescription = "Previous" }
-        ) {
-            IconMd(
-                Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                contentDescription = null,
-                tint = if (gameController.canUndo) TrainingTextPrimary else TrainingIconInactive,
-            )
-        }
-        TextButton(
-            onClick = {
-                goToStart(
-                    gameController = gameController,
-                    currentPly = currentPly
+        items = EditableGameSide.entries.map { side ->
+            BoardActionNavigationItem(
+                label = if (side == EditableGameSide.AS_WHITE) "White" else "Black",
+                selected = side == selectedSide,
+                onClick = { onSideSelected(side) },
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_king),
+                    contentDescription = side.toDisplayText(),
+                    tint = if (side == selectedSide) TrainingAccentTeal else TrainingIconInactive,
+                    modifier = Modifier.size(AppIconSizes.Lg),
+                )
+            }
+        } + listOf(
+            BoardActionNavigationItem(
+                label = "Reset",
+                enabled = canUndo,
+                onClick = onResetClick,
+            ) {
+                IconMd(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "Reset",
+                    tint = if (canUndo) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
                 )
             },
-            enabled = gameController.canUndo
-        ) {
-            CardMetaText("<<")
-        }
-        TextButton(
-            onClick = {
-                goToStart(
-                    gameController = gameController,
-                    currentPly = currentPly
+            BoardActionNavigationItem(
+                label = "Back",
+                enabled = canUndo,
+                modifier = Modifier.testTag(GameEditorPreviousTestTag),
+                onClick = onBackClick,
+            ) {
+                IconMd(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                    contentDescription = "Previous move",
+                    tint = if (canUndo) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
                 )
             },
-            enabled = gameController.canUndo
-        ) {
-            CardMetaText("Reset")
-        }
-        TextButton(
-            onClick = {
-                goToEnd(
-                    gameController = gameController,
-                    currentPly = currentPly,
-                    totalPly = totalPly
+            BoardActionNavigationItem(
+                label = "Forward",
+                enabled = canRedo,
+                modifier = Modifier.testTag(GameEditorNextTestTag),
+                onClick = onForwardClick,
+            ) {
+                IconMd(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = "Next move",
+                    tint = if (canRedo) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
                 )
             },
-            enabled = gameController.canRedo
-        ) {
-            CardMetaText(">>")
-        }
-        IconButton(
-            onClick = { gameController.redoMove() },
-            enabled = gameController.canRedo,
-            modifier = Modifier
-                .testTag(GameEditorNextTestTag)
-                .semantics { contentDescription = "Next" }
-        ) {
-            IconMd(
-                Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint = if (gameController.canRedo) TrainingTextPrimary else TrainingIconInactive,
-            )
-        }
-    }
+        ),
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -361,10 +336,17 @@ fun GameEditorScreen(
             )
         },
         bottomBar = {
-            AppBottomNavigation(
-                items = defaultAppBottomNavigationItems(),
-                selectedItem = ScreenType.GamesExplorer,
-                onItemSelected = onNavigate
+            GameEditorBoardControlsBar(
+                selectedSide = selectedSide,
+                onSideSelected = {
+                    selectedSide = it
+                    gameController.setOrientation(it.orientation)
+                },
+                canUndo = gameController.canUndo,
+                canRedo = gameController.canRedo,
+                onResetClick = { goToStart(gameController, currentPly) },
+                onBackClick = { gameController.undoMove() },
+                onForwardClick = { gameController.redoMove() },
             )
         }
     ) { paddingValues ->
@@ -381,32 +363,6 @@ fun GameEditorScreen(
                     .verticalScroll(rememberScrollState())
             ) {
                 ChessBoardSection(gameController = gameController, modifier = Modifier.fillMaxWidth())
-
-                Spacer(modifier = Modifier.height(AppDimens.spaceMd))
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = AppDimens.spaceLg),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    GameSideSelector(
-                        selectedSide = selectedSide,
-                        onSideSelected = {
-                            selectedSide = it
-                            gameController.setOrientation(it.orientation)
-                        },
-                        showTitle = false,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Spacer(modifier = Modifier.width(AppDimens.spaceMd))
-                    GameEditorMoveControls(
-                        gameController = gameController,
-                        currentPly = currentPly,
-                        totalPly = moveLabels.size,
-                    )
-                }
 
                 Spacer(modifier = Modifier.height(AppDimens.spaceMd))
 
