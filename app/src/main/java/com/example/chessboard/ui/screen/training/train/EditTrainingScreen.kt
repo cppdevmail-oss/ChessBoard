@@ -10,6 +10,16 @@ package com.example.chessboard.ui.screen.training.train
  * - persistence helpers unrelated to this concrete screen flow
  * Validation date: 2026-04-25
  */
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.rounded.PlayArrow
+import com.example.chessboard.ui.components.BoardActionNavigationBar
+import com.example.chessboard.ui.components.BoardActionNavigationItem
+import com.example.chessboard.ui.components.IconMd
+import com.example.chessboard.ui.theme.TrainingIconInactive
 import com.example.chessboard.ui.screen.training.common.CreateTrainingEditorState
 import com.example.chessboard.ui.screen.training.common.DEFAULT_TRAINING_NAME
 import com.example.chessboard.ui.screen.training.common.TrainingCollectionEditorScreen
@@ -183,6 +193,78 @@ fun EditTrainingScreenContainer(
     )
 }
 
+@Composable
+private fun EditTrainingBoardControlsBar(
+    canUndo: Boolean,
+    canRedo: Boolean,
+    hasSelection: Boolean,
+    onResetClick: () -> Unit,
+    onPrevClick: () -> Unit,
+    onNextClick: () -> Unit,
+    onEditClick: () -> Unit,
+    onStartClick: () -> Unit,
+) {
+    BoardActionNavigationBar(
+        items = listOf(
+            BoardActionNavigationItem(
+                label = "Reset",
+                enabled = canUndo,
+                onClick = onResetClick,
+            ) {
+                IconMd(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "Reset",
+                    tint = if (canUndo) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
+                )
+            },
+            BoardActionNavigationItem(
+                label = "Back",
+                enabled = canUndo,
+                onClick = onPrevClick,
+            ) {
+                IconMd(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                    contentDescription = "Previous move",
+                    tint = if (canUndo) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
+                )
+            },
+            BoardActionNavigationItem(
+                label = "Forward",
+                enabled = canRedo,
+                onClick = onNextClick,
+            ) {
+                IconMd(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = "Next move",
+                    tint = if (canRedo) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
+                )
+            },
+            BoardActionNavigationItem(
+                label = "Edit",
+                enabled = hasSelection,
+                onClick = onEditClick,
+            ) {
+                IconMd(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Edit game",
+                    tint = if (hasSelection) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
+                )
+            },
+            BoardActionNavigationItem(
+                label = "Start",
+                enabled = hasSelection,
+                onClick = onStartClick,
+            ) {
+                IconMd(
+                    imageVector = Icons.Rounded.PlayArrow,
+                    contentDescription = "Start training",
+                    tint = if (hasSelection) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
+                )
+            },
+        ),
+    )
+}
+
 private val EditTrainingScreenStrings = TrainingCollectionEditorStrings(
     screenTitle = "Edit Training",
     collectionNameLabel = "Training Name",
@@ -238,6 +320,10 @@ fun EditTrainingScreen(
     val selectedGame = editorState.editableGamesForTraining.firstOrNull { game ->
         game.gameId == boardSession.selectedGameId
     }
+    @Suppress("UNUSED_VARIABLE")
+    val boardState = boardSession.gameController.boardState
+    val canUndo = selectedGame != null && boardSession.gameController.canUndo
+    val canRedo = selectedGame != null && boardSession.gameController.canRedo
 
     fun hasUnsavedChanges(): Boolean {
         return hasUnsavedTrainingEditorChanges(
@@ -354,6 +440,18 @@ fun EditTrainingScreen(
         modifier = modifier,
         simpleViewEnabled = simpleViewEnabled,
         autoScrollToGameIndex = autoScrollToGameIndex,
+        bottomBarOverride = {
+            EditTrainingBoardControlsBar(
+                canUndo = canUndo,
+                canRedo = canRedo,
+                hasSelection = selectedGame != null,
+                onResetClick = { boardSession.selectedGameId?.let { boardSession.onResetSelectedGame(it) } },
+                onPrevClick = { boardSession.gameController.undoMove() },
+                onNextClick = { boardSession.gameController.redoMove() },
+                onEditClick = { selectedGame?.let { g -> requestLeave { onOpenGameEditorClick(g.gameId) } } },
+                onStartClick = { selectedGame?.let { g -> requestLeave { onStartGameTrainingClick(g.gameId, orderedGameIds) } } },
+            )
+        },
         topBarActions = {
             SettingsIconButton(
                 onClick = onOpenSettingsClick,
@@ -406,22 +504,6 @@ fun EditTrainingScreen(
                 onRemoveClick = { removeGameFromTraining(game.gameId) },
             ),
             removeCollectionLabel = "training",
-            primaryActions = listOfNotNull(
-                parsedGame?.let { currentParsedGame ->
-                    createEditTrainingAnalyzeAction(
-                        uciMoves = currentParsedGame.uciMoves,
-                        currentPly = if (isSelected) boardSession.gameController.currentMoveIndex else 0,
-                        requestLeave = ::requestLeave,
-                        onAnalyzeGameClick = onAnalyzeGameClick,
-                    )
-                },
-                createEditTrainingPrimaryAction(
-                    gameId = game.gameId,
-                    orderedGameIds = orderedGameIds,
-                    requestLeave = ::requestLeave,
-                    onStartGameTrainingClick = onStartGameTrainingClick,
-                ),
-            )
         )
     }
 }

@@ -58,6 +58,7 @@ internal fun TrainingCollectionEditorScreen(
     autoScrollToGameIndex: Int? = null,
     headerContent: (@Composable () -> Unit)? = null,
     topBarActions: @Composable () -> Unit = {},
+    bottomBarOverride: (@Composable () -> Unit)? = null,
     gameItemContent: @Composable LazyItemScope.(TrainingGameEditorItem) -> Unit,
 ) {
     val listState = rememberLazyListState()
@@ -90,11 +91,15 @@ internal fun TrainingCollectionEditorScreen(
             )
         },
         bottomBar = {
-            AppBottomNavigation(
-                items = defaultAppBottomNavigationItems(),
-                selectedItem = selectedNavItem,
-                onItemSelected = onNavigate
-            )
+            if (bottomBarOverride != null) {
+                bottomBarOverride()
+            } else {
+                AppBottomNavigation(
+                    items = defaultAppBottomNavigationItems(),
+                    selectedItem = selectedNavItem,
+                    onItemSelected = onNavigate
+                )
+            }
         }
     ) { paddingValues ->
         LazyColumn(

@@ -16,16 +16,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -37,29 +31,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.ui.EditTrainingMoveLegendSectionTestTag
-import com.example.chessboard.ui.MoveLegendNextTestTag
 import com.example.chessboard.ui.TrainingEditorGameCardTestTag
 import com.example.chessboard.ui.components.AppConfirmDialog
 import com.example.chessboard.ui.components.AppIconSizes
 import com.example.chessboard.ui.components.BoardActionBlock
-import com.example.chessboard.ui.components.BoardActionButtonGroup
 import com.example.chessboard.ui.components.DeleteIconButton
 import com.example.chessboard.ui.components.ChessBoardSection
-import com.example.chessboard.ui.components.IconSm
 import com.example.chessboard.ui.components.IconXs
 import com.example.chessboard.ui.components.MoveSequenceSection
 import com.example.chessboard.ui.theme.AppDimens
-import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingIconInactive
 
 internal data class TrainingEditorGameSectionState(
     val game: TrainingGameEditorItem,
@@ -82,26 +68,13 @@ internal data class TrainingEditorGameSectionActions(
     val onRemoveClick: (() -> Unit)? = null,
 )
 
-internal data class TrainingEditorPrimaryAction(
-    val onClick: () -> Unit,
-    val icon: ImageVector,
-    val contentDescription: String,
-    val tint: Color = TextColor.Primary,
-)
-
 @Composable
 internal fun TrainingEditorGameSection(
     state: TrainingEditorGameSectionState,
     actions: TrainingEditorGameSectionActions,
-    primaryAction: TrainingEditorPrimaryAction? = null,
-    primaryActions: List<TrainingEditorPrimaryAction> = emptyList(),
     removeCollectionLabel: String = "training",
     modifier: Modifier = Modifier,
 ) {
-    val visiblePrimaryActions = resolveVisiblePrimaryActions(
-        primaryAction = primaryAction,
-        primaryActions = primaryActions,
-    )
     var showRemoveConfirm by remember { mutableStateOf(false) }
 
     if (showRemoveConfirm) {
@@ -142,20 +115,8 @@ internal fun TrainingEditorGameSection(
         TrainingEditorGameCard(
             state = state,
             actions = actions,
-            primaryActions = visiblePrimaryActions,
         )
     }
-}
-
-private fun resolveVisiblePrimaryActions(
-    primaryAction: TrainingEditorPrimaryAction?,
-    primaryActions: List<TrainingEditorPrimaryAction>,
-): List<TrainingEditorPrimaryAction> {
-    if (primaryActions.isNotEmpty()) {
-        return primaryActions
-    }
-
-    return listOfNotNull(primaryAction)
 }
 
 @Composable
@@ -253,11 +214,10 @@ private fun RenderTrainingGameEcoBadge(eco: String?) {
 private fun TrainingEditorGameCard(
     state: TrainingEditorGameSectionState,
     actions: TrainingEditorGameSectionActions,
-    primaryActions: List<TrainingEditorPrimaryAction>,
 ) {
-    val cardActionButtonSize = AppDimens.iconButtonSize
-    val canUndo = state.isSelected && state.gameController.canUndo
-    val canRedo = state.isSelected && state.gameController.canRedo
+    if (state.parsedGame == null) {
+        return
+    }
 
     BoardActionBlock(
         modifier = Modifier
@@ -266,45 +226,6 @@ private fun TrainingEditorGameCard(
         highlighted = state.isSelected,
         onClick = if (state.isSelected) null else actions.onSelect
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(2.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TrainingEditorMoveControls(
-                canUndo = canUndo,
-                canRedo = canRedo,
-                onResetClick = actions.onResetClick,
-                onPrevClick = actions.onPrevClick,
-                onNextClick = actions.onNextClick,
-                buttonSize = cardActionButtonSize,
-            )
-
-            Spacer(modifier = Modifier.width(AppDimens.spaceSm))
-
-            IconButton(
-                onClick = actions.onEditGameClick,
-                modifier = Modifier.size(cardActionButtonSize)
-            ) {
-                IconSm(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Edit game",
-                )
-            }
-
-            RenderPrimaryGameActionButtons(
-                primaryActions = primaryActions,
-                buttonSize = cardActionButtonSize,
-            )
-        }
-
-        if (state.parsedGame == null) {
-            return@BoardActionBlock
-        }
-
-        Spacer(modifier = Modifier.height(AppDimens.spaceMd))
-        HorizontalDivider(color = Background.ScreenDark, thickness = 1.dp)
-        Spacer(modifier = Modifier.height(AppDimens.spaceMd))
         MoveSequenceSection(
             moveLabels = state.parsedGame.moveLabels,
             currentPly = state.currentPly,
@@ -314,92 +235,5 @@ private fun TrainingEditorGameCard(
             },
             modifier = Modifier.testTag(EditTrainingMoveLegendSectionTestTag),
         )
-    }
-}
-
-@Composable
-private fun TrainingEditorMoveControls(
-    canUndo: Boolean,
-    canRedo: Boolean,
-    onResetClick: () -> Unit,
-    onPrevClick: () -> Unit,
-    onNextClick: () -> Unit,
-    buttonSize: Dp,
-) {
-    val undoTint = resolveTrainingEditorMoveControlTint(canUndo)
-    val redoTint = resolveTrainingEditorMoveControlTint(canRedo)
-
-    BoardActionButtonGroup {
-        IconButton(
-            onClick = onResetClick,
-            enabled = canUndo,
-            modifier = Modifier.size(buttonSize)
-        ) {
-            IconSm(
-                imageVector = Icons.Default.Refresh,
-                contentDescription = "Reset",
-                tint = undoTint,
-            )
-        }
-        IconButton(
-            onClick = onPrevClick,
-            enabled = canUndo,
-            modifier = Modifier.size(buttonSize)
-        ) {
-            IconSm(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                contentDescription = "Previous move",
-                tint = undoTint,
-            )
-        }
-        IconButton(
-            onClick = onNextClick,
-            enabled = canRedo,
-            modifier = Modifier
-                .size(buttonSize)
-                .testTag(MoveLegendNextTestTag)
-        ) {
-            IconSm(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = "Next move",
-                tint = redoTint,
-            )
-        }
-    }
-}
-
-private fun resolveTrainingEditorMoveControlTint(isEnabled: Boolean): Color {
-    if (isEnabled) {
-        return TextColor.Primary
-    }
-
-    return TrainingIconInactive
-}
-
-@Composable
-private fun RenderPrimaryGameActionButtons(
-    primaryActions: List<TrainingEditorPrimaryAction>,
-    buttonSize: Dp,
-) {
-    if (primaryActions.isEmpty()) {
-        return
-    }
-
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        primaryActions.forEach { action ->
-            IconButton(
-                onClick = action.onClick,
-                modifier = Modifier.size(buttonSize)
-            ) {
-                IconSm(
-                    imageVector = action.icon,
-                    contentDescription = action.contentDescription,
-                    tint = action.tint,
-                )
-            }
-        }
     }
 }

@@ -3,16 +3,12 @@ import com.example.chessboard.ui.screen.training.common.ParsedTrainingEditorGame
 import com.example.chessboard.ui.screen.training.common.TrainingEditorGameSection
 import com.example.chessboard.ui.screen.training.common.TrainingEditorGameSectionActions
 import com.example.chessboard.ui.screen.training.common.TrainingEditorGameSectionState
-import com.example.chessboard.ui.screen.training.common.TrainingEditorPrimaryAction
 import com.example.chessboard.ui.screen.training.common.TrainingGameEditorItem
 
 import androidx.activity.ComponentActivity
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -73,66 +69,12 @@ class TrainingEditorGameSectionTest {
     }
 
     @Test
-    fun trainingEditorGameSection_primaryActionVisibleAndInvokesCallback() {
-        var primaryActionClicks = 0
-
-        setTrainingEditorGameSectionContent(
-            primaryAction = TrainingEditorPrimaryAction(
-                onClick = { primaryActionClicks += 1 },
-                icon = Icons.Default.Add,
-                contentDescription = "Start training"
-            )
-        )
-
-        composeRule.onNodeWithContentDescription("Start training").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Start training").performClick()
-
-        composeRule.runOnIdle {
-            assertEquals(1, primaryActionClicks)
-        }
-    }
-
-    @Test
-    fun trainingEditorGameSection_primaryActionsVisibleAndInvokeCallbacks() {
-        var analyzeClicks = 0
-        var startClicks = 0
-
-        setTrainingEditorGameSectionContent(
-            primaryAction = null,
-            primaryActions = listOf(
-                TrainingEditorPrimaryAction(
-                    onClick = { analyzeClicks += 1 },
-                    icon = Icons.Default.Add,
-                    contentDescription = "Analyze game",
-                ),
-                TrainingEditorPrimaryAction(
-                    onClick = { startClicks += 1 },
-                    icon = Icons.Default.Add,
-                    contentDescription = "Start training",
-                ),
-            ),
-        )
-
-        composeRule.onNodeWithContentDescription("Analyze game").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Start training").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Analyze game").performClick()
-        composeRule.onNodeWithContentDescription("Start training").performClick()
-
-        composeRule.runOnIdle {
-            assertEquals(1, analyzeClicks)
-            assertEquals(1, startClicks)
-        }
-    }
-
-    @Test
     fun trainingEditorGameSection_hidesOptionalSectionsWhenDataIsMissing() {
         setTrainingEditorGameSectionContent(
             state = createSectionState(parsedGame = null, isSelected = false),
-            primaryAction = null
         )
 
         composeRule.onAllNodesWithText("Move Sequence").assertCountEquals(0)
-        composeRule.onAllNodesWithContentDescription("Start training").assertCountEquals(0)
     }
 
     @Test
@@ -156,16 +98,12 @@ class TrainingEditorGameSectionTest {
     private fun setTrainingEditorGameSectionContent(
         state: TrainingEditorGameSectionState = createSectionState(),
         actions: TrainingEditorGameSectionActions = createSectionActions(),
-        primaryAction: TrainingEditorPrimaryAction? = createPrimaryAction(),
-        primaryActions: List<TrainingEditorPrimaryAction> = emptyList(),
     ) {
         composeRule.setContent {
             ChessBoardTheme {
                 TrainingEditorGameSection(
                     state = state,
                     actions = actions,
-                    primaryAction = primaryAction,
-                    primaryActions = primaryActions,
                 )
             }
         }
@@ -205,14 +143,6 @@ class TrainingEditorGameSectionTest {
             onResetClick = onResetClick,
             onEditGameClick = onEditGameClick,
             onMovePlyClick = onMovePlyClick
-        )
-    }
-
-    private fun createPrimaryAction(): TrainingEditorPrimaryAction {
-        return TrainingEditorPrimaryAction(
-            onClick = {},
-            icon = Icons.Default.Add,
-            contentDescription = "Start training"
         )
     }
 
