@@ -216,8 +216,8 @@ private fun TreeMoveChip(label: String, isSelected: Boolean, onClick: () -> Unit
         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
         color = if (isSelected) TrainingAccentTeal else TextColor.Primary,
         modifier = Modifier
-            .testTag(moveChipTestTag(label))
             .clickable(onClick = onClick)
+            .testTag(moveChipTestTag(label))
             .padding(horizontal = 2.dp, vertical = 3.dp),
     )
 }

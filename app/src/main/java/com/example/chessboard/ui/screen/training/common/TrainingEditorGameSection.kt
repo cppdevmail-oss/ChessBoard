@@ -98,7 +98,7 @@ internal fun TrainingEditorGameSection(
             simpleViewEnabled = state.simpleViewEnabled,
             onDecreaseWeightClick = actions.onDecreaseWeightClick,
             onIncreaseWeightClick = actions.onIncreaseWeightClick,
-            onRemoveClick = if (actions.onRemoveClick != null) {
+            onRemoveClick = if (state.isSelected && actions.onRemoveClick != null) {
                 { showRemoveConfirm = true }
             } else null,
             removeCollectionLabel = removeCollectionLabel,
@@ -217,4 +217,3 @@ private fun RenderTrainingGameEcoBadge(eco: String?) {
         )
     }
 }
-

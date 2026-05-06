@@ -17,6 +17,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithTag
@@ -94,9 +95,9 @@ class EditTrainingTemplateScreenTest {
         composeRule.onNodeWithTag(EditTrainingListTestTag)
             .performScrollToNode(hasTestTag(EditTrainingMoveLegendSectionTestTag))
         waitForNodeDisplayed(EditTrainingMoveLegendSectionTestTag)
-        composeRule.onNodeWithTag(moveChipTestTag("1.e4")).performScrollTo()
-        waitForNodeDisplayed(moveChipTestTag("1.e4"))
-        composeRule.onNodeWithTag(moveChipTestTag("1.e4"))
+        composeRule.onNodeWithTag(moveChipTestTag("e4")).performScrollTo()
+        waitForNodeDisplayed(moveChipTestTag("e4"))
+        composeRule.onNodeWithTag(moveChipTestTag("e4"))
             .performSemanticsAction(SemanticsActions.OnClick)
 
         assertBoardFenEventually(AfterE4Fen)
@@ -155,6 +156,9 @@ class EditTrainingTemplateScreenTest {
             }
         }
 
+        composeRule.onNodeWithTag(EditTrainingListTestTag)
+            .performScrollToNode(hasContentDescription("Remove game from template"))
+        waitForNodeDisplayedByContentDescription("Remove game from template")
         composeRule.onNodeWithContentDescription("Remove game from template").performClick()
         waitForTextDisplayed("Remove Game")
         composeRule.onNode(hasText("Remove") and hasClickAction()).performClick()
@@ -189,6 +193,15 @@ class EditTrainingTemplateScreenTest {
         composeRule.waitUntil(timeoutMillis = 5_000) {
             runCatching {
                 composeRule.onNodeWithText(text).assertIsDisplayed()
+                true
+            }.getOrDefault(false)
+        }
+    }
+
+    private fun waitForNodeDisplayedByContentDescription(contentDescription: String) {
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching {
+                composeRule.onNodeWithContentDescription(contentDescription).assertIsDisplayed()
                 true
             }.getOrDefault(false)
         }

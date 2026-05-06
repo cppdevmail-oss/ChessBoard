@@ -8,6 +8,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.click
+import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.entity.SideMask
 import com.example.chessboard.service.ParsedGame
@@ -46,18 +47,9 @@ class GamesExplorerCardSelectionTest {
                 GameBlock(
                     parsedGame = parsedGame,
                     isSelected = false,
-                    currentPly = 0,
+                    gameController = GameController(),
                     onSelectClick = { selectedPly = 0 },
-                    canUndo = false,
-                    canRedo = false,
                     onMovePlyClick = {},
-                    onPrevClick = {},
-                    onNextClick = {},
-                    onResetClick = {},
-                    onAnalyzeClick = {},
-                    onCloneClick = {},
-                    onEditClick = {},
-                    onDeleteClick = {},
                     modifier = Modifier.testTag(gameBlockTestTag),
                 )
             }

@@ -49,6 +49,7 @@ import com.example.chessboard.runtimecontext.RuntimeContext
 import com.example.chessboard.runtimecontext.TrainingRuntimeContext
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.ui.components.AppConfirmDialog
+import com.example.chessboard.ui.components.DeleteIconButton
 import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
@@ -60,7 +61,9 @@ import com.example.chessboard.ui.screen.training.loadsave.loadEditTrainingState
 import com.example.chessboard.ui.screen.training.loadsave.normalizeTrainingEditorName
 import com.example.chessboard.ui.screen.training.loadsave.saveEditedTraining
 import com.example.chessboard.ui.theme.AppDimens
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 private fun RenderMissingTrainingDialog(
@@ -127,6 +130,7 @@ fun EditTrainingScreenContainer(
     val trainingService = remember(inDbProvider) { inDbProvider.createTrainingService() }
     var loadState by remember { mutableStateOf(TrainingLoadState()) }
     var trainingSaveSuccess by remember { mutableStateOf<TrainingSaveSuccess?>(null) }
+    var showDeleteTrainingDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(trainingId) {
@@ -153,6 +157,27 @@ fun EditTrainingScreenContainer(
         }
     )
 
+    if (showDeleteTrainingDialog) {
+        val trainingName = loadState.trainingName.ifBlank { "this training" }
+        AppConfirmDialog(
+            title = "Delete Training",
+            message = "Delete \"$trainingName\"?\nTraining ID: $trainingId",
+            onDismiss = { },
+            onConfirm = {
+                scope.launch {
+                    val deleted = withContext(Dispatchers.IO) {
+                        trainingService.deleteTraining(trainingId)
+                    }
+                    if (deleted) {
+                        onNavigate(ScreenType.Training)
+                    }
+                }
+            },
+            confirmText = "Delete",
+            isDestructive = true,
+        )
+    }
+
     val visibleGamesForTraining = if (hideLinesWithWeightZero) {
         loadState.gamesForTraining.filter { it.weight > 0 }
     } else {
@@ -170,6 +195,7 @@ fun EditTrainingScreenContainer(
         onStartGameTrainingClick = onStartGameTrainingClick,
         onAnalyzeGameClick = onAnalyzeGameClick,
         onOpenSettingsClick = onOpenSettingsClick,
+        onDeleteTrainingClick = { showDeleteTrainingDialog = true },
         onOpenGameEditorClick = createOpenEditTrainingGameEditorAction(
             allGamesById = loadState.allGamesById,
             onOpenGameEditorClick = onOpenGameEditorClick
@@ -289,6 +315,7 @@ fun EditTrainingScreen(
     onAnalyzeGameClick: (List<String>, Int) -> Unit = { _, _ -> },
     onOpenGameEditorClick: (Long) -> Unit = {},
     onOpenSettingsClick: () -> Unit = {},
+    onDeleteTrainingClick: () -> Unit = {},
     onSaveTraining: (String, List<TrainingGameEditorItem>, Boolean, (() -> Unit)?) -> Unit = { _, _, _, _ -> },
     modifier: Modifier = Modifier
 ) {
@@ -477,6 +504,10 @@ fun EditTrainingScreen(
             SettingsIconButton(
                 onClick = onOpenSettingsClick,
                 contentDescription = "Training settings",
+            )
+            DeleteIconButton(
+                onClick = onDeleteTrainingClick,
+                contentDescription = "Delete training",
             )
         }
     ) { game ->

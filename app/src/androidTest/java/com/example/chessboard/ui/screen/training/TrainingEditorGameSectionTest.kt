@@ -19,6 +19,7 @@ import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.service.buildMoveLabels
 import com.example.chessboard.service.parsePgnMoves
 import com.example.chessboard.ui.MoveTreeBoxTestTag
+import com.example.chessboard.ui.moveChipTestTag
 import com.example.chessboard.ui.theme.ChessBoardTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -90,7 +91,7 @@ class TrainingEditorGameSectionTest {
         )
 
         composeRule.onNodeWithTag(MoveTreeBoxTestTag).assertIsDisplayed()
-        composeRule.onNodeWithText("e4").performClick()
+        composeRule.onNodeWithTag(moveChipTestTag("e4")).performClick()
 
         composeRule.runOnIdle {
             assertEquals(1, movePlyClicks)
@@ -154,7 +155,7 @@ class TrainingEditorGameSectionTest {
             title = "Italian Game",
             weight = 3,
             eco = "C50",
-            pgn = "1. e4 e5 2. Nf3 *"
+            pgn = "1. e2e4 e7e5 2. g1f3 *"
         )
     }
 

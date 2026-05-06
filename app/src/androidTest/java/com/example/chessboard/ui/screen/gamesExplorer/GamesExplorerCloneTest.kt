@@ -40,17 +40,13 @@ class GamesExplorerCloneTest {
 
         composeRule.setContent {
             ChessBoardTheme {
-                GameBlock(
-                    parsedGame = parsedGame,
-                    isSelected = true,
-                    currentPly = 0,
-                    onSelectClick = {},
+                GamesExplorerBoardControlsBar(
                     canUndo = false,
                     canRedo = false,
-                    onMovePlyClick = {},
+                    hasSelection = true,
                     onPrevClick = {},
-                    onNextClick = {},
                     onResetClick = {},
+                    onNextClick = {},
                     onAnalyzeClick = {},
                     onCloneClick = {
                         clonedGame = parsedGame.game
@@ -98,17 +94,13 @@ class GamesExplorerCloneTest {
 
         composeRule.setContent {
             ChessBoardTheme {
-                GameBlock(
-                    parsedGame = parsedGame,
-                    isSelected = true,
-                    currentPly = 2,
-                    onSelectClick = {},
+                GamesExplorerBoardControlsBar(
                     canUndo = false,
                     canRedo = false,
-                    onMovePlyClick = {},
+                    hasSelection = true,
                     onPrevClick = {},
-                    onNextClick = {},
                     onResetClick = {},
+                    onNextClick = {},
                     onAnalyzeClick = { analyzeClicks += 1 },
                     onCloneClick = {},
                     onEditClick = {},

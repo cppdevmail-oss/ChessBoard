@@ -9,7 +9,6 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -28,7 +27,6 @@ import com.example.chessboard.testing.normalizeFenForAssertion
 import com.example.chessboard.ui.EditTrainingListTestTag
 import com.example.chessboard.ui.EditTrainingMoveLegendSectionTestTag
 import com.example.chessboard.ui.InteractiveChessBoardTestTag
-import com.example.chessboard.ui.MoveLegendNextTestTag
 import com.example.chessboard.ui.moveChipTestTag
 import com.example.chessboard.ui.theme.ChessBoardTheme
 import org.junit.Rule
@@ -57,9 +55,9 @@ class EditTrainingScreenTest {
         composeRule.onNodeWithTag(EditTrainingListTestTag)
             .performScrollToNode(hasTestTag(EditTrainingMoveLegendSectionTestTag))
         waitForNodeDisplayed(EditTrainingMoveLegendSectionTestTag)
-        composeRule.onNodeWithTag(moveChipTestTag("1.e4")).performScrollTo()
-        waitForNodeDisplayed(moveChipTestTag("1.e4"))
-        composeRule.onNodeWithTag(moveChipTestTag("1.e4"))
+        composeRule.onNodeWithTag(moveChipTestTag("e4")).performScrollTo()
+        waitForNodeDisplayed(moveChipTestTag("e4"))
+        composeRule.onNodeWithTag(moveChipTestTag("e4"))
             .performSemanticsAction(SemanticsActions.OnClick)
 
         assertBoardFenEventually(AfterE4Fen)
@@ -87,12 +85,11 @@ class EditTrainingScreenTest {
         composeRule.onNodeWithTag(EditTrainingListTestTag)
             .performScrollToNode(hasTestTag(EditTrainingMoveLegendSectionTestTag))
         waitForNodeDisplayed(EditTrainingMoveLegendSectionTestTag)
-        composeRule.onNodeWithTag(MoveLegendNextTestTag).performScrollTo()
-        waitForNodeDisplayed(MoveLegendNextTestTag)
+        waitForNodeDisplayedByContentDescription("Next move")
         // Wait for the board to settle at the initial position before clicking next.
         // This makes the test assert the intended transition: start position -> first move.
         assertBoardFenEventually(InitialBoardFen)
-        composeRule.onNodeWithTag(MoveLegendNextTestTag).performClick()
+        composeRule.onNodeWithContentDescription("Next move").performClick()
 
         assertBoardFenEventually(AfterE4Fen)
     }
@@ -113,8 +110,6 @@ class EditTrainingScreenTest {
             }
         }
 
-        composeRule.onNodeWithTag(EditTrainingListTestTag)
-            .performScrollToNode(hasContentDescription("Start training"))
         waitForNodeDisplayedByContentDescription("Start training")
         composeRule.onNodeWithContentDescription("Start training").performClick()
 
