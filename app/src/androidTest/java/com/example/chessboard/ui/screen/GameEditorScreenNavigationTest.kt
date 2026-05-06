@@ -16,7 +16,6 @@ import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.boardmodel.InitialBoardFen
 import com.example.chessboard.entity.GameEntity
 import com.example.chessboard.entity.SideMask
-import com.example.chessboard.service.buildMoveLabels
 import com.example.chessboard.testing.normalizeFenForAssertion
 import com.example.chessboard.ui.GameEditorMoveSequenceSectionTestTag
 import com.example.chessboard.ui.GameEditorNextTestTag
@@ -35,14 +34,12 @@ class GameEditorScreenNavigationTest {
     @Test
     fun gameEditorScreen_rightArrowAdvancesBoardPosition() {
         val gameController = createGameControllerAtStart()
-        val moveLabels = buildMoveLabels(TestUciMoves)
 
         composeRule.setContent {
             ChessBoardTheme {
                 GameEditorScreen(
                     game = TestGame,
                     gameController = gameController,
-                    moveLabels = moveLabels,
                     isLoading = false,
                     onSave = { _, _, _ -> },
                 )
@@ -67,14 +64,12 @@ class GameEditorScreenNavigationTest {
     @Test
     fun gameEditorScreen_moveChipAdvancesBoardPosition() {
         val gameController = createGameControllerAtStart()
-        val moveLabels = buildMoveLabels(TestUciMoves)
 
         composeRule.setContent {
             ChessBoardTheme {
                 GameEditorScreen(
                     game = TestGame,
                     gameController = gameController,
-                    moveLabels = moveLabels,
                     isLoading = false,
                     onSave = { _, _, _ -> },
                 )
@@ -87,9 +82,9 @@ class GameEditorScreenNavigationTest {
         composeRule.onNodeWithTag(GameEditorScrollContainerTestTag)
             .performScrollToNode(hasTestTag(GameEditorMoveSequenceSectionTestTag))
         waitForNodeDisplayed(GameEditorMoveSequenceSectionTestTag)
-        composeRule.onNodeWithTag(moveChipTestTag("1.e4")).performScrollTo()
-        waitForNodeDisplayed(moveChipTestTag("1.e4"))
-        composeRule.onNodeWithTag(moveChipTestTag("1.e4"))
+        composeRule.onNodeWithTag(moveChipTestTag("e4")).performScrollTo()
+        waitForNodeDisplayed(moveChipTestTag("e4"))
+        composeRule.onNodeWithTag(moveChipTestTag("e4"))
             .performSemanticsAction(SemanticsActions.OnClick)
 
         composeRule.waitUntil(timeoutMillis = 5_000) {

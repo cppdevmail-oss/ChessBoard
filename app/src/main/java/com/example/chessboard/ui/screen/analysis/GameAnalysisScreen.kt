@@ -59,11 +59,10 @@ import com.example.chessboard.ui.components.BoardActionNavigationBar
 import com.example.chessboard.ui.components.BoardActionNavigationItem
 import com.example.chessboard.ui.components.ChessBoardSection
 import com.example.chessboard.ui.components.IconMd
-import com.example.chessboard.ui.components.ScreenSection
 import com.example.chessboard.ui.screen.EditableGameSide
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
-import com.example.chessboard.ui.screen.gameNotation.GameMoveTreeSection
+import com.example.chessboard.ui.components.GameMoveTreeSection
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import com.example.chessboard.ui.theme.TrainingIconInactive
@@ -295,21 +294,17 @@ internal fun GameAnalysisScreen(
             ),
         ) {
             item {
-                ScreenSection {
-                    ChessBoardSection(gameController = gameController)
-                }
+                ChessBoardSection(gameController = gameController)
             }
 
             item {
                 Spacer(modifier = Modifier.height(AppDimens.spaceLg))
-                ScreenSection {
-                    GameMoveTreeSection(
-                        importedUciLines = variationLines,
-                        gameController = gameController,
-                        startFen = startFen,
-                        maxContentHeight = moveTreeMaxHeight,
-                    )
-                }
+                GameMoveTreeSection(
+                    importedUciLines = variationLines,
+                    gameController = gameController,
+                    startFen = startFen,
+                    maxContentHeight = moveTreeMaxHeight,
+                )
             }
 
             item {

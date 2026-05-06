@@ -1,16 +1,11 @@
-package com.example.chessboard.ui.screen.gameNotation
+package com.example.chessboard.ui.components
 
-/**
- * Reusable move-tree UI for screens that show one or more chess lines.
- *
- * Keep move-tree rendering and click-to-position wiring here. Do not add PGN import fields,
- * screen-specific save flows, navigation decisions, or database logic to this file.
- */
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -24,14 +19,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.ui.MoveTreeBoxTestTag
 import com.example.chessboard.ui.MoveTreeContentTestTag
-import com.example.chessboard.ui.components.BodySecondaryText
-import com.example.chessboard.ui.components.MoveChip
-import com.example.chessboard.ui.components.SectionTitleText
+import com.example.chessboard.ui.moveChipTestTag
 import com.example.chessboard.ui.moveTreeRowTestTag
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.Background
@@ -80,12 +75,13 @@ private fun resolveBackingLine(
 }
 
 @Composable
-internal fun GameMoveTreeSection(
+fun GameMoveTreeSection(
     importedUciLines: List<List<String>>,
     gameController: GameController,
     modifier: Modifier = Modifier,
     startFen: String? = null,
     maxContentHeight: Dp? = null,
+    onMoveSelected: ((backingLine: List<String>, targetPly: Int) -> Unit)? = null,
 ) {
     val boardState = gameController.boardState
     val authoredUciLine = remember(boardState) { resolveUciLine(gameController) }
@@ -107,10 +103,10 @@ internal fun GameMoveTreeSection(
     val moveTreeContentModifier = rememberMoveTreeContentModifier(maxContentHeight)
 
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)) {
-        SectionTitleText(text = "Move Tree", color = TrainingAccentTeal)
         Surface(
             shape = RoundedCornerShape(AppDimens.radiusMd),
             color = Background.SurfaceDark,
+            border = BorderStroke(1.dp, TrainingAccentTeal),
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag(MoveTreeBoxTestTag),
@@ -152,11 +148,15 @@ internal fun GameMoveTreeSection(
                                         isSelected = currentPositionPath == move.uciPath,
                                         onClick = {
                                             val backingLine = resolveBackingLine(visibleLines, move.uciPath)
-                                            gameController.loadFromUciMoves(
-                                                uciMoves = backingLine,
-                                                targetPly = move.uciPath.size,
-                                                startFen = startFen,
-                                            )
+                                            if (onMoveSelected != null) {
+                                                onMoveSelected(backingLine, move.uciPath.size)
+                                            } else {
+                                                gameController.loadFromUciMoves(
+                                                    uciMoves = backingLine,
+                                                    targetPly = move.uciPath.size,
+                                                    startFen = startFen,
+                                                )
+                                            }
                                         },
                                     )
                                 }
@@ -187,11 +187,15 @@ internal fun GameMoveTreeSection(
                                         isSelected = currentPositionPath == move.uciPath,
                                         onClick = {
                                             val backingLine = resolveBackingLine(visibleLines, move.uciPath)
-                                            gameController.loadFromUciMoves(
-                                                uciMoves = backingLine,
-                                                targetPly = move.uciPath.size,
-                                                startFen = startFen,
-                                            )
+                                            if (onMoveSelected != null) {
+                                                onMoveSelected(backingLine, move.uciPath.size)
+                                            } else {
+                                                gameController.loadFromUciMoves(
+                                                    uciMoves = backingLine,
+                                                    targetPly = move.uciPath.size,
+                                                    startFen = startFen,
+                                                )
+                                            }
                                         },
                                     )
                                 }
@@ -206,24 +210,23 @@ internal fun GameMoveTreeSection(
 
 @Composable
 private fun TreeMoveChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
-    MoveChip(
-        label = label,
-        isSelected = isSelected,
-        onClick = onClick,
-        unselectedBackground = Background.CardDark,
-        unselectedTextColor = TextColor.Primary,
-        textStyle = MaterialTheme.typography.bodyMedium,
-        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 3.dp),
+    Text(
+        text = label,
+        style = MaterialTheme.typography.bodyMedium,
+        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+        color = if (isSelected) TrainingAccentTeal else TextColor.Primary,
+        modifier = Modifier
+            .testTag(moveChipTestTag(label))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 2.dp, vertical = 3.dp),
     )
 }
 
 @Composable
 private fun rememberMoveTreeContentModifier(maxContentHeight: Dp?): Modifier {
-    if (maxContentHeight == null) {
-        return Modifier
-    }
-
+    val defaultMaxHeight = LocalConfiguration.current.screenHeightDp.dp / 4
+    val resolvedMax = maxContentHeight ?: defaultMaxHeight
     return Modifier
-        .heightIn(max = maxContentHeight)
+        .heightIn(max = resolvedMax)
         .verticalScroll(rememberScrollState())
 }

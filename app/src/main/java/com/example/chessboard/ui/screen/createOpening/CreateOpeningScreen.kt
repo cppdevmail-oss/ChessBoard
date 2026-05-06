@@ -49,7 +49,7 @@ import com.example.chessboard.ui.components.IconMd
 import com.example.chessboard.ui.components.PasteInputBlock
 import com.example.chessboard.ui.components.ScreenSection
 import com.example.chessboard.ui.screen.EditableGameSide
-import com.example.chessboard.ui.screen.gameNotation.GameMoveTreeSection
+import com.example.chessboard.ui.components.GameMoveTreeSection
 import com.example.chessboard.ui.screen.training.DarkInputField
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TrainingAccentTeal

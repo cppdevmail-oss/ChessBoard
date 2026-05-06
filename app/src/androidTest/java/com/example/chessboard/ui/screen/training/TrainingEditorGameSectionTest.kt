@@ -9,6 +9,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -17,7 +18,7 @@ import androidx.compose.ui.test.performClick
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.service.buildMoveLabels
 import com.example.chessboard.service.parsePgnMoves
-import com.example.chessboard.ui.TrainingEditorGameCardTestTag
+import com.example.chessboard.ui.MoveTreeBoxTestTag
 import com.example.chessboard.ui.theme.ChessBoardTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -44,7 +45,7 @@ class TrainingEditorGameSectionTest {
         composeRule.onNodeWithText("Italian Game").assertIsDisplayed()
         composeRule.onNodeWithText("C50").assertIsDisplayed()
         composeRule.onNodeWithText("3").assertIsDisplayed()
-        composeRule.onNodeWithText("Move Sequence").assertIsDisplayed()
+        composeRule.onNodeWithTag(MoveTreeBoxTestTag).assertIsDisplayed()
     }
 
     @Test
@@ -74,24 +75,25 @@ class TrainingEditorGameSectionTest {
             state = createSectionState(parsedGame = null, isSelected = false),
         )
 
-        composeRule.onAllNodesWithText("Move Sequence").assertCountEquals(0)
+        composeRule.onAllNodesWithTag(MoveTreeBoxTestTag).assertCountEquals(0)
     }
 
     @Test
-    fun trainingEditorGameSection_clickingUnselectedCardInvokesOnSelect() {
-        var selectClicks = 0
+    fun trainingEditorGameSection_clickingMoveInUnselectedTreeInvokesOnMovePlyClick() {
+        var movePlyClicks = 0
 
         setTrainingEditorGameSectionContent(
             state = createSectionState(isSelected = false),
             actions = createSectionActions(
-                onSelect = { selectClicks += 1 }
+                onMovePlyClick = { movePlyClicks += 1 }
             )
         )
 
-        composeRule.onNodeWithTag(TrainingEditorGameCardTestTag).performClick()
+        composeRule.onNodeWithTag(MoveTreeBoxTestTag).assertIsDisplayed()
+        composeRule.onNodeWithText("e4").performClick()
 
         composeRule.runOnIdle {
-            assertEquals(1, selectClicks)
+            assertEquals(1, movePlyClicks)
         }
     }
 

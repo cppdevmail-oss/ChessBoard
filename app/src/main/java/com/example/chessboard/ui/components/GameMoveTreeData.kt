@@ -1,11 +1,5 @@
-package com.example.chessboard.ui.screen.gameNotation
+package com.example.chessboard.ui.components
 
-/**
- * Reusable move-tree data builder for screens that display chess lines with variations.
- *
- * Keep pure UCI-line to move-tree transformation logic here. Do not add composable UI,
- * screen container state, navigation, import workflows, or persistence logic to this file.
- */
 import com.example.chessboard.service.computeLabel
 import com.github.bhlangonijr.chesslib.Board
 import com.github.bhlangonijr.chesslib.Square

@@ -35,14 +35,12 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.ui.EditTrainingMoveLegendSectionTestTag
-import com.example.chessboard.ui.TrainingEditorGameCardTestTag
 import com.example.chessboard.ui.components.AppConfirmDialog
 import com.example.chessboard.ui.components.AppIconSizes
-import com.example.chessboard.ui.components.BoardActionBlock
 import com.example.chessboard.ui.components.DeleteIconButton
 import com.example.chessboard.ui.components.ChessBoardSection
 import com.example.chessboard.ui.components.IconXs
-import com.example.chessboard.ui.components.MoveSequenceSection
+import com.example.chessboard.ui.components.GameMoveTreeSection
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
@@ -76,6 +74,7 @@ internal fun TrainingEditorGameSection(
     modifier: Modifier = Modifier,
 ) {
     var showRemoveConfirm by remember { mutableStateOf(false) }
+    val displayController = remember { GameController() }
 
     if (showRemoveConfirm) {
         AppConfirmDialog(
@@ -109,13 +108,22 @@ internal fun TrainingEditorGameSection(
 
         if (state.isSelected && state.parsedGame != null) {
             ChessBoardSection(gameController = state.gameController)
-            Spacer(modifier = Modifier.height(AppDimens.spaceLg))
+            Spacer(modifier = Modifier.height(AppDimens.spaceMd))
+            GameMoveTreeSection(
+                importedUciLines = listOf(state.parsedGame.uciMoves),
+                gameController = state.gameController,
+                modifier = Modifier.testTag(EditTrainingMoveLegendSectionTestTag),
+            )
+        } else if (state.parsedGame != null) {
+            GameMoveTreeSection(
+                importedUciLines = listOf(state.parsedGame.uciMoves),
+                gameController = displayController,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(EditTrainingMoveLegendSectionTestTag),
+                onMoveSelected = { _, ply -> actions.onMovePlyClick(ply) },
+            )
         }
-
-        TrainingEditorGameCard(
-            state = state,
-            actions = actions,
-        )
     }
 }
 
@@ -210,30 +218,3 @@ private fun RenderTrainingGameEcoBadge(eco: String?) {
     }
 }
 
-@Composable
-private fun TrainingEditorGameCard(
-    state: TrainingEditorGameSectionState,
-    actions: TrainingEditorGameSectionActions,
-) {
-    if (state.parsedGame == null) {
-        return
-    }
-
-    BoardActionBlock(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(TrainingEditorGameCardTestTag),
-        highlighted = state.isSelected,
-        onClick = if (state.isSelected) null else actions.onSelect
-    ) {
-        MoveSequenceSection(
-            moveLabels = state.parsedGame.moveLabels,
-            currentPly = state.currentPly,
-            onMovePlyClick = { ply ->
-                actions.onSelect()
-                actions.onMovePlyClick(ply)
-            },
-            modifier = Modifier.testTag(EditTrainingMoveLegendSectionTestTag),
-        )
-    }
-}
