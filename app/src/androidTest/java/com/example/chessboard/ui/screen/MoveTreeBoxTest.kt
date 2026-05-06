@@ -8,7 +8,7 @@ import androidx.compose.ui.test.onNodeWithText
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.ui.MoveTreeBoxTestTag
 import com.example.chessboard.ui.moveTreeRowTestTag
-import com.example.chessboard.ui.screen.gameNotation.GameMoveTreeSection
+import com.example.chessboard.ui.components.GameMoveTreeSection
 import com.example.chessboard.ui.theme.ChessBoardTheme
 import org.junit.Rule
 import org.junit.Test

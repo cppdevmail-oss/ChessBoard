@@ -13,8 +13,8 @@ package com.example.chessboard.ui.screen.training.train
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.rounded.PlayArrow
 import com.example.chessboard.ui.components.BoardActionNavigationBar
 import com.example.chessboard.ui.components.BoardActionNavigationItem
@@ -48,6 +48,7 @@ import androidx.compose.ui.Modifier
 import com.example.chessboard.runtimecontext.RuntimeContext
 import com.example.chessboard.runtimecontext.TrainingRuntimeContext
 import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.ui.components.AppConfirmDialog
 import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
@@ -199,25 +200,15 @@ private fun EditTrainingBoardControlsBar(
     canUndo: Boolean,
     canRedo: Boolean,
     hasSelection: Boolean,
-    onResetClick: () -> Unit,
     onPrevClick: () -> Unit,
     onNextClick: () -> Unit,
     onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit,
     onStartClick: () -> Unit,
 ) {
     BoardActionNavigationBar(
+        maxVisibleItems = 5,
         items = listOf(
-            BoardActionNavigationItem(
-                label = "Reset",
-                enabled = canUndo,
-                onClick = onResetClick,
-            ) {
-                IconMd(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = "Reset",
-                    tint = if (canUndo) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
-                )
-            },
             BoardActionNavigationItem(
                 label = "Edit",
                 enabled = hasSelection,
@@ -226,6 +217,17 @@ private fun EditTrainingBoardControlsBar(
                 IconMd(
                     imageVector = Icons.Default.Edit,
                     contentDescription = "Edit game",
+                    tint = if (hasSelection) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
+                )
+            },
+            BoardActionNavigationItem(
+                label = "Delete",
+                enabled = hasSelection,
+                onClick = onDeleteClick,
+            ) {
+                IconMd(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Remove game from training",
                     tint = if (hasSelection) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
                 )
             },
@@ -305,6 +307,7 @@ fun EditTrainingScreen(
     var savedTrainingName by remember(initialTrainingName) { mutableStateOf(initialTrainingName) }
     var savedGamesForTraining by remember(gamesForTraining) { mutableStateOf(gamesForTraining) }
     var pendingLeaveAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var pendingRemoveGame by remember { mutableStateOf<TrainingGameEditorItem?>(null) }
     val orderedGameIds = remember(editorState.editableGamesForTraining) {
         orderGamesInTraining.orderGames(
             games = editorState.editableGamesForTraining,
@@ -410,6 +413,20 @@ fun EditTrainingScreen(
         }
     )
 
+    pendingRemoveGame?.let { gameToRemove ->
+        AppConfirmDialog(
+            title = "Remove Game",
+            message = "Remove \"${gameToRemove.title}\" from training?",
+            onDismiss = { pendingRemoveGame = null },
+            onConfirm = {
+                pendingRemoveGame = null
+                removeGameFromTraining(gameToRemove.gameId)
+            },
+            confirmText = "Remove",
+            isDestructive = true,
+        )
+    }
+
     BackHandler {
         requestLeave(onBackClick)
     }
@@ -446,10 +463,10 @@ fun EditTrainingScreen(
                 canUndo = canUndo,
                 canRedo = canRedo,
                 hasSelection = selectedGame != null,
-                onResetClick = { boardSession.selectedGameId?.let { boardSession.onResetSelectedGame(it) } },
                 onPrevClick = { boardSession.gameController.undoMove() },
                 onNextClick = { boardSession.gameController.redoMove() },
                 onEditClick = { selectedGame?.let { g -> requestLeave { onOpenGameEditorClick(g.gameId) } } },
+                onDeleteClick = { selectedGame?.let { g -> pendingRemoveGame = g } },
                 onStartClick = { selectedGame?.let { g -> requestLeave { onStartGameTrainingClick(g.gameId, orderedGameIds) } } },
             )
         },
@@ -505,7 +522,6 @@ fun EditTrainingScreen(
                     }
                 },
                 onMovePlyClick = { ply -> boardSession.onMoveToPly(game.gameId, ply) },
-                onRemoveClick = { removeGameFromTraining(game.gameId) },
             ),
             removeCollectionLabel = "training",
         )

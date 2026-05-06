@@ -65,6 +65,7 @@ import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.ChessBoardSection
 import com.example.chessboard.ui.components.IconMd
+import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.theme.AppDimens
@@ -486,6 +487,8 @@ internal fun GamesExplorerScreen(
 
                         if (isSelected) {
                             ChessBoardSection(gameController = gameController)
+                            Spacer(modifier = Modifier.height(AppDimens.spaceMd))
+                            SectionTitleText(text = parsedGame.game.event ?: "Opening")
                             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
                         }
 
