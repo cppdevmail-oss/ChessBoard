@@ -108,9 +108,9 @@ internal fun CreateOpeningScreenContainer(
             pgnImportError = null
         } catch (error: CancellationException) {
             throw error
-        } catch (_: Exception) {
+        } catch (error: Exception) {
             importedChapters = emptyList()
-            pgnImportError = "Failed to parse PGN"
+            pgnImportError = error.message ?: "Failed to parse PGN"
         }
     }
 

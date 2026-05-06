@@ -40,7 +40,14 @@ fun parsePgnToUciLines(pgnText: String): List<List<String>> {
 
     return sanLines
         .reversed() // extractSanLines adds the main line last; reverse so it comes first
-        .map(::parseSanLineToUci)
+        .mapIndexed { idx, line ->
+            val lineLabel = if (idx == 0) "main line" else "variation $idx"
+            try {
+                parseSanLineToUci(line)
+            } catch (e: IllegalArgumentException) {
+                throw IllegalArgumentException("${e.message} in the $lineLabel", e)
+            }
+        }
         .distinctBy { it.joinToString(" ") }
 }
 
@@ -81,7 +88,7 @@ fun buildStoredPgnFromUci(
 }
 
 private fun extractSanLines(pgnText: String): List<List<String>> {
-    val withoutComments = pgnText
+    val withoutComments = pgnText.removePrefix("﻿")
         .replace(Regex("\\{[^}]*\\}"), " ")
         .replace(Regex(";[^\\n]*"), " ")
 
@@ -176,12 +183,14 @@ private fun parseSanLineToUci(tokens: List<String>): List<String> {
     val uciMoves = mutableListOf<String>()
 
     for ((index, token) in tokens.withIndex()) {
+        val fullMove = index / 2 + 1
+        val side = if (index % 2 == 0) "White" else "Black"
         val uci = sanToUci(token, board)
-            ?: throw IllegalArgumentException("Can't play $token at move ${index + 1}")
+            ?: throw IllegalArgumentException("Unrecognized notation \"$token\" (move $fullMove, $side)")
         val move = uciToMove(uci, board)
 
         if (!board.legalMoves().contains(move)) {
-            throw IllegalArgumentException("Can't play $token at move ${index + 1}")
+            throw IllegalArgumentException("Illegal move \"$token\" (move $fullMove, $side)")
         }
 
         board.doMove(move)
