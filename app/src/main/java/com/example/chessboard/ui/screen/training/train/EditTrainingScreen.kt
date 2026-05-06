@@ -35,6 +35,7 @@ import com.example.chessboard.ui.screen.training.common.resolveNextSelectedTrain
 import com.example.chessboard.ui.screen.training.common.rememberTrainingEditorBoardSession
 
 import androidx.activity.compose.BackHandler
+import com.example.chessboard.ui.components.HomeIconButton
 import com.example.chessboard.ui.components.SettingsIconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -453,6 +454,9 @@ fun EditTrainingScreen(
             )
         },
         topBarActions = {
+            HomeIconButton(
+                onClick = { requestLeave { onNavigate(ScreenType.Home) } },
+            )
             SettingsIconButton(
                 onClick = onOpenSettingsClick,
                 contentDescription = "Training settings",
