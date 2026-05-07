@@ -29,3 +29,4 @@ Follow these collaboration rules when working with the user on this project.
 
 - The default behavior after review is: report first, change later.
 - Only skip the extra approval step when the user has already explicitly asked for automatic fixes in advance.
+- Treat default no-op callbacks such as `= {}` as a code smell in this project; report or avoid them instead of introducing them casually.
