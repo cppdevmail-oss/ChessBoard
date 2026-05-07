@@ -39,14 +39,7 @@ class EditTrainingScreenTest {
 
     @Test
     fun editTrainingScreen_moveChipUpdatesVisibleBoardPosition() {
-        composeRule.setContent {
-            ChessBoardTheme {
-                EditTrainingScreen(
-                    gamesForTraining = listOf(TestTrainingGame),
-                    orderGamesInTraining = RuntimeContext.OrderGamesInTraining()
-                )
-            }
-        }
+        setEditTrainingScreenContent(gamesForTraining = listOf(TestTrainingGame))
 
         composeRule.waitForIdle()
         // This screen auto-scrolls to the selected game with animateScrollToItem(...).
@@ -65,14 +58,7 @@ class EditTrainingScreenTest {
 
     @Test
     fun editTrainingScreen_nextArrowUpdatesVisibleBoardPosition() {
-        composeRule.setContent {
-            ChessBoardTheme {
-                EditTrainingScreen(
-                    gamesForTraining = listOf(TestTrainingGame),
-                    orderGamesInTraining = RuntimeContext.OrderGamesInTraining()
-                )
-            }
-        }
+        setEditTrainingScreenContent(gamesForTraining = listOf(TestTrainingGame))
 
         composeRule.waitForIdle()
         // Keep these waits. The test is intentionally defensive because this screen has
@@ -98,17 +84,12 @@ class EditTrainingScreenTest {
     fun editTrainingScreen_startTrainingActionLaunchesTraining() {
         var launchedGameId: Long? = null
 
-        composeRule.setContent {
-            ChessBoardTheme {
-                EditTrainingScreen(
-                    gamesForTraining = listOf(TestTrainingGame),
-                    orderGamesInTraining = RuntimeContext.OrderGamesInTraining(),
-                    onStartGameTrainingClick = { gameId, _ ->
-                        launchedGameId = gameId
-                    }
-                )
-            }
-        }
+        setEditTrainingScreenContent(
+            gamesForTraining = listOf(TestTrainingGame),
+            onStartGameTrainingClick = { gameId, _ ->
+                launchedGameId = gameId
+            },
+        )
 
         waitForNodeDisplayedByContentDescription("Start training")
         composeRule.onNodeWithContentDescription("Start training").performClick()
@@ -120,17 +101,12 @@ class EditTrainingScreenTest {
 
     @Test
     fun editTrainingScreen_removeSelectedGameRemovesItFromTraining() {
-        composeRule.setContent {
-            ChessBoardTheme {
-                EditTrainingScreen(
-                    gamesForTraining = listOf(
-                        TestTrainingGame,
-                        SecondTrainingGame,
-                    ),
-                    orderGamesInTraining = RuntimeContext.OrderGamesInTraining(),
-                )
-            }
-        }
+        setEditTrainingScreenContent(
+            gamesForTraining = listOf(
+                TestTrainingGame,
+                SecondTrainingGame,
+            ),
+        )
 
         composeRule.onNodeWithContentDescription("Remove game from training").performClick()
         waitForTextDisplayed("Remove Game")
@@ -202,8 +178,56 @@ class EditTrainingScreenTest {
         }.getOrNull()
     }
 
-        private companion object {
-                val TestTrainingGame = TrainingGameEditorItem(
+    private fun setEditTrainingScreenContent(
+        gamesForTraining: List<TrainingGameEditorItem>,
+    ) {
+        setEditTrainingScreenContent(
+            gamesForTraining = gamesForTraining,
+            onStartGameTrainingClick = ::ignoreStartGameTrainingClick,
+        )
+    }
+
+    private fun setEditTrainingScreenContent(
+        gamesForTraining: List<TrainingGameEditorItem>,
+        onStartGameTrainingClick: (Long, List<Long>) -> Unit,
+    ) {
+        composeRule.setContent {
+            ChessBoardTheme {
+                EditTrainingScreen(
+                    gamesForTraining = gamesForTraining,
+                    orderGamesInTraining = RuntimeContext.OrderGamesInTraining(),
+                    onBackClick = ::ignoreBackClick,
+                    onNavigate = ::ignoreNavigate,
+                    onStartGameTrainingClick = onStartGameTrainingClick,
+                    onOpenGameEditorClick = ::ignoreOpenGameEditorClick,
+                    onOpenSettingsClick = ::ignoreOpenSettingsClick,
+                    onSaveTraining = ::ignoreSaveTraining,
+                )
+            }
+        }
+    }
+
+    private companion object {
+        fun ignoreBackClick() = Unit
+
+        fun ignoreNavigate(screenType: com.example.chessboard.ui.screen.ScreenType) = Unit
+
+        fun ignoreStartGameTrainingClick(gameId: Long, orderedGameIds: List<Long>) = Unit
+
+        fun ignoreOpenGameEditorClick(gameId: Long) = Unit
+
+        fun ignoreOpenSettingsClick() = Unit
+
+        fun ignoreSaveTraining(
+            trainingName: String,
+            editableGames: List<TrainingGameEditorItem>,
+            showSuccessMessage: Boolean,
+            onSaved: (() -> Unit)?,
+        ) {
+            onSaved?.invoke()
+        }
+
+        val TestTrainingGame = TrainingGameEditorItem(
             gameId = 1L,
             title = "Test Opening",
             pgn = "1. e2e4 e7e5 *",
