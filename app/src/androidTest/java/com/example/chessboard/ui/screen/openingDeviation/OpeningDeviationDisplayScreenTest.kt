@@ -7,6 +7,9 @@ package com.example.chessboard.ui.screen.openingDeviation
  * Do not add navigation flow tests from Saved Positions to this file.
  */
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assert
@@ -140,6 +143,58 @@ class OpeningDeviationDisplayScreenTest {
         composeRule.onNodeWithContentDescription("Back").performClick()
 
         assertEquals(1, backClicks)
+    }
+
+    @Test
+    fun displayScreen_updatesBoardWhenDeviationItemChanges() {
+        var deviationItem by mutableStateOf(
+            OpeningDeviationItem(
+                positionFen = "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6",
+                branches = listOf(
+                    OpeningDeviationBranch(
+                        moveUci = "g1f3",
+                        resultFen = "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2",
+                        gamesCount = 2,
+                    ),
+                ),
+            )
+        )
+
+        composeRule.setContent {
+            ChessBoardTheme {
+                OpeningDeviationDisplayScreen(
+                    deviationItem = deviationItem,
+                )
+            }
+        }
+
+        assertBoardFenEventually(
+            boardTag = OpeningDeviationSourceBoardTestTag,
+            expectedFen = "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 1",
+        )
+
+        composeRule.runOnUiThread {
+            deviationItem = OpeningDeviationItem(
+                positionFen = "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq -",
+                branches = listOf(
+                    OpeningDeviationBranch(
+                        moveUci = "f1c4",
+                        resultFen = "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 1 3",
+                        gamesCount = 1,
+                    ),
+                ),
+            )
+        }
+
+        composeRule.waitForIdle()
+
+        assertBoardFenEventually(
+            boardTag = OpeningDeviationSourceBoardTestTag,
+            expectedFen = "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 1",
+        )
+        composeRule.onNodeWithText(
+            "FEN: r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq -"
+        ).assertIsDisplayed()
     }
 
     private fun scrollToTag(tag: String) {

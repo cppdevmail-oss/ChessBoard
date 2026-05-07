@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -42,12 +41,12 @@ internal fun OpeningDeviationBoardCard(
     isSelected: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
-    val gameController = remember { GameController() }
-
-    LaunchedEffect(fen) {
-        gameController.loadPreviewFen(toLoadableDeviationFen(fen))
-        gameController.setOrientation(resolveDeviationBoardOrientation(fen))
-        gameController.setUserMovesEnabled(false)
+    val gameController = remember(fen) {
+        GameController().also { controller ->
+            controller.loadPreviewFen(toLoadableDeviationFen(fen))
+            controller.setOrientation(resolveDeviationBoardOrientation(fen))
+            controller.setUserMovesEnabled(false)
+        }
     }
 
     CardSurface(
