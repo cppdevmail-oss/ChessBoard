@@ -21,6 +21,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import com.example.chessboard.MainActivity
@@ -488,7 +489,7 @@ class SavedPositionsNavigationTest {
         composeRule.onNodeWithTag(SavedPositionsSearchActionTestTag).performClick()
         waitForTextDisplayed("Search Positions")
         composeRule.onNodeWithTag(SavedPositionsSearchNameFieldTestTag)
-            .performTextInput("Italian")
+            .performTextReplacement("Italian")
         composeRule.onNodeWithText("Cancel").performClick()
 
         composeRule.onNodeWithText("Italian Position").assertIsDisplayed()
