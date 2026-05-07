@@ -267,18 +267,6 @@ class RegularTrainingFlowCoordinatorTest {
             ),
             coordinator.openGameEditorFromEditor(game = game, trainingId = 4L),
         )
-        assertEquals(
-            TrainingFlowResult.OpenAnalysis(
-                uciMoves = listOf("e2e4"),
-                initialPly = 1,
-                backTarget = ScreenType.EditTraining(4L),
-            ),
-            coordinator.openAnalysisFromEditor(
-                trainingId = 4L,
-                uciMoves = listOf("e2e4"),
-                initialPly = 1,
-            ),
-        )
     }
 
     @Test

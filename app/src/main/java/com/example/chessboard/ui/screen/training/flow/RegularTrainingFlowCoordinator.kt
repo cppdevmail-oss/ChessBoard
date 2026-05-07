@@ -153,18 +153,6 @@ class RegularTrainingFlowCoordinator(
         )
     }
 
-    fun openAnalysisFromEditor(
-        trainingId: Long,
-        uciMoves: List<String>,
-        initialPly: Int,
-    ): TrainingFlowResult {
-        return TrainingFlowResult.OpenAnalysis(
-            uciMoves = uciMoves,
-            initialPly = initialPly,
-            backTarget = ScreenType.EditTraining(trainingId),
-        )
-    }
-
     fun openAnalysisFromTraining(
         trainingId: Long,
         gameId: Long,
