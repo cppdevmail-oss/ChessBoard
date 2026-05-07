@@ -324,6 +324,30 @@ class SavedPositionsNavigationTest {
     }
 
     @Test
+    fun savedPositionsScreen_findDeviationsSelectionStartsSecondDisplayFlow() {
+        val positionId = saveMultipleDeviationSourcePosition()
+
+        openDeviationSelectionFromSavedPosition(
+            positionId = positionId,
+            positionName = "Multiple Deviation Flow Position",
+        )
+
+        composeRule.onNodeWithTag(openingDeviationSelectionCardTestTag(1)).performClick()
+        composeRule.onNodeWithTag(OpeningDeviationSelectionStartTestTag).assertIsEnabled()
+        composeRule.onNodeWithTag(OpeningDeviationSelectionStartTestTag).performClick()
+
+        waitForNodeDisplayed(OpeningDeviationDisplayContentTestTag)
+        composeRule.onNodeWithText("Opening Deviations").assertIsDisplayed()
+        assertBoardFenEventually(
+            boardTag = OpeningDeviationSourceBoardTestTag,
+            expectedFen = "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 1",
+        )
+        composeRule.onNodeWithText(
+            "FEN: r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq -"
+        ).assertIsDisplayed()
+    }
+
+    @Test
     fun savedPositionsScreen_findDeviationsUsesWhiteAndBothGamesOnly() {
         saveGame(
             event = "White Side Line",
@@ -500,6 +524,30 @@ class SavedPositionsNavigationTest {
 
         return savePosition(
             name = "Deviation Flow Position",
+            fen = InitialBoardFen,
+        )
+    }
+
+    private fun saveMultipleDeviationSourcePosition(): Long {
+        saveGame(
+            event = "Multiple Deviation A",
+            uciMoves = listOf("e2e4", "e7e5", "g1f3", "b8c6", "f1c4"),
+        )
+        saveGame(
+            event = "Multiple Deviation B",
+            uciMoves = listOf("e2e4", "e7e5", "g1f3", "b8c6", "f1b5"),
+        )
+        saveGame(
+            event = "Multiple Deviation C",
+            uciMoves = listOf("d2d4", "d7d5", "c2c4"),
+        )
+        saveGame(
+            event = "Multiple Deviation D",
+            uciMoves = listOf("d2d4", "d7d5", "c2c3"),
+        )
+
+        return savePosition(
+            name = "Multiple Deviation Flow Position",
             fen = InitialBoardFen,
         )
     }

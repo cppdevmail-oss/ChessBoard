@@ -71,7 +71,9 @@ internal fun OpeningDeviationBoardCard(
                 BodySecondaryText(text = subtitle)
             }
             if (!metaText.isNullOrBlank()) {
-                CardMetaText(text = metaText)
+                metaText.lines().forEach { line ->
+                    CardMetaText(text = line)
+                }
             }
             Spacer(modifier = Modifier.height(AppDimens.spaceXs))
             ChessBoardSection(

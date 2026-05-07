@@ -65,6 +65,9 @@ class OpeningDeviationDisplayScreenTest {
         composeRule.onNodeWithTag(OpeningDeviationDisplayContentTestTag).assertIsDisplayed()
         composeRule.onNodeWithTag(OpeningDeviationSourceBoardCardTestTag).assertIsDisplayed()
         composeRule.onNodeWithText("Deviation Position").assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "FEN: rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6"
+        ).assertIsDisplayed()
         assertBoardFenEventually(
             boardTag = OpeningDeviationSourceBoardTestTag,
             expectedFen = "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 1",
@@ -74,6 +77,9 @@ class OpeningDeviationDisplayScreenTest {
         composeRule.onNodeWithTag(openingDeviationBranchCardTestTag(0)).assertIsDisplayed()
         composeRule.onNodeWithText("Move: g1f3").assertIsDisplayed()
         composeRule.onNodeWithText("Games: 2").assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "FEN: rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2"
+        ).assertIsDisplayed()
         assertBoardFenEventually(
             boardTag = openingDeviationBranchBoardTestTag(0),
             expectedFen = "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2",

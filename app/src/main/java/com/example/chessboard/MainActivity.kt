@@ -367,7 +367,8 @@ class MainActivity : ComponentActivity() {
                         onDeviationSelected = { index ->
                             runtimeContext.openingDeviation.selectDeviation(index)
                         },
-                        onStartClick = {
+                        onStartClick = { index ->
+                            runtimeContext.openingDeviation.selectDeviation(index)
                             navigateToOpeningDeviationDisplay()
                         },
                         onBackClick = { currentScreen = ScreenType.SavedPositions },
