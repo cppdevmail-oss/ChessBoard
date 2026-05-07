@@ -1,4 +1,4 @@
-package com.example.chessboard.ui.screen.positions
+package com.example.chessboard.ui.screen.positions.savedPositions
 
 /**
  * UI coverage for the saved-positions deviation-search progress dialog. Validated 2026-05-07.

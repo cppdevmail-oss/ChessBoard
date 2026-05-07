@@ -1,4 +1,4 @@
-package com.example.chessboard.ui.screen.positions
+package com.example.chessboard.ui.screen.positions.positionSearch
 
 import android.util.Log
 import androidx.compose.foundation.Canvas
@@ -69,6 +69,10 @@ import com.example.chessboard.ui.screen.EditableGameSide
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.screen.SideButtonSelectedBg
+import com.example.chessboard.ui.screen.positions.PositionSearchResultDialogActions
+import com.example.chessboard.ui.screen.positions.PositionTemplateNameDialogState
+import com.example.chessboard.ui.screen.positions.RenderPositionSearchResultDialog
+import com.example.chessboard.ui.screen.positions.createPositionTemplateFromGameIds
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import com.example.chessboard.ui.theme.TrainingIconInactive

@@ -1,4 +1,4 @@
-package com.example.chessboard.ui.screen.positions
+package com.example.chessboard.ui.screen.positions.savedPositions
 
 /**
  * Screen entry point for browsing saved search positions.
@@ -59,6 +59,10 @@ import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.screen.openingDeviation.OpeningDeviationItem
+import com.example.chessboard.ui.screen.positions.PositionSearchResultDialogActions
+import com.example.chessboard.ui.screen.positions.PositionTemplateNameDialogState
+import com.example.chessboard.ui.screen.positions.RenderPositionSearchResultDialog
+import com.example.chessboard.ui.screen.positions.createPositionTemplateFromGameIds
 import com.example.chessboard.ui.SavedPositionsDeviationSearchDialogTestTag
 import com.example.chessboard.ui.SavedPositionsDeviationSearchCancelTestTag
 import com.example.chessboard.ui.theme.Background
