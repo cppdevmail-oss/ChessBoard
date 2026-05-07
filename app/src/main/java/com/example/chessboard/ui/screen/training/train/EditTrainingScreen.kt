@@ -114,9 +114,9 @@ fun EditTrainingScreenContainer(
     trainingRuntimeContext: TrainingRuntimeContext,
     hideLinesWithWeightZero: Boolean = false,
     simpleViewEnabled: Boolean = false,
-    onStartGameTrainingClick: (Long, List<Long>) -> Unit = { _, _ -> },
-    onOpenGameEditorClick: (GameEntity) -> Unit = {},
-    onOpenSettingsClick: () -> Unit = {},
+    onStartGameTrainingClick: (Long, List<Long>) -> Unit,
+    onOpenGameEditorClick: (GameEntity) -> Unit,
+    onOpenSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val onBackClick = screenContext.onBackClick
@@ -280,12 +280,12 @@ fun EditTrainingScreen(
     orderGamesInTraining: RuntimeContext.OrderGamesInTraining,
     simpleViewEnabled: Boolean = false,
     initialSelectedGameId: Long? = null,
-    onBackClick: () -> Unit = {},
-    onNavigate: (ScreenType) -> Unit = {},
-    onStartGameTrainingClick: (Long, List<Long>) -> Unit = { _, _ -> },
-    onOpenGameEditorClick: (Long) -> Unit = {},
-    onOpenSettingsClick: () -> Unit = {},
-    onSaveTraining: (String, List<TrainingGameEditorItem>, Boolean, (() -> Unit)?) -> Unit = { _, _, _, _ -> },
+    onBackClick: () -> Unit,
+    onNavigate: (ScreenType) -> Unit,
+    onStartGameTrainingClick: (Long, List<Long>) -> Unit,
+    onOpenGameEditorClick: (Long) -> Unit,
+    onOpenSettingsClick: () -> Unit,
+    onSaveTraining: (String, List<TrainingGameEditorItem>, Boolean, (() -> Unit)?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
