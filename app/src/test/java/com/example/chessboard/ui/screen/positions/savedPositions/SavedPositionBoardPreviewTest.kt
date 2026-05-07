@@ -1,4 +1,4 @@
-package com.example.chessboard.ui.screen.positions
+package com.example.chessboard.ui.screen.positions.savedPositions
 
 /**
  * Unit coverage for saved-position board preview helpers.

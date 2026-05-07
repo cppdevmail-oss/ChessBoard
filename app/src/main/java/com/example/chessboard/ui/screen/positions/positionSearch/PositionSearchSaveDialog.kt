@@ -1,4 +1,4 @@
-package com.example.chessboard.ui.screen.positions
+package com.example.chessboard.ui.screen.positions.positionSearch
 
 /*
  * Screen-specific save-position dialog for PositionSearch.

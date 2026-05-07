@@ -1,4 +1,4 @@
-package com.example.chessboard.ui.screen.positions
+package com.example.chessboard.ui.screen.positions.savedPositions
 
 /**
  * Screen entry point for browsing saved search positions.
@@ -8,18 +8,23 @@ package com.example.chessboard.ui.screen.positions
  */
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -48,14 +53,25 @@ import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.components.AppMessageDialogAction
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.BodySecondaryText
+import com.example.chessboard.ui.components.ScreenTitleText
+import com.example.chessboard.ui.components.CardMetaText
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.screen.openingDeviation.OpeningDeviationItem
+import com.example.chessboard.ui.screen.positions.PositionSearchResultDialogActions
+import com.example.chessboard.ui.screen.positions.PositionTemplateNameDialogState
+import com.example.chessboard.ui.screen.positions.RenderPositionSearchResultDialog
+import com.example.chessboard.ui.screen.positions.createPositionTemplateFromGameIds
+import com.example.chessboard.ui.SavedPositionsDeviationSearchDialogTestTag
+import com.example.chessboard.ui.SavedPositionsDeviationSearchCancelTestTag
+import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -65,6 +81,7 @@ private data class SavedPositionsState(
     val selectedPositionId: Long? = null,
     val positionToDelete: SavedPositionListItem? = null,
     val deviationDialog: SavedPositionsDeviationDialog? = null,
+    val deviationSearchDialog: SavedPositionsDeviationSearchDialog? = null,
     val foundGameIds: List<Long>? = null,
     val templateNameDialogState: PositionTemplateNameDialogState? = null,
     val infoDialog: SavedPositionsInfoDialog? = null,
@@ -94,6 +111,10 @@ private data class SavedPositionsDeviationDialog(
     val deviationItems: List<OpeningDeviationItem>,
 )
 
+internal data class SavedPositionsDeviationSearchDialog(
+    val positionName: String,
+)
+
 internal data class SavedPositionListItem(
     val id: Long,
     val name: String,
@@ -113,6 +134,7 @@ internal fun SavedPositionsScreenContainer(
     }
     val scope = rememberCoroutineScope()
     var state by remember { mutableStateOf(SavedPositionsState()) }
+    var deviationSearchJob by remember { mutableStateOf<Job?>(null) }
 
     fun resolveSearchDialogVisibilityState(isVisible: Boolean): SavedPositionsState {
         if (!isVisible) {
@@ -143,29 +165,46 @@ internal fun SavedPositionsScreenContainer(
     }
 
     fun findOpeningDeviations(position: SavedPositionListItem) {
-        scope.launch {
-            val deviationItems = withContext(Dispatchers.IO) {
-                buildOpeningDeviationItemsForSavedPosition(
-                    dbProvider = screenContext.inDbProvider,
-                    position = position,
-                )
-            }
+        if (deviationSearchJob != null) {
+            return
+        }
 
-            if (deviationItems.isEmpty()) {
+        state = state.copy(
+            deviationSearchDialog = SavedPositionsDeviationSearchDialog(
+                positionName = position.name,
+            ),
+        )
+
+        deviationSearchJob = scope.launch {
+            try {
+                val deviationItems = withContext(Dispatchers.IO) {
+                    buildOpeningDeviationItemsForSavedPosition(
+                        dbProvider = screenContext.inDbProvider,
+                        position = position,
+                    )
+                }
+
+                if (deviationItems.isEmpty()) {
+                    state = state.copy(
+                        deviationDialog = null,
+                        infoDialog = resolveNoDeviationsInfoDialog(),
+                    )
+                    return@launch
+                }
+
                 state = state.copy(
-                    deviationDialog = null,
-                    infoDialog = resolveNoDeviationsInfoDialog(),
+                    infoDialog = null,
+                    deviationDialog = SavedPositionsDeviationDialog(
+                        sourcePositionFen = resolveDisplayedFen(position),
+                        deviationItems = deviationItems,
+                    ),
                 )
+            } catch (_: CancellationException) {
                 return@launch
+            } finally {
+                deviationSearchJob = null
+                state = state.copy(deviationSearchDialog = null)
             }
-
-            state = state.copy(
-                infoDialog = null,
-                deviationDialog = SavedPositionsDeviationDialog(
-                    sourcePositionFen = resolveDisplayedFen(position),
-                    deviationItems = deviationItems,
-                ),
-            )
         }
     }
 
@@ -319,6 +358,9 @@ internal fun SavedPositionsScreenContainer(
         onDeviationDialogDismiss = {
             state = state.copy(deviationDialog = null)
         },
+        onDeviationSearchCancel = {
+            deviationSearchJob?.cancel()
+        },
         onShowOpeningDeviationSelection = { dialog ->
             state = state.copy(deviationDialog = null)
             onShowOpeningDeviationSelection(
@@ -386,6 +428,7 @@ private fun SavedPositionsScreen(
     onConfirmTemplateName: () -> Unit,
     onInfoDialogDismiss: () -> Unit,
     onDeviationDialogDismiss: () -> Unit,
+    onDeviationSearchCancel: () -> Unit,
     onShowOpeningDeviationSelection: (SavedPositionsDeviationDialog) -> Unit,
 ) {
     val selectedPosition = resolveSelectedPosition(state)
@@ -461,6 +504,10 @@ private fun SavedPositionsScreen(
         onDismiss = onDeviationDialogDismiss,
         onShowDeviations = onShowOpeningDeviationSelection,
     )
+    RenderSavedPositionsDeviationSearchDialog(
+        dialogState = state.deviationSearchDialog,
+        onCancel = onDeviationSearchCancel,
+    )
 
     Box(modifier = modifier.fillMaxSize()) {
         AppScreenScaffold(
@@ -516,6 +563,46 @@ private fun SavedPositionsScreen(
             SavedPositionsBlockingLoadingOverlay()
         }
     }
+}
+
+@Composable
+internal fun RenderSavedPositionsDeviationSearchDialog(
+    dialogState: SavedPositionsDeviationSearchDialog?,
+    onCancel: () -> Unit,
+) {
+    val currentDialog = dialogState ?: return
+
+    AlertDialog(
+        modifier = Modifier.testTag(SavedPositionsDeviationSearchDialogTestTag),
+        onDismissRequest = {},
+        containerColor = Background.ScreenDark,
+        title = {
+            ScreenTitleText(text = "Searching Deviations")
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(AppDimens.spaceSm)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)) {
+                    CircularProgressIndicator(color = TrainingAccentTeal)
+                    BodySecondaryText(
+                        text = "Analyzing saved games for \"${currentDialog.positionName}\".",
+                        modifier = Modifier.padding(top = AppDimens.spaceXs),
+                    )
+                }
+                BodySecondaryText(
+                    text = "This can take a while. Cancel to stop the analysis.",
+                    color = TextColor.Secondary,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onCancel,
+                modifier = Modifier.testTag(SavedPositionsDeviationSearchCancelTestTag),
+            ) {
+                CardMetaText(text = "Cancel")
+            }
+        },
+    )
 }
 
 @Composable

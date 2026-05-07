@@ -49,9 +49,9 @@ import com.example.chessboard.ui.screen.SettingsScreenContainer
 import com.example.chessboard.ui.screen.SmartSettingsScreenContainer
 import com.example.chessboard.ui.screen.SmartTrainingScreenContainer
 import com.example.chessboard.ui.screen.home.HomeScreenContainer
-import com.example.chessboard.ui.screen.positions.PositionSearchScreenContainer
-import com.example.chessboard.ui.screen.positions.PositionSearchSettingsScreenContainer
-import com.example.chessboard.ui.screen.positions.SavedPositionsScreenContainer
+import com.example.chessboard.ui.screen.positions.positionSearch.PositionSearchScreenContainer
+import com.example.chessboard.ui.screen.positions.positionSearch.PositionSearchSettingsScreenContainer
+import com.example.chessboard.ui.screen.positions.savedPositions.SavedPositionsScreenContainer
 import com.example.chessboard.ui.screen.trainSingleGame.TrainSingleGameLauncherScreenContainer
 import com.example.chessboard.ui.screen.training.CreateTrainingByStatisticsScreenContainer
 import com.example.chessboard.ui.screen.training.CreateTrainingChoiceScreenContainer
@@ -367,7 +367,8 @@ class MainActivity : ComponentActivity() {
                         onDeviationSelected = { index ->
                             runtimeContext.openingDeviation.selectDeviation(index)
                         },
-                        onStartClick = {
+                        onStartClick = { index ->
+                            runtimeContext.openingDeviation.selectDeviation(index)
                             navigateToOpeningDeviationDisplay()
                         },
                         onBackClick = { currentScreen = ScreenType.SavedPositions },

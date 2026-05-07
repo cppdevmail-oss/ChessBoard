@@ -1,4 +1,4 @@
-package com.example.chessboard.ui.screen.positions
+package com.example.chessboard.ui.screen.positions.savedPositions
 
 /**
  * Top bar rendering for the saved positions screen.

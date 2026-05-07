@@ -55,7 +55,7 @@ class OpeningDeviationSelectionScreenTest {
     @Test
     fun selectionScreen_selectsPositionShowsPreviewAndStartsDisplay() {
         var selectedDeviationIndex: Int? by mutableStateOf(null)
-        var startedWithFen: String? = null
+        var startedWithIndex: Int? = null
 
         composeRule.setContent {
             ChessBoardTheme {
@@ -65,8 +65,8 @@ class OpeningDeviationSelectionScreenTest {
                     onDeviationSelected = { index ->
                         selectedDeviationIndex = index
                     },
-                    onStartClick = { deviationItem ->
-                        startedWithFen = deviationItem.positionFen
+                    onStartClick = { index ->
+                        startedWithIndex = index
                     },
                     onBackClick = {},
                 )
@@ -82,10 +82,7 @@ class OpeningDeviationSelectionScreenTest {
 
         composeRule.onNodeWithTag(OpeningDeviationSelectionStartTestTag).performClick()
 
-        assertEquals(
-            "rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR w KQkq d6",
-            startedWithFen,
-        )
+        assertEquals(1, startedWithIndex)
     }
 
     @Test

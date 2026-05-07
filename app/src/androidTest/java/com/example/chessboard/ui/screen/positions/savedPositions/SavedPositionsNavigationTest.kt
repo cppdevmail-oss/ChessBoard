@@ -1,4 +1,4 @@
-package com.example.chessboard.ui.screen.positions
+package com.example.chessboard.ui.screen.positions.savedPositions
 
 /**
  * Navigation coverage for the saved positions entry point.
@@ -21,6 +21,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import com.example.chessboard.MainActivity
@@ -324,6 +325,30 @@ class SavedPositionsNavigationTest {
     }
 
     @Test
+    fun savedPositionsScreen_startOnSecondDeviationSelectionOpensSelectedPosition() {
+        val positionId = saveGamesWithTwoDeviationPositions()
+
+        openDeviationSelectionFromSavedPosition(
+            positionId = positionId,
+            positionName = "Multiple Deviation Flow Position",
+        )
+
+        composeRule.onNodeWithTag(openingDeviationSelectionCardTestTag(1)).performClick()
+        composeRule.onNodeWithTag(OpeningDeviationSelectionStartTestTag).assertIsEnabled()
+        composeRule.onNodeWithTag(OpeningDeviationSelectionStartTestTag).performClick()
+
+        waitForNodeDisplayed(OpeningDeviationDisplayContentTestTag)
+        composeRule.onNodeWithText("Opening Deviations").assertIsDisplayed()
+        assertBoardFenEventually(
+            boardTag = OpeningDeviationSourceBoardTestTag,
+            expectedFen = "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 1",
+        )
+        composeRule.onNodeWithText(
+            "FEN: r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq -"
+        ).assertIsDisplayed()
+    }
+
+    @Test
     fun savedPositionsScreen_findDeviationsUsesWhiteAndBothGamesOnly() {
         saveGame(
             event = "White Side Line",
@@ -464,7 +489,7 @@ class SavedPositionsNavigationTest {
         composeRule.onNodeWithTag(SavedPositionsSearchActionTestTag).performClick()
         waitForTextDisplayed("Search Positions")
         composeRule.onNodeWithTag(SavedPositionsSearchNameFieldTestTag)
-            .performTextInput("Italian")
+            .performTextReplacement("Italian")
         composeRule.onNodeWithText("Cancel").performClick()
 
         composeRule.onNodeWithText("Italian Position").assertIsDisplayed()
@@ -500,6 +525,33 @@ class SavedPositionsNavigationTest {
 
         return savePosition(
             name = "Deviation Flow Position",
+            fen = InitialBoardFen,
+        )
+    }
+
+    private fun saveGamesWithTwoDeviationPositions(): Long {
+        // Creates two distinct deviation positions reachable from the same saved source position:
+        // 1. after 1.e4 e5 2.Nf3 Nc6
+        // 2. after 1.d4 d5
+        saveGame(
+            event = "Multiple Deviation A",
+            uciMoves = listOf("e2e4", "e7e5", "g1f3", "b8c6", "f1c4"),
+        )
+        saveGame(
+            event = "Multiple Deviation B",
+            uciMoves = listOf("e2e4", "e7e5", "g1f3", "b8c6", "f1b5"),
+        )
+        saveGame(
+            event = "Multiple Deviation C",
+            uciMoves = listOf("d2d4", "d7d5", "c2c4"),
+        )
+        saveGame(
+            event = "Multiple Deviation D",
+            uciMoves = listOf("d2d4", "d7d5", "c2c3"),
+        )
+
+        return savePosition(
+            name = "Multiple Deviation Flow Position",
             fen = InitialBoardFen,
         )
     }

@@ -98,6 +98,7 @@ fun OpeningDeviationDisplayScreen(
                     title = "Deviation Position",
                     fen = deviationItem.positionFen,
                     subtitle = resolveDeviationSideToMoveLabel(deviationItem.positionFen),
+                    metaText = "FEN: ${deviationItem.positionFen}",
                     modifier = Modifier.testTag(OpeningDeviationSourceBoardCardTestTag),
                     boardTestTag = OpeningDeviationSourceBoardTestTag,
                 )
@@ -115,7 +116,7 @@ fun OpeningDeviationDisplayScreen(
                     title = "Branch ${index + 1}",
                     fen = branch.resultFen,
                     subtitle = "Move: ${branch.moveUci}",
-                    metaText = "Games: ${branch.gamesCount}",
+                    metaText = "Games: ${branch.gamesCount}\nFEN: ${branch.resultFen}",
                     modifier = Modifier.testTag(openingDeviationBranchCardTestTag(index)),
                     boardTestTag = openingDeviationBranchBoardTestTag(index),
                     isSelected = index == selectedBranchIndex,

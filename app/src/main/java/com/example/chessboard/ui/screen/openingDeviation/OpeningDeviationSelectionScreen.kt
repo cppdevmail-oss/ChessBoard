@@ -52,7 +52,7 @@ fun OpeningDeviationSelectionScreenContainer(
     deviationItems: List<OpeningDeviationItem>,
     selectedDeviationIndex: Int?,
     onDeviationSelected: (Int) -> Unit,
-    onStartClick: (OpeningDeviationItem) -> Unit,
+    onStartClick: (Int) -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -71,7 +71,7 @@ internal fun OpeningDeviationSelectionScreen(
     deviationItems: List<OpeningDeviationItem>,
     selectedDeviationIndex: Int?,
     onDeviationSelected: (Int) -> Unit,
-    onStartClick: (OpeningDeviationItem) -> Unit,
+    onStartClick: (Int) -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -96,8 +96,9 @@ internal fun OpeningDeviationSelectionScreen(
                 actions = {
                     IconButton(
                         onClick = {
-                            val deviationItem = selectedDeviationItem ?: return@IconButton
-                            onStartClick(deviationItem)
+                            val currentSelectedDeviationIndex = selectedDeviationIndex
+                                ?: return@IconButton
+                            onStartClick(currentSelectedDeviationIndex)
                         },
                         enabled = selectedDeviationItem != null,
                         modifier = Modifier.testTag(OpeningDeviationSelectionStartTestTag),

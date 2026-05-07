@@ -289,7 +289,7 @@ fun PositionSearchBoardWithCoordinates(
     modifier: Modifier = Modifier,
 ) {
     val boardState = gameController.boardState
-    val currentFen = remember(boardState) { gameController.getFen() }
+    val currentFen = gameController.getFen()
     val orientation = gameController.getSide()
     var dragFromSquare by remember(orientation) { mutableStateOf<String?>(null) }
     var dragOffset by remember(orientation) { mutableStateOf(Offset.Zero) }
@@ -389,7 +389,7 @@ fun ChessBoardWithCoordinates(
     modifier: Modifier = Modifier,
 ) {
     val boardState = gameController.boardState
-    val currentFen = remember(boardState) { gameController.getFen() }
+    val currentFen = gameController.getFen()
 
     LaunchedEffect(boardState) {
         Log.d(
