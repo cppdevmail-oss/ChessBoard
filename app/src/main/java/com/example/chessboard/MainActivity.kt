@@ -482,15 +482,6 @@ class MainActivity : ComponentActivity() {
                                 )
                             )
                         },
-                        onAnalyzeGameClick = { uciMoves, initialPly ->
-                            applyTrainingFlowResult(
-                                regularTrainingFlow.openAnalysisFromEditor(
-                                    trainingId = screen.trainingId,
-                                    uciMoves = uciMoves,
-                                    initialPly = initialPly,
-                                )
-                            )
-                        },
                         onOpenGameEditorClick = { game ->
                             applyTrainingFlowResult(
                                 regularTrainingFlow.openGameEditorFromEditor(
