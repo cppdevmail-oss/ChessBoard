@@ -38,6 +38,7 @@ import com.example.chessboard.analysis.OpeningSide
 import com.example.chessboard.boardmodel.GameController
 import com.example.chessboard.boardmodel.InitialBoardFen
 import com.example.chessboard.entity.SavedSearchPositionEntity
+import com.example.chessboard.entity.SideMask
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.ui.SavedPositionsDeviationDialogActionTestTag
 import com.example.chessboard.ui.SavedPositionsContentTestTag
@@ -743,15 +744,26 @@ private suspend fun buildOpeningDeviationItemsForSavedPosition(
     builder: OpeningDeviationItemBuilder = OpeningDeviationItemBuilder(),
 ): List<OpeningDeviationItem> {
     val displayedFen = resolveDisplayedFen(position)
+    val selectedSide = resolveOpeningDeviationSide(displayedFen)
+    fun matchesOpeningDeviationSide(gameSideMask: Int): Boolean {
+        var requiredSideMask = SideMask.WHITE
+        if (selectedSide == OpeningSide.BLACK) {
+            requiredSideMask = SideMask.BLACK
+        }
+
+        return (gameSideMask and requiredSideMask) != 0
+    }
+
     val gameIds = findGameIdsForSavedPosition(
         dbProvider = dbProvider,
         position = position,
     )
     val games = dbProvider.createGameListService().getGamesByIds(gameIds)
+        .filter { game -> matchesOpeningDeviationSide(game.sideMask) }
 
     return builder.build(
         games = games,
-        selectedSide = resolveOpeningDeviationSide(displayedFen),
+        selectedSide = selectedSide,
     )
 }
 
