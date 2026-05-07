@@ -324,6 +324,76 @@ class SavedPositionsNavigationTest {
     }
 
     @Test
+    fun savedPositionsScreen_findDeviationsUsesWhiteAndBothGamesOnly() {
+        saveGame(
+            event = "White Side Line",
+            uciMoves = listOf("e2e4"),
+            sideMask = SideMask.WHITE,
+        )
+        saveGame(
+            event = "Both Sides Line",
+            uciMoves = listOf("d2d4"),
+            sideMask = SideMask.BOTH,
+        )
+        saveGame(
+            event = "Black Side Line",
+            uciMoves = listOf("c2c4"),
+            sideMask = SideMask.BLACK,
+        )
+        val positionId = savePosition(
+            name = "White Side Deviation Position",
+            fen = InitialBoardFen,
+        )
+
+        openDeviationDisplayFromSavedPosition(
+            positionId = positionId,
+            positionName = "White Side Deviation Position",
+        )
+
+        composeRule.onNodeWithText("Branches: 2").assertIsDisplayed()
+        scrollToDeviationBranchCard(0)
+        composeRule.onNodeWithText("Move: e2e4").assertIsDisplayed()
+        scrollToDeviationBranchCard(1)
+        composeRule.onNodeWithText("Move: d2d4").assertIsDisplayed()
+        composeRule.onNodeWithText("Move: c2c4").assertDoesNotExist()
+    }
+
+    @Test
+    fun savedPositionsScreen_findDeviationsUsesBlackAndBothGamesOnly() {
+        saveGame(
+            event = "Black Side Sicilian",
+            uciMoves = listOf("e2e4", "c7c5"),
+            sideMask = SideMask.BLACK,
+        )
+        saveGame(
+            event = "Both Sides Open Game",
+            uciMoves = listOf("e2e4", "e7e5"),
+            sideMask = SideMask.BOTH,
+        )
+        saveGame(
+            event = "White Side French",
+            uciMoves = listOf("e2e4", "e7e6"),
+            sideMask = SideMask.WHITE,
+        )
+        val positionId = savePosition(
+            name = "Black Side Deviation Position",
+            fen = BlackToMoveAfterE4Fen,
+        )
+
+        openDeviationDisplayFromSavedPosition(
+            positionId = positionId,
+            positionName = "Black Side Deviation Position",
+        )
+
+        composeRule.onNodeWithText("Branches: 2").assertIsDisplayed()
+        scrollToDeviationBranchCard(0)
+        composeRule.onNodeWithText("Move: c7c5").assertIsDisplayed()
+        scrollToDeviationBranchCard(1)
+        composeRule.onNodeWithText("Move: e7e5").assertIsDisplayed()
+        composeRule.onNodeWithText("Move: e7e6").assertDoesNotExist()
+    }
+
+    @Test
     fun savedPositionsScreen_openingDeviationBackFlowReturnsToSavedPositions() {
         val positionId = saveDeviationSourcePosition()
 
@@ -434,11 +504,14 @@ class SavedPositionsNavigationTest {
         )
     }
 
-    private fun openDeviationSelectionFromSavedPosition(positionId: Long) {
+    private fun openDeviationSelectionFromSavedPosition(
+        positionId: Long,
+        positionName: String = "Deviation Flow Position",
+    ) {
         waitForTextDisplayed("Saved Positions")
         composeRule.onNodeWithText("Saved Positions").performClick()
 
-        waitForTextDisplayed("Deviation Flow Position")
+        waitForTextDisplayed(positionName)
         composeRule.onNodeWithTag(savedPositionDeviationButtonTestTag(positionId)).performClick()
 
         waitForTextDisplayed("Opening Deviations")
@@ -446,8 +519,14 @@ class SavedPositionsNavigationTest {
         waitForNodeDisplayed(OpeningDeviationSelectionContentTestTag)
     }
 
-    private fun openDeviationDisplayFromSavedPosition(positionId: Long) {
-        openDeviationSelectionFromSavedPosition(positionId)
+    private fun openDeviationDisplayFromSavedPosition(
+        positionId: Long,
+        positionName: String = "Deviation Flow Position",
+    ) {
+        openDeviationSelectionFromSavedPosition(
+            positionId = positionId,
+            positionName = positionName,
+        )
         composeRule.onNodeWithTag(openingDeviationSelectionCardTestTag(0)).performClick()
         composeRule.onNodeWithTag(OpeningDeviationSelectionStartTestTag).performClick()
         waitForNodeDisplayed(OpeningDeviationDisplayContentTestTag)
@@ -463,13 +542,14 @@ class SavedPositionsNavigationTest {
     private fun saveGame(
         event: String,
         uciMoves: List<String>,
+        sideMask: Int = SideMask.BOTH,
     ): Long {
         return runBlocking {
             val game = GameEntity(
                 event = event,
                 pgn = storedPgn(uciMoves),
                 initialFen = "",
-                sideMask = SideMask.BOTH,
+                sideMask = sideMask,
             )
             val gameId = dbProvider.createGameSaver().saveGame(
                 game = game,
@@ -596,5 +676,7 @@ class SavedPositionsNavigationTest {
     private companion object {
         const val EmptyBoardFen = "8/8/8/8/8/8/8/8 w - - 0 1"
         const val BlackToMoveFen = "8/8/8/8/8/8/8/8 b - - 0 1"
+        const val BlackToMoveAfterE4Fen =
+            "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
     }
 }
