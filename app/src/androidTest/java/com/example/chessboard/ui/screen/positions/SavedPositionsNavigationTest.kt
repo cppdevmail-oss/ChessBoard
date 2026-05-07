@@ -324,8 +324,8 @@ class SavedPositionsNavigationTest {
     }
 
     @Test
-    fun savedPositionsScreen_findDeviationsSelectionStartsSecondDisplayFlow() {
-        val positionId = saveMultipleDeviationSourcePosition()
+    fun savedPositionsScreen_startOnSecondDeviationSelectionOpensSelectedPosition() {
+        val positionId = saveGamesWithTwoDeviationPositions()
 
         openDeviationSelectionFromSavedPosition(
             positionId = positionId,
@@ -528,7 +528,10 @@ class SavedPositionsNavigationTest {
         )
     }
 
-    private fun saveMultipleDeviationSourcePosition(): Long {
+    private fun saveGamesWithTwoDeviationPositions(): Long {
+        // Creates two distinct deviation positions reachable from the same saved source position:
+        // 1. after 1.e4 e5 2.Nf3 Nc6
+        // 2. after 1.d4 d5
         saveGame(
             event = "Multiple Deviation A",
             uciMoves = listOf("e2e4", "e7e5", "g1f3", "b8c6", "f1c4"),
