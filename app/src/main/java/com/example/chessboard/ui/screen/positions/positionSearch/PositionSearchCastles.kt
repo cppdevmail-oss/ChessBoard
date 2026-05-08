@@ -1,4 +1,4 @@
-package com.example.chessboard.ui.screen
+package com.example.chessboard.ui.screen.positions.positionSearch
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
