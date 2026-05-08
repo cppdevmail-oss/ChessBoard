@@ -66,7 +66,7 @@ import com.example.chessboard.ui.screen.training.flow.SmartTrainingFlowCoordinat
 import com.example.chessboard.ui.screen.training.flow.TrainingFlowResult
 import com.example.chessboard.ui.screen.training.train.EditTrainingScreenContainer
 import com.example.chessboard.ui.screen.training.train.TrainingSettingsScreenContainer
-import com.example.chessboard.ui.screen.training.TrainingListScreenContainer
+import com.example.chessboard.ui.screen.training.train.TrainingListScreenContainer
 import com.example.chessboard.ui.theme.ChessBoardTheme
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
