@@ -30,3 +30,42 @@ Follow these collaboration rules when working with the user on this project.
 - The default behavior after review is: report first, change later.
 - Only skip the extra approval step when the user has already explicitly asked for automatic fixes in advance.
 - Treat default no-op callbacks such as `= {}` as a code smell in this project; report or avoid them instead of introducing them casually.
+
+## Read-Only Git Escalation
+
+- The user pre-approves running safe read-only git commands with elevated permissions when sandbox restrictions block normal execution.
+- This permission is limited to viewing repository state and history.
+- Use it without asking again for:
+  - `git status`
+  - `git branch`
+  - `git branch -r`
+  - `git branch -a`
+  - `git remote -v`
+  - `git log`
+  - `git show`
+  - `git diff`
+  - `git diff --stat`
+  - `git rev-parse`
+  - `git symbolic-ref`
+  - `git tag`
+  - `git reflog`
+  - `git stash list`
+  - `git ls-files`
+  - `git grep`
+- Do not treat any git command that changes the working tree, index, local refs, remote refs, or network state as pre-approved.
+- Commands that are still not auto-approved include:
+  - `git fetch`
+  - `git pull`
+  - `git push`
+  - `git switch`
+  - `git checkout`
+  - `git merge`
+  - `git rebase`
+  - `git cherry-pick`
+  - `git commit`
+  - `git branch -d`
+  - `git branch -D`
+  - `git reset`
+  - `git clean`
+  - `git stash push`
+  - `git stash pop`
