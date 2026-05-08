@@ -156,10 +156,8 @@ class EditTrainingTemplateScreenTest {
             }
         }
 
-        composeRule.onNodeWithTag(EditTrainingListTestTag)
-            .performScrollToNode(hasContentDescription("Remove game from template"))
-        waitForNodeDisplayedByContentDescription("Remove game from template")
-        composeRule.onNodeWithContentDescription("Remove game from template").performClick()
+        waitForTextDisplayed("Delete")
+        composeRule.onNodeWithText("Delete").performClick()
         waitForTextDisplayed("Remove Game")
         composeRule.onNode(hasText("Remove") and hasClickAction()).performClick()
 
@@ -193,15 +191,6 @@ class EditTrainingTemplateScreenTest {
         composeRule.waitUntil(timeoutMillis = 5_000) {
             runCatching {
                 composeRule.onNodeWithText(text).assertIsDisplayed()
-                true
-            }.getOrDefault(false)
-        }
-    }
-
-    private fun waitForNodeDisplayedByContentDescription(contentDescription: String) {
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            runCatching {
-                composeRule.onNodeWithContentDescription(contentDescription).assertIsDisplayed()
                 true
             }.getOrDefault(false)
         }

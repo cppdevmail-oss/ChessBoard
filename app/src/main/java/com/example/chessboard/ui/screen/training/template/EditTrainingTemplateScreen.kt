@@ -9,6 +9,7 @@ package com.example.chessboard.ui.screen.training.template
  */
 
 import com.example.chessboard.ui.screen.training.common.CreateTrainingEditorState
+import com.example.chessboard.ui.screen.training.common.TrainingCollectionEditorBarsFactory
 import com.example.chessboard.ui.screen.training.common.TrainingCollectionEditorScreen
 import com.example.chessboard.ui.screen.training.common.TrainingCollectionEditorStrings
 import com.example.chessboard.ui.screen.training.common.TrainingEditorGameSection
@@ -31,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.ui.components.AppConfirmDialog
 import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
@@ -185,10 +187,13 @@ fun EditTrainingTemplateScreen(
     var savedTemplateName by remember(initialTemplateName) { mutableStateOf(initialTemplateName) }
     var savedGamesForTemplate by remember(gamesForTemplate) { mutableStateOf(gamesForTemplate) }
     var pendingLeaveAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var pendingRemoveGame by remember { mutableStateOf<TrainingGameEditorItem?>(null) }
     val boardSession = rememberTrainingEditorBoardSession(editorState.editableGamesForTraining)
     val selectedGame = editorState.editableGamesForTraining.firstOrNull { game ->
         game.gameId == boardSession.selectedGameId
     }
+    val canUndo = selectedGame != null && boardSession.gameController.canUndo
+    val canRedo = selectedGame != null && boardSession.gameController.canRedo
 
     fun hasUnsavedChanges(): Boolean {
         return hasUnsavedTrainingEditorChanges(
@@ -247,6 +252,22 @@ fun EditTrainingTemplateScreen(
         boardSession.onSelectGame(nextSelectedGameId)
     }
 
+    fun withSelectedGame(action: (TrainingGameEditorItem) -> Unit) {
+        selectedGame?.let(action)
+    }
+
+    fun openSelectedGameEditor() {
+        withSelectedGame { game ->
+            requestLeave { onOpenGameEditorClick(game.gameId) }
+        }
+    }
+
+    fun removeSelectedGame() {
+        withSelectedGame { game ->
+            pendingRemoveGame = game
+        }
+    }
+
     LaunchedEffect(initialTemplateName, gamesForTemplate) {
         editorState = editorState.copy(
             trainingName = initialTemplateName,
@@ -274,6 +295,20 @@ fun EditTrainingTemplateScreen(
         },
     )
 
+    pendingRemoveGame?.let { gameToRemove ->
+        AppConfirmDialog(
+            title = "Remove Game",
+            message = "Remove \"${gameToRemove.title}\" from template?",
+            onDismiss = { pendingRemoveGame = null },
+            onConfirm = {
+                pendingRemoveGame = null
+                removeGameFromTemplate(gameToRemove.gameId)
+            },
+            confirmText = "Remove",
+            isDestructive = true,
+        )
+    }
+
     BackHandler {
         requestLeave(onBackClick)
     }
@@ -285,6 +320,18 @@ fun EditTrainingTemplateScreen(
     } else {
         null
     }
+
+    val editorBars = TrainingCollectionEditorBarsFactory(
+        onHomeClick = { requestLeave { onNavigate(ScreenType.Home) } },
+        hasSelection = selectedGame != null,
+        onEditClick = ::openSelectedGameEditor,
+        onDeleteClick = ::removeSelectedGame,
+        deleteContentDescription = "Remove game from template",
+        canUndo = canUndo,
+        onPrevClick = { boardSession.gameController.undoMove() },
+        canRedo = canRedo,
+        onNextClick = { boardSession.gameController.redoMove() },
+    )
 
     TrainingCollectionEditorScreen(
         strings = EditTrainingTemplateScreenStrings,
@@ -306,7 +353,8 @@ fun EditTrainingTemplateScreen(
         },
         modifier = modifier,
         autoScrollToGameIndex = autoScrollToGameIndex,
-        topBarActions = {},
+        bottomBarOverride = editorBars.buildBottomBar(),
+        topBarActions = editorBars.buildTopBarActions(),
     ) { game ->
         val parsedGame = boardSession.parsedGamesById[game.gameId]
         val isSelected = boardSession.selectedGameId == game.gameId
@@ -349,7 +397,6 @@ fun EditTrainingTemplateScreen(
                     }
                 },
                 onMovePlyClick = { ply -> boardSession.onMoveToPly(game.gameId, ply) },
-                onRemoveClick = { removeGameFromTemplate(game.gameId) },
             ),
             removeCollectionLabel = "template",
         )
