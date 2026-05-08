@@ -1,4 +1,4 @@
-package com.example.chessboard.ui.screen.training
+package com.example.chessboard.ui.screen.training.template
 
 /**
  * Shared UI helpers for training template list screens.

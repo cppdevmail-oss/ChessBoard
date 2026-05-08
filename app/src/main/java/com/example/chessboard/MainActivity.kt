@@ -55,8 +55,8 @@ import com.example.chessboard.ui.screen.positions.savedPositions.SavedPositionsS
 import com.example.chessboard.ui.screen.trainSingleGame.TrainSingleGameLauncherScreenContainer
 import com.example.chessboard.ui.screen.training.CreateTrainingByStatisticsScreenContainer
 import com.example.chessboard.ui.screen.training.CreateTrainingChoiceScreenContainer
-import com.example.chessboard.ui.screen.training.TrainingTemplateSelectionScreenContainer
-import com.example.chessboard.ui.screen.training.TrainingTemplateBrowserScreenContainer
+import com.example.chessboard.ui.screen.training.template.TrainingTemplateSelectionScreenContainer
+import com.example.chessboard.ui.screen.training.template.TrainingTemplateBrowserScreenContainer
 import com.example.chessboard.ui.screen.training.template.EditTrainingTemplateScreenContainer
 import com.example.chessboard.ui.screen.training.CreateTrainingFromAllGamesScreenContainer
 import com.example.chessboard.ui.screen.training.CreateTrainingFromGameIdsScreenContainer
