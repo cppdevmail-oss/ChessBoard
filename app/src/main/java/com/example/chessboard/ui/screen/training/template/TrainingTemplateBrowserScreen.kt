@@ -1,4 +1,4 @@
-package com.example.chessboard.ui.screen.training
+package com.example.chessboard.ui.screen.training.template
 
 /**
  * Training template browser screen.

@@ -12,12 +12,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chessboard.ui.components.AppSettingsScaffold
 import com.example.chessboard.ui.components.CardSurface
-import com.example.chessboard.ui.screen.PositionSearchCastlesSection
-import com.example.chessboard.ui.screen.PositionSearchCastlingState
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
-import com.example.chessboard.ui.screen.replacePositionSearchFenCastlingPart
-import com.example.chessboard.ui.screen.resolvePositionSearchCastlingState
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TextColor
 
