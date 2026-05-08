@@ -38,3 +38,10 @@
 мб проблема в полуходе, добавил ход за черных и эта линия появилась в новой тренировке
 - move sequence replace to move tree on train game screen
 - replace games with line everywhere
+
+- заменить легенду ходов в active training:
+  перевести TrainSingleGame с MoveSequenceSection на GameMoveTreeSection,
+  сохранить логику скрытия будущих ходов через visibleUciMoves,
+  передавать startFen для training ranges,
+  не сломать ограничения выбора ходов во время training phase,
+  старый MoveLegendSection пометить как deprecated
