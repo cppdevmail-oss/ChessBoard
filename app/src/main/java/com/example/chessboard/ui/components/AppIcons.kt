@@ -24,6 +24,7 @@ object AppIconSizes {
     val Sm = 20.dp
     val Md = 24.dp
     val Lg = 32.dp
+    val Xl = 48.dp
 }
 
 @Composable

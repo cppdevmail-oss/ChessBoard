@@ -19,15 +19,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.example.chessboard.R
+import com.example.chessboard.ui.components.AppIconSizes
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.CardMetaText
@@ -75,7 +79,12 @@ internal fun RegularHomeScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("♛", fontSize = 26.sp, color = TrainingAccentTeal)
+                            Icon(
+                                painter = painterResource(R.drawable.ic_launcher_foreground),
+                                contentDescription = null,
+                                tint = TrainingAccentTeal,
+                                modifier = Modifier.size(AppIconSizes.Xl),
+                            )
                             Spacer(modifier = Modifier.width(AppDimens.spaceSm))
                             Text(
                                 text = "Chess Openings",

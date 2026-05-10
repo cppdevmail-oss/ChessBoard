@@ -130,7 +130,7 @@ internal fun SimpleHomeScreen(
                                 painter = painterResource(R.drawable.ic_launcher_foreground),
                                 contentDescription = null,
                                 tint = TrainingAccentTeal,
-                                modifier = Modifier.size(48.dp),
+                                modifier = Modifier.size(AppIconSizes.Xl),
                             )
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
