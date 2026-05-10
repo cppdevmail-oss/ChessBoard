@@ -80,6 +80,7 @@ fun GameMoveTreeSection(
     gameController: GameController,
     modifier: Modifier = Modifier,
     startFen: String? = null,
+    maxVisiblePly: Int? = null,
     maxContentHeight: Dp? = null,
     onMoveSelected: ((backingLine: List<String>, targetPly: Int) -> Unit)? = null,
 ) {
@@ -118,7 +119,7 @@ fun GameMoveTreeSection(
                     .testTag(MoveTreeContentTestTag),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                if (segments.isEmpty()) {
+                if (segments.isEmpty() && maxVisiblePly == null) {
                     BodySecondaryText(
                         text = "No moves yet. Import a PGN or add moves on the board.",
                         color = TrainingIconInactive,
@@ -127,12 +128,18 @@ fun GameMoveTreeSection(
                 segments.forEachIndexed { segIndex, segment ->
                     when (segment) {
                         is TreeSegment.MainMoves -> {
+                            val visibleMoves = if (maxVisiblePly != null) {
+                                segment.moves.filter { it.ply < maxVisiblePly }
+                            } else {
+                                segment.moves
+                            }
+                            if (visibleMoves.isEmpty()) return@forEachIndexed
                             val isContinuation = segIndex > 0 && segments[segIndex - 1] is TreeSegment.Variation
                             FlowRow(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                                 modifier = Modifier.testTag(moveTreeRowTestTag(segIndex)),
                             ) {
-                                segment.moves.forEachIndexed { moveIndex, move ->
+                                visibleMoves.forEachIndexed { moveIndex, move ->
                                     val isWhite = move.ply % 2 == 0
                                     val showNumber = isWhite || (moveIndex == 0 && isContinuation)
                                     if (showNumber) {
@@ -163,6 +170,12 @@ fun GameMoveTreeSection(
                             }
                         }
                         is TreeSegment.Variation -> {
+                            val visibleMoves = if (maxVisiblePly != null) {
+                                segment.moves.filter { it.ply < maxVisiblePly }
+                            } else {
+                                segment.moves
+                            }
+                            if (visibleMoves.isEmpty()) return@forEachIndexed
                             FlowRow(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                                 modifier = Modifier.testTag(moveTreeRowTestTag(segIndex)),
@@ -173,7 +186,7 @@ fun GameMoveTreeSection(
                                     color = TextColor.Secondary,
                                     modifier = Modifier.align(Alignment.CenterVertically),
                                 )
-                                segment.moves.forEach { move ->
+                                visibleMoves.forEach { move ->
                                     if (move.ply % 2 == 0) {
                                         Text(
                                             text = "${move.ply / 2 + 1}.",

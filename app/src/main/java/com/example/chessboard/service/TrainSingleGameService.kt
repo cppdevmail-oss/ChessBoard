@@ -61,6 +61,26 @@ class TrainSingleGameService(
         }
     }
 
+    // Same as recordTrainingStats but returns the new level if the player leveled up, null otherwise.
+    suspend fun recordTrainingStatsCheckingLevelUp(gameId: Long, mistakesCount: Int): Int? {
+        val globalStatsService = GlobalTrainingStatsService(database)
+        val levelBefore = resolveLevel(globalStatsService.getStats().totalTrainingsCount)
+        recordTrainingStats(gameId = gameId, mistakesCount = mistakesCount)
+        val levelAfter = resolveLevel(globalStatsService.getStats().totalTrainingsCount)
+        return if (levelAfter > levelBefore) levelAfter else null
+    }
+
+    private fun resolveLevel(totalTrainings: Int): Int {
+        var level = 1
+        var threshold = 0
+        while (true) {
+            val required = if (level == 1) 3 else threshold + 10 + level
+            if (totalTrainings < required) return level
+            threshold = required
+            level++
+        }
+    }
+
     // Decreases the weight of the trained line. Call this when the user confirms finish.
     suspend fun finishTraining(
         trainingId: Long,

@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.IconButton
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -47,6 +48,7 @@ import com.example.chessboard.ui.components.IconMd
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
+import com.example.chessboard.ui.screen.resolvePlayerTier
 import com.example.chessboard.ui.theme.AppDimens
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -66,6 +68,7 @@ fun TrainSingleGameScreenContainer(
     sessionTotal: Int = 0,
     onTrainingFinished: (TrainSingleGameResult) -> Unit = {},
     onNextTrainingClick: (TrainSingleGameResult) -> Unit = {},
+    autoNextLine: Boolean = false,
     onInterruptTrainingClick: () -> Unit,
     onOpenGameEditorClick: () -> Unit,
     onCloneGameClick: (GameDraft) -> Unit,
@@ -77,6 +80,33 @@ fun TrainSingleGameScreenContainer(
 ) {
     val inDbProvider = screenContext.inDbProvider
     val scope = rememberCoroutineScope()
+    var showLevelUp by remember { mutableStateOf(false) }
+    var levelUpTierSymbol by remember { mutableStateOf("") }
+    var levelUpLevel by remember { mutableStateOf(0) }
+    var levelUpTitle by remember { mutableStateOf("") }
+    var autoNextLine by remember { mutableStateOf(autoNextLine) }
+
+    suspend fun checkAndRecordStats(result: TrainSingleGameResult): Boolean {
+        val newLevel = withContext(Dispatchers.IO) {
+            inDbProvider.recordTrainingGameStatsCheckingLevelUp(
+                gameId = result.gameId,
+                mistakesCount = result.mistakesCount,
+            )
+        }
+        if (newLevel != null) {
+            val tier = resolvePlayerTier(newLevel)
+            val title = tier.titles.random()
+            withContext(Dispatchers.IO) {
+                inDbProvider.createUserProfileService().updateRankTitle(tier.name, title)
+            }
+            levelUpTierSymbol = tier.symbol
+            levelUpLevel = newLevel
+            levelUpTitle = title
+            showLevelUp = true
+            return true
+        }
+        return false
+    }
 
     TrainSingleGameScreen(
         gameId = gameId,
@@ -86,14 +116,15 @@ fun TrainSingleGameScreenContainer(
         hasNextTrainingGame = hasNextTrainingGame,
         sessionCurrent = sessionCurrent,
         sessionTotal = sessionTotal,
+        showLevelUp = showLevelUp,
+        levelUpTierSymbol = levelUpTierSymbol,
+        levelUpLevel = levelUpLevel,
+        levelUpTitle = levelUpTitle,
+        onLevelUpDismiss = { showLevelUp = false },
         onLineCompleted = { result ->
-            scope.launch(Dispatchers.IO) {
-                inDbProvider.recordTrainingGameStats(
-                    gameId = result.gameId,
-                    mistakesCount = result.mistakesCount,
-                )
-            }
+            scope.launch { checkAndRecordStats(result) }
         },
+        checkAndRecordStats = { result -> checkAndRecordStats(result) },
         onTrainingFinished = { result ->
             scope.launch {
                 withContext(Dispatchers.IO) {
@@ -120,6 +151,13 @@ fun TrainSingleGameScreenContainer(
                 onNextTrainingClick(result)
             }
         },
+        autoNextLine = autoNextLine,
+        onAutoNextLineChange = { enabled ->
+            autoNextLine = enabled
+            scope.launch(Dispatchers.IO) {
+                inDbProvider.createUserProfileService().updateAutoNextLine(enabled)
+            }
+        },
         onInterruptTrainingClick = onInterruptTrainingClick,
         onBackClick = screenContext.onBackClick,
         onNavigate = screenContext.onNavigate,
@@ -141,9 +179,17 @@ private fun TrainSingleGameScreen(
     hasNextTrainingGame: Boolean = false,
     sessionCurrent: Int = 0,
     sessionTotal: Int = 0,
+    showLevelUp: Boolean = false,
+    levelUpTierSymbol: String = "",
+    levelUpLevel: Int = 0,
+    levelUpTitle: String = "",
+    onLevelUpDismiss: () -> Unit = {},
     onLineCompleted: (TrainSingleGameResult) -> Unit = {},
+    checkAndRecordStats: suspend (TrainSingleGameResult) -> Boolean = { false },
     onTrainingFinished: (TrainSingleGameResult) -> Unit = {},
     onNextTrainingClick: (TrainSingleGameResult) -> Unit = {},
+    autoNextLine: Boolean = false,
+    onAutoNextLineChange: (Boolean) -> Unit = {},
     onInterruptTrainingClick: () -> Unit,
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
@@ -329,8 +375,11 @@ private fun TrainSingleGameScreen(
     }
 
     // Fire stats as soon as the final completion dialog appears, before Finish is pressed.
+    // Skipped when auto-next is on — auto-next calls checkAndRecordStats inline so it can
+    // await the result and react to level-up before deciding whether to navigate.
     val completionDialog = uiState.completionDialog
     LaunchedEffect(completionDialog) {
+        if (autoNextLine) return@LaunchedEffect
         if (completionDialog != null && !completionDialog.hasNextSide) {
             onLineCompleted(
                 TrainSingleGameResult(
@@ -340,6 +389,47 @@ private fun TrainSingleGameScreen(
                 )
             )
         }
+    }
+
+    // Tracks whether stats were recorded for the current completion so the effect doesn't
+    // double-record when it restarts after the level-up dialog is dismissed.
+    // remember(completionDialog) resets this flag on each new completion.
+    var statsRecordedForCompletion by remember(completionDialog) { mutableStateOf(false) }
+
+    // Auto-advance to the next side or next game when auto-next is enabled.
+    // showLevelUp is a key so the effect restarts whenever the level-up dialog appears or
+    // is dismissed — no snapshotFlow or arbitrary delay needed.
+    LaunchedEffect(completionDialog, autoNextLine, showLevelUp) {
+        val dialog = completionDialog ?: return@LaunchedEffect
+        if (!autoNextLine) return@LaunchedEffect
+        if (showLevelUp) return@LaunchedEffect  // wait until user dismisses the level-up dialog
+        if (!dialog.hasNextSide && !hasNextTrainingGame) return@LaunchedEffect
+
+        if (dialog.hasNextSide) {
+            uiState = handleCompletionFinish(
+                uiState = uiState,
+                gameId = gameId,
+                trainingId = trainingId,
+                onTrainingFinished = onTrainingFinished
+            )
+            return@LaunchedEffect
+        }
+
+        val result = TrainSingleGameResult(
+            gameId = gameId,
+            trainingId = trainingId,
+            mistakesCount = uiState.mistakesCount,
+        )
+        if (!statsRecordedForCompletion) {
+            statsRecordedForCompletion = true
+            val leveledUp = checkAndRecordStats(result)
+            if (leveledUp) return@LaunchedEffect  // showLevelUp → true triggers key restart → exits above
+        }
+
+        hasInitializedSession = false
+        trainingRuntimeContext.clearGameProgress(trainingId, gameId)
+        uiState = uiState.copy(completionDialog = null)
+        onNextTrainingClick(result)
     }
 
     // Keeps the event handlers together so the main render block stays compact.
@@ -429,8 +519,9 @@ private fun TrainSingleGameScreen(
         )
     }
 
+    Box(modifier = modifier.fillMaxSize()) {
     AppScreenScaffold(
-        modifier = modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         topBar = {
             Column {
                 AppTopBar(
@@ -488,27 +579,32 @@ private fun TrainSingleGameScreen(
             )
         }
     ) { paddingValues ->
-        RenderCompletionDialog(
-            dialogState = uiState.completionDialog,
-            onRepeatClick = {
-                resetToTrainingStart()
-                uiState = buildRepeatVariationState(uiState)
-            },
-            onFinishClick = {
-                val isFinalCompletion = uiState.completionDialog?.hasNextSide != true
-                if (isFinalCompletion) {
-                    hasInitializedSession = false
-                    trainingRuntimeContext.clearGameProgress(trainingId, gameId)
-                }
-                uiState = handleCompletionFinish(
-                    uiState = uiState,
-                    gameId = gameId,
-                    trainingId = trainingId,
-                    onTrainingFinished = onTrainingFinished
-                )
-            },
-            onNextTrainingClick = createNextTrainingClickAction()
-        )
+        val autoNextWillAdvance = autoNextLine && completionDialog != null &&
+            (completionDialog.hasNextSide || hasNextTrainingGame)
+
+        if (!showLevelUp) {
+            RenderCompletionDialog(
+                dialogState = if (autoNextWillAdvance) null else uiState.completionDialog,
+                onRepeatClick = {
+                    resetToTrainingStart()
+                    uiState = buildRepeatVariationState(uiState)
+                },
+                onFinishClick = {
+                    val isFinalCompletion = uiState.completionDialog?.hasNextSide != true
+                    if (isFinalCompletion) {
+                        hasInitializedSession = false
+                        trainingRuntimeContext.clearGameProgress(trainingId, gameId)
+                    }
+                    uiState = handleCompletionFinish(
+                        uiState = uiState,
+                        gameId = gameId,
+                        trainingId = trainingId,
+                        onTrainingFinished = onTrainingFinished
+                    )
+                },
+                onNextTrainingClick = createNextTrainingClickAction()
+            )
+        }
 
         Column(
             modifier = Modifier
@@ -542,4 +638,15 @@ private fun TrainSingleGameScreen(
             )
         }
     }
+
+    if (showLevelUp) {
+        LevelUpDialog(
+            tierSymbol = levelUpTierSymbol,
+            levelNumber = levelUpLevel,
+            rankTitle = levelUpTitle,
+            onDismiss = onLevelUpDismiss,
+        )
+    }
+    } // Box
 }
+

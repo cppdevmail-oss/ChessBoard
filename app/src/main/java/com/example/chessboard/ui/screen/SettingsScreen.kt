@@ -1,44 +1,37 @@
 package com.example.chessboard.ui.screen
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chessboard.ui.components.AppSettingsScaffold
-import com.example.chessboard.ui.components.CardMetaText
+import com.example.chessboard.ui.components.AppSettingsToggleRow
 import com.example.chessboard.ui.components.CardSurface
-import com.example.chessboard.ui.components.IconSm
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.ChessBoardTheme
 import com.example.chessboard.ui.theme.TextColor
-import com.example.chessboard.ui.theme.TrainingAccentTeal
-
-private val SettingsIconBg = Color(0xFF1A3A28)
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun SettingsScreenContainer(
@@ -52,6 +45,17 @@ fun SettingsScreenContainer(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val userProfileService = remember(screenContext.inDbProvider) {
+        screenContext.inDbProvider.createUserProfileService()
+    }
+    val scope = rememberCoroutineScope()
+    var autoNextLine by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        val profile = withContext(Dispatchers.IO) { userProfileService.getProfile() }
+        autoNextLine = profile.autoNextLine
+    }
+
     SettingsScreen(
         simpleViewEnabled = simpleViewEnabled,
         onSimpleViewToggle = onSimpleViewToggle,
@@ -59,6 +63,11 @@ fun SettingsScreenContainer(
         onRemoveLineIfRepIsZeroToggle = onRemoveLineIfRepIsZeroToggle,
         hideLinesWithWeightZero = hideLinesWithWeightZero,
         onHideLinesWithWeightZeroToggle = onHideLinesWithWeightZeroToggle,
+        autoNextLine = autoNextLine,
+        onAutoNextLineChange = { newValue ->
+            autoNextLine = newValue
+            scope.launch(Dispatchers.IO) { userProfileService.updateAutoNextLine(newValue) }
+        },
         onBackClick = screenContext.onBackClick,
         onNavigate = screenContext.onNavigate,
         modifier = modifier,
@@ -73,6 +82,8 @@ fun SettingsScreen(
     onRemoveLineIfRepIsZeroToggle: (Boolean) -> Unit,
     hideLinesWithWeightZero: Boolean,
     onHideLinesWithWeightZeroToggle: (Boolean) -> Unit,
+    autoNextLine: Boolean = false,
+    onAutoNextLineChange: (Boolean) -> Unit = {},
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
     modifier: Modifier = Modifier,
@@ -95,6 +106,8 @@ fun SettingsScreen(
             onRemoveLineIfRepIsZeroToggle = onRemoveLineIfRepIsZeroToggle,
             hideLinesWithWeightZero = hideLinesWithWeightZero,
             onHideLinesWithWeightZeroToggle = onHideLinesWithWeightZeroToggle,
+            autoNextLine = autoNextLine,
+            onAutoNextLineChange = onAutoNextLineChange,
         )
     }
 }
@@ -135,6 +148,8 @@ private fun TrainingSection(
     onRemoveLineIfRepIsZeroToggle: (Boolean) -> Unit,
     hideLinesWithWeightZero: Boolean,
     onHideLinesWithWeightZeroToggle: (Boolean) -> Unit,
+    autoNextLine: Boolean,
+    onAutoNextLineChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     CardSurface(
@@ -154,19 +169,26 @@ private fun TrainingSection(
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 1.sp,
         )
-        SettingsToggleRow(
+        AppSettingsToggleRow(
             icon = Icons.Filled.FitnessCenter,
             title = "Remove line if rep is 0",
             subtitle = "Remove lines from training when repetitions reach zero",
-            enabled = removeLineIfRepIsZero,
-            onToggle = onRemoveLineIfRepIsZeroToggle,
+            checked = removeLineIfRepIsZero,
+            onCheckedChange = onRemoveLineIfRepIsZeroToggle,
         )
-        SettingsToggleRow(
+        AppSettingsToggleRow(
             icon = Icons.Filled.VisibilityOff,
             title = "Hide lines with weight 0",
             subtitle = "Hide exhausted lines from the training editor",
-            enabled = hideLinesWithWeightZero,
-            onToggle = onHideLinesWithWeightZeroToggle,
+            checked = hideLinesWithWeightZero,
+            onCheckedChange = onHideLinesWithWeightZeroToggle,
+        )
+        AppSettingsToggleRow(
+            icon = Icons.Filled.FastForward,
+            title = "Auto Next Line",
+            subtitle = "Skip completion dialog and move to the next line",
+            checked = autoNextLine,
+            onCheckedChange = onAutoNextLineChange,
         )
     }
 }
@@ -177,76 +199,14 @@ private fun SimpleViewRow(
     onToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    SettingsToggleRow(
+    AppSettingsToggleRow(
         icon = Icons.Filled.Visibility,
         title = "Simple View",
         subtitle = "Simplified interface with minimal distractions",
-        enabled = enabled,
-        onToggle = onToggle,
+        checked = enabled,
+        onCheckedChange = onToggle,
         modifier = modifier,
     )
-}
-
-@Composable
-private fun SettingsToggleRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    title: String,
-    subtitle: String,
-    enabled: Boolean,
-    onToggle: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(AppDimens.spaceLg),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(44.dp)
-                .clip(RoundedCornerShape(AppDimens.radiusLg))
-                .background(SettingsIconBg),
-            contentAlignment = Alignment.Center,
-        ) {
-            IconSm(
-                imageVector = icon,
-                contentDescription = null,
-                tint = TrainingAccentTeal,
-            )
-        }
-
-        Spacer(modifier = Modifier.width(AppDimens.spaceLg))
-
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(AppDimens.spaceXs),
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                color = TextColor.Primary,
-                fontWeight = FontWeight.SemiBold,
-            )
-            CardMetaText(
-                text = subtitle,
-                color = TextColor.Secondary,
-            )
-        }
-
-        Spacer(modifier = Modifier.width(AppDimens.spaceMd))
-
-        Switch(
-            checked = enabled,
-            onCheckedChange = onToggle,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = Color.White,
-                checkedTrackColor = TrainingAccentTeal,
-                uncheckedThumbColor = Color.White,
-                uncheckedTrackColor = Color(0xFF3A3A3A),
-            ),
-        )
-    }
 }
 
 @Preview(showBackground = true)

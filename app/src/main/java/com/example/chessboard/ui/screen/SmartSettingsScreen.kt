@@ -1,8 +1,6 @@
 package com.example.chessboard.ui.screen
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -18,8 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FormatListNumbered
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chessboard.ui.components.AppNumberSlider
 import com.example.chessboard.ui.components.AppSettingsScaffold
+import com.example.chessboard.ui.components.AppSettingsToggleRow
 import com.example.chessboard.ui.components.CardMetaText
 import com.example.chessboard.ui.components.CardSurface
 import com.example.chessboard.ui.components.IconSm
@@ -46,6 +43,8 @@ import com.example.chessboard.ui.theme.TrainingAccentTeal
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+
 
 private const val SmartMaxLinesMin = 1
 private const val SmartMaxLinesMax = 50
@@ -207,52 +206,13 @@ private fun OnlyWithMistakesRow(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) }
-            .padding(AppDimens.spaceLg),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(44.dp)
-                .clip(RoundedCornerShape(AppDimens.radiusLg))
-                .background(SmartSettingsIconBg),
-            contentAlignment = Alignment.Center,
-        ) {
-            IconSm(
-                imageVector = Icons.Filled.Warning,
-                contentDescription = null,
-                tint = TrainingAccentTeal,
-            )
-        }
-        Spacer(modifier = Modifier.width(AppDimens.spaceLg))
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(AppDimens.spaceXs),
-        ) {
-            Text(
-                text = "Only Games with Mistakes",
-                style = MaterialTheme.typography.bodyMedium,
-                color = TextColor.Primary,
-                fontWeight = FontWeight.SemiBold,
-            )
-            CardMetaText(
-                text = "Skip well-known lines, focus on errors",
-                color = TextColor.Secondary,
-            )
-        }
-        Spacer(modifier = Modifier.width(AppDimens.spaceMd))
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = Color.White,
-                checkedTrackColor = TrainingAccentTeal,
-                uncheckedThumbColor = Color.White,
-                uncheckedTrackColor = Color(0xFF3A3A3A),
-            ),
-        )
-    }
+    AppSettingsToggleRow(
+        icon = Icons.Filled.Warning,
+        title = "Only Games with Mistakes",
+        subtitle = "Skip well-known lines, focus on errors",
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        iconBackground = SmartSettingsIconBg,
+        modifier = modifier,
+    )
 }

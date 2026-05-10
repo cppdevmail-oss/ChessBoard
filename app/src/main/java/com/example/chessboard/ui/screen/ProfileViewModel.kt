@@ -19,9 +19,8 @@ enum class PlayerTier(val label: String, val symbol: String, val titles: List<St
         titles = listOf(
             "Walking Blunder",
             "Free Material",
-            "\"Oops, hung it\"",
             "Pawn With Dreams",
-            "Future Rage Quitter",
+            "Rage Quitter",
             "Center Feeder",
             "One-Move Genius",
             "Hope Chess Beginner",
@@ -54,11 +53,9 @@ enum class PlayerTier(val label: String, val symbol: String, val titles: List<St
             "Long-Range Miss",
             "\"Didn't see that\"",
             "Still Hanging Pieces",
-            "Color Complex Victim",
             "Passive Observer",
             "Fake Strategist",
             "Trapped Bishop Club",
-            "Almost Improving",
         )
     ),
     Rook(
@@ -67,12 +64,10 @@ enum class PlayerTier(val label: String, val symbol: String, val titles: List<St
         titles = listOf(
             "Open File Tourist",
             "Rook Hanger",
-            "Endgame Thrower",
+            "Sacrifice the ROOOOOOOK",
             "\"I Had This Won\"",
-            "Almost Competent",
             "Back Rank Victim",
             "Late Game Blunderer",
-            "Missed Mate Threat",
             "Panic Defender",
             "Somehow Winning",
         )
@@ -85,7 +80,7 @@ enum class PlayerTier(val label: String, val symbol: String, val titles: List<St
             "\"It Was a Sacrifice\"",
             "Tilt Manager",
             "Calculation Optional",
-            "One Move Genius",
+            "Botez Gambit",
             "Overconfident Player",
             "Attack Without Plan",
             "Fake Tactician",
@@ -100,7 +95,6 @@ enum class PlayerTier(val label: String, val symbol: String, val titles: List<St
             "Blunders Mate in 1",
             "Self-Check Artist",
             "\"I Didn't See That\"",
-            "Certified Thrower",
             "Still Not GM",
             "King in Danger",
             "Panic Mode Activated",
@@ -159,12 +153,15 @@ private fun defaultAchievements() = listOf(
     AchievementItem("Streak King", "Achieve a 5-move perfect streak"),
 )
 
+private const val FirstLevelThreshold = 3
+
 private fun resolveProfileLevelProgress(totalTrainingsCount: Int): ProfileLevelProgress {
     var level = 1
     var nextLevelThreshold = 0
 
     while (true) {
-        val requiredTrainings = nextLevelThreshold + BaseLevelThresholdStep + level
+        val requiredTrainings = if (level == 1) FirstLevelThreshold
+            else nextLevelThreshold + BaseLevelThresholdStep + level
         if (totalTrainingsCount < requiredTrainings) {
             return ProfileLevelProgress(
                 level = level,

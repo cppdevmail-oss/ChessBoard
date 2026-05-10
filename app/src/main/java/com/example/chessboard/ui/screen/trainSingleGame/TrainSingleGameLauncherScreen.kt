@@ -38,7 +38,10 @@ import kotlinx.coroutines.withContext
 
 private sealed interface TrainSingleGameLaunchState {
     data object Loading : TrainSingleGameLaunchState
-    data class Ready(val trainingGameData: TrainSingleGameData) : TrainSingleGameLaunchState
+    data class Ready(
+        val trainingGameData: TrainSingleGameData,
+        val autoNextLine: Boolean,
+    ) : TrainSingleGameLaunchState
     data object TrainingNotFound : TrainSingleGameLaunchState
     data object GameNotFound : TrainSingleGameLaunchState
     data object GameRemovedFromTraining : TrainSingleGameLaunchState
@@ -81,8 +84,6 @@ fun TrainSingleGameLauncherScreenContainer(
     }
 
     LaunchedEffect(trainingId, gameId) {
-        launchState = TrainSingleGameLaunchState.Loading
-
         launchState = withContext(Dispatchers.IO) {
             when (val launchData = trainSingleGameService.getTrainingGameLaunchData(trainingId, gameId)) {
                 is TrainingGameLaunchTrainingNotFound,
@@ -112,6 +113,10 @@ fun TrainSingleGameLauncherScreenContainer(
                         uciMovesToMoves(allMoves.take(startPly)).forEach { board.doMove(it) }
                         board.fen
                     }
+                    val autoNextLine = screenContext.inDbProvider
+                        .createUserProfileService()
+                        .getProfile()
+                        .autoNextLine
 
                     return@withContext TrainSingleGameLaunchState.Ready(
                         trainingGameData = TrainSingleGameData(
@@ -121,7 +126,8 @@ fun TrainSingleGameLauncherScreenContainer(
                             hasMoveCap = moveTo > 0,
                             analysisUciMoves = allMoves,
                             analysisStartPly = startPly,
-                        )
+                        ),
+                        autoNextLine = autoNextLine,
                     )
                 }
             }
@@ -182,6 +188,7 @@ fun TrainSingleGameLauncherScreenContainer(
         onCloneGameClick = { onCloneGameClick(it) },
         onSearchByPositionClick = onSearchByPositionClick,
         onAnalyzeGameClick = onAnalyzeGameClick,
+        autoNextLine = readyState.autoNextLine,
         simpleViewEnabled = simpleViewEnabled,
         screenContext = screenContext,
         modifier = modifier,

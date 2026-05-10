@@ -38,4 +38,9 @@ class UserProfileService(private val dao: UserProfileDao) {
         val current = getProfile()
         dao.upsertProfile(current.copy(smartMaxLines = maxLines, smartOnlyWithMistakes = onlyWithMistakes))
     }
+
+    suspend fun updateAutoNextLine(enabled: Boolean) {
+        val current = getProfile()
+        dao.upsertProfile(current.copy(autoNextLine = enabled))
+    }
 }

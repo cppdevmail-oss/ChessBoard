@@ -46,7 +46,7 @@ import com.github.bhlangonijr.chesslib.move.Move
         TrainingResultEntity::class,
         UserProfileEntity::class,
     ],
-    version = 14
+    version = 15
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun gameDao(): GameDao
@@ -75,7 +75,7 @@ class DatabaseProvider private constructor(
             DB_NAME
         )
             .addCallback(databaseCallback)
-            .addMigrations(MIGRATION_12_13, MIGRATION_13_14)
+            .addMigrations(MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15)
             .fallbackToDestructiveMigration()
             .build()
     }
@@ -136,6 +136,11 @@ class DatabaseProvider private constructor(
     suspend fun recordTrainingGameStats(gameId: Long, mistakesCount: Int) {
         val trainSingleGameService = TrainSingleGameService(database)
         trainSingleGameService.recordTrainingStats(gameId = gameId, mistakesCount = mistakesCount)
+    }
+
+    suspend fun recordTrainingGameStatsCheckingLevelUp(gameId: Long, mistakesCount: Int): Int? {
+        val trainSingleGameService = TrainSingleGameService(database)
+        return trainSingleGameService.recordTrainingStatsCheckingLevelUp(gameId = gameId, mistakesCount = mistakesCount)
     }
 
     suspend fun finishTrainingGame(
@@ -233,6 +238,12 @@ class DatabaseProvider private constructor(
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE `user_profile` ADD COLUMN `smartMaxLines` INTEGER NOT NULL DEFAULT 10")
                 database.execSQL("ALTER TABLE `user_profile` ADD COLUMN `smartOnlyWithMistakes` INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE `user_profile` ADD COLUMN `autoNextLine` INTEGER NOT NULL DEFAULT 0")
             }
         }
 

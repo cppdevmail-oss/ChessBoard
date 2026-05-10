@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
@@ -28,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -40,9 +43,10 @@ import com.example.chessboard.ui.components.AppMessageDialogAction
 import com.example.chessboard.ui.components.AppNumberSlider
 import com.example.chessboard.ui.components.AppProgressCard
 import com.example.chessboard.ui.components.BodySecondaryText
+import com.example.chessboard.ui.components.GameMoveTreeSection
 import com.example.chessboard.ui.components.HintIconButton
+import com.example.chessboard.ui.components.IconLg
 import com.example.chessboard.ui.components.IconSm
-import com.example.chessboard.ui.components.MoveSequenceSection
 import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.ScreenSection
 import com.example.chessboard.ui.components.SectionTitleText
@@ -50,6 +54,7 @@ import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
+import com.example.chessboard.ui.theme.TrainingIconInactive
 
 @Composable
 internal fun RenderCompletionDialog(
@@ -106,19 +111,51 @@ internal fun TrainSingleGameContent(
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
             TrainingSessionInfoRow(state = state, simpleViewEnabled = simpleViewEnabled)
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
-            val visibleMoveLabels = resolveVisibleTrainingMoveLabels(state)
-            MoveSequenceSection(
-                moveLabels = visibleMoveLabels,
-                currentPly = state.currentPly,
-                isSelectionEnabled = state.showLineCompleted,
-                showNavControls = state.showLineCompleted,
-                canUndo = state.showLineCompleted && state.currentPly > 0,
-                canRedo = state.showLineCompleted && state.currentPly < state.moveLabels.size,
-                onMovePlyClick = actions.onMovePlyClick,
-                onPrevMoveClick = actions.onPrevMoveClick,
-                onNextMoveClick = actions.onNextMoveClick,
-                onResetMovesClick = actions.onResetMovesClick,
-            )
+            val maxVisiblePly = resolveTrainingMaxVisiblePly(state)
+            val uciMoves = state.trainingGameData.uciMoves
+            val importedUciLines = remember(uciMoves) { listOf(uciMoves) }
+            if (maxVisiblePly == null || maxVisiblePly > 0) {
+                GameMoveTreeSection(
+                    importedUciLines = importedUciLines,
+                    gameController = gameController,
+                    startFen = state.trainingGameData.startFen,
+                    maxVisiblePly = maxVisiblePly,
+                    onMoveSelected = { _, targetPly ->
+                        if (state.showLineCompleted) actions.onMovePlyClick(targetPly)
+                    },
+                )
+            }
+            if (state.showLineCompleted) {
+                val canUndo = state.currentPly > 0
+                val canRedo = state.currentPly < state.trainingGameData.uciMoves.size
+                Spacer(modifier = Modifier.height(AppDimens.spaceMd))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                ) {
+                    IconButton(onClick = actions.onPrevMoveClick, enabled = canUndo) {
+                        IconLg(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                            contentDescription = "Previous move",
+                            tint = if (canUndo) TextColor.Primary else TrainingIconInactive,
+                        )
+                    }
+                    TextButton(onClick = actions.onResetMovesClick, enabled = canUndo) {
+                        Text(
+                            text = "Reset",
+                            color = if (canUndo) TextColor.Primary else TextColor.Secondary,
+                        )
+                    }
+                    IconButton(onClick = actions.onNextMoveClick, enabled = canRedo) {
+                        IconLg(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = "Next move",
+                            tint = if (canRedo) TextColor.Primary else TrainingIconInactive,
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -260,22 +297,13 @@ private fun resolveTrainingSessionProgressFraction(
     return (current.toFloat() / total).coerceIn(0f, 1f)
 }
 
-internal fun resolveVisibleTrainingMoveLabels(
+internal fun resolveTrainingMaxVisiblePly(
     state: TrainSingleGameContentState
-): List<String> {
-    if (state.phase == TrainSingleGamePhase.ShowingLine) {
-        return state.moveLabels
+): Int? {
+    if (state.phase == TrainSingleGamePhase.ShowingLine || state.showLineCompleted) {
+        return null
     }
-
-    if (state.showLineCompleted) {
-        return state.moveLabels
-    }
-
-    if (state.phase == TrainSingleGamePhase.Training || state.phase == TrainSingleGamePhase.Mistake) {
-        return state.moveLabels.take(state.currentPly)
-    }
-
-    return state.moveLabels.take(state.currentPly)
+    return state.currentPly
 }
 
 @Composable
