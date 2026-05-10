@@ -127,10 +127,10 @@ internal fun SimpleHomeScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_crown),
+                                painter = painterResource(R.drawable.ic_launcher_foreground),
                                 contentDescription = null,
                                 tint = TrainingAccentTeal,
-                                modifier = Modifier.size(AppIconSizes.Md),
+                                modifier = Modifier.size(48.dp),
                             )
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
