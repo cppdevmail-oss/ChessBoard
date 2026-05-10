@@ -8,7 +8,7 @@ package com.example.chessboard.ui.screen.training.loadsave
  * Do not add screen loading, save flows, or unrelated UI to this file.
  */
 
-import com.example.chessboard.ui.screen.training.common.TrainingGameEditorItem
+import com.example.chessboard.ui.screen.training.common.TrainingLineEditorItem
 
 import androidx.compose.runtime.Composable
 import com.example.chessboard.ui.components.AppMessageDialog
@@ -29,14 +29,14 @@ internal fun normalizeTrainingEditorName(
 internal fun hasUnsavedTrainingEditorChanges(
     editorState: CreateTrainingEditorState,
     initialTrainingName: String,
-    initialGamesForTraining: List<TrainingGameEditorItem>,
+    initialLinesForTraining: List<TrainingLineEditorItem>,
     defaultName: String = DEFAULT_TRAINING_NAME,
 ): Boolean {
     val newName = normalizeTrainingEditorName(editorState.trainingName, defaultName)
     val oldName = normalizeTrainingEditorName(initialTrainingName, defaultName)
     if (newName != oldName) { return true }
 
-    return editorState.editableGamesForTraining != initialGamesForTraining
+    return editorState.editableLinesForTraining != initialLinesForTraining
 }
 
 @Composable

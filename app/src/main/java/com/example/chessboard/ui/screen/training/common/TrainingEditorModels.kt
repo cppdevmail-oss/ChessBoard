@@ -7,11 +7,11 @@ package com.example.chessboard.ui.screen.training.common
  * share them. Do not add screen-specific Compose UI, loading, or save flows here.
  */
 
-import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.entity.LineEntity
 import com.example.chessboard.entity.SideMask
 
-data class TrainingGameEditorItem(
-    val gameId: Long,
+data class TrainingLineEditorItem(
+    val lineId: Long,
     val title: String,
     val weight: Int = 1,
     val eco: String? = null,
@@ -19,73 +19,73 @@ data class TrainingGameEditorItem(
     val sideMask: Int = SideMask.BOTH
 )
 
-internal fun decreaseTrainingGameWeight(
-    games: List<TrainingGameEditorItem>,
-    gameId: Long
-): List<TrainingGameEditorItem> {
-    if (games.none { it.gameId == gameId }) {
-        return games
+internal fun decreaseTrainingLineWeight(
+    lines: List<TrainingLineEditorItem>,
+    lineId: Long
+): List<TrainingLineEditorItem> {
+    if (lines.none { it.lineId == lineId }) {
+        return lines
     }
 
-    return games.map { game ->
-        if (game.gameId != gameId) {
-            return@map game
+    return lines.map { line ->
+        if (line.lineId != lineId) {
+            return@map line
         }
 
-        return@map game.copy(weight = (game.weight - 1).coerceAtLeast(1))
+        return@map line.copy(weight = (line.weight - 1).coerceAtLeast(1))
     }
 }
 
-internal fun increaseTrainingGameWeight(
-    games: List<TrainingGameEditorItem>,
-    gameId: Long
-): List<TrainingGameEditorItem> {
-    if (games.none { it.gameId == gameId }) {
-        return games
+internal fun increaseTrainingLineWeight(
+    lines: List<TrainingLineEditorItem>,
+    lineId: Long
+): List<TrainingLineEditorItem> {
+    if (lines.none { it.lineId == lineId }) {
+        return lines
     }
 
-    return games.map { game ->
-        if (game.gameId != gameId) {
-            return@map game
+    return lines.map { line ->
+        if (line.lineId != lineId) {
+            return@map line
         }
 
-        return@map game.copy(weight = game.weight + 1)
+        return@map line.copy(weight = line.weight + 1)
     }
 }
 
-internal fun removeTrainingGame(
-    games: List<TrainingGameEditorItem>,
-    gameId: Long
-): List<TrainingGameEditorItem> {
-    if (games.none { it.gameId == gameId }) {
-        return games
+internal fun removeTrainingLine(
+    lines: List<TrainingLineEditorItem>,
+    lineId: Long
+): List<TrainingLineEditorItem> {
+    if (lines.none { it.lineId == lineId }) {
+        return lines
     }
 
-    return games.filterNot { game ->
-        game.gameId == gameId
+    return lines.filterNot { line ->
+        line.lineId == lineId
     }
 }
 
-internal fun resolveNextSelectedTrainingGameId(
-    games: List<TrainingGameEditorItem>,
-    removedGameId: Long,
+internal fun resolveNextSelectedTrainingLineId(
+    lines: List<TrainingLineEditorItem>,
+    removedLineId: Long,
 ): Long? {
-    val removedIndex = games.indexOfFirst { game -> game.gameId == removedGameId }
+    val removedIndex = lines.indexOfFirst { line -> line.lineId == removedLineId }
     if (removedIndex < 0) {
         return null
     }
 
-    val remainingGames = removeTrainingGame(games, removedGameId)
-    if (remainingGames.isEmpty()) {
+    val remainingLines = removeTrainingLine(lines, removedLineId)
+    if (remainingLines.isEmpty()) {
         return null
     }
 
-    return remainingGames.getOrNull(removedIndex)?.gameId ?: remainingGames.last().gameId
+    return remainingLines.getOrNull(removedIndex)?.lineId ?: remainingLines.last().lineId
 }
 
-internal fun GameEntity.toTrainingGameEditorItem(weight: Int = 1): TrainingGameEditorItem {
-    return TrainingGameEditorItem(
-        gameId = id,
+internal fun LineEntity.toTrainingLineEditorItem(weight: Int = 1): TrainingLineEditorItem {
+    return TrainingLineEditorItem(
+        lineId = id,
         title = event ?: "Unnamed Opening",
         weight = weight,
         eco = eco,

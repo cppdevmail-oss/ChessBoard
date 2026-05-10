@@ -7,10 +7,10 @@ package com.example.chessboard.ui.screen.training
  * database-backed screen flow tests to this file.
  */
 
-import com.example.chessboard.ui.screen.training.common.TrainingGameEditorItem
-import com.example.chessboard.ui.screen.training.common.decreaseTrainingGameWeight
-import com.example.chessboard.ui.screen.training.common.increaseTrainingGameWeight
-import com.example.chessboard.ui.screen.training.common.removeTrainingGame
+import com.example.chessboard.ui.screen.training.common.TrainingLineEditorItem
+import com.example.chessboard.ui.screen.training.common.decreaseTrainingLineWeight
+import com.example.chessboard.ui.screen.training.common.increaseTrainingLineWeight
+import com.example.chessboard.ui.screen.training.common.removeTrainingLine
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -18,84 +18,84 @@ import org.junit.Test
 class TrainingEditorModelsTest {
 
     @Test
-    fun `decreaseTrainingGameWeight reduces only matching game`() {
-        val games = listOf(
-            TrainingGameEditorItem(gameId = 1L, title = "Game 1", weight = 3),
-            TrainingGameEditorItem(gameId = 2L, title = "Game 2", weight = 2)
+    fun `decreaseTrainingLineWeight reduces only matching line`() {
+        val lines = listOf(
+            TrainingLineEditorItem(lineId = 1L, title = "Line 1", weight = 3),
+            TrainingLineEditorItem(lineId = 2L, title = "Line 2", weight = 2)
         )
 
-        val updatedGames = decreaseTrainingGameWeight(
-            games = games,
-            gameId = 1L
+        val updatedLines = decreaseTrainingLineWeight(
+            lines = lines,
+            lineId = 1L
         )
 
-        assertEquals(2, updatedGames.first { it.gameId == 1L }.weight)
-        assertEquals(2, updatedGames.first { it.gameId == 2L }.weight)
+        assertEquals(2, updatedLines.first { it.lineId == 1L }.weight)
+        assertEquals(2, updatedLines.first { it.lineId == 2L }.weight)
     }
 
     @Test
-    fun `decreaseTrainingGameWeight keeps minimum weight at one`() {
-        val games = listOf(
-            TrainingGameEditorItem(gameId = 1L, title = "Game 1", weight = 1)
+    fun `decreaseTrainingLineWeight keeps minimum weight at one`() {
+        val lines = listOf(
+            TrainingLineEditorItem(lineId = 1L, title = "Line 1", weight = 1)
         )
 
-        val updatedGames = decreaseTrainingGameWeight(
-            games = games,
-            gameId = 1L
+        val updatedLines = decreaseTrainingLineWeight(
+            lines = lines,
+            lineId = 1L
         )
 
-        assertEquals(1, updatedGames.single().weight)
+        assertEquals(1, updatedLines.single().weight)
     }
 
     @Test
-    fun `increaseTrainingGameWeight increases only matching game`() {
-        val games = listOf(
-            TrainingGameEditorItem(gameId = 1L, title = "Game 1", weight = 3),
-            TrainingGameEditorItem(gameId = 2L, title = "Game 2", weight = 2)
+    fun `increaseTrainingLineWeight increases only matching line`() {
+        val lines = listOf(
+            TrainingLineEditorItem(lineId = 1L, title = "Line 1", weight = 3),
+            TrainingLineEditorItem(lineId = 2L, title = "Line 2", weight = 2)
         )
 
-        val updatedGames = increaseTrainingGameWeight(
-            games = games,
-            gameId = 2L
+        val updatedLines = increaseTrainingLineWeight(
+            lines = lines,
+            lineId = 2L
         )
 
-        assertEquals(3, updatedGames.first { it.gameId == 1L }.weight)
-        assertEquals(3, updatedGames.first { it.gameId == 2L }.weight)
+        assertEquals(3, updatedLines.first { it.lineId == 1L }.weight)
+        assertEquals(3, updatedLines.first { it.lineId == 2L }.weight)
     }
 
     @Test
-    fun `removeTrainingGame removes only matching game`() {
-        val games = listOf(
-            TrainingGameEditorItem(gameId = 1L, title = "Game 1", weight = 3),
-            TrainingGameEditorItem(gameId = 2L, title = "Game 2", weight = 2)
+    fun `removeTrainingLine removes only matching line`() {
+        val lines = listOf(
+            TrainingLineEditorItem(lineId = 1L, title = "Line 1", weight = 3),
+            TrainingLineEditorItem(lineId = 2L, title = "Line 2", weight = 2)
         )
 
-        val updatedGames = removeTrainingGame(
-            games = games,
-            gameId = 1L
+        val updatedLines = removeTrainingLine(
+            lines = lines,
+            lineId = 1L
         )
 
-        assertEquals(listOf(2L), updatedGames.map { it.gameId })
+        assertEquals(listOf(2L), updatedLines.map { it.lineId })
     }
 
     @Test
-    fun `shared helpers keep list unchanged for unknown game id`() {
-        val games = listOf(
-            TrainingGameEditorItem(gameId = 1L, title = "Game 1", weight = 3),
-            TrainingGameEditorItem(gameId = 2L, title = "Game 2", weight = 2)
+    fun `shared helpers keep list unchanged for unknown line id`() {
+        val lines = listOf(
+            TrainingLineEditorItem(lineId = 1L, title = "Line 1", weight = 3),
+            TrainingLineEditorItem(lineId = 2L, title = "Line 2", weight = 2)
         )
 
         assertEquals(
-            games,
-            decreaseTrainingGameWeight(games = games, gameId = 99L)
+            lines,
+            decreaseTrainingLineWeight(lines = lines, lineId = 99L)
         )
         assertEquals(
-            games,
-            increaseTrainingGameWeight(games = games, gameId = 99L)
+            lines,
+            increaseTrainingLineWeight(lines = lines, lineId = 99L)
         )
         assertEquals(
-            games,
-            removeTrainingGame(games = games, gameId = 99L)
+            lines,
+            removeTrainingLine(lines = lines, lineId = 99L)
         )
     }
 }

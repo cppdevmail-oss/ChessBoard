@@ -22,35 +22,35 @@ import com.example.chessboard.ui.theme.TextColor
 
 @Composable
 internal fun TrainingCollectionRemoveAction(
-    selectedGame: TrainingGameEditorItem?,
+    selectedLine: TrainingLineEditorItem?,
     collectionLabel: String,
     onConfirmRemove: (Long) -> Unit,
 ) {
-    var gameToRemove by remember { mutableStateOf<TrainingGameEditorItem?>(null) }
+    var lineToRemove by remember { mutableStateOf<TrainingLineEditorItem?>(null) }
 
-    if (gameToRemove != null) {
+    if (lineToRemove != null) {
         AppConfirmDialog(
-            title = "Remove Game",
-            message = "Remove \"${gameToRemove!!.title}\" from $collectionLabel?",
-            onDismiss = { gameToRemove = null },
+            title = "Remove Line",
+            message = "Remove \"${lineToRemove!!.title}\" from $collectionLabel?",
+            onDismiss = { lineToRemove = null },
             onConfirm = {
-                val gameId = gameToRemove!!.gameId
-                gameToRemove = null
-                onConfirmRemove(gameId)
+                val lineId = lineToRemove!!.lineId
+                lineToRemove = null
+                onConfirmRemove(lineId)
             },
             confirmText = "Remove",
             isDestructive = true,
         )
     }
 
-    if (selectedGame == null) {
+    if (selectedLine == null) {
         return
     }
 
-    IconButton(onClick = { gameToRemove = selectedGame }) {
+    IconButton(onClick = { lineToRemove = selectedLine }) {
         IconMd(
             imageVector = Icons.Default.ContentCut,
-            contentDescription = "Remove game from $collectionLabel",
+            contentDescription = "Remove line from $collectionLabel",
             tint = TextColor.Primary,
         )
     }

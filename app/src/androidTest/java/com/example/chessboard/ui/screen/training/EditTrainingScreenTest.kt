@@ -1,6 +1,6 @@
 package com.example.chessboard.ui.screen.training
 import com.example.chessboard.ui.screen.training.train.EditTrainingScreen
-import com.example.chessboard.ui.screen.training.common.TrainingGameEditorItem
+import com.example.chessboard.ui.screen.training.common.TrainingLineEditorItem
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.semantics.SemanticsActions
@@ -39,10 +39,10 @@ class EditTrainingScreenTest {
 
     @Test
     fun editTrainingScreen_moveChipUpdatesVisibleBoardPosition() {
-        setEditTrainingScreenContent(gamesForTraining = listOf(TestTrainingGame))
+        setEditTrainingScreenContent(linesForTraining = listOf(TestTrainingLine))
 
         composeRule.waitForIdle()
-        // This screen auto-scrolls to the selected game with animateScrollToItem(...).
+        // This screen auto-scrolls to the selected line with animateScrollToItem(...).
         // On slower emulators that animation can overlap with performScrollTo(), so we wait
         // until the target node is actually displayed before clicking it.
         composeRule.onNodeWithTag(EditTrainingListTestTag)
@@ -58,14 +58,14 @@ class EditTrainingScreenTest {
 
     @Test
     fun editTrainingScreen_nextArrowUpdatesVisibleBoardPosition() {
-        setEditTrainingScreenContent(gamesForTraining = listOf(TestTrainingGame))
+        setEditTrainingScreenContent(linesForTraining = listOf(TestTrainingLine))
 
         composeRule.waitForIdle()
         // Keep these waits. The test is intentionally defensive because this screen has
         // multiple async pieces of UI work:
         // 1. LazyColumn.performScrollTo() moves the list to the legend controls.
-        // 2. The screen itself also auto-scrolls to the selected game via animateScrollToItem(...).
-        // 3. The selected game's moves are loaded in LaunchedEffect(...), and only after that
+        // 2. The screen itself also auto-scrolls to the selected line via animateScrollToItem(...).
+        // 3. The selected line's moves are loaded in LaunchedEffect(...), and only after that
         //    canRedo becomes true and the next-arrow click reliably advances the board.
         // Removing these waits tends to make the test flaky on slower emulators.
         composeRule.onNodeWithTag(EditTrainingListTestTag)
@@ -82,12 +82,12 @@ class EditTrainingScreenTest {
 
     @Test
     fun editTrainingScreen_startTrainingActionLaunchesTraining() {
-        var launchedGameId: Long? = null
+        var launchedLineId: Long? = null
 
         setEditTrainingScreenContent(
-            gamesForTraining = listOf(TestTrainingGame),
-            onStartGameTrainingClick = { gameId, _ ->
-                launchedGameId = gameId
+            linesForTraining = listOf(TestTrainingLine),
+            onStartLineTrainingClick = { lineId, _ ->
+                launchedLineId = lineId
             },
         )
 
@@ -95,27 +95,27 @@ class EditTrainingScreenTest {
         composeRule.onNodeWithContentDescription("Start training").performClick()
 
         composeRule.runOnIdle {
-            assert(launchedGameId == TestTrainingGame.gameId)
+            assert(launchedLineId == TestTrainingLine.lineId)
         }
     }
 
     @Test
-    fun editTrainingScreen_removeSelectedGameRemovesItFromTraining() {
+    fun editTrainingScreen_removeSelectedLineRemovesItFromTraining() {
         setEditTrainingScreenContent(
-            gamesForTraining = listOf(
-                TestTrainingGame,
-                SecondTrainingGame,
+            linesForTraining = listOf(
+                TestTrainingLine,
+                SecondTrainingLine,
             ),
         )
 
-        composeRule.onNodeWithContentDescription("Remove game from training").performClick()
-        waitForTextDisplayed("Remove Game")
+        composeRule.onNodeWithContentDescription("Remove line from training").performClick()
+        waitForTextDisplayed("Remove Line")
         composeRule.onNode(hasText("Remove") and hasClickAction()).performClick()
 
-        waitForTextInTree("Games in training: 1")
+        waitForTextInTree("Lines in training: 1")
         composeRule.onNodeWithTag(EditTrainingListTestTag)
-            .performScrollToNode(hasText("Games in training: 1"))
-        waitForTextDisplayed("Games in training: 1")
+            .performScrollToNode(hasText("Lines in training: 1"))
+        waitForTextDisplayed("Lines in training: 1")
     }
 
     private fun assertBoardFenEventually(expectedFen: String) {
@@ -179,27 +179,27 @@ class EditTrainingScreenTest {
     }
 
     private fun setEditTrainingScreenContent(
-        gamesForTraining: List<TrainingGameEditorItem>,
+        linesForTraining: List<TrainingLineEditorItem>,
     ) {
         setEditTrainingScreenContent(
-            gamesForTraining = gamesForTraining,
-            onStartGameTrainingClick = ::ignoreStartGameTrainingClick,
+            linesForTraining = linesForTraining,
+            onStartLineTrainingClick = ::ignoreStartLineTrainingClick,
         )
     }
 
     private fun setEditTrainingScreenContent(
-        gamesForTraining: List<TrainingGameEditorItem>,
-        onStartGameTrainingClick: (Long, List<Long>) -> Unit,
+        linesForTraining: List<TrainingLineEditorItem>,
+        onStartLineTrainingClick: (Long, List<Long>) -> Unit,
     ) {
         composeRule.setContent {
             ChessBoardTheme {
                 EditTrainingScreen(
-                    gamesForTraining = gamesForTraining,
-                    orderGamesInTraining = RuntimeContext.OrderGamesInTraining(),
+                    linesForTraining = linesForTraining,
+                    orderLinesInTraining = RuntimeContext.OrderLinesInTraining(),
                     onBackClick = ::ignoreBackClick,
                     onNavigate = ::ignoreNavigate,
-                    onStartGameTrainingClick = onStartGameTrainingClick,
-                    onOpenGameEditorClick = ::ignoreOpenGameEditorClick,
+                    onStartLineTrainingClick = onStartLineTrainingClick,
+                    onOpenLineEditorClick = ::ignoreOpenLineEditorClick,
                     onOpenSettingsClick = ::ignoreOpenSettingsClick,
                     onSaveTraining = ::ignoreSaveTraining,
                 )
@@ -212,29 +212,29 @@ class EditTrainingScreenTest {
 
         fun ignoreNavigate(screenType: com.example.chessboard.ui.screen.ScreenType) = Unit
 
-        fun ignoreStartGameTrainingClick(gameId: Long, orderedGameIds: List<Long>) = Unit
+        fun ignoreStartLineTrainingClick(lineId: Long, orderedLineIds: List<Long>) = Unit
 
-        fun ignoreOpenGameEditorClick(gameId: Long) = Unit
+        fun ignoreOpenLineEditorClick(lineId: Long) = Unit
 
         fun ignoreOpenSettingsClick() = Unit
 
         fun ignoreSaveTraining(
             trainingName: String,
-            editableGames: List<TrainingGameEditorItem>,
+            editableLines: List<TrainingLineEditorItem>,
             showSuccessMessage: Boolean,
             onSaved: (() -> Unit)?,
         ) {
             onSaved?.invoke()
         }
 
-        val TestTrainingGame = TrainingGameEditorItem(
-            gameId = 1L,
+        val TestTrainingLine = TrainingLineEditorItem(
+            lineId = 1L,
             title = "Test Opening",
             pgn = "1. e2e4 e7e5 *",
             sideMask = SideMask.WHITE
         )
-        val SecondTrainingGame = TrainingGameEditorItem(
-            gameId = 2L,
+        val SecondTrainingLine = TrainingLineEditorItem(
+            lineId = 2L,
             title = "Second Opening",
             pgn = "1. d2d4 d7d5 *",
             sideMask = SideMask.WHITE

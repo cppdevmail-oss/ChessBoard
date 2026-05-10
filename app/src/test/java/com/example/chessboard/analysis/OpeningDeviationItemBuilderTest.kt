@@ -5,7 +5,7 @@ package com.example.chessboard.analysis
  * Keep Android UI rendering and navigation coverage out of this file.
  */
 import com.example.chessboard.boardmodel.InitialBoardFen
-import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.entity.LineEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -16,17 +16,17 @@ class OpeningDeviationItemBuilderTest {
 
     @Test
     fun `build creates one start position with two branches`() {
-        val nf3Game = game(
+        val nf3Line = line(
             id = 1,
             pgn = storedPgn("e2e4", "e7e5", "g1f3"),
         )
-        val bc4Game = game(
+        val bc4Line = line(
             id = 2,
             pgn = storedPgn("e2e4", "e7e5", "f1c4"),
         )
 
         val items = builder.build(
-            games = listOf(nf3Game, bc4Game),
+            lines = listOf(nf3Line, bc4Line),
             selectedSide = OpeningSide.WHITE,
         )
 
@@ -40,12 +40,12 @@ class OpeningDeviationItemBuilderTest {
                 branch(
                     moveUci = "g1f3",
                     resultFen = "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq -",
-                    gamesCount = 1,
+                    linesCount = 1,
                 ),
                 branch(
                     moveUci = "f1c4",
                     resultFen = "rnbqkbnr/pppp1ppp/8/4p3/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq -",
-                    gamesCount = 1,
+                    linesCount = 1,
                 ),
             ),
             items.single().branches,
@@ -54,25 +54,25 @@ class OpeningDeviationItemBuilderTest {
 
     @Test
     fun `build creates multiple deviation start positions`() {
-        val nf3Game = game(
+        val nf3Line = line(
             id = 1,
             pgn = storedPgn("e2e4", "e7e5", "g1f3"),
         )
-        val bc4Game = game(
+        val bc4Line = line(
             id = 2,
             pgn = storedPgn("e2e4", "e7e5", "f1c4"),
         )
-        val c4Game = game(
+        val c4Line = line(
             id = 3,
             pgn = storedPgn("d2d4", "d7d5", "c2c4"),
         )
-        val g3Game = game(
+        val g3Line = line(
             id = 4,
             pgn = storedPgn("d2d4", "d7d5", "g2g3"),
         )
 
         val items = builder.build(
-            games = listOf(nf3Game, bc4Game, c4Game, g3Game),
+            lines = listOf(nf3Line, bc4Line, c4Line, g3Line),
             selectedSide = OpeningSide.WHITE,
         )
 
@@ -89,17 +89,17 @@ class OpeningDeviationItemBuilderTest {
 
     @Test
     fun `build returns empty list when no deviations exist`() {
-        val firstGame = game(
+        val firstLine = line(
             id = 1,
             pgn = storedPgn("e2e4", "e7e5", "g1f3"),
         )
-        val secondGame = game(
+        val secondLine = line(
             id = 2,
             pgn = storedPgn("e2e4", "e7e5", "g1f3"),
         )
 
         val items = builder.build(
-            games = listOf(firstGame, secondGame),
+            lines = listOf(firstLine, secondLine),
             selectedSide = OpeningSide.WHITE,
         )
 
@@ -107,22 +107,22 @@ class OpeningDeviationItemBuilderTest {
     }
 
     @Test
-    fun `build merges repeated final positions into one branch with games count`() {
-        val firstNf3Game = game(
+    fun `build merges repeated final positions into one branch with lines count`() {
+        val firstNf3Line = line(
             id = 1,
             pgn = storedPgn("e2e4", "e7e5", "g1f3"),
         )
-        val secondNf3Game = game(
+        val secondNf3Line = line(
             id = 2,
             pgn = storedPgn("e2e4", "e7e5", "g1f3"),
         )
-        val bc4Game = game(
+        val bc4Line = line(
             id = 3,
             pgn = storedPgn("e2e4", "e7e5", "f1c4"),
         )
 
         val items = builder.build(
-            games = listOf(firstNf3Game, secondNf3Game, bc4Game),
+            lines = listOf(firstNf3Line, secondNf3Line, bc4Line),
             selectedSide = OpeningSide.WHITE,
         )
 
@@ -130,7 +130,7 @@ class OpeningDeviationItemBuilderTest {
         assertEquals(2, items.single().branches.size)
         assertEquals(
             listOf(2, 1),
-            items.single().branches.map { branch -> branch.gamesCount },
+            items.single().branches.map { branch -> branch.linesCount },
         )
         assertEquals(
             listOf("g1f3", "f1c4"),
@@ -138,12 +138,12 @@ class OpeningDeviationItemBuilderTest {
         )
     }
 
-    private fun game(
+    private fun line(
         id: Long,
         pgn: String,
         initialFen: String = InitialBoardFen,
-    ): GameEntity {
-        return GameEntity(
+    ): LineEntity {
+        return LineEntity(
             id = id,
             pgn = pgn,
             initialFen = initialFen,
@@ -172,10 +172,10 @@ class OpeningDeviationItemBuilderTest {
     private fun branch(
         moveUci: String,
         resultFen: String,
-        gamesCount: Int,
+        linesCount: Int,
     ) = com.example.chessboard.ui.screen.openingDeviation.OpeningDeviationBranch(
         moveUci = moveUci,
         resultFen = resultFen,
-        gamesCount = gamesCount,
+        linesCount = linesCount,
     )
 }

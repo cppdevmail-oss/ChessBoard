@@ -1,18 +1,18 @@
 package com.example.chessboard.service
 
-import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.entity.LineEntity
 import com.example.chessboard.entity.TrainingResultEntity
 import com.example.chessboard.repository.AppDatabase
 import com.example.chessboard.repository.TrainingResultDao
 import kotlin.math.min
 
-private const val RecentResultsPerGame = 5
-private const val MaxStatisticsTrainingGames = 50
+private const val RecentResultsPerLine = 5
+private const val MaxStatisticsTrainingLines = 50
 private const val RecencyDaysCap = 7
 private const val MillisPerDay = 24L * 60L * 60L * 1000L
 private const val DefaultMaxWeight = 5
 
-data class GameTrainingStats(
+data class LineTrainingStats(
     val attemptsCount: Int,
     val lastTrainedAt: Long?,
     val mistakesLast: Int,
@@ -22,10 +22,10 @@ data class GameTrainingStats(
 )
 
 data class StatisticsTrainingRecommendationItem(
-    val game: GameEntity,
+    val line: LineEntity,
     val weight: Int,
     val score: Double,
-    val stats: GameTrainingStats,
+    val stats: LineTrainingStats,
 )
 
 class StatisticsTrainingService(
@@ -33,13 +33,13 @@ class StatisticsTrainingService(
 ) {
 
     suspend fun getRecommendation(
-        limit: Int = MaxStatisticsTrainingGames,
+        limit: Int = MaxStatisticsTrainingLines,
         minDaysSinceLastTraining: Int = 0,
         maxWeight: Int = DefaultMaxWeight,
         nowMillis: Long = System.currentTimeMillis(),
     ): List<StatisticsTrainingRecommendationItem> {
         return buildRecommendation(
-            allGames = database.gameDao().getAllGames(),
+            allLines = database.lineDao().getAllLines(),
             recentResults = database.trainingResultDao().getRecentResults(TrainingResultDao.MAX_TRAINING_RESULTS),
             nowMillis = nowMillis,
             limit = limit,
@@ -49,31 +49,31 @@ class StatisticsTrainingService(
     }
 
     private fun buildRecommendation(
-        allGames: List<GameEntity>,
+        allLines: List<LineEntity>,
         recentResults: List<TrainingResultEntity>,
         nowMillis: Long = System.currentTimeMillis(),
-        limit: Int = MaxStatisticsTrainingGames,
+        limit: Int = MaxStatisticsTrainingLines,
         minDaysSinceLastTraining: Int = 0,
         maxWeight: Int = DefaultMaxWeight,
     ): List<StatisticsTrainingRecommendationItem> {
-        val resultsByGameId = recentResults
-            .groupBy { result -> result.gameId }
+        val resultsByLineId = recentResults
+            .groupBy { result -> result.lineId }
             .mapValues { (_, results) ->
                 results.sortedWith(compareByDescending<TrainingResultEntity> { it.trainedAt }.thenByDescending { it.id })
             }
 
-        return allGames
-            .map { game ->
-                val allGameResults = resultsByGameId[game.id].orEmpty()
-                val recentGameResults = allGameResults.take(RecentResultsPerGame)
-                val stats = buildGameStats(
-                    results = recentGameResults,
-                    attemptsCount = allGameResults.size,
+        return allLines
+            .map { line ->
+                val allLineResults = resultsByLineId[line.id].orEmpty()
+                val recentLineResults = allLineResults.take(RecentResultsPerLine)
+                val stats = buildLineStats(
+                    results = recentLineResults,
+                    attemptsCount = allLineResults.size,
                     nowMillis = nowMillis,
                 )
                 val score = computeNeedScore(stats)
                 StatisticsTrainingRecommendationItem(
-                    game = game,
+                    line = line,
                     weight = mapScoreToWeight(score = score, maxWeight = maxWeight),
                     score = score,
                     stats = stats,
@@ -89,16 +89,16 @@ class StatisticsTrainingService(
                 compareByDescending<StatisticsTrainingRecommendationItem> { it.score }
                     .thenBy { it.stats.attemptsCount }
                     .thenByDescending { it.stats.daysSinceLastTraining }
-                    .thenBy { it.game.id }
+                    .thenBy { it.line.id }
             )
-            .take(limit.coerceIn(1, MaxStatisticsTrainingGames))
+            .take(limit.coerceIn(1, MaxStatisticsTrainingLines))
     }
 
-    private fun buildGameStats(
+    private fun buildLineStats(
         results: List<TrainingResultEntity>,
         attemptsCount: Int,
         nowMillis: Long,
-    ): GameTrainingStats {
+    ): LineTrainingStats {
         val lastResult = results.firstOrNull()
         val lastTrainedAt = lastResult?.trainedAt
         val avgMistakesRecent = if (results.isEmpty()) {
@@ -112,7 +112,7 @@ class StatisticsTrainingService(
             results.count { result -> result.mistakesCount == 0 }.toDouble() / results.size.toDouble()
         }
 
-        return GameTrainingStats(
+        return LineTrainingStats(
             attemptsCount = attemptsCount,
             lastTrainedAt = lastTrainedAt,
             mistakesLast = lastResult?.mistakesCount ?: 0,
@@ -123,7 +123,7 @@ class StatisticsTrainingService(
     }
 
     private fun shouldIncludeRecommendation(
-        stats: GameTrainingStats,
+        stats: LineTrainingStats,
         minDaysSinceLastTraining: Int,
     ): Boolean {
         if (minDaysSinceLastTraining <= 0) {
@@ -137,7 +137,7 @@ class StatisticsTrainingService(
         return stats.daysSinceLastTraining >= minDaysSinceLastTraining
     }
 
-    private fun computeNeedScore(stats: GameTrainingStats): Double {
+    private fun computeNeedScore(stats: LineTrainingStats): Double {
         val recencyDays = min(stats.daysSinceLastTraining, RecencyDaysCap)
         return 4.0 * min(stats.mistakesLast, 3) +
             2.0 * min(stats.avgMistakesRecent, 3.0) +

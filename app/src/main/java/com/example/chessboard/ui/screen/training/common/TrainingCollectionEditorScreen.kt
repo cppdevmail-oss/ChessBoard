@@ -3,7 +3,7 @@ package com.example.chessboard.ui.screen.training.common
 /*
  * Shared collection-editor shell for training-like screens.
  *
- * Keep the reusable scaffold, name field, optional header slot, games count,
+ * Keep the reusable scaffold, name field, optional header slot, lines count,
  * and list container here so training and template editors can share the same
  * screen shell. Do not add training-only launch logic or persistence helpers.
  */
@@ -39,7 +39,7 @@ internal data class TrainingCollectionEditorStrings(
     val screenTitle: String,
     val collectionNameLabel: String,
     val collectionNamePlaceholder: String,
-    val gamesCountLabel: String,
+    val linesCountLabel: String,
 )
 
 @Composable
@@ -47,7 +47,7 @@ internal fun TrainingCollectionEditorScreen(
     strings: TrainingCollectionEditorStrings,
     collectionName: String,
     onCollectionNameChange: (String) -> Unit,
-    games: List<TrainingGameEditorItem>,
+    lines: List<TrainingLineEditorItem>,
     selectedNavItem: ScreenType,
     onBackClick: () -> Unit,
     onSaveClick: () -> Unit,
@@ -55,16 +55,16 @@ internal fun TrainingCollectionEditorScreen(
     modifier: Modifier = Modifier,
     simpleViewEnabled: Boolean = false,
     listTestTag: String = EditTrainingListTestTag,
-    autoScrollToGameIndex: Int? = null,
+    autoScrollToLineIndex: Int? = null,
     headerContent: (@Composable () -> Unit)? = null,
     topBarActions: @Composable () -> Unit = {},
     bottomBarOverride: (@Composable () -> Unit)? = null,
-    gameItemContent: @Composable LazyItemScope.(TrainingGameEditorItem) -> Unit,
+    lineItemContent: @Composable LazyItemScope.(TrainingLineEditorItem) -> Unit,
 ) {
     val listState = rememberLazyListState()
 
-    LaunchedEffect(autoScrollToGameIndex, headerContent) {
-        val targetIndex = autoScrollToGameIndex ?: return@LaunchedEffect
+    LaunchedEffect(autoScrollToLineIndex, headerContent) {
+        val targetIndex = autoScrollToLineIndex ?: return@LaunchedEffect
         listState.animateScrollToItem(
             targetIndex + resolveTrainingEditorHeaderCount(headerContent)
         )
@@ -132,13 +132,13 @@ internal fun TrainingCollectionEditorScreen(
             }
 
             item {
-                BodySecondaryText(text = "${strings.gamesCountLabel}: ${games.size}")
+                BodySecondaryText(text = "${strings.linesCountLabel}: ${lines.size}")
             }
 
             items(
-                items = games,
-                key = { game -> game.gameId },
-                itemContent = gameItemContent
+                items = lines,
+                key = { line -> line.lineId },
+                itemContent = lineItemContent
             )
         }
     }

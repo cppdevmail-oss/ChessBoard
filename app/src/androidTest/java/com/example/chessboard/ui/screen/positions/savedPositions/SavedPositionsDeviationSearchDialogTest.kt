@@ -40,7 +40,7 @@ class SavedPositionsDeviationSearchDialogTest {
         composeRule.onNodeWithTag(SavedPositionsDeviationSearchDialogTestTag).assertIsDisplayed()
         composeRule.onNodeWithText("Searching Deviations").assertIsDisplayed()
         composeRule.onNodeWithText(
-            "Analyzing saved games for \"Italian Position\"."
+            "Analyzing saved lines for \"Italian Position\"."
         ).assertIsDisplayed()
         composeRule.onNodeWithText(
             "This can take a while. Cancel to stop the analysis."

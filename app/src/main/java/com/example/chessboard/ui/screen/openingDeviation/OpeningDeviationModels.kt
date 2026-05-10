@@ -14,5 +14,5 @@ data class OpeningDeviationItem(
 data class OpeningDeviationBranch(
     val moveUci: String,
     val resultFen: String,
-    val gamesCount: Int,
+    val linesCount: Int,
 )

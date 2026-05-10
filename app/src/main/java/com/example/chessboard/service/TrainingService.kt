@@ -3,25 +3,25 @@ package com.example.chessboard.service
 import androidx.room.withTransaction
 import com.example.chessboard.entity.TrainingEntity
 import com.example.chessboard.repository.AppDatabase
-import com.example.chessboard.repository.GameDao
+import com.example.chessboard.repository.LineDao
 import com.example.chessboard.repository.TrainingDao
 import com.example.chessboard.repository.TrainingTemplateDao
 
 class TrainingService(
     private val database: AppDatabase,
-    private val gameDao: GameDao,
+    private val lineDao: LineDao,
     private val dao: TrainingDao,
     private val templateDao: TrainingTemplateDao
 ) {
 
-    private data class TrainingGamesContext(
+    private data class TrainingLinesContext(
         val training: TrainingEntity,
-        val games: MutableList<OneGameTrainingData>
+        val lines: MutableList<OneLineTrainingData>
     )
 
-    private data class TrainingGameContext(
+    private data class TrainingLineContext(
         val training: TrainingEntity,
-        val games: MutableList<OneGameTrainingData>,
+        val lines: MutableList<OneLineTrainingData>,
         val index: Int
     )
 
@@ -43,159 +43,159 @@ class TrainingService(
         return true
     }
 
-    suspend fun createTrainingFromGames(
-        games: List<OneGameTrainingData>,
+    suspend fun createTrainingFromLines(
+        lines: List<OneLineTrainingData>,
         name: String = "FullTraining"
     ): Long? {
-        if (games.isEmpty()) return null
-        val gamesJson = OneGameTrainingData.toJson(games)
+        if (lines.isEmpty()) return null
+        val linesJson = OneLineTrainingData.toJson(lines)
 
         return dao.insert(
             TrainingEntity(
                 name = name,
-                gamesJson = gamesJson
+                linesJson = linesJson
             )
         )
     }
 
-    suspend fun updateTrainingFromGames(
+    suspend fun updateTrainingFromLines(
         trainingId: Long,
-        games: List<OneGameTrainingData>,
+        lines: List<OneLineTrainingData>,
         name: String = "FullTraining"
     ): Boolean {
-        if (games.isEmpty()) return false
+        if (lines.isEmpty()) return false
 
         val training = validateTraining(trainingId) ?: return false
         dao.update(
             training.copy(
                 name = name,
-                gamesJson = OneGameTrainingData.toJson(games)
+                linesJson = OneLineTrainingData.toJson(lines)
             )
         )
         return true
     }
 
-    suspend fun addGameToTraining(trainingId: Long, gameId: Long, weight: Int = 1): Boolean {
-        val context = loadTrainingGames(trainingId) ?: return false
-        if (context.games.any { it.gameId == gameId }) return false
+    suspend fun addLineToTraining(trainingId: Long, lineId: Long, weight: Int = 1): Boolean {
+        val context = loadTrainingLines(trainingId) ?: return false
+        if (context.lines.any { it.lineId == lineId }) return false
 
-        context.games.add(OneGameTrainingData(gameId, weight))
-        dao.update(context.training.copy(gamesJson = OneGameTrainingData.toJson(context.games)))
+        context.lines.add(OneLineTrainingData(lineId, weight))
+        dao.update(context.training.copy(linesJson = OneLineTrainingData.toJson(context.lines)))
         return true
     }
 
-    suspend fun addGamesToTraining(
+    suspend fun addLinesToTraining(
         trainingId: Long,
-        gamesForTraining: List<OneGameTrainingData>
+        linesForTraining: List<OneLineTrainingData>
     ): Boolean {
         val training = dao.getById(trainingId) ?: return false
-        if (gamesForTraining.isEmpty()) return true
+        if (linesForTraining.isEmpty()) return true
 
-        val existingGames = OneGameTrainingData.fromJson(training.gamesJson).toMutableList()
-        val existingGameIds = existingGames.map { it.gameId }.toHashSet()
-        val filteredGames = mutableListOf<OneGameTrainingData>()
-        val newGameIds = mutableSetOf<Long>()
+        val existingLines = OneLineTrainingData.fromJson(training.linesJson).toMutableList()
+        val existingLineIds = existingLines.map { it.lineId }.toHashSet()
+        val filteredLines = mutableListOf<OneLineTrainingData>()
+        val newLineIds = mutableSetOf<Long>()
 
-        for (game in gamesForTraining) {
-            if (!newGameIds.add(game.gameId)) return false
-            if (game.gameId !in existingGameIds) {
-                filteredGames.add(game)
+        for (line in linesForTraining) {
+            if (!newLineIds.add(line.lineId)) return false
+            if (line.lineId !in existingLineIds) {
+                filteredLines.add(line)
             }
         }
 
-        if (filteredGames.isEmpty()) return true
+        if (filteredLines.isEmpty()) return true
 
-        existingGames.addAll(filteredGames)
-        dao.update(training.copy(gamesJson = OneGameTrainingData.toJson(existingGames)))
+        existingLines.addAll(filteredLines)
+        dao.update(training.copy(linesJson = OneLineTrainingData.toJson(existingLines)))
         return true
     }
 
     suspend fun createFromTemplate(templateId: Long): Long {
         val template = templateDao.getById(templateId) ?: return -1
         return dao.insert(
-            TrainingEntity(name = template.name, gamesJson = template.gamesJson)
+            TrainingEntity(name = template.name, linesJson = template.linesJson)
         )
     }
 
     suspend fun validateTraining(trainingId: Long): TrainingEntity? {
         return database.withTransaction {
             val training = dao.getById(trainingId) ?: return@withTransaction null
-            val games = OneGameTrainingData.fromJson(training.gamesJson)
-            if (games.isEmpty()) {
+            val lines = OneLineTrainingData.fromJson(training.linesJson)
+            if (lines.isEmpty()) {
                 dao.deleteById(trainingId)
                 return@withTransaction null
             }
 
-            val validGames = mutableListOf<OneGameTrainingData>()
+            val validLines = mutableListOf<OneLineTrainingData>()
 
-            for (game in games) {
-                val existingGame = gameDao.getById(game.gameId)
-                if (existingGame != null) {
-                    validGames.add(game)
+            for (line in lines) {
+                val existingLine = lineDao.getById(line.lineId)
+                if (existingLine != null) {
+                    validLines.add(line)
                 }
             }
 
-            if (validGames.isEmpty()) {
+            if (validLines.isEmpty()) {
                 dao.deleteById(trainingId)
                 return@withTransaction null
             }
 
-            if (validGames.size == games.size) {
+            if (validLines.size == lines.size) {
                 return@withTransaction training
             }
 
             val validatedTraining = training.copy(
-                gamesJson = OneGameTrainingData.toJson(validGames)
+                linesJson = OneLineTrainingData.toJson(validLines)
             )
             dao.update(validatedTraining)
             return@withTransaction validatedTraining
         }
     }
 
-    suspend fun decreaseLineWeight(trainingId: Long, gameId: Long, keepIfZero: Boolean = false): Boolean {
-        val context = findTrainingGame(trainingId, gameId) ?: return false
-        val newWeight = context.games[context.index].weight - 1
+    suspend fun decreaseLineWeight(trainingId: Long, lineId: Long, keepIfZero: Boolean = false): Boolean {
+        val context = findTrainingLine(trainingId, lineId) ?: return false
+        val newWeight = context.lines[context.index].weight - 1
 
         if (newWeight <= 0 && !keepIfZero) {
-            context.games.removeAt(context.index)
+            context.lines.removeAt(context.index)
         } else {
-            context.games[context.index] = context.games[context.index].copy(weight = newWeight.coerceAtLeast(0))
+            context.lines[context.index] = context.lines[context.index].copy(weight = newWeight.coerceAtLeast(0))
         }
 
-        if (context.games.isEmpty()) {
+        if (context.lines.isEmpty()) {
             dao.deleteById(trainingId)
             return true
         }
 
-        dao.update(context.training.copy(gamesJson = OneGameTrainingData.toJson(context.games)))
+        dao.update(context.training.copy(linesJson = OneLineTrainingData.toJson(context.lines)))
         return true
     }
 
-    private suspend fun loadTrainingGames(trainingId: Long): TrainingGamesContext? {
+    private suspend fun loadTrainingLines(trainingId: Long): TrainingLinesContext? {
         val training = dao.getById(trainingId) ?: return null
-        val games = OneGameTrainingData.fromJson(training.gamesJson).toMutableList()
-        return TrainingGamesContext(training = training, games = games)
+        val lines = OneLineTrainingData.fromJson(training.linesJson).toMutableList()
+        return TrainingLinesContext(training = training, lines = lines)
     }
 
-    private suspend fun findTrainingGame(trainingId: Long, gameId: Long): TrainingGameContext? {
-        val context = loadTrainingGames(trainingId) ?: return null
-        val index = context.games.indexOfFirst { it.gameId == gameId }
+    private suspend fun findTrainingLine(trainingId: Long, lineId: Long): TrainingLineContext? {
+        val context = loadTrainingLines(trainingId) ?: return null
+        val index = context.lines.indexOfFirst { it.lineId == lineId }
         if (index < 0) return null
 
-        return TrainingGameContext(
+        return TrainingLineContext(
             training = context.training,
-            games = context.games,
+            lines = context.lines,
             index = index
         )
     }
 
-    suspend fun increaseLineWeight(trainingId: Long, gameId: Long, delta: Int = 1): Boolean {
-        val context = findTrainingGame(trainingId, gameId) ?: return false
-        context.games[context.index] = context.games[context.index].copy(
-            weight = context.games[context.index].weight + delta
+    suspend fun increaseLineWeight(trainingId: Long, lineId: Long, delta: Int = 1): Boolean {
+        val context = findTrainingLine(trainingId, lineId) ?: return false
+        context.lines[context.index] = context.lines[context.index].copy(
+            weight = context.lines[context.index].weight + delta
         )
 
-        dao.update(context.training.copy(gamesJson = OneGameTrainingData.toJson(context.games)))
+        dao.update(context.training.copy(linesJson = OneLineTrainingData.toJson(context.lines)))
         return true
     }
 }

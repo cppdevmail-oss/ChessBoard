@@ -116,7 +116,7 @@ class OpeningDeviationSelectionScreenTest {
                     OpeningDeviationBranch(
                         moveUci = "g1f3",
                         resultFen = "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq -",
-                        gamesCount = 2,
+                        linesCount = 2,
                     ),
                 ),
             ),
@@ -126,7 +126,7 @@ class OpeningDeviationSelectionScreenTest {
                     OpeningDeviationBranch(
                         moveUci = "c2c4",
                         resultFen = "rnbqkbnr/ppp1pppp/8/3p4/2PP4/8/PP2PPPP/RNBQKBNR b KQkq c3",
-                        gamesCount = 1,
+                        linesCount = 1,
                     ),
                 ),
             ),

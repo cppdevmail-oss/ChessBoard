@@ -5,7 +5,7 @@ import com.example.chessboard.ui.screen.training.common.DEFAULT_TRAINING_NAME
  * Container helpers that prepare initial training data for specific create-training flows.
  */
 
-import com.example.chessboard.ui.screen.training.common.toTrainingGameEditorItem
+import com.example.chessboard.ui.screen.training.common.toTrainingLineEditorItem
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -14,30 +14,30 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.example.chessboard.service.OneGameTrainingData
+import com.example.chessboard.service.OneLineTrainingData
 import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 @Composable
-fun CreateTrainingFromAllGamesScreenContainer(
+fun CreateTrainingFromAllLinesScreenContainer(
     screenContext: ScreenContainerContext,
     screenTitle: String = "Create Training",
-    gamesCountLabel: String = "Games loaded for training",
+    linesCountLabel: String = "Lines loaded for training",
     modifier: Modifier = Modifier,
 ) {
     var initialData by remember { mutableStateOf(CreateTrainingInitialData()) }
 
     LaunchedEffect(Unit) {
-        val allGames = withContext(Dispatchers.IO) {
-            screenContext.inDbProvider.getAllGames()
+        val allLines = withContext(Dispatchers.IO) {
+            screenContext.inDbProvider.getAllLines()
         }
 
         initialData = CreateTrainingInitialData(
             trainingName = DEFAULT_TRAINING_NAME,
-            gamesForTraining = allGames.map { game ->
-                game.toTrainingGameEditorItem()
+            linesForTraining = allLines.map { line ->
+                line.toTrainingLineEditorItem()
             }
         )
     }
@@ -46,7 +46,7 @@ fun CreateTrainingFromAllGamesScreenContainer(
         screenContext = screenContext,
         initialData = initialData,
         screenTitle = screenTitle,
-        gamesCountLabel = gamesCountLabel,
+        linesCountLabel = linesCountLabel,
         modifier = modifier
     )
 }
@@ -56,7 +56,7 @@ fun CreateTrainingFromTemplateScreenContainer(
     templateId: Long,
     screenContext: ScreenContainerContext,
     screenTitle: String = "Create Training From Template",
-    gamesCountLabel: String = "Games loaded from template",
+    linesCountLabel: String = "Lines loaded from template",
     modifier: Modifier = Modifier,
 ) {
     var initialData by remember { mutableStateOf(CreateTrainingInitialData()) }
@@ -66,15 +66,15 @@ fun CreateTrainingFromTemplateScreenContainer(
         val templateInitialData = withContext(Dispatchers.IO) {
             val template = screenContext.inDbProvider.createTrainingTemplateService().getTemplateById(templateId)
                 ?: return@withContext null
-            val allGamesById = screenContext.inDbProvider.getAllGames().associateBy { it.id }
-            val templateGames = OneGameTrainingData.fromJson(template.gamesJson).mapNotNull { templateGame ->
-                val game = allGamesById[templateGame.gameId] ?: return@mapNotNull null
-                game.toTrainingGameEditorItem(weight = templateGame.weight)
+            val allLinesById = screenContext.inDbProvider.getAllLines().associateBy { it.id }
+            val templateLines = OneLineTrainingData.fromJson(template.linesJson).mapNotNull { templateLine ->
+                val line = allLinesById[templateLine.lineId] ?: return@mapNotNull null
+                line.toTrainingLineEditorItem(weight = templateLine.weight)
             }
 
             CreateTrainingInitialData(
                 trainingName = template.name.ifBlank { DEFAULT_TRAINING_NAME },
-                gamesForTraining = templateGames
+                linesForTraining = templateLines
             )
         }
 
@@ -101,30 +101,30 @@ fun CreateTrainingFromTemplateScreenContainer(
         screenContext = screenContext,
         initialData = initialData,
         screenTitle = screenTitle,
-        gamesCountLabel = gamesCountLabel,
+        linesCountLabel = linesCountLabel,
         modifier = modifier
     )
 }
 
 @Composable
-fun CreateTrainingFromGameIdsScreenContainer(
-    gameIds: List<Long>,
+fun CreateTrainingFromLineIdsScreenContainer(
+    lineIds: List<Long>,
     screenContext: ScreenContainerContext,
     screenTitle: String = "Create Training From Position",
-    gamesCountLabel: String = "Games found for position",
+    linesCountLabel: String = "Lines found for position",
     modifier: Modifier = Modifier,
 ) {
     var initialData by remember { mutableStateOf(CreateTrainingInitialData()) }
 
-    LaunchedEffect(gameIds) {
-        val allGamesById = withContext(Dispatchers.IO) {
-            screenContext.inDbProvider.getAllGames().associateBy { it.id }
+    LaunchedEffect(lineIds) {
+        val allLinesById = withContext(Dispatchers.IO) {
+            screenContext.inDbProvider.getAllLines().associateBy { it.id }
         }
 
         initialData = CreateTrainingInitialData(
             trainingName = DEFAULT_TRAINING_NAME,
-            gamesForTraining = gameIds.mapNotNull { gameId ->
-                allGamesById[gameId]?.toTrainingGameEditorItem()
+            linesForTraining = lineIds.mapNotNull { lineId ->
+                allLinesById[lineId]?.toTrainingLineEditorItem()
             }
         )
     }
@@ -133,7 +133,7 @@ fun CreateTrainingFromGameIdsScreenContainer(
         screenContext = screenContext,
         initialData = initialData,
         screenTitle = screenTitle,
-        gamesCountLabel = gamesCountLabel,
+        linesCountLabel = linesCountLabel,
         modifier = modifier
     )
 }

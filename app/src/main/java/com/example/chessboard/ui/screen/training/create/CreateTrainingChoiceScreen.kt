@@ -77,7 +77,7 @@ private fun CreateTrainingChoiceScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     PrimaryButton(
-                        text = "Training From All Games",
+                        text = "Training From All Lines",
                         onClick = { onNavigate(ScreenType.CreateTraining) },
                         modifier = Modifier.fillMaxWidth()
                     )

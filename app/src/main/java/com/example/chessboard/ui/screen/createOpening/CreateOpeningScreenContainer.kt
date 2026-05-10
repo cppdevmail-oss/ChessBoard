@@ -24,11 +24,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
-import com.example.chessboard.boardmodel.GameController
-import com.example.chessboard.boardmodel.GameDraft
-import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.boardmodel.LineController
+import com.example.chessboard.boardmodel.LineDraft
+import com.example.chessboard.entity.LineEntity
 import com.example.chessboard.service.parsePgnMoves
-import com.example.chessboard.ui.screen.EditableGameSide
+import com.example.chessboard.ui.screen.EditableLineSide
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -42,15 +42,15 @@ private const val PgnImportDebounceMs = 600L
 internal fun CreateOpeningScreenContainer(
     activity: Activity,
     screenContext: ScreenContainerContext,
-    initialDraft: GameDraft = GameDraft(),
+    initialDraft: LineDraft = LineDraft(),
     modifier: Modifier = Modifier,
 ) {
     val dbProvider = screenContext.inDbProvider
-    val gameSaver = remember(dbProvider) { dbProvider.createGameSaver() }
+    val lineSaver = remember(dbProvider) { dbProvider.createLineSaver() }
     val trainingService = remember(dbProvider) { dbProvider.createTrainingService() }
     val userProfileService = remember(dbProvider) { dbProvider.createUserProfileService() }
-    val gameController = remember { GameController() }
-    var gameDraft by remember(initialDraft) { mutableStateOf(initialDraft) }
+    val lineController = remember { LineController() }
+    var lineDraft by remember(initialDraft) { mutableStateOf(initialDraft) }
     var showOpeningNameError by remember { mutableStateOf(false) }
     var pgnText by remember { mutableStateOf("") }
     var pgnImportError by remember { mutableStateOf<String?>(null) }
@@ -67,17 +67,17 @@ internal fun CreateOpeningScreenContainer(
     val importedUciLines = importedChapters.firstOrNull()?.uciLines ?: emptyList()
 
     LaunchedEffect(initialDraft) {
-        gameDraft = initialDraft
+        lineDraft = initialDraft
         importedChapters = emptyList()
         pgnText = ""
         loadDraftPosition(
             initialDraft = initialDraft,
-            gameController = gameController,
+            lineController = lineController,
         )
     }
 
-    LaunchedEffect(gameDraft.game.sideMask) {
-        gameController.setOrientation(EditableGameSide.fromSideMask(gameDraft.game.sideMask).orientation)
+    LaunchedEffect(lineDraft.line.sideMask) {
+        lineController.setOrientation(EditableLineSide.fromSideMask(lineDraft.line.sideMask).orientation)
     }
 
     LaunchedEffect(pgnText) {
@@ -99,12 +99,12 @@ internal fun CreateOpeningScreenContainer(
             }
 
             val firstChapter = chapters.first()
-            gameDraft = applyImportedChapterToDraft(
-                gameDraft = gameDraft,
+            lineDraft = applyImportedChapterToDraft(
+                lineDraft = lineDraft,
                 importedChapter = firstChapter,
             )
             importedChapters = chapters
-            gameController.loadFromUciMoves(firstChapter.uciLines.first())
+            lineController.loadFromUciMoves(firstChapter.uciLines.first())
             pgnImportError = null
         } catch (error: CancellationException) {
             throw error
@@ -161,11 +161,11 @@ internal fun CreateOpeningScreenContainer(
     )
 
     CreateOpeningScreen(
-        gameController = gameController,
+        lineController = lineController,
         state = CreateOpeningScreenState(
-            selectedSide = EditableGameSide.fromSideMask(gameDraft.game.sideMask),
-            openingName = gameDraft.game.event.orEmpty(),
-            ecoCode = gameDraft.game.eco.orEmpty(),
+            selectedSide = EditableLineSide.fromSideMask(lineDraft.line.sideMask),
+            openingName = lineDraft.line.event.orEmpty(),
+            ecoCode = lineDraft.line.eco.orEmpty(),
             showOpeningNameError = showOpeningNameError,
             pgnText = pgnText,
             importedUciLines = importedUciLines,
@@ -175,20 +175,20 @@ internal fun CreateOpeningScreenContainer(
         ),
         actions = CreateOpeningScreenActions(
             onSideSelected = { selectedSide ->
-                gameDraft = updateDraftGame(gameDraft) { draftGame ->
-                    draftGame.copy(sideMask = selectedSide.sideMask)
+                lineDraft = updateDraftLine(lineDraft) { draftLine ->
+                    draftLine.copy(sideMask = selectedSide.sideMask)
                 }
             },
             onBackClick = screenContext.onBackClick,
             onOpeningNameChange = {
-                gameDraft = updateDraftGame(gameDraft) { draftGame ->
-                    draftGame.copy(event = it)
+                lineDraft = updateDraftLine(lineDraft) { draftLine ->
+                    draftLine.copy(event = it)
                 }
                 showOpeningNameError = false
             },
             onEcoCodeChange = { eco ->
-                gameDraft = updateDraftGame(gameDraft) { draftGame ->
-                    draftGame.copy(eco = eco)
+                lineDraft = updateDraftLine(lineDraft) { draftLine ->
+                    draftLine.copy(eco = eco)
                 }
             },
             onPgnTextChange = {
@@ -201,7 +201,7 @@ internal fun CreateOpeningScreenContainer(
             onImportFromFileClick = { filePickerLauncher.launch(arrayOf("*/*")) },
             onSave = onSaveAction@{ scrollToNameField ->
                 val isMultiChapter = importedChapters.size > 1
-                if (!isMultiChapter && gameDraft.game.event.isNullOrBlank()) {
+                if (!isMultiChapter && lineDraft.line.event.isNullOrBlank()) {
                     showOpeningNameError = true
                     scrollToNameField()
                     return@onSaveAction
@@ -209,9 +209,9 @@ internal fun CreateOpeningScreenContainer(
 
                 val lifecycleOwner = activity as? LifecycleOwner ?: return@onSaveAction
                 val saveSnapshot = buildCreateOpeningSaveSnapshot(
-                    gameDraft = gameDraft,
+                    lineDraft = lineDraft,
                     importedChapters = importedChapters,
-                    gameController = gameController,
+                    lineController = lineController,
                     simpleViewEnabled = simpleViewEnabled,
                 )
 
@@ -219,7 +219,7 @@ internal fun CreateOpeningScreenContainer(
                     val saveResult = saveOpening(
                         snapshot = saveSnapshot,
                         dbProvider = dbProvider,
-                        gameSaver = gameSaver,
+                        lineSaver = lineSaver,
                         trainingService = trainingService,
                     )
                     withContext(Dispatchers.Main) {
@@ -238,24 +238,24 @@ internal fun CreateOpeningScreenContainer(
 }
 
 private fun buildCreateOpeningSaveSnapshot(
-    gameDraft: GameDraft,
+    lineDraft: LineDraft,
     importedChapters: List<ImportedChapter>,
-    gameController: GameController,
+    lineController: LineController,
     simpleViewEnabled: Boolean,
 ): CreateOpeningSaveSnapshot {
-    val openingName = gameDraft.game.event.orEmpty()
+    val openingName = lineDraft.line.event.orEmpty()
     val generatedPgn = if (importedChapters.isEmpty()) {
-        gameController.generatePgn(event = openingName.ifBlank { "Opening" })
+        lineController.generatePgn(event = openingName.ifBlank { "Opening" })
     } else {
         ""
     }
 
     return CreateOpeningSaveSnapshot(
         openingName = openingName,
-        ecoCode = gameDraft.game.eco.orEmpty(),
-        selectedSide = EditableGameSide.fromSideMask(gameDraft.game.sideMask),
+        ecoCode = lineDraft.line.eco.orEmpty(),
+        selectedSide = EditableLineSide.fromSideMask(lineDraft.line.sideMask),
         importedChapters = importedChapters,
-        movesSnapshot = gameController.getMovesCopy(),
+        movesSnapshot = lineController.getMovesCopy(),
         generatedPgn = generatedPgn,
         simpleViewEnabled = simpleViewEnabled,
     )
@@ -275,21 +275,21 @@ private fun applyCreateOpeningSaveResult(
 }
 
 private fun loadDraftPosition(
-    initialDraft: GameDraft,
-    gameController: GameController,
+    initialDraft: LineDraft,
+    lineController: LineController,
 ) {
-    if (initialDraft.game.pgn.isBlank()) {
-        gameController.resetToStartPosition()
+    if (initialDraft.line.pgn.isBlank()) {
+        lineController.resetToStartPosition()
         return
     }
 
-    val uciMoves = parsePgnMoves(initialDraft.game.pgn)
+    val uciMoves = parsePgnMoves(initialDraft.line.pgn)
     if (uciMoves.isEmpty()) {
-        gameController.resetToStartPosition()
+        lineController.resetToStartPosition()
         return
     }
 
-    gameController.loadFromUciMoves(uciMoves)
+    lineController.loadFromUciMoves(uciMoves)
 }
 
 private fun readImportedPgnText(
@@ -301,9 +301,9 @@ private fun readImportedPgnText(
         ?.use { reader -> reader.readText() }
 }
 
-private fun updateDraftGame(
-    gameDraft: GameDraft,
-    transform: (GameEntity) -> GameEntity,
-): GameDraft {
-    return gameDraft.copy(game = transform(gameDraft.game))
+private fun updateDraftLine(
+    lineDraft: LineDraft,
+    transform: (LineEntity) -> LineEntity,
+): LineDraft {
+    return lineDraft.copy(line = transform(lineDraft.line))
 }

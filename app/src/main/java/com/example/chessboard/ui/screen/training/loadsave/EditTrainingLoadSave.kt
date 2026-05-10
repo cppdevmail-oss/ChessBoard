@@ -8,11 +8,11 @@ package com.example.chessboard.ui.screen.training.loadsave
  * screen orchestration. Do not add dialogs or broader screen layout code here.
  */
 
-import com.example.chessboard.ui.screen.training.common.TrainingGameEditorItem
+import com.example.chessboard.ui.screen.training.common.TrainingLineEditorItem
 
-import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.entity.LineEntity
 import com.example.chessboard.repository.DatabaseProvider
-import com.example.chessboard.service.OneGameTrainingData
+import com.example.chessboard.service.OneLineTrainingData
 import com.example.chessboard.service.TrainingService
 import com.example.chessboard.ui.screen.training.common.DEFAULT_TRAINING_NAME
 import kotlinx.coroutines.Dispatchers
@@ -20,8 +20,8 @@ import kotlinx.coroutines.withContext
 
 internal data class TrainingLoadState(
     val trainingName: String = DEFAULT_TRAINING_NAME,
-    val gamesForTraining: List<TrainingGameEditorItem> = emptyList(),
-    val allGamesById: Map<Long, GameEntity> = emptyMap(),
+    val linesForTraining: List<TrainingLineEditorItem> = emptyList(),
+    val allLinesById: Map<Long, LineEntity> = emptyMap(),
     val trainingLoadFailed: Boolean = false,
 )
 
@@ -30,25 +30,25 @@ internal suspend fun loadEditTrainingState(
     trainingService: TrainingService,
     trainingId: Long,
 ): TrainingLoadState {
-    val allGames = withContext(Dispatchers.IO) {
-        inDbProvider.getAllGames()
+    val allLines = withContext(Dispatchers.IO) {
+        inDbProvider.getAllLines()
     }
 
     val training = withContext(Dispatchers.IO) {
         trainingService.getTrainingById(trainingId)
     } ?: return TrainingLoadState(
         trainingName = DEFAULT_TRAINING_NAME,
-        gamesForTraining = emptyList(),
+        linesForTraining = emptyList(),
         trainingLoadFailed = true,
     )
 
     return TrainingLoadState(
         trainingName = training.name.ifBlank { DEFAULT_TRAINING_NAME },
-        gamesForTraining = buildTrainingEditorItems(
-            allGames = allGames,
-            trainingGames = OneGameTrainingData.fromJson(training.gamesJson),
+        linesForTraining = buildTrainingEditorItems(
+            allLines = allLines,
+            trainingLines = OneLineTrainingData.fromJson(training.linesJson),
         ),
-        allGamesById = allGames.associateBy { game -> game.id },
+        allLinesById = allLines.associateBy { line -> line.id },
     )
 }
 
@@ -56,21 +56,21 @@ internal suspend fun saveEditedTraining(
     trainingService: TrainingService,
     trainingId: Long,
     trainingName: String,
-    editableGames: List<TrainingGameEditorItem>,
+    editableLines: List<TrainingLineEditorItem>,
 ): TrainingSaveSuccess? {
     val normalizedName = normalizeTrainingEditorName(trainingName)
-    val trainingGames = editableGames.map { game ->
-        OneGameTrainingData(
-            gameId = game.gameId,
-            weight = game.weight,
+    val trainingLines = editableLines.map { line ->
+        OneLineTrainingData(
+            lineId = line.lineId,
+            weight = line.weight,
         )
     }
 
     val wasUpdated = withContext(Dispatchers.IO) {
-        trainingService.updateTrainingFromGames(
+        trainingService.updateTrainingFromLines(
             trainingId = trainingId,
             name = normalizedName,
-            games = trainingGames,
+            lines = trainingLines,
         )
     }
 
@@ -81,6 +81,6 @@ internal suspend fun saveEditedTraining(
     return TrainingSaveSuccess(
         trainingId = trainingId,
         trainingName = normalizedName,
-        gamesCount = editableGames.size,
+        linesCount = editableLines.size,
     )
 }

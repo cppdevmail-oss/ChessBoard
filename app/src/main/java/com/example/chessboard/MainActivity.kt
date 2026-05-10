@@ -26,20 +26,20 @@ import androidx.compose.runtime.setValue
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.example.chessboard.boardmodel.GameDraft
-import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.boardmodel.LineDraft
+import com.example.chessboard.entity.LineEntity
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.runtimecontext.RuntimeContext
 import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.error.AppErrorReporter
 import com.example.chessboard.ui.error.AppErrorUiState
 import com.example.chessboard.ui.error.launchAppCatching
-import com.example.chessboard.ui.screen.analysis.GameAnalysisInitialPosition
-import com.example.chessboard.ui.screen.analysis.GameAnalysisScreenContainer
+import com.example.chessboard.ui.screen.analysis.LineAnalysisInitialPosition
+import com.example.chessboard.ui.screen.analysis.LineAnalysisScreenContainer
 import com.example.chessboard.ui.screen.createOpening.CreateOpeningScreenContainer
 import com.example.chessboard.ui.screen.BackupScreenContainer
-import com.example.chessboard.ui.screen.GameEditorScreenContainer
-import com.example.chessboard.ui.screen.gamesExplorer.GamesExplorerScreenContainer
+import com.example.chessboard.ui.screen.LineEditorScreenContainer
+import com.example.chessboard.ui.screen.linesExplorer.LinesExplorerScreenContainer
 import com.example.chessboard.ui.screen.openingDeviation.OpeningDeviationDisplayScreen
 import com.example.chessboard.ui.screen.openingDeviation.OpeningDeviationSelectionScreenContainer
 import com.example.chessboard.ui.screen.ScreenType
@@ -52,14 +52,14 @@ import com.example.chessboard.ui.screen.home.HomeScreenContainer
 import com.example.chessboard.ui.screen.positions.positionSearch.PositionSearchScreenContainer
 import com.example.chessboard.ui.screen.positions.positionSearch.PositionSearchSettingsScreenContainer
 import com.example.chessboard.ui.screen.positions.savedPositions.SavedPositionsScreenContainer
-import com.example.chessboard.ui.screen.trainSingleGame.TrainSingleGameLauncherScreenContainer
+import com.example.chessboard.ui.screen.trainSingleLine.TrainSingleLineLauncherScreenContainer
 import com.example.chessboard.ui.screen.training.create.CreateTrainingByStatisticsScreenContainer
 import com.example.chessboard.ui.screen.training.create.CreateTrainingChoiceScreenContainer
 import com.example.chessboard.ui.screen.training.template.TrainingTemplateSelectionScreenContainer
 import com.example.chessboard.ui.screen.training.template.TrainingTemplateBrowserScreenContainer
 import com.example.chessboard.ui.screen.training.template.EditTrainingTemplateScreenContainer
-import com.example.chessboard.ui.screen.training.create.CreateTrainingFromAllGamesScreenContainer
-import com.example.chessboard.ui.screen.training.create.CreateTrainingFromGameIdsScreenContainer
+import com.example.chessboard.ui.screen.training.create.CreateTrainingFromAllLinesScreenContainer
+import com.example.chessboard.ui.screen.training.create.CreateTrainingFromLineIdsScreenContainer
 import com.example.chessboard.ui.screen.training.create.CreateTrainingFromTemplateScreenContainer
 import com.example.chessboard.ui.screen.training.flow.RegularTrainingFlowCoordinator
 import com.example.chessboard.ui.screen.training.flow.SmartTrainingFlowCoordinator
@@ -96,11 +96,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             ChessBoardTheme {
                 var currentScreen by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
-                var selectedGame by remember { mutableStateOf<GameEntity?>(null) }
-                var gamesExplorerSelectedGameId by remember { mutableStateOf<Long?>(null) }
-                var gamesExplorerOnBackClick by remember { mutableStateOf<() -> Unit>({ currentScreen = ScreenType.Home }) }
-                var gameEditorOnBackClick by remember { mutableStateOf<() -> Unit>({ currentScreen = ScreenType.GamesExplorer }) }
-                var createOpeningDraft by remember { mutableStateOf(GameDraft()) }
+                var selectedLine by remember { mutableStateOf<LineEntity?>(null) }
+                var linesExplorerSelectedLineId by remember { mutableStateOf<Long?>(null) }
+                var linesExplorerOnBackClick by remember { mutableStateOf<() -> Unit>({ currentScreen = ScreenType.Home }) }
+                var lineEditorOnBackClick by remember { mutableStateOf<() -> Unit>({ currentScreen = ScreenType.LinesExplorer }) }
+                var createOpeningDraft by remember { mutableStateOf(LineDraft()) }
                 var createOpeningOnBackClick by remember { mutableStateOf<() -> Unit>({ currentScreen = ScreenType.Home }) }
                 var simpleViewEnabled by remember { mutableStateOf(false) }
                 var removeLineIfRepIsZero by remember { mutableStateOf(true) }
@@ -147,41 +147,41 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                fun openGamesExplorer() {
+                fun openLinesExplorer() {
                     scope.launchAppCatching(
                         errorReporter = errorReporter,
-                        message = "Failed to open games.",
+                        message = "Failed to open lines.",
                     ) {
-                        runtimeContext.gamesExplorer.loadAllGameIds(dbProvider)
-                        gamesExplorerSelectedGameId = null
-                        gamesExplorerOnBackClick = { currentScreen = ScreenType.Home }
-                        currentScreen = ScreenType.GamesExplorer
+                        runtimeContext.linesExplorer.loadAllLineIds(dbProvider)
+                        linesExplorerSelectedLineId = null
+                        linesExplorerOnBackClick = { currentScreen = ScreenType.Home }
+                        currentScreen = ScreenType.LinesExplorer
                     }
                 }
 
-                fun openGamesExplorerForOpeningDeviationBranch(branchFen: String) {
+                fun openLinesExplorerForOpeningDeviationBranch(branchFen: String) {
                     scope.launchAppCatching(
                         errorReporter = errorReporter,
-                        message = "Failed to open matching games.",
+                        message = "Failed to open matching lines.",
                     ) {
-                        val gameIds = withContext(Dispatchers.IO) {
-                            dbProvider.findGameIdsByFenWithoutMoveNumber(branchFen)
+                        val lineIds = withContext(Dispatchers.IO) {
+                            dbProvider.findLineIdsByFenWithoutMoveNumber(branchFen)
                         }
 
-                        runtimeContext.gamesExplorer.setGameIds(gameIds)
-                        gamesExplorerSelectedGameId = null
-                        gamesExplorerOnBackClick = {
+                        runtimeContext.linesExplorer.setLineIds(lineIds)
+                        linesExplorerSelectedLineId = null
+                        linesExplorerOnBackClick = {
                             currentScreen = ScreenType.ShowOpeningDeviation
                         }
-                        currentScreen = ScreenType.GamesExplorer
+                        currentScreen = ScreenType.LinesExplorer
                     }
                 }
 
                 fun createScreenContext(
                     onBackClick: () -> Unit = {},
                         onNavigate: (ScreenType) -> Unit = navigation@ { screenType ->
-                        if (screenType == ScreenType.GamesExplorer) {
-                            openGamesExplorer()
+                        if (screenType == ScreenType.LinesExplorer) {
+                            openLinesExplorer()
                             return@navigation
                         }
 
@@ -204,12 +204,12 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                fun openGameAnalysis(
+                fun openLineAnalysis(
                     uciMoves: List<String>,
                     initialPly: Int,
                     backTarget: ScreenType,
                 ) {
-                    currentScreen = ScreenType.AnalyzeGame(
+                    currentScreen = ScreenType.AnalyzeLine(
                         uciMoves = uciMoves,
                         initialPly = initialPly,
                         backTarget = backTarget,
@@ -222,10 +222,10 @@ class MainActivity : ComponentActivity() {
                             currentScreen = result.screen
                         }
 
-                        is TrainingFlowResult.OpenGameEditor -> {
-                            selectedGame = result.game
-                            gameEditorOnBackClick = { currentScreen = result.backTarget }
-                            currentScreen = ScreenType.GameEditor
+                        is TrainingFlowResult.OpenLineEditor -> {
+                            selectedLine = result.line
+                            lineEditorOnBackClick = { currentScreen = result.backTarget }
+                            currentScreen = ScreenType.LineEditor
                         }
 
                         is TrainingFlowResult.OpenCreateOpening -> {
@@ -243,7 +243,7 @@ class MainActivity : ComponentActivity() {
                         }
 
                         is TrainingFlowResult.OpenAnalysis -> {
-                            openGameAnalysis(
+                            openLineAnalysis(
                                 uciMoves = result.uciMoves,
                                 initialPly = result.initialPly,
                                 backTarget = result.backTarget,
@@ -280,30 +280,30 @@ class MainActivity : ComponentActivity() {
                         },
                     )
 
-                    ScreenType.GamesExplorer -> GamesExplorerScreenContainer(
-                        observableGamesPage = runtimeContext.gamesExplorer,
-                        initialSelectedGameId = gamesExplorerSelectedGameId,
+                    ScreenType.LinesExplorer -> LinesExplorerScreenContainer(
+                        observableLinesPage = runtimeContext.linesExplorer,
+                        initialSelectedLineId = linesExplorerSelectedLineId,
                         simpleViewEnabled = simpleViewEnabled,
                         screenContext = createScreenContext(
-                            onBackClick = { gamesExplorerOnBackClick() },
+                            onBackClick = { linesExplorerOnBackClick() },
                         ),
-                        onCloneGameClick = { draft ->
+                        onCloneLineClick = { draft ->
                             createOpeningDraft = draft
-                            createOpeningOnBackClick = { currentScreen = ScreenType.GamesExplorer }
+                            createOpeningOnBackClick = { currentScreen = ScreenType.LinesExplorer }
                             currentScreen = ScreenType.CreateOpening
                         },
-                        onAnalyzeGameClick = { uciMoves, initialPly ->
-                            openGameAnalysis(
+                        onAnalyzeLineClick = { uciMoves, initialPly ->
+                            openLineAnalysis(
                                 uciMoves = uciMoves,
                                 initialPly = initialPly,
-                                backTarget = ScreenType.GamesExplorer,
+                                backTarget = ScreenType.LinesExplorer,
                             )
                         },
-                        onOpenGameEditor = { game ->
-                            selectedGame = game
-                            gamesExplorerSelectedGameId = game.id
-                            gameEditorOnBackClick = { currentScreen = ScreenType.GamesExplorer }
-                            currentScreen = ScreenType.GameEditor
+                        onOpenLineEditor = { line ->
+                            selectedLine = line
+                            linesExplorerSelectedLineId = line.id
+                            lineEditorOnBackClick = { currentScreen = ScreenType.LinesExplorer }
+                            currentScreen = ScreenType.LineEditor
                         },
                     )
 
@@ -324,12 +324,12 @@ class MainActivity : ComponentActivity() {
                             runtimeContext.positionSearch.initialFen = currentFen
                             currentScreen = ScreenType.PositionSearchSettings
                         },
-                        onShowFoundGamesClick = { foundGameIds, currentFen ->
+                        onShowFoundLinesClick = { foundLineIds, currentFen ->
                             runtimeContext.positionSearch.initialFen = currentFen
-                            runtimeContext.gamesExplorer.setGameIds(foundGameIds)
-                            gamesExplorerSelectedGameId = null
-                            gamesExplorerOnBackClick = { currentScreen = ScreenType.PositionSearch }
-                            currentScreen = ScreenType.GamesExplorer
+                            runtimeContext.linesExplorer.setLineIds(foundLineIds)
+                            linesExplorerSelectedLineId = null
+                            linesExplorerOnBackClick = { currentScreen = ScreenType.PositionSearch }
+                            currentScreen = ScreenType.LinesExplorer
                         }
                     )
 
@@ -381,8 +381,8 @@ class MainActivity : ComponentActivity() {
                             onBranchSelected = { index ->
                                 runtimeContext.openingDeviation.selectBranch(index)
                             },
-                            onOpenGamesClick = { branch ->
-                                openGamesExplorerForOpeningDeviationBranch(branch.resultFen)
+                            onOpenLinesClick = { branch ->
+                                openLinesExplorerForOpeningDeviationBranch(branch.resultFen)
                             },
                             onBackClick = { currentScreen = ScreenType.SelectOpeningDeviationPosition },
                         )
@@ -427,7 +427,7 @@ class MainActivity : ComponentActivity() {
                         ),
                     )
 
-                    ScreenType.CreateTraining -> CreateTrainingFromAllGamesScreenContainer(
+                    ScreenType.CreateTraining -> CreateTrainingFromAllLinesScreenContainer(
                         screenContext = createScreenContext(
                             onBackClick = { currentScreen = ScreenType.CreateTrainingChoice },
                         ),
@@ -439,16 +439,16 @@ class MainActivity : ComponentActivity() {
                         ),
                         templateId = screen.templateId,
                         screenTitle = "Create Training From Template",
-                        gamesCountLabel = "Games loaded from template",
+                        linesCountLabel = "Lines loaded from template",
                     )
 
-                    is ScreenType.CreateTrainingFromGameIds -> CreateTrainingFromGameIdsScreenContainer(
+                    is ScreenType.CreateTrainingFromLineIds -> CreateTrainingFromLineIdsScreenContainer(
                         screenContext = createScreenContext(
                             onBackClick = { currentScreen = screen.backTarget },
                         ),
-                        gameIds = screen.gameIds,
+                        lineIds = screen.lineIds,
                         screenTitle = "Create Training From Position",
-                        gamesCountLabel = "Games found for position",
+                        linesCountLabel = "Lines found for position",
                     )
 
                     is ScreenType.EditTrainingTemplate -> EditTrainingTemplateScreenContainer(
@@ -456,12 +456,12 @@ class MainActivity : ComponentActivity() {
                         screenContext = createScreenContext(
                             onBackClick = { currentScreen = ScreenType.TrainingTemplates },
                         ),
-                        onOpenGameEditorClick = { game ->
-                            selectedGame = game
-                            gameEditorOnBackClick = {
+                        onOpenLineEditorClick = { line ->
+                            selectedLine = line
+                            lineEditorOnBackClick = {
                                 currentScreen = ScreenType.EditTrainingTemplate(screen.templateId)
                             }
-                            currentScreen = ScreenType.GameEditor
+                            currentScreen = ScreenType.LineEditor
                         },
                     )
 
@@ -470,23 +470,23 @@ class MainActivity : ComponentActivity() {
                         screenContext = createScreenContext(
                             onBackClick = { currentScreen = ScreenType.Training },
                         ),
-                        orderGamesInTraining = runtimeContext.orderGamesInTraining,
+                        orderLinesInTraining = runtimeContext.orderLinesInTraining,
                         trainingRuntimeContext = runtimeContext.trainingSession,
                         hideLinesWithWeightZero = hideLinesWithWeightZero,
                         simpleViewEnabled = simpleViewEnabled,
-                        onStartGameTrainingClick = { gameId, orderedGameIds ->
+                        onStartLineTrainingClick = { lineId, orderedLineIds ->
                             applyTrainingFlowResult(
-                                regularTrainingFlow.startGame(
+                                regularTrainingFlow.startLine(
                                     trainingId = screen.trainingId,
-                                    gameId = gameId,
-                                    orderedGameIds = orderedGameIds,
+                                    lineId = lineId,
+                                    orderedLineIds = orderedLineIds,
                                 )
                             )
                         },
-                        onOpenGameEditorClick = { game ->
+                        onOpenLineEditorClick = { line ->
                             applyTrainingFlowResult(
-                                regularTrainingFlow.openGameEditorFromEditor(
-                                    game = game,
+                                regularTrainingFlow.openLineEditorFromEditor(
+                                    line = line,
                                     trainingId = screen.trainingId,
                                 )
                             )
@@ -520,31 +520,31 @@ class MainActivity : ComponentActivity() {
                         },
                     )
 
-                    is ScreenType.TrainSingleGame -> TrainSingleGameLauncherScreenContainer(
+                    is ScreenType.TrainSingleLine -> TrainSingleLineLauncherScreenContainer(
                         trainingId = screen.trainingId,
-                        gameId = screen.gameId,
+                        lineId = screen.lineId,
                         moveFrom = runtimeContext.trainingMoveFrom,
                         moveTo = runtimeContext.trainingMoveTo,
                         keepLineIfZero = !removeLineIfRepIsZero,
                         simpleViewEnabled = simpleViewEnabled,
                         trainingRuntimeContext = runtimeContext.trainingSession,
-                        hasNextTrainingGame = regularTrainingFlow.hasNextGame(
+                        hasNextTrainingLine = regularTrainingFlow.hasNextLine(
                             trainingId = screen.trainingId,
-                            gameId = screen.gameId,
+                            lineId = screen.lineId,
                         ),
                         sessionCurrent = regularTrainingFlow.sessionCurrent(
                             trainingId = screen.trainingId,
-                            gameId = screen.gameId,
+                            lineId = screen.lineId,
                         ),
                         sessionTotal = regularTrainingFlow.sessionTotal(screen.trainingId),
                         onTrainingFinished = { result ->
                             applyTrainingFlowResult(
-                                regularTrainingFlow.finishGame(result)
+                                regularTrainingFlow.finishLine(result)
                             )
                         },
                         onNextTrainingClick = { result ->
                             applyTrainingFlowResult(
-                                regularTrainingFlow.openNextGame(result)
+                                regularTrainingFlow.openNextLine(result)
                             )
                         },
                         onInterruptTrainingClick = {
@@ -552,21 +552,21 @@ class MainActivity : ComponentActivity() {
                                 regularTrainingFlow.interruptTraining(screen.trainingId)
                             )
                         },
-                        onOpenGameEditorClick = { game ->
+                        onOpenLineEditorClick = { line ->
                             applyTrainingFlowResult(
-                                regularTrainingFlow.openGameEditorFromTraining(
-                                    game = game,
+                                regularTrainingFlow.openLineEditorFromTraining(
+                                    line = line,
                                     trainingId = screen.trainingId,
-                                    gameId = screen.gameId,
+                                    lineId = screen.lineId,
                                 )
                             )
                         },
-                        onCloneGameClick = { draft ->
+                        onCloneLineClick = { draft ->
                             applyTrainingFlowResult(
                                 regularTrainingFlow.openCreateOpeningFromTraining(
                                     draft = draft,
                                     trainingId = screen.trainingId,
-                                    gameId = screen.gameId,
+                                    lineId = screen.lineId,
                                 )
                             )
                         },
@@ -575,15 +575,15 @@ class MainActivity : ComponentActivity() {
                                 regularTrainingFlow.openPositionSearchFromTraining(
                                     fen = fen,
                                     trainingId = screen.trainingId,
-                                    gameId = screen.gameId,
+                                    lineId = screen.lineId,
                                 )
                             )
                         },
-                        onAnalyzeGameClick = { uciMoves, initialPly ->
+                        onAnalyzeLineClick = { uciMoves, initialPly ->
                             applyTrainingFlowResult(
                                 regularTrainingFlow.openAnalysisFromTraining(
                                     trainingId = screen.trainingId,
-                                    gameId = screen.gameId,
+                                    lineId = screen.lineId,
                                     uciMoves = uciMoves,
                                     initialPly = initialPly,
                                 )
@@ -596,11 +596,11 @@ class MainActivity : ComponentActivity() {
                         ),
                     )
 
-                    is ScreenType.AnalyzeGame -> GameAnalysisScreenContainer(
+                    is ScreenType.AnalyzeLine -> LineAnalysisScreenContainer(
                         screenContext = createScreenContext(
                             onBackClick = { currentScreen = screen.backTarget },
                         ),
-                        initialPosition = GameAnalysisInitialPosition.FromGameLine(
+                        initialPosition = LineAnalysisInitialPosition.FromLineLine(
                             uciMoves = screen.uciMoves,
                             initialPly = screen.initialPly,
                         ),
@@ -613,16 +613,16 @@ class MainActivity : ComponentActivity() {
                         },
                     )
 
-                    ScreenType.GameEditor -> selectedGame?.let { game ->
-                        GameEditorScreenContainer(
+                    ScreenType.LineEditor -> selectedLine?.let { line ->
+                        LineEditorScreenContainer(
                             activity = this@MainActivity,
-                            game = game,
+                            line = line,
                             screenContext = createScreenContext(
-                                onBackClick = { gameEditorOnBackClick() },
+                                onBackClick = { lineEditorOnBackClick() },
                             ),
                         )
                     } ?: run {
-                        openGamesExplorer()
+                        openLinesExplorer()
                     }
 
                     ScreenType.Home -> HomeScreenContainer(
@@ -632,7 +632,7 @@ class MainActivity : ComponentActivity() {
                         ),
                         simpleViewEnabled = simpleViewEnabled,
                         onCreateOpeningClick = {
-                            createOpeningDraft = GameDraft()
+                            createOpeningDraft = LineDraft()
                             createOpeningOnBackClick = { currentScreen = ScreenType.Home }
                             currentScreen = ScreenType.CreateOpening
                         },
@@ -719,36 +719,36 @@ class MainActivity : ComponentActivity() {
                         },
                     )
 
-                    is ScreenType.SmartTrainGame -> TrainSingleGameLauncherScreenContainer(
+                    is ScreenType.SmartTrainLine -> TrainSingleLineLauncherScreenContainer(
                         trainingId = screen.trainingId,
-                        gameId = screen.gameId,
+                        lineId = screen.lineId,
                         keepLineIfZero = !removeLineIfRepIsZero,
                         simpleViewEnabled = simpleViewEnabled,
                         trainingRuntimeContext = runtimeContext.trainingSession,
-                        hasNextTrainingGame = smartTrainingFlow.hasNextGame(screen.gameId),
-                        sessionCurrent = smartTrainingFlow.sessionCurrent(screen.gameId),
+                        hasNextTrainingLine = smartTrainingFlow.hasNextLine(screen.lineId),
+                        sessionCurrent = smartTrainingFlow.sessionCurrent(screen.lineId),
                         sessionTotal = smartTrainingFlow.sessionTotal(),
                         onTrainingFinished = {
-                            applyTrainingFlowResult(smartTrainingFlow.finishGame())
+                            applyTrainingFlowResult(smartTrainingFlow.finishLine())
                         },
                         onNextTrainingClick = { result ->
-                            applyTrainingFlowResult(smartTrainingFlow.openNextGame(result))
+                            applyTrainingFlowResult(smartTrainingFlow.openNextLine(result))
                         },
-                        onOpenGameEditorClick = { game ->
+                        onOpenLineEditorClick = { line ->
                             applyTrainingFlowResult(
-                                smartTrainingFlow.openGameEditor(
-                                    game = game,
+                                smartTrainingFlow.openLineEditor(
+                                    line = line,
                                     trainingId = screen.trainingId,
-                                    gameId = screen.gameId,
+                                    lineId = screen.lineId,
                                 )
                             )
                         },
-                        onCloneGameClick = { draft ->
+                        onCloneLineClick = { draft ->
                             applyTrainingFlowResult(
                                 smartTrainingFlow.openCreateOpening(
                                     draft = draft,
                                     trainingId = screen.trainingId,
-                                    gameId = screen.gameId,
+                                    lineId = screen.lineId,
                                 )
                             )
                         },
@@ -757,15 +757,15 @@ class MainActivity : ComponentActivity() {
                                 smartTrainingFlow.openPositionSearch(
                                     fen = fen,
                                     trainingId = screen.trainingId,
-                                    gameId = screen.gameId,
+                                    lineId = screen.lineId,
                                 )
                             )
                         },
-                        onAnalyzeGameClick = { uciMoves, initialPly ->
+                        onAnalyzeLineClick = { uciMoves, initialPly ->
                             applyTrainingFlowResult(
                                 smartTrainingFlow.openAnalysis(
                                     trainingId = screen.trainingId,
-                                    gameId = screen.gameId,
+                                    lineId = screen.lineId,
                                     uciMoves = uciMoves,
                                     initialPly = initialPly,
                                 )

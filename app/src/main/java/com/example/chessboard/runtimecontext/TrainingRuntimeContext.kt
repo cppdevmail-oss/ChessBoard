@@ -3,7 +3,7 @@ package com.example.chessboard.runtimecontext
 /**
  * File role: groups runtime-only state for in-progress training sessions.
  * Allowed here:
- * - active training game tracking, move-range state, and per-game progress snapshots
+ * - active training line tracking, move-range state, and per-line progress snapshots
  * - in-memory helpers that restore unfinished training sessions after screen changes
  * Not allowed here:
  * - composable UI, navigation rendering, or screen layout code
@@ -11,104 +11,104 @@ package com.example.chessboard.runtimecontext
  * Validation date: 2026-04-25
  */
 
-import com.example.chessboard.ui.screen.trainSingleGame.TrainSingleGamePhase
-import com.example.chessboard.ui.screen.trainSingleGame.TrainSingleGameUiState
+import com.example.chessboard.ui.screen.trainSingleLine.TrainSingleLinePhase
+import com.example.chessboard.ui.screen.trainSingleLine.TrainSingleLineUiState
 
 class TrainingRuntimeContext {
-    internal data class GameProgressSnapshot(
+    internal data class LineProgressSnapshot(
         val currentPly: Int,
         val lineFingerprint: String,
-        val uiState: TrainSingleGameUiState,
+        val uiState: TrainSingleLineUiState,
     )
 
     private data class TrainingSession(
-        val currentGameId: Long? = null,
-        val orderedGameIds: List<Long> = emptyList(),
-        val gameProgressById: Map<Long, GameProgressSnapshot> = emptyMap(),
+        val currentLineId: Long? = null,
+        val orderedLineIds: List<Long> = emptyList(),
+        val lineProgressById: Map<Long, LineProgressSnapshot> = emptyMap(),
     )
 
     private val sessionsByTrainingId = mutableMapOf<Long, TrainingSession>()
 
     fun rememberLaunch(
         trainingId: Long,
-        gameId: Long,
-        orderedGameIds: List<Long>,
+        lineId: Long,
+        orderedLineIds: List<Long>,
     ) {
         val currentSession = sessionsByTrainingId[trainingId] ?: TrainingSession()
         sessionsByTrainingId[trainingId] = currentSession.copy(
-            currentGameId = gameId,
-            orderedGameIds = orderedGameIds,
+            currentLineId = lineId,
+            orderedLineIds = orderedLineIds,
         )
     }
 
-    fun orderedGameIds(trainingId: Long): List<Long> {
-        return sessionsByTrainingId[trainingId]?.orderedGameIds ?: emptyList()
+    fun orderedLineIds(trainingId: Long): List<Long> {
+        return sessionsByTrainingId[trainingId]?.orderedLineIds ?: emptyList()
     }
 
-    fun activeGameId(trainingId: Long): Long? {
-        return sessionsByTrainingId[trainingId]?.currentGameId
+    fun activeLineId(trainingId: Long): Long? {
+        return sessionsByTrainingId[trainingId]?.currentLineId
     }
 
-    fun firstStartedGameId(trainingId: Long): Long? {
+    fun firstStartedLineId(trainingId: Long): Long? {
         val session = sessionsByTrainingId[trainingId] ?: return null
-        if (session.gameProgressById.isEmpty()) {
+        if (session.lineProgressById.isEmpty()) {
             return null
         }
 
-        val firstStartedOrderedGameId = session.orderedGameIds.firstOrNull { gameId ->
-            session.gameProgressById.containsKey(gameId)
+        val firstStartedOrderedLineId = session.orderedLineIds.firstOrNull { lineId ->
+            session.lineProgressById.containsKey(lineId)
         }
-        if (firstStartedOrderedGameId != null) {
-            return firstStartedOrderedGameId
-        }
-
-        val activeGameId = session.currentGameId
-        if (activeGameId != null && session.gameProgressById.containsKey(activeGameId)) {
-            return activeGameId
+        if (firstStartedOrderedLineId != null) {
+            return firstStartedOrderedLineId
         }
 
-        return session.gameProgressById.keys.firstOrNull()
+        val activeLineId = session.currentLineId
+        if (activeLineId != null && session.lineProgressById.containsKey(activeLineId)) {
+            return activeLineId
+        }
+
+        return session.lineProgressById.keys.firstOrNull()
     }
 
-    fun setCurrentGameId(trainingId: Long, gameId: Long?) {
+    fun setCurrentLineId(trainingId: Long, lineId: Long?) {
         val currentSession = sessionsByTrainingId[trainingId] ?: return
-        sessionsByTrainingId[trainingId] = currentSession.copy(currentGameId = gameId)
+        sessionsByTrainingId[trainingId] = currentSession.copy(currentLineId = lineId)
     }
 
-    fun resolveNextGameId(trainingId: Long, currentGameId: Long): Long? {
-        val orderedGameIds = orderedGameIds(trainingId)
-        val currentIndex = orderedGameIds.indexOf(currentGameId)
+    fun resolveNextLineId(trainingId: Long, currentLineId: Long): Long? {
+        val orderedLineIds = orderedLineIds(trainingId)
+        val currentIndex = orderedLineIds.indexOf(currentLineId)
         if (currentIndex < 0) {
             return null
         }
 
-        return orderedGameIds.getOrNull(currentIndex + 1)
+        return orderedLineIds.getOrNull(currentIndex + 1)
     }
 
-    fun sessionCurrent(trainingId: Long, gameId: Long): Int {
-        return orderedGameIds(trainingId).indexOf(gameId).coerceAtLeast(0) + 1
+    fun sessionCurrent(trainingId: Long, lineId: Long): Int {
+        return orderedLineIds(trainingId).indexOf(lineId).coerceAtLeast(0) + 1
     }
 
     fun sessionTotal(trainingId: Long): Int {
-        return orderedGameIds(trainingId).size
+        return orderedLineIds(trainingId).size
     }
 
-    internal fun restoreGameProgress(trainingId: Long, gameId: Long): GameProgressSnapshot? {
-        return sessionsByTrainingId[trainingId]?.gameProgressById?.get(gameId)
+    internal fun restoreLineProgress(trainingId: Long, lineId: Long): LineProgressSnapshot? {
+        return sessionsByTrainingId[trainingId]?.lineProgressById?.get(lineId)
     }
 
-    internal fun saveGameProgress(
+    internal fun saveLineProgress(
         trainingId: Long,
-        gameId: Long,
+        lineId: Long,
         currentPly: Int,
         lineFingerprint: String,
-        uiState: TrainSingleGameUiState,
+        uiState: TrainSingleLineUiState,
     ) {
         val currentSession = sessionsByTrainingId[trainingId] ?: TrainingSession()
         sessionsByTrainingId[trainingId] = currentSession.copy(
-            currentGameId = gameId,
-            gameProgressById = currentSession.gameProgressById + (
-                gameId to GameProgressSnapshot(
+            currentLineId = lineId,
+            lineProgressById = currentSession.lineProgressById + (
+                lineId to LineProgressSnapshot(
                     currentPly = currentPly,
                     lineFingerprint = lineFingerprint,
                     uiState = sanitizeUiState(uiState),
@@ -117,10 +117,10 @@ class TrainingRuntimeContext {
         )
     }
 
-    fun clearGameProgress(trainingId: Long, gameId: Long) {
+    fun clearLineProgress(trainingId: Long, lineId: Long) {
         val currentSession = sessionsByTrainingId[trainingId] ?: return
         sessionsByTrainingId[trainingId] = currentSession.copy(
-            gameProgressById = currentSession.gameProgressById - gameId,
+            lineProgressById = currentSession.lineProgressById - lineId,
         )
     }
 
@@ -128,10 +128,10 @@ class TrainingRuntimeContext {
         sessionsByTrainingId.remove(trainingId)
     }
 
-    private fun sanitizeUiState(uiState: TrainSingleGameUiState): TrainSingleGameUiState {
+    private fun sanitizeUiState(uiState: TrainSingleLineUiState): TrainSingleLineUiState {
         var sanitizedState = uiState.copy(wrongMoveSquare = null)
-        if (sanitizedState.phase == TrainSingleGamePhase.ShowingLine) {
-            sanitizedState = sanitizedState.copy(phase = TrainSingleGamePhase.Idle)
+        if (sanitizedState.phase == TrainSingleLinePhase.ShowingLine) {
+            sanitizedState = sanitizedState.copy(phase = TrainSingleLinePhase.Idle)
         }
 
         return sanitizedState

@@ -46,7 +46,7 @@ import com.example.chessboard.R
 import com.example.chessboard.boardmodel.BoardPiece
 import com.example.chessboard.boardmodel.BoardPosition
 import com.example.chessboard.boardmodel.ChesslibMapper
-import com.example.chessboard.boardmodel.GameController
+import com.example.chessboard.boardmodel.LineController
 import com.example.chessboard.boardmodel.InitialBoardFenWithoutMoveNumbers
 import com.example.chessboard.service.SaveSavedSearchPositionResult
 import com.example.chessboard.service.calculateFenHashWithoutMoveNumbers
@@ -65,14 +65,14 @@ import com.example.chessboard.ui.components.IconMd
 import com.example.chessboard.ui.components.PasteInputBlock
 import com.example.chessboard.ui.components.SettingsIconButton
 import com.example.chessboard.ui.drawPieceGlyph
-import com.example.chessboard.ui.screen.EditableGameSide
+import com.example.chessboard.ui.screen.EditableLineSide
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.screen.SideButtonSelectedBg
 import com.example.chessboard.ui.screen.positions.PositionSearchResultDialogActions
 import com.example.chessboard.ui.screen.positions.PositionTemplateNameDialogState
 import com.example.chessboard.ui.screen.positions.RenderPositionSearchResultDialog
-import com.example.chessboard.ui.screen.positions.createPositionTemplateFromGameIds
+import com.example.chessboard.ui.screen.positions.createPositionTemplateFromLineIds
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import com.example.chessboard.ui.theme.TrainingIconInactive
@@ -108,10 +108,10 @@ private val PositionSearchPieceOptions = listOf(
 
 private data class PositionSearchUiState(
     val fenText: String = EmptyBoardFen,
-    val selectedSide: EditableGameSide = EditableGameSide.AS_WHITE,
+    val selectedSide: EditableLineSide = EditableLineSide.AS_WHITE,
     val selectedPiece: PositionSearchPieceOption? = null,
     val fenError: String? = null,
-    val foundGameIds: List<Long>? = null,
+    val foundLineIds: List<Long>? = null,
     val infoDialog: PositionSearchInfoDialog? = null
 )
 
@@ -137,12 +137,12 @@ internal data class PositionSearchScreenActions(
     val board: Board,
     val topBar: TopBar,
     val saveDialog: SaveDialog,
-    val foundGamesDialog: PositionSearchResultDialogActions,
+    val foundLinesDialog: PositionSearchResultDialogActions,
     val feedback: Feedback
 ) {
     data class Position(
         val onFenTextChange: (String) -> Unit,
-        val onSideSelected: (EditableGameSide) -> Unit,
+        val onSideSelected: (EditableLineSide) -> Unit,
     )
 
     data class Board(
@@ -153,7 +153,7 @@ internal data class PositionSearchScreenActions(
 
     data class TopBar(
         val onSavePositionClick: () -> Unit,
-        val onFindGamesClick: () -> Unit,
+        val onFindLinesClick: () -> Unit,
         val onClearBoardClick: () -> Unit,
         val onSetInitialPositionClick: () -> Unit,
         val onHistoryBackClick: () -> Unit,
@@ -181,7 +181,7 @@ private data class PositionSearchNavigationActions(
 
 private data class PositionSearchSnapshot(
     val fenText: String,
-    val selectedSide: EditableGameSide,
+    val selectedSide: EditableLineSide,
 )
 
 private data class PositionSearchHistory(
@@ -194,15 +194,15 @@ fun PositionSearchScreenContainer(
     initialFen: String = InitialBoardFenWithoutMoveNumbers,
     screenContext: ScreenContainerContext,
     onNavigateToSettings: (currentFen: String) -> Unit = {},
-    onShowFoundGamesClick: (gameIds: List<Long>, currentFen: String) -> Unit = { _, _ -> },
+    onShowFoundLinesClick: (lineIds: List<Long>, currentFen: String) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
     val savedSearchPositionService = remember(screenContext.inDbProvider) {
         screenContext.inDbProvider.createSavedSearchPositionService()
     }
-    val gameController = remember {
-        GameController().also { controller ->
+    val lineController = remember {
+        LineController().also { controller ->
             controller.loadPreviewFen(toLoadableFen(EmptyBoardFen))
         }
     }
@@ -211,19 +211,19 @@ fun PositionSearchScreenContainer(
     var templateNameDialogState by remember { mutableStateOf<PositionTemplateNameDialogState?>(null) }
     var positionHistory by remember { mutableStateOf(PositionSearchHistory()) }
 
-    fun resolveSelectedSide(fen: String): EditableGameSide {
+    fun resolveSelectedSide(fen: String): EditableLineSide {
         val sideToken = fen.trim().split(Regex("\\s+")).getOrNull(1)
         if (sideToken == "b") {
-            return EditableGameSide.AS_BLACK
+            return EditableLineSide.AS_BLACK
         }
 
-        return EditableGameSide.AS_WHITE
+        return EditableLineSide.AS_WHITE
     }
 
     fun updatePositionSearchPreview(
         fen: String,
-        selectedSide: EditableGameSide = uiState.selectedSide,
-        foundGameIds: List<Long>? = uiState.foundGameIds,
+        selectedSide: EditableLineSide = uiState.selectedSide,
+        foundLineIds: List<Long>? = uiState.foundLineIds,
         recordHistory: Boolean = true,
     ) {
         val normalizedFen = normalizePositionSearchFen(
@@ -242,25 +242,25 @@ fun PositionSearchScreenContainer(
                 future = emptyList(),
             )
         }
-        gameController.loadPreviewFen(toLoadableFen(normalizedFen))
+        lineController.loadPreviewFen(toLoadableFen(normalizedFen))
         uiState = uiState.copy(
             fenText = normalizedFen,
             selectedSide = selectedSide,
             fenError = null,
-            foundGameIds = foundGameIds
+            foundLineIds = foundLineIds
         )
     }
 
     fun applyPositionSearchFen(
         fen: String,
-        selectedSide: EditableGameSide = uiState.selectedSide,
-        foundGameIds: List<Long>? = null
+        selectedSide: EditableLineSide = uiState.selectedSide,
+        foundLineIds: List<Long>? = null
     ): Boolean {
         val normalizedFen = normalizePositionSearchFen(
             fen = fen,
             selectedSide = selectedSide
         )
-        val wasLoaded = gameController.loadFromFen(toLoadableFen(normalizedFen))
+        val wasLoaded = lineController.loadFromFen(toLoadableFen(normalizedFen))
         if (!wasLoaded) {
             uiState = uiState.copy(fenError = "Failed to apply FEN")
             return false
@@ -268,23 +268,23 @@ fun PositionSearchScreenContainer(
 
         uiState = uiState.copy(
             fenText = normalizePositionSearchFen(
-                fen = gameController.getFen(),
+                fen = lineController.getFen(),
                 selectedSide = selectedSide
             ),
             selectedSide = selectedSide,
             fenError = null,
-            foundGameIds = foundGameIds
+            foundLineIds = foundLineIds
         )
         return true
     }
 
     fun applyPositionSearchSnapshot(snapshot: PositionSearchSnapshot) {
-        gameController.loadPreviewFen(toLoadableFen(snapshot.fenText))
+        lineController.loadPreviewFen(toLoadableFen(snapshot.fenText))
         uiState = uiState.copy(
             fenText = snapshot.fenText,
             selectedSide = snapshot.selectedSide,
             fenError = null,
-            foundGameIds = null,
+            foundLineIds = null,
         )
     }
 
@@ -314,20 +314,20 @@ fun PositionSearchScreenContainer(
     }
 
     fun openTemplateNameDialog() {
-        val foundGameIds = uiState.foundGameIds ?: return
-        uiState = uiState.copy(foundGameIds = null)
-        templateNameDialogState = PositionTemplateNameDialogState(gameIds = foundGameIds)
+        val foundLineIds = uiState.foundLineIds ?: return
+        uiState = uiState.copy(foundLineIds = null)
+        templateNameDialogState = PositionTemplateNameDialogState(lineIds = foundLineIds)
     }
 
-    fun createTemplateFromFoundGames() {
+    fun createTemplateFromFoundLines() {
         val currentDialogState = templateNameDialogState ?: return
         templateNameDialogState = null
 
         scope.launch {
             val templateId = withContext(Dispatchers.IO) {
-                createPositionTemplateFromGameIds(
+                createPositionTemplateFromLineIds(
                     dbProvider = screenContext.inDbProvider,
-                    gameIds = currentDialogState.gameIds,
+                    lineIds = currentDialogState.lineIds,
                     templateName = currentDialogState.templateName,
                 )
             }
@@ -336,7 +336,7 @@ fun PositionSearchScreenContainer(
                 uiState = uiState.copy(
                     infoDialog = PositionSearchInfoDialog(
                         title = "Template Created",
-                        message = "Template ID: $templateId\nGames added: ${currentDialogState.gameIds.size}"
+                        message = "Template ID: $templateId\nLines added: ${currentDialogState.lineIds.size}"
                     ),
                     fenError = null
                 )
@@ -346,7 +346,7 @@ fun PositionSearchScreenContainer(
             uiState = uiState.copy(
                 infoDialog = PositionSearchInfoDialog(
                     title = "Template Error",
-                    message = "Found games could not be saved as a template."
+                    message = "Found lines could not be saved as a template."
                 ),
                 fenError = null
             )
@@ -380,7 +380,7 @@ fun PositionSearchScreenContainer(
     }
 
     LaunchedEffect(uiState.selectedSide) {
-        gameController.setOrientation(uiState.selectedSide.orientation)
+        lineController.setOrientation(uiState.selectedSide.orientation)
     }
 
     LaunchedEffect(initialFen) {
@@ -388,14 +388,14 @@ fun PositionSearchScreenContainer(
         updatePositionSearchPreview(
             fen = initialFen,
             selectedSide = selectedSide,
-            foundGameIds = null,
+            foundLineIds = null,
             recordHistory = false,
         )
         positionHistory = PositionSearchHistory()
     }
 
     PositionSearchScreen(
-        gameController = gameController,
+        lineController = lineController,
         state = PositionSearchScreenState(
             search = uiState,
             saveDialog = saveDialogState,
@@ -406,7 +406,7 @@ fun PositionSearchScreenContainer(
             position = PositionSearchScreenActions.Position(
                 onFenTextChange = { newFen ->
                     val normalizedFen = normalizePositionSearchFen(newFen, uiState.selectedSide)
-                    gameController.loadPreviewFen(toLoadableFen(normalizedFen))
+                    lineController.loadPreviewFen(toLoadableFen(normalizedFen))
                     uiState = uiState.copy(fenText = newFen, fenError = null)
                 },
                 onSideSelected = { selectedSide ->
@@ -417,7 +417,7 @@ fun PositionSearchScreenContainer(
                     updatePositionSearchPreview(
                         fen = updatedFen,
                         selectedSide = selectedSide,
-                        foundGameIds = uiState.foundGameIds
+                        foundLineIds = uiState.foundLineIds
                     )
                 },
             ),
@@ -430,7 +430,7 @@ fun PositionSearchScreenContainer(
                 onBoardSquareClick = onBoardSquareClick@{ square ->
                     val selectedPiece = uiState.selectedPiece ?: return@onBoardSquareClick
                     val updatedFen = placePieceOnFen(
-                        fen = gameController.getFen(),
+                        fen = lineController.getFen(),
                         square = square,
                         pieceLetter = selectedPiece.letter
                     )
@@ -438,7 +438,7 @@ fun PositionSearchScreenContainer(
                 },
                 onBoardPieceMove = { fromSquare, toSquare ->
                     val updatedFen = movePieceOnFen(
-                        fen = gameController.getFen(),
+                        fen = lineController.getFen(),
                         fromSquare = fromSquare,
                         toSquare = toSquare
                     )
@@ -462,7 +462,7 @@ fun PositionSearchScreenContainer(
                         saveDialogState = PositionSearchSaveDialogState()
                     }
                 },
-                onFindGamesClick = {
+                onFindLinesClick = {
                     scope.launch {
                         if (!applyPositionSearchFen(uiState.fenText)) {
                             return@launch
@@ -470,16 +470,16 @@ fun PositionSearchScreenContainer(
 
                         Log.d(
                             PositionSearchLogTag,
-                            "findGames fen=${gameController.getFen()} hash=${calculateFenHashWithoutMoveNumbers(gameController.getFen())}"
+                            "findLines fen=${lineController.getFen()} hash=${calculateFenHashWithoutMoveNumbers(lineController.getFen())}"
                         )
-                        val foundGameIds = withContext(Dispatchers.IO) {
-                            screenContext.inDbProvider.findGameIdsByFenWithoutMoveNumber(
-                                gameController.getFen()
+                        val foundLineIds = withContext(Dispatchers.IO) {
+                            screenContext.inDbProvider.findLineIdsByFenWithoutMoveNumber(
+                                lineController.getFen()
                             )
                         }
 
                         uiState = uiState.copy(
-                            foundGameIds = foundGameIds,
+                            foundLineIds = foundLineIds,
                             fenError = null
                         )
                     }
@@ -505,7 +505,7 @@ fun PositionSearchScreenContainer(
                                     return@launch
                                 }
 
-                                val currentFen = gameController.getFen()
+                                val currentFen = lineController.getFen()
                                 val saveResult = withContext(Dispatchers.IO) {
                                     savedSearchPositionService.create(
                                         name = trimmedName,
@@ -533,19 +533,19 @@ fun PositionSearchScreenContainer(
                     }
                 }
             ),
-            foundGamesDialog = PositionSearchResultDialogActions(
-                onDismiss = { uiState = uiState.copy(foundGameIds = null) },
-                onCreateTrainingClick = createTrainingFromFoundGames@{
-                    val foundGameIds = uiState.foundGameIds ?: return@createTrainingFromFoundGames
-                    screenContext.onNavigate(ScreenType.CreateTrainingFromGameIds(foundGameIds))
-                    uiState = uiState.copy(foundGameIds = null)
+            foundLinesDialog = PositionSearchResultDialogActions(
+                onDismiss = { uiState = uiState.copy(foundLineIds = null) },
+                onCreateTrainingClick = createTrainingFromFoundLines@{
+                    val foundLineIds = uiState.foundLineIds ?: return@createTrainingFromFoundLines
+                    screenContext.onNavigate(ScreenType.CreateTrainingFromLineIds(foundLineIds))
+                    uiState = uiState.copy(foundLineIds = null)
                 },
                 onCreateTemplateClick = ::openTemplateNameDialog,
-                onShowLinesClick = showLinesFromFoundGames@{
-                    val foundGameIds = uiState.foundGameIds ?: return@showLinesFromFoundGames
+                onShowLinesClick = showLinesFromFoundLines@{
+                    val foundLineIds = uiState.foundLineIds ?: return@showLinesFromFoundLines
                     val currentFen = uiState.fenText
-                    uiState = uiState.copy(foundGameIds = null)
-                    onShowFoundGamesClick(foundGameIds, currentFen)
+                    uiState = uiState.copy(foundLineIds = null)
+                    onShowFoundLinesClick(foundLineIds, currentFen)
                 },
                 templateNameDialogState = templateNameDialogState,
                 onTemplateNameChange = { templateName ->
@@ -554,7 +554,7 @@ fun PositionSearchScreenContainer(
                     }
                 },
                 onTemplateNameDismiss = { templateNameDialogState = null },
-                onConfirmTemplateName = ::createTemplateFromFoundGames,
+                onConfirmTemplateName = ::createTemplateFromFoundLines,
             ),
             feedback = PositionSearchScreenActions.Feedback(
                 onFenErrorDismiss = { uiState = uiState.copy(fenError = null) },
@@ -573,7 +573,7 @@ fun PositionSearchScreenContainer(
 
 @Composable
 private fun PositionSearchScreen(
-    gameController: GameController,
+    lineController: LineController,
     state: PositionSearchScreenState,
     actions: PositionSearchScreenActions,
     navigation: PositionSearchNavigationActions = PositionSearchNavigationActions(),
@@ -584,8 +584,8 @@ private fun PositionSearchScreen(
         onDismiss = actions.feedback.onFenErrorDismiss
     )
     RenderPositionSearchResultDialog(
-        foundGameIds = state.search.foundGameIds,
-        actions = actions.foundGamesDialog
+        foundLineIds = state.search.foundLineIds,
+        actions = actions.foundLinesDialog
     )
     RenderPositionSearchInfoDialog(
         infoDialog = state.search.infoDialog,
@@ -612,10 +612,10 @@ private fun PositionSearchScreen(
                             tint = TrainingAccentTeal,
                         )
                     }
-                    IconButton(onClick = actions.topBar.onFindGamesClick) {
+                    IconButton(onClick = actions.topBar.onFindLinesClick) {
                         IconMd(
                             imageVector = Icons.Default.Search,
-                            contentDescription = "Find Games",
+                            contentDescription = "Find Lines",
                             tint = TrainingTextPrimary,
                         )
                     }
@@ -659,7 +659,7 @@ private fun PositionSearchScreen(
 
             item {
                 PositionSearchBoardSection(
-                    gameController = gameController,
+                    lineController = lineController,
                     onBoardSquareClick = actions.board.onBoardSquareClick,
                     onBoardPieceMove = actions.board.onBoardPieceMove
                 )
@@ -712,11 +712,11 @@ private fun RenderPositionSearchFenError(
 
 @Composable
 private fun PositionSearchBoardSection(
-    gameController: GameController,
+    lineController: LineController,
     onBoardSquareClick: (String) -> Unit,
     onBoardPieceMove: (String, String) -> Unit
 ) {
-    val boardState = gameController.boardState
+    val boardState = lineController.boardState
 
     Box(
         modifier = Modifier
@@ -726,7 +726,7 @@ private fun PositionSearchBoardSection(
     ) {
         key(boardState) {
             PositionSearchBoardWithCoordinates(
-                gameController = gameController,
+                lineController = lineController,
                 onSquareClick = onBoardSquareClick,
                 onPieceMove = onBoardPieceMove,
                 modifier = Modifier.fillMaxSize()
@@ -810,10 +810,10 @@ private fun PositionSearchPalettePiece(
 
 @Composable
 private fun PositionSearchBoardControlsBar(
-    selectedSide: EditableGameSide,
+    selectedSide: EditableLineSide,
     canGoBack: Boolean,
     canGoForward: Boolean,
-    onSideSelected: (EditableGameSide) -> Unit,
+    onSideSelected: (EditableLineSide) -> Unit,
     onResetClick: () -> Unit,
     onClearBoardClick: () -> Unit,
     onBackClick: () -> Unit,
@@ -823,9 +823,9 @@ private fun PositionSearchBoardControlsBar(
     BoardActionNavigationBar(
         modifier = modifier,
         maxVisibleItems = 6,
-        items = EditableGameSide.entries.map { side ->
+        items = EditableLineSide.entries.map { side ->
             BoardActionNavigationItem(
-                label = if (side == EditableGameSide.AS_WHITE) "White" else "Black",
+                label = if (side == EditableLineSide.AS_WHITE) "White" else "Black",
                 selected = side == selectedSide,
                 onClick = { onSideSelected(side) },
             ) {
@@ -885,7 +885,7 @@ private fun PositionSearchBoardControlsBar(
 
 @Composable
 private fun PositionSearchSideIcon(
-    side: EditableGameSide,
+    side: EditableLineSide,
     selected: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -899,7 +899,7 @@ private fun PositionSearchSideIcon(
 
 private fun normalizePositionSearchFen(
     fen: String,
-    selectedSide: EditableGameSide
+    selectedSide: EditableLineSide
 ): String {
     val trimmedFen = fen.trim()
     if (trimmedFen.isBlank()) {
@@ -927,7 +927,7 @@ private fun normalizePositionSearchFen(
 
 private fun replaceFenSide(
     fen: String,
-    selectedSide: EditableGameSide
+    selectedSide: EditableLineSide
 ): String {
     val normalizedFen = normalizePositionSearchFen(
         fen = fen,
@@ -943,7 +943,7 @@ private fun replaceFenSide(
     )
 }
 
-private fun resolveEmptyBoardFen(selectedSide: EditableGameSide): String {
+private fun resolveEmptyBoardFen(selectedSide: EditableLineSide): String {
     return buildPositionSearchFen(
         boardPart = EmptyBoardBoardPart,
         sidePart = resolveFenSideToken(selectedSide),
@@ -952,8 +952,8 @@ private fun resolveEmptyBoardFen(selectedSide: EditableGameSide): String {
     )
 }
 
-private fun resolveFenSideToken(selectedSide: EditableGameSide): String {
-    if (selectedSide == EditableGameSide.AS_BLACK) {
+private fun resolveFenSideToken(selectedSide: EditableLineSide): String {
+    if (selectedSide == EditableLineSide.AS_BLACK) {
         return "b"
     }
 

@@ -40,7 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
-import com.example.chessboard.boardmodel.GameController
+import com.example.chessboard.boardmodel.LineController
 import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
@@ -48,15 +48,15 @@ import com.example.chessboard.ui.components.ChessBoardSection
 import com.example.chessboard.ui.components.IconMd
 import com.example.chessboard.ui.components.PasteInputBlock
 import com.example.chessboard.ui.components.ScreenSection
-import com.example.chessboard.ui.screen.EditableGameSide
-import com.example.chessboard.ui.components.GameMoveTreeSection
+import com.example.chessboard.ui.screen.EditableLineSide
+import com.example.chessboard.ui.components.LineMoveTreeSection
 import com.example.chessboard.ui.screen.training.DarkInputField
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import kotlinx.coroutines.launch
 
 internal data class CreateOpeningScreenState(
-    val selectedSide: EditableGameSide,
+    val selectedSide: EditableLineSide,
     val openingName: String,
     val ecoCode: String,
     val showOpeningNameError: Boolean,
@@ -68,7 +68,7 @@ internal data class CreateOpeningScreenState(
 )
 
 internal data class CreateOpeningScreenActions(
-    val onSideSelected: (EditableGameSide) -> Unit,
+    val onSideSelected: (EditableLineSide) -> Unit,
     val onBackClick: () -> Unit,
     val onOpeningNameChange: (String) -> Unit,
     val onEcoCodeChange: (String) -> Unit,
@@ -82,7 +82,7 @@ internal data class CreateOpeningScreenActions(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun CreateOpeningScreen(
-    gameController: GameController,
+    lineController: LineController,
     state: CreateOpeningScreenState,
     actions: CreateOpeningScreenActions,
     modifier: Modifier = Modifier
@@ -135,11 +135,11 @@ internal fun CreateOpeningScreen(
             CreateOpeningBoardControlsBar(
                 selectedSide = state.selectedSide,
                 onSideSelected = actions.onSideSelected,
-                canUndo = gameController.canUndo,
-                canRedo = gameController.canRedo,
-                onUndoClick = { gameController.undoMove() },
-                onResetClick = { gameController.resetToStartPosition() },
-                onRedoClick = { gameController.redoMove() },
+                canUndo = lineController.canUndo,
+                canRedo = lineController.canRedo,
+                onUndoClick = { lineController.undoMove() },
+                onResetClick = { lineController.resetToStartPosition() },
+                onRedoClick = { lineController.redoMove() },
             )
         },
     ) { paddingValues ->
@@ -191,15 +191,15 @@ internal fun CreateOpeningScreen(
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
 
             ScreenSection {
-                ChessBoardSection(gameController = gameController)
+                ChessBoardSection(lineController = lineController)
             }
 
             Spacer(modifier = Modifier.height(AppDimens.spaceXs))
 
             ScreenSection {
-                GameMoveTreeSection(
+                LineMoveTreeSection(
                     importedUciLines = state.importedUciLines,
-                    gameController = gameController
+                    lineController = lineController
                 )
             }
 

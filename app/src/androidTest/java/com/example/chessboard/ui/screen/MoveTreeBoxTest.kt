@@ -5,10 +5,10 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import com.example.chessboard.boardmodel.GameController
+import com.example.chessboard.boardmodel.LineController
 import com.example.chessboard.ui.MoveTreeBoxTestTag
 import com.example.chessboard.ui.moveTreeRowTestTag
-import com.example.chessboard.ui.components.GameMoveTreeSection
+import com.example.chessboard.ui.components.LineMoveTreeSection
 import com.example.chessboard.ui.theme.ChessBoardTheme
 import org.junit.Rule
 import org.junit.Test
@@ -28,9 +28,9 @@ class MoveTreeBoxTest {
 
         composeRule.setContent {
             ChessBoardTheme {
-                GameMoveTreeSection(
+                LineMoveTreeSection(
                     importedUciLines = importedUciLines,
-                    gameController = GameController()
+                    lineController = LineController()
                 )
             }
         }

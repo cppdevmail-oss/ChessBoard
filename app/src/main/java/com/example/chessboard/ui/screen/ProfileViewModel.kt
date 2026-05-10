@@ -67,7 +67,7 @@ enum class PlayerTier(val label: String, val symbol: String, val titles: List<St
             "Sacrifice the ROOOOOOOK",
             "\"I Had This Won\"",
             "Back Rank Victim",
-            "Late Game Blunderer",
+            "Late Line Blunderer",
             "Panic Defender",
             "Somehow Winning",
         )

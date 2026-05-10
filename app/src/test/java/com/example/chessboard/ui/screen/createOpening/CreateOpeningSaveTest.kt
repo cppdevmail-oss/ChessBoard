@@ -3,7 +3,7 @@ package com.example.chessboard.ui.screen.createOpening
 /**
  * File role: groups unit tests for create-opening save-planning helpers.
  * Allowed here:
- * - pure tests for create-opening game metadata mapping and imported line save plans
+ * - pure tests for create-opening line metadata mapping and imported line save plans
  * - assertions about naming and fallback behavior used before persistence calls
  * Not allowed here:
  * - Room integration tests or Android activity tests
@@ -12,7 +12,7 @@ package com.example.chessboard.ui.screen.createOpening
  */
 
 import com.example.chessboard.entity.SideMask
-import com.example.chessboard.ui.screen.EditableGameSide
+import com.example.chessboard.ui.screen.EditableLineSide
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -40,7 +40,7 @@ class CreateOpeningSaveTest {
             baseName = "Sicilian Defense",
             importedChapter = importedChapter,
             ecoCode = "",
-            selectedSide = EditableGameSide.AS_WHITE,
+            selectedSide = EditableLineSide.AS_WHITE,
         )
 
         assertEquals(2, savePlans.size)
@@ -63,10 +63,10 @@ class CreateOpeningSaveTest {
         )
 
         val savePlans = buildImportedLineSavePlans(
-            baseName = "Queen's Pawn Game",
+            baseName = "Queen's Pawn Line",
             importedChapter = importedChapter,
             ecoCode = "D00",
-            selectedSide = EditableGameSide.AS_BLACK,
+            selectedSide = EditableLineSide.AS_BLACK,
         )
 
         assertEquals("D00", savePlans.single().entity.eco)
@@ -79,7 +79,7 @@ class CreateOpeningSaveTest {
             openingName = "",
             ecoCode = "",
             generatedPgn = "1. e4 e5 *",
-            selectedSide = EditableGameSide.AS_WHITE,
+            selectedSide = EditableLineSide.AS_WHITE,
         )
 
         assertNull(entity.event)

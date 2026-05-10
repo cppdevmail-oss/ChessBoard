@@ -37,7 +37,7 @@ class PgnServiceTest {
             [White "?"]
             [Black "?"]
             [Result "*"]
-            [Link "https://www.chess.com/analysis/game/pgn/2MAF42tFxz/analysis"]
+            [Link "https://www.chess.com/analysis/line/pgn/2MAF42tFxz/analysis"]
 
             1. d4 d5 2. Nf3 Nf6 (2... Bg4 3. Nbd2 e6 4. e3 (4. Ne5 Nf6 5. h3) 4... Nf6 5.
             h3) 3. e3 e6 4. Bd3 Be7 *
@@ -73,7 +73,7 @@ class PgnServiceTest {
             [White "?"]
             [Black "?"]
             [Result "*"]
-            [Link "https://www.chess.com/analysis/game/pgn/2MAF42tFxz/analysis"]
+            [Link "https://www.chess.com/analysis/line/pgn/2MAF42tFxz/analysis"]
 
             1. d4 d5 2. Nf3 Nf6 (2... Bg4 3. Nbd2 e6 4. e3 (4. Ne5 Nf6 5. h3) 4... Nf6 5.
             h3) 3. e3 e6 4. Bd3 Be7 *
@@ -391,7 +391,7 @@ class PgnServiceTest {
     // ──────────────────────────────────────────────────────────────────────
 
     @Test
-    fun `splitPgnChapters returns one element for a single-game PGN`() {
+    fun `splitPgnChapters returns one element for a single-line PGN`() {
         val pgn = """
             [Event "Test"]
             [Result "*"]
@@ -532,7 +532,7 @@ class PgnServiceTest {
         // Regression: importing this PGN in-app produced "None of the imported lines could be saved".
         // Root cause lives in the parse→convert pipeline: if any line yields a UCI string that
         // uciMovesToMoves cannot replay on a Board, the save coroutine crashes silently and
-        // addGameAndGetId is never called.
+        // addLineAndGetId is never called.
         val lines = parsePgnToUciLines(najdorfStudyPgn)
         val failures = mutableListOf<String>()
 

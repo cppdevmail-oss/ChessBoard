@@ -23,9 +23,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
-import com.example.chessboard.boardmodel.GameController
+import com.example.chessboard.boardmodel.LineController
 import com.example.chessboard.boardmodel.InitialBoardFen
-import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.entity.LineEntity
 import com.example.chessboard.entity.SideMask
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.testing.fenStateDescriptionMatcher
@@ -33,12 +33,12 @@ import com.example.chessboard.ui.ChessBoardWithCoordinates
 import com.example.chessboard.ui.InteractiveChessBoardTestTag
 import com.example.chessboard.ui.BoardOrientation
 import com.example.chessboard.ui.screen.positions.positionSearch.PositionSearchScreenContainer
-import com.example.chessboard.ui.screen.trainSingleGame.TrainSingleGamePhase
-import com.example.chessboard.ui.screen.trainSingleGame.TrainSingleGameUiState
-import com.example.chessboard.ui.screen.trainSingleGame.advanceProgramMoves
-import com.example.chessboard.ui.screen.trainSingleGame.buildStartTrainingState
-import com.example.chessboard.ui.screen.trainSingleGame.handleTrainingProgress
-import com.example.chessboard.ui.screen.trainSingleGame.resolveBoardInteractionEnabled
+import com.example.chessboard.ui.screen.trainSingleLine.TrainSingleLinePhase
+import com.example.chessboard.ui.screen.trainSingleLine.TrainSingleLineUiState
+import com.example.chessboard.ui.screen.trainSingleLine.advanceProgramMoves
+import com.example.chessboard.ui.screen.trainSingleLine.buildStartTrainingState
+import com.example.chessboard.ui.screen.trainSingleLine.handleTrainingProgress
+import com.example.chessboard.ui.screen.trainSingleLine.resolveBoardInteractionEnabled
 import com.example.chessboard.ui.theme.ChessBoardTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -50,12 +50,12 @@ class PositionSearchFlowTest {
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun trainSingleGame_searchByPositionReturnsCurrentBoardFen() {
+    fun trainSingleLine_searchByPositionReturnsCurrentBoardFen() {
         var searchedFen = ""
 
         composeRule.setContent {
             ChessBoardTheme {
-                TrainSingleGameSearchHarness(
+                TrainSingleLineSearchHarness(
                     uciMoves = listOf("e2e4", "e7e5"),
                     onSearchByPositionClick = { searchedFen = it }
                 )
@@ -116,22 +116,22 @@ class PositionSearchFlowTest {
     }
 
     @Composable
-    private fun TrainSingleGameSearchHarness(
+    private fun TrainSingleLineSearchHarness(
         uciMoves: List<String>,
         onSearchByPositionClick: (String) -> Unit,
     ) {
-        var uiState by remember { mutableStateOf(TrainSingleGameUiState()) }
-        val gameController = remember { GameController(BoardOrientation.WHITE) }
+        var uiState by remember { mutableStateOf(TrainSingleLineUiState()) }
+        val lineController = remember { LineController(BoardOrientation.WHITE) }
 
         SideEffect {
-            gameController.setUserMovesEnabled(resolveBoardInteractionEnabled(uiState))
-            gameController.setAllowedMoveUci(null)
+            lineController.setUserMovesEnabled(resolveBoardInteractionEnabled(uiState))
+            lineController.setAllowedMoveUci(null)
         }
 
-        LaunchedEffect(uiState.phase, gameController.boardState, uiState.expectedPly, uciMoves) {
+        LaunchedEffect(uiState.phase, lineController.boardState, uiState.expectedPly, uciMoves) {
             uiState = handleTrainingProgress(
                 uiState = uiState,
-                gameController = gameController,
+                lineController = lineController,
                 uciMoves = uciMoves,
                 currentOrientation = BoardOrientation.WHITE,
                 sidesCount = 1,
@@ -141,10 +141,10 @@ class PositionSearchFlowTest {
         Column {
             androidx.compose.material3.IconButton(
                 onClick = {
-                    gameController.resetToStartPosition()
+                    lineController.resetToStartPosition()
                     uiState = advanceProgramMoves(
                         uiState = buildStartTrainingState(uiState),
-                        gameController = gameController,
+                        lineController = lineController,
                         uciMoves = uciMoves,
                         currentOrientation = BoardOrientation.WHITE,
                         sidesCount = 1,
@@ -158,7 +158,7 @@ class PositionSearchFlowTest {
             }
 
             androidx.compose.material3.IconButton(
-                onClick = { onSearchByPositionClick(gameController.getFen()) }
+                onClick = { onSearchByPositionClick(lineController.getFen()) }
             ) {
                 androidx.compose.material3.Icon(
                     imageVector = Icons.Default.Search,
@@ -166,10 +166,10 @@ class PositionSearchFlowTest {
                 )
             }
 
-            androidx.compose.material3.Text("Phase: ${uiState.phase == TrainSingleGamePhase.Training}")
+            androidx.compose.material3.Text("Phase: ${uiState.phase == TrainSingleLinePhase.Training}")
 
             ChessBoardWithCoordinates(
-                gameController = gameController,
+                lineController = lineController,
                 modifier = Modifier.size(320.dp),
             )
         }

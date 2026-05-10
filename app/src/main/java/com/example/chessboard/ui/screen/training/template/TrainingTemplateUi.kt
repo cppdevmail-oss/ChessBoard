@@ -22,9 +22,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import com.example.chessboard.entity.TrainingTemplateEntity
-import com.example.chessboard.service.GameListService
-import com.example.chessboard.service.OneGameTrainingData
-import com.example.chessboard.service.buildAnalysisPgnFromGames
+import com.example.chessboard.service.LineListService
+import com.example.chessboard.service.OneLineTrainingData
+import com.example.chessboard.service.buildAnalysisPgnFromLines
 import com.example.chessboard.ui.components.CardMetaText
 import com.example.chessboard.ui.components.CardSurface
 import com.example.chessboard.ui.components.DeleteIconButton
@@ -35,8 +35,8 @@ import com.example.chessboard.ui.theme.AppDimens
 internal data class TrainingTemplateCardItem(
     val templateId: Long,
     val name: String,
-    val gamesCount: Int,
-    val gameIds: List<Long>,
+    val linesCount: Int,
+    val lineIds: List<Long>,
 )
 
 internal data class TrainingTemplateInfoDialog(
@@ -65,7 +65,7 @@ internal fun TrainingTemplateCard(
                 ScreenTitleText(text = template.name)
                 Spacer(modifier = Modifier.height(AppDimens.spaceXs))
                 CardMetaText(text = "Template ID: ${template.templateId}")
-                CardMetaText(text = "Games: ${template.gamesCount}")
+                CardMetaText(text = "Lines: ${template.linesCount}")
             }
             Row(
                 horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceXs),
@@ -86,37 +86,37 @@ internal fun TrainingTemplateCard(
 }
 
 internal fun TrainingTemplateEntity.toTrainingTemplateCardItem(): TrainingTemplateCardItem {
-    val templateGames = OneGameTrainingData.fromJson(gamesJson)
+    val templateLines = OneLineTrainingData.fromJson(linesJson)
 
     return TrainingTemplateCardItem(
         templateId = id,
         name = name.ifBlank { "Unnamed Template" },
-        gamesCount = templateGames.size,
-        gameIds = templateGames.map { game -> game.gameId },
+        linesCount = templateLines.size,
+        lineIds = templateLines.map { line -> line.lineId },
     )
 }
 
 internal suspend fun buildTemplateAnalysisPgn(
-    gameListService: GameListService,
-    gameIds: List<Long>,
+    lineListService: LineListService,
+    lineIds: List<Long>,
 ): String {
-    val games = gameListService.getGamesByIds(gameIds)
-    return buildAnalysisPgnFromGames(games)
+    val lines = lineListService.getLinesByIds(lineIds)
+    return buildAnalysisPgnFromLines(lines)
 }
 
 internal suspend fun copyTemplatePgnToClipboard(
-    gameListService: GameListService,
+    lineListService: LineListService,
     clipboard: Clipboard,
-    gameIds: List<Long>,
+    lineIds: List<Long>,
 ): TrainingTemplateInfoDialog {
     val templatePgn = buildTemplateAnalysisPgn(
-        gameListService = gameListService,
-        gameIds = gameIds,
+        lineListService = lineListService,
+        lineIds = lineIds,
     )
     if (templatePgn.isBlank()) {
         return TrainingTemplateInfoDialog(
             title = "PGN unavailable",
-            message = "Template games could not be exported to PGN.",
+            message = "Template lines could not be exported to PGN.",
         )
     }
 

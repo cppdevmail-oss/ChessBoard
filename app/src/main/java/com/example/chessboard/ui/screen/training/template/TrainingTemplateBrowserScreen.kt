@@ -108,9 +108,9 @@ fun TrainingTemplateBrowserScreenContainer(
                 try {
                     val infoDialog = withContext(Dispatchers.IO) {
                         copyTemplatePgnToClipboard(
-                            gameListService = inDbProvider.createGameListService(),
+                            lineListService = inDbProvider.createLineListService(),
                             clipboard = clipboard,
-                            gameIds = template.gameIds,
+                            lineIds = template.lineIds,
                         )
                     }
                     state = state.copy(

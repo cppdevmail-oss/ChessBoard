@@ -5,7 +5,7 @@ package com.example.chessboard.analysis
  * Keep screen behavior and persistence integration tests in their own packages.
  */
 import com.example.chessboard.boardmodel.InitialBoardFen
-import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.entity.LineEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -16,17 +16,17 @@ class OpeningDeviationFinderTest {
 
     @Test
     fun `findDeviations detects white move split from same position`() {
-        val nf3Game = game(
+        val nf3Line = line(
             id = 1,
             pgn = storedPgn("e2e4", "e7e5", "g1f3"),
         )
-        val bc4Game = game(
+        val bc4Line = line(
             id = 2,
             pgn = storedPgn("e2e4", "e7e5", "f1c4"),
         )
 
         val deviations = finder.findDeviations(
-            games = listOf(nf3Game, bc4Game),
+            lines = listOf(nf3Line, bc4Line),
             selectedSide = OpeningSide.WHITE,
         )
 
@@ -35,22 +35,22 @@ class OpeningDeviationFinderTest {
             "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6",
             deviations.single().positionFen,
         )
-        assertEquals(listOf(1L, 2L), deviations.single().games.map { game -> game.id })
+        assertEquals(listOf(1L, 2L), deviations.single().lines.map { line -> line.id })
     }
 
     @Test
     fun `findDeviations ignores opponent move split`() {
-        val e5Game = game(
+        val e5Line = line(
             id = 1,
             pgn = storedPgn("e2e4", "e7e5"),
         )
-        val c5Game = game(
+        val c5Line = line(
             id = 2,
             pgn = storedPgn("e2e4", "c7c5"),
         )
 
         val deviations = finder.findDeviations(
-            games = listOf(e5Game, c5Game),
+            lines = listOf(e5Line, c5Line),
             selectedSide = OpeningSide.WHITE,
         )
 
@@ -59,17 +59,17 @@ class OpeningDeviationFinderTest {
 
     @Test
     fun `findDeviations detects black move split`() {
-        val e5Game = game(
+        val e5Line = line(
             id = 1,
             pgn = storedPgn("e2e4", "e7e5"),
         )
-        val c5Game = game(
+        val c5Line = line(
             id = 2,
             pgn = storedPgn("e2e4", "c7c5"),
         )
 
         val deviations = finder.findDeviations(
-            games = listOf(e5Game, c5Game),
+            lines = listOf(e5Line, c5Line),
             selectedSide = OpeningSide.BLACK,
         )
 
@@ -78,12 +78,12 @@ class OpeningDeviationFinderTest {
             "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3",
             deviations.single().positionFen,
         )
-        assertEquals(listOf(1L, 2L), deviations.single().games.map { game -> game.id })
+        assertEquals(listOf(1L, 2L), deviations.single().lines.map { line -> line.id })
     }
 
     @Test
-    fun `findDeviations treats repeated position in same game once`() {
-        val repeatedGame = game(
+    fun `findDeviations treats repeated position in same line once`() {
+        val repeatedLine = line(
             id = 1,
             pgn = storedPgn(
                 "g1f3",
@@ -93,13 +93,13 @@ class OpeningDeviationFinderTest {
                 "e2e4",
             ),
         )
-        val nf3Game = game(
+        val nf3Line = line(
             id = 2,
             pgn = storedPgn("g1f3"),
         )
 
         val deviations = finder.findDeviations(
-            games = listOf(repeatedGame, nf3Game),
+            lines = listOf(repeatedLine, nf3Line),
             selectedSide = OpeningSide.WHITE,
         )
 
@@ -108,17 +108,17 @@ class OpeningDeviationFinderTest {
 
     @Test
     fun `findDeviations keeps en passant target in position key`() {
-        val e5Game = game(
+        val e5Line = line(
             id = 1,
             pgn = storedPgn("e2e4", "d7d5", "e4e5"),
         )
-        val exd5Game = game(
+        val exd5Line = line(
             id = 2,
             pgn = storedPgn("e2e4", "d7d5", "e4d5"),
         )
 
         val deviations = finder.findDeviations(
-            games = listOf(e5Game, exd5Game),
+            lines = listOf(e5Line, exd5Line),
             selectedSide = OpeningSide.WHITE,
         )
 
@@ -130,31 +130,31 @@ class OpeningDeviationFinderTest {
     }
 
     @Test
-    fun `findDeviations keeps unsaved games distinct by input position`() {
-        val nf3Game = game(
+    fun `findDeviations keeps unsaved lines distinct by input position`() {
+        val nf3Line = line(
             id = 0,
             pgn = storedPgn("e2e4", "e7e5", "g1f3"),
         )
-        val bc4Game = game(
+        val bc4Line = line(
             id = 0,
             pgn = storedPgn("e2e4", "e7e5", "f1c4"),
         )
 
         val deviations = finder.findDeviations(
-            games = listOf(nf3Game, bc4Game),
+            lines = listOf(nf3Line, bc4Line),
             selectedSide = OpeningSide.WHITE,
         )
 
         assertEquals(1, deviations.size)
-        assertEquals(2, deviations.single().games.size)
+        assertEquals(2, deviations.single().lines.size)
     }
 
-    private fun game(
+    private fun line(
         id: Long,
         pgn: String,
         initialFen: String = InitialBoardFen,
-    ): GameEntity {
-        return GameEntity(
+    ): LineEntity {
+        return LineEntity(
             id = id,
             pgn = pgn,
             initialFen = initialFen,

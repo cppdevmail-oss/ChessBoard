@@ -28,7 +28,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.platform.testTag
-import com.example.chessboard.boardmodel.GameController
+import com.example.chessboard.boardmodel.LineController
 import com.example.chessboard.ui.theme.ChessDark
 import com.example.chessboard.ui.theme.ChessLight
 
@@ -172,7 +172,7 @@ private fun DrawScope.drawPieceAt(
 
 @Composable
 fun ChessBoard(
-    gameController: GameController,
+    lineController: LineController,
     boardState: Int,
     squareSizePx: Float,
     selectedSquare: String?,
@@ -182,16 +182,16 @@ fun ChessBoard(
     hintSquare: String? = null,
     modifier: Modifier = Modifier
 ) {
-    val orientation = gameController.getSide()
-    val lastMoveHighlight = gameController.getLastMoveHighlight()
+    val orientation = lineController.getSide()
+    val lastMoveHighlight = lineController.getLastMoveHighlight()
 
     SideEffect {
         Log.d(
             ChessBoardLogTag,
-                "draw controller=${System.identityHashCode(gameController)} " +
+                "draw controller=${System.identityHashCode(lineController)} " +
                 "boardState=$boardState " +
-                "moveIndex=${gameController.currentMoveIndex} " +
-                "fen=${gameController.getFen()}"
+                "moveIndex=${lineController.currentMoveIndex} " +
+                "fen=${lineController.getFen()}"
         )
     }
 
@@ -261,7 +261,7 @@ fun ChessBoard(
         drawHintHighlight(hintSquare, orientation, squareSizePx)
 
         // 4. Pieces — skip the one being dragged (drawn separately on top)
-        val position = gameController.getBoardPosition()
+        val position = lineController.getBoardPosition()
         position.pieces.forEach { piece ->
             if (piece.field == dragFromSquare) return@forEach
             drawFigure(piece.letter, piece.field, squareSizePx, orientation)
@@ -283,14 +283,14 @@ fun ChessBoard(
 
 @Composable
 fun PositionSearchBoardWithCoordinates(
-    gameController: GameController,
+    lineController: LineController,
     onSquareClick: (String) -> Unit,
     onPieceMove: (String, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val boardState = gameController.boardState
-    val currentFen = gameController.getFen()
-    val orientation = gameController.getSide()
+    val boardState = lineController.boardState
+    val currentFen = lineController.getFen()
+    val orientation = lineController.getSide()
     var dragFromSquare by remember(orientation) { mutableStateOf<String?>(null) }
     var dragOffset by remember(orientation) { mutableStateOf(Offset.Zero) }
 
@@ -317,7 +317,7 @@ fun PositionSearchBoardWithCoordinates(
                         val startPosition = down.position
                         var latestPosition = startPosition
                         var isDragging = false
-                        val hasPieceOnStartSquare = gameController.getBoardPosition().pieces.any { piece ->
+                        val hasPieceOnStartSquare = lineController.getBoardPosition().pieces.any { piece ->
                             piece.field == startSquare
                         }
 
@@ -369,7 +369,7 @@ fun PositionSearchBoardWithCoordinates(
                 }
         ) {
             ChessBoard(
-                gameController = gameController,
+                lineController = lineController,
                 boardState = boardState,
                 squareSizePx = squareSizePx,
                 selectedSquare = null,
@@ -383,25 +383,25 @@ fun PositionSearchBoardWithCoordinates(
 
 @Composable
 fun ChessBoardWithCoordinates(
-    gameController: GameController,
+    lineController: LineController,
     wrongMoveSquare: String? = null,
     hintSquare: String? = null,
     modifier: Modifier = Modifier,
 ) {
-    val boardState = gameController.boardState
-    val currentFen = gameController.getFen()
+    val boardState = lineController.boardState
+    val currentFen = lineController.getFen()
 
     LaunchedEffect(boardState) {
         Log.d(
             ChessBoardLogTag,
-            "boardState changed controller=${System.identityHashCode(gameController)} " +
+            "boardState changed controller=${System.identityHashCode(lineController)} " +
                 "boardState=$boardState " +
-                "moveIndex=${gameController.currentMoveIndex} " +
-                "fen=${gameController.getFen()}"
+                "moveIndex=${lineController.currentMoveIndex} " +
+                "fen=${lineController.getFen()}"
         )
     }
 
-    val orientation = gameController.getSide()
+    val orientation = lineController.getSide()
 
     // Tap selection state
     var selectedSquare by remember(orientation) { mutableStateOf<String?>(null) }
@@ -433,7 +433,7 @@ fun ChessBoardWithCoordinates(
 
                         // Determine what square was touched
                         val startSquare = getSquareFromOffset(startPos, squareSizePx, orientation)
-                        val canDrag = startSquare != null && gameController.canSelectSquare(startSquare)
+                        val canDrag = startSquare != null && lineController.canSelectSquare(startSquare)
 
                         // Track pointer until release
                         while (true) {
@@ -463,33 +463,33 @@ fun ChessBoardWithCoordinates(
                             // Validate target is on the board, then attempt move
                             val targetSquare = getSquareFromOffset(latestPos, squareSizePx, orientation)
                             if (targetSquare != null && dragFromSquare != null) {
-                                gameController.setStartSquare(dragFromSquare)
-                                gameController.setDestinationSquareAndTryMove(targetSquare)
+                                lineController.setStartSquare(dragFromSquare)
+                                lineController.setDestinationSquareAndTryMove(targetSquare)
                             }
                             dragFromSquare = null
                         } else {
                             // Tap: two-tap select-then-move flow
                             if (startSquare == null) return@awaitEachGesture
 
-                            if (gameController.getStartSquare() != null) {
+                            if (lineController.getStartSquare() != null) {
                                 // A piece is already selected — try moving to tapped square
-                                val moved = gameController.setDestinationSquareAndTryMove(startSquare)
+                                val moved = lineController.setDestinationSquareAndTryMove(startSquare)
                                 if (moved) {
                                     selectedSquare = null
                                 } else {
                                     // Not a valid destination — try selecting a new piece instead
-                                    selectedSquare = if (gameController.setStartSquare(startSquare)) startSquare else null
+                                    selectedSquare = if (lineController.setStartSquare(startSquare)) startSquare else null
                                 }
                             } else {
                                 // Nothing selected yet — try selecting the tapped piece
-                                selectedSquare = if (gameController.setStartSquare(startSquare)) startSquare else null
+                                selectedSquare = if (lineController.setStartSquare(startSquare)) startSquare else null
                             }
                         }
                     }
                 }
         ) {
             ChessBoard(
-                gameController = gameController,
+                lineController = lineController,
                 boardState = boardState,
                 squareSizePx = squareSizePx,
                 selectedSquare = selectedSquare,

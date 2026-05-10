@@ -2,6 +2,7 @@ package com.example.chessboard.entity
 
 import androidx.room.Entity
 import androidx.room.Index
+import androidx.room.ColumnInfo
 import androidx.room.PrimaryKey
 
 @Entity(
@@ -14,7 +15,8 @@ import androidx.room.PrimaryKey
 data class TrainingResultEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    val gameId: Long,
+    @ColumnInfo(name = "gameId")
+    val lineId: Long,
     val mistakesCount: Int,
     val trainedAt: Long
 )

@@ -13,7 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.example.chessboard.repository.DatabaseProvider
-import com.example.chessboard.service.OneGameTrainingData
+import com.example.chessboard.service.OneLineTrainingData
 import com.example.chessboard.service.parsePgnMoves
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
@@ -56,14 +56,14 @@ fun TrainingSettingsScreenContainer(
 
 private suspend fun resolveTrainingMaxMove(dbProvider: DatabaseProvider, trainingId: Long): Int? {
     val training = dbProvider.createTrainingService().getTrainingById(trainingId) ?: return null
-    val gameIds = OneGameTrainingData.fromJson(training.gamesJson).map { it.gameId }
-    if (gameIds.isEmpty()) return null
+    val lineIds = OneLineTrainingData.fromJson(training.linesJson).map { it.lineId }
+    if (lineIds.isEmpty()) return null
 
-    val allGamesById = dbProvider.getAllGames().associateBy { it.id }
-    return gameIds
-        .mapNotNull { allGamesById[it] }
-        .mapNotNull { game ->
-            val plies = parsePgnMoves(game.pgn).size
+    val allLinesById = dbProvider.getAllLines().associateBy { it.id }
+    return lineIds
+        .mapNotNull { allLinesById[it] }
+        .mapNotNull { line ->
+            val plies = parsePgnMoves(line.pgn).size
             if (plies > 0) (plies + 1) / 2 else null
         }
         .maxOrNull()

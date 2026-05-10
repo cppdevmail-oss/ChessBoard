@@ -3,31 +3,31 @@ package com.example.chessboard.ui.screen.training.loadsave
 /*
  * Shared mapping helpers for training-like editor load flows.
  *
- * Keep pure mapping from stored game ids and weights to editor items here so
+ * Keep pure mapping from stored line ids and weights to editor items here so
  * training and template editors can reuse one persistence-to-UI conversion.
  * Do not add screen state, dialog code, or save orchestration to this file.
  */
 
-import com.example.chessboard.ui.screen.training.common.TrainingGameEditorItem
-import com.example.chessboard.ui.screen.training.common.toTrainingGameEditorItem
+import com.example.chessboard.ui.screen.training.common.TrainingLineEditorItem
+import com.example.chessboard.ui.screen.training.common.toTrainingLineEditorItem
 
-import com.example.chessboard.entity.GameEntity
-import com.example.chessboard.service.OneGameTrainingData
+import com.example.chessboard.entity.LineEntity
+import com.example.chessboard.service.OneLineTrainingData
 
 internal fun buildTrainingEditorItems(
-    allGames: List<GameEntity>,
-    trainingGames: List<OneGameTrainingData>,
-): List<TrainingGameEditorItem> {
-    if (trainingGames.isEmpty()) {
+    allLines: List<LineEntity>,
+    trainingLines: List<OneLineTrainingData>,
+): List<TrainingLineEditorItem> {
+    if (trainingLines.isEmpty()) {
         return emptyList()
     }
 
-    val weightsByGameId = trainingGames.associate { trainingGame ->
-        trainingGame.gameId to trainingGame.weight
+    val weightsByLineId = trainingLines.associate { trainingLine ->
+        trainingLine.lineId to trainingLine.weight
     }
 
-    return allGames.mapNotNull { game ->
-        val weight = weightsByGameId[game.id] ?: return@mapNotNull null
-        game.toTrainingGameEditorItem(weight = weight)
+    return allLines.mapNotNull { line ->
+        val weight = weightsByLineId[line.id] ?: return@mapNotNull null
+        line.toTrainingLineEditorItem(weight = weight)
     }
 }

@@ -1,0 +1,187 @@
+package com.example.chessboard.ui.screen.trainSingleLine
+
+// Shared state models and small pure helpers for single-line training.
+// This file keeps lightweight data structures in one place so the screen, logic,
+// and UI component files can depend on the same vocabulary.
+
+import com.example.chessboard.entity.LineEntity
+import com.example.chessboard.entity.SideMask
+import com.example.chessboard.ui.BoardOrientation
+import com.github.bhlangonijr.chesslib.move.Move
+
+data class TrainSingleLineData(
+    val line: LineEntity,
+    val uciMoves: List<String>,
+    val startFen: String? = null,
+    val hasMoveCap: Boolean = false,
+    val analysisUciMoves: List<String> = uciMoves,
+    val analysisStartPly: Int = 0,
+)
+
+data class TrainSingleLineResult(
+    val lineId: Long,
+    val trainingId: Long,
+    val mistakesCount: Int
+)
+
+internal const val ShowLineMoveDelayMs = 500L
+internal const val MinShowLineMoveDelayMs = 100L
+internal const val MaxShowLineMoveDelayMs = 4000L
+internal const val TrainSingleLineLogTag = "TrainSingleLine"
+
+internal enum class TrainSingleLinePhase {
+    Idle,
+    ShowingLine,
+    Training,
+    Mistake
+}
+
+internal data class TrainSingleLineUiState(
+    val currentSideIndex: Int = 0,
+    val phase: TrainSingleLinePhase = TrainSingleLinePhase.Idle,
+    val expectedPly: Int = 0,
+    val mistakesCount: Int = 0,
+    val completionDialog: TrainSingleLineCompletionState? = null,
+    val wrongMoveSquare: String? = null,
+    val hintSquare: String? = null,
+    val showLineMoveDelayInput: String = ShowLineMoveDelayMs.toString(),
+    val showLineCompleted: Boolean = false
+)
+
+internal data class TrainSingleLineCompletionState(
+    val title: String,
+    val message: String,
+    val finishLabel: String,
+    val hasNextSide: Boolean
+)
+
+internal data class TrainSingleLineContentState(
+    val lineId: Long,
+    val trainingId: Long,
+    val trainingLineData: TrainSingleLineData,
+    val currentOrientation: BoardOrientation,
+    val sidesCount: Int,
+    val sessionCurrent: Int,
+    val sessionTotal: Int,
+    val currentPly: Int,
+    val moveLabels: List<String>,
+    val phase: TrainSingleLinePhase,
+    val mistakesCount: Int,
+    val showLineMoveDelayInput: String,
+    val showLineCompleted: Boolean,
+    val wrongMoveSquare: String? = null,
+    val hintSquare: String? = null,
+)
+
+internal data class TrainSingleLineContentActions(
+    val onShowLineClick: () -> Unit,
+    val onConfirmShowLineClick: () -> Unit,
+    val onDismissShowLineDialogClick: () -> Unit,
+    val onStopShowLineClick: () -> Unit,
+    val onAnalyzeLineClick: () -> Unit,
+    val onStartTrainingClick: () -> Unit,
+    val onStopTrainingClick: () -> Unit,
+    val onMakeCorrectMoveClick: () -> Unit,
+    val onHintClick: () -> Unit,
+    val onShowLineMoveDelayInputChange: (String) -> Unit,
+    val onMovePlyClick: (Int) -> Unit,
+    val onPrevMoveClick: () -> Unit,
+    val onNextMoveClick: () -> Unit,
+    val onResetMovesClick: () -> Unit
+)
+
+internal sealed interface TrainingSingleLineActionsState {
+    data object ShowingLine : TrainingSingleLineActionsState
+    data object Idle : TrainingSingleLineActionsState
+    data object Training : TrainingSingleLineActionsState
+    data object Mistake : TrainingSingleLineActionsState
+}
+
+internal fun resolveTrainingSingleLineActionsState(
+    phase: TrainSingleLinePhase
+): TrainingSingleLineActionsState {
+    if (phase == TrainSingleLinePhase.ShowingLine) {
+        return TrainingSingleLineActionsState.ShowingLine
+    }
+
+    if (phase == TrainSingleLinePhase.Training) {
+        return TrainingSingleLineActionsState.Training
+    }
+
+    if (phase == TrainSingleLinePhase.Mistake) {
+        return TrainingSingleLineActionsState.Mistake
+    }
+
+    return TrainingSingleLineActionsState.Idle
+}
+
+internal fun resolveTrainingAnalysisInitialPly(
+    trainingLineData: TrainSingleLineData,
+    currentPly: Int,
+): Int {
+    val requestedPly = trainingLineData.analysisStartPly + currentPly
+    return requestedPly.coerceIn(0, trainingLineData.analysisUciMoves.size)
+}
+
+internal fun resolveTrainingOrientations(sideMask: Int): List<BoardOrientation> {
+    if (sideMask == SideMask.WHITE) {
+        return listOf(BoardOrientation.WHITE)
+    }
+
+    if (sideMask == SideMask.BLACK) {
+        return listOf(BoardOrientation.BLACK)
+    }
+
+    if (sideMask == SideMask.BOTH) {
+        return listOf(BoardOrientation.WHITE, BoardOrientation.BLACK)
+    }
+
+    return listOf(BoardOrientation.WHITE)
+}
+
+internal fun orientationLabel(orientation: BoardOrientation): String =
+    when (orientation) {
+        BoardOrientation.WHITE -> "White"
+        BoardOrientation.BLACK -> "Black"
+    }
+
+internal fun isUserTurn(expectedPly: Int, orientation: BoardOrientation): Boolean =
+    when (orientation) {
+        BoardOrientation.WHITE -> expectedPly % 2 == 0
+        BoardOrientation.BLACK -> expectedPly % 2 == 1
+    }
+
+internal fun moveToUci(move: Move): String =
+    "${move.from.value().lowercase()}${move.to.value().lowercase()}"
+
+internal fun buildCompletionDialog(
+    currentSideIndex: Int,
+    sidesCount: Int,
+    currentOrientation: BoardOrientation
+): TrainSingleLineCompletionState {
+    if (currentSideIndex + 1 < sidesCount) {
+        return TrainSingleLineCompletionState(
+            title = "Variation completed",
+            message = "The ${orientationLabel(currentOrientation).lowercase()} side is completed. Continue with the next side or repeat this variation.",
+            finishLabel = "Next side",
+            hasNextSide = true
+        )
+    }
+
+    return TrainSingleLineCompletionState(
+        title = "Variation completed",
+        message = "You reached the end of the line. Repeat the variation or finish this training.",
+        finishLabel = "Finish variation",
+        hasNextSide = false
+    )
+}
+
+internal fun resolveShowLineMoveDelayMs(input: String): Long {
+    return input.toLongOrNull()
+        ?.coerceIn(MinShowLineMoveDelayMs, MaxShowLineMoveDelayMs)
+        ?: ShowLineMoveDelayMs
+}
+
+internal fun formatShowLineMoveDelayInput(delayMs: Long): String {
+    return delayMs.coerceIn(MinShowLineMoveDelayMs, MaxShowLineMoveDelayMs).toString()
+}

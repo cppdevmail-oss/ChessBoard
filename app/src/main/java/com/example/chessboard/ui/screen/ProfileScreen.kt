@@ -101,7 +101,7 @@ private fun ProfileScreen(
     if (showClearAllDataDialog) {
         AppConfirmDialog(
             title = "Clear All Data",
-            message = "Delete all games, positions, trainings, templates and statistics? This cannot be undone.",
+            message = "Delete all lines, positions, trainings, templates and statistics? This cannot be undone.",
             onDismiss = { showClearAllDataDialog = false },
             onConfirm = {
                 showClearAllDataDialog = false

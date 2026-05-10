@@ -50,12 +50,12 @@ class OpeningDeviationDisplayScreenTest {
                             OpeningDeviationBranch(
                                 moveUci = "g1f3",
                                 resultFen = "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2",
-                                gamesCount = 2,
+                                linesCount = 2,
                             ),
                             OpeningDeviationBranch(
                                 moveUci = "f1c4",
                                 resultFen = "rnbqkbnr/pppp1ppp/8/4p3/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2",
-                                gamesCount = 1,
+                                linesCount = 1,
                             ),
                         ),
                     ),
@@ -79,7 +79,7 @@ class OpeningDeviationDisplayScreenTest {
         scrollToTag(openingDeviationBranchCardTestTag(0))
         composeRule.onNodeWithTag(openingDeviationBranchCardTestTag(0)).assertIsDisplayed()
         composeRule.onNodeWithText("Move: g1f3").assertIsDisplayed()
-        composeRule.onNodeWithText("Games: 2").assertIsDisplayed()
+        composeRule.onNodeWithText("Lines: 2").assertIsDisplayed()
         composeRule.onNodeWithText(
             "FEN: rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2"
         ).assertIsDisplayed()
@@ -91,7 +91,7 @@ class OpeningDeviationDisplayScreenTest {
         scrollToTag(openingDeviationBranchCardTestTag(1))
         composeRule.onNodeWithTag(openingDeviationBranchCardTestTag(1)).assertIsDisplayed()
         composeRule.onNodeWithText("Move: f1c4").assertIsDisplayed()
-        composeRule.onNodeWithText("Games: 1").assertIsDisplayed()
+        composeRule.onNodeWithText("Lines: 1").assertIsDisplayed()
         assertBoardFenEventually(
             boardTag = openingDeviationBranchBoardTestTag(1),
             expectedFen = "rnbqkbnr/pppp1ppp/8/4p3/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2",
@@ -154,7 +154,7 @@ class OpeningDeviationDisplayScreenTest {
                     OpeningDeviationBranch(
                         moveUci = "g1f3",
                         resultFen = "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2",
-                        gamesCount = 2,
+                        linesCount = 2,
                     ),
                 ),
             )
@@ -180,7 +180,7 @@ class OpeningDeviationDisplayScreenTest {
                     OpeningDeviationBranch(
                         moveUci = "f1c4",
                         resultFen = "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 1 3",
-                        gamesCount = 1,
+                        linesCount = 1,
                     ),
                 ),
             )

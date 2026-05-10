@@ -176,7 +176,7 @@ private fun createEditBottomBarAction(
     ) { isEnabled ->
         IconMd(
             imageVector = Icons.Default.Edit,
-            contentDescription = "Edit game",
+            contentDescription = "Edit line",
             tint = resolveTrainingCollectionEditorActionTint(isEnabled),
         )
     }

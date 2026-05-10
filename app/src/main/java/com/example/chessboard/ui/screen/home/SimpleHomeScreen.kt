@@ -298,8 +298,8 @@ private fun HomeTrainingCard(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 HomeMetricBox(
-                    title = "Games",
-                    value = training.gamesCount.toString(),
+                    title = "Lines",
+                    value = training.linesCount.toString(),
                     modifier = Modifier.weight(1f),
                 )
                 HomeMetricBox(

@@ -25,7 +25,7 @@ class PositionService(
         }
     }
 
-    suspend fun findGameIdsByFenWithoutMoveNumber(fen: String): List<Long> {
+    suspend fun findLineIdsByFenWithoutMoveNumber(fen: String): List<Long> {
         val matchingPositions = findPositionsByFenWithoutMoveNumber(fen)
         val positionIds = matchingPositions.map { position -> position.id }
 
@@ -33,6 +33,6 @@ class PositionService(
             return emptyList()
         }
 
-        return database.gamePositionDao().getGameIdsByPositionIds(positionIds)
+        return database.linePositionDao().getLineIdsByPositionIds(positionIds)
     }
 }

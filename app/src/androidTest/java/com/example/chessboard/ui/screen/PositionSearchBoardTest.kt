@@ -15,7 +15,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
-import com.example.chessboard.boardmodel.GameController
+import com.example.chessboard.boardmodel.LineController
 import com.example.chessboard.boardmodel.InitialBoardFen
 import com.example.chessboard.ui.InteractiveChessBoardTestTag
 import com.example.chessboard.ui.PositionSearchBoardWithCoordinates
@@ -32,22 +32,22 @@ class PositionSearchBoardTest {
 
     @Test
     fun positionSearchBoard_updatesVisibleFenWhenPreviewPositionChanges() {
-        val gameController = GameController()
+        val lineController = LineController()
 
         composeRule.setContent {
             ChessBoardTheme {
-                PositionSearchBoardHost(gameController = gameController)
+                PositionSearchBoardHost(lineController = lineController)
             }
         }
 
         composeRule.runOnIdle {
-            gameController.loadPreviewFen("8/8/8/8/8/8/8/4K3 w - - 0 1")
+            lineController.loadPreviewFen("8/8/8/8/8/8/8/4K3 w - - 0 1")
         }
 
         assertBoardFen("8/8/8/8/8/8/8/4K3 w - - 0 1")
 
         composeRule.runOnIdle {
-            gameController.loadPreviewFen("4k3/8/8/8/8/8/8/4K3 w - - 0 1")
+            lineController.loadPreviewFen("4k3/8/8/8/8/8/8/4K3 w - - 0 1")
         }
 
         assertBoardFen("4k3/8/8/8/8/8/8/4K3 w - - 0 1")
@@ -56,16 +56,16 @@ class PositionSearchBoardTest {
 
     @Test
     fun positionSearchBoard_dragAndDropUpdatesVisibleFen() {
-        val gameController = GameController()
+        val lineController = LineController()
 
         composeRule.setContent {
             ChessBoardTheme {
-                PositionSearchInteractiveBoardHost(gameController = gameController)
+                PositionSearchInteractiveBoardHost(lineController = lineController)
             }
         }
 
         composeRule.runOnIdle {
-            gameController.loadPreviewFen("4k3/8/8/8/8/8/8/4K3 w - - 0 1")
+            lineController.loadPreviewFen("4k3/8/8/8/8/8/8/4K3 w - - 0 1")
         }
 
         val boardNode = composeRule.onNodeWithTag(InteractiveChessBoardTestTag)
@@ -85,16 +85,16 @@ class PositionSearchBoardTest {
 
     @Test
     fun positionSearchBoard_tapPlacesPieceAndUpdatesVisibleFen() {
-        val gameController = GameController()
+        val lineController = LineController()
 
         composeRule.setContent {
             ChessBoardTheme {
-                PositionSearchPlacementBoardHost(gameController = gameController)
+                PositionSearchPlacementBoardHost(lineController = lineController)
             }
         }
 
         composeRule.runOnIdle {
-            gameController.loadPreviewFen("4k3/8/8/8/8/8/8/4K3 w - - 0 1")
+            lineController.loadPreviewFen("4k3/8/8/8/8/8/8/4K3 w - - 0 1")
         }
 
         val boardNode = composeRule.onNodeWithTag(InteractiveChessBoardTestTag)
@@ -110,11 +110,11 @@ class PositionSearchBoardTest {
 
     @Test
     fun positionSearchBoard_clearBoardButtonUpdatesVisibleFen() {
-        val gameController = GameController()
+        val lineController = LineController()
 
         composeRule.setContent {
             ChessBoardTheme {
-                PositionSearchClearBoardHost(gameController = gameController)
+                PositionSearchClearBoardHost(lineController = lineController)
             }
         }
 
@@ -126,11 +126,11 @@ class PositionSearchBoardTest {
 
     @Test
     fun positionSearchBoard_initialPositionButtonUpdatesVisibleFen() {
-        val gameController = GameController()
+        val lineController = LineController()
 
         composeRule.setContent {
             ChessBoardTheme {
-                PositionSearchInitialPositionHost(gameController = gameController)
+                PositionSearchInitialPositionHost(lineController = lineController)
             }
         }
 
@@ -151,12 +151,12 @@ class PositionSearchBoardTest {
 }
 
 @Composable
-private fun PositionSearchBoardHost(gameController: GameController) {
-    val boardState = gameController.boardState
+private fun PositionSearchBoardHost(lineController: LineController) {
+    val boardState = lineController.boardState
 
     key(boardState) {
         PositionSearchBoardWithCoordinates(
-            gameController = gameController,
+            lineController = lineController,
             onSquareClick = {},
             onPieceMove = { _, _ -> },
             modifier = Modifier.size(320.dp)
@@ -165,20 +165,20 @@ private fun PositionSearchBoardHost(gameController: GameController) {
 }
 
 @Composable
-private fun PositionSearchInteractiveBoardHost(gameController: GameController) {
-    val boardState = gameController.boardState
+private fun PositionSearchInteractiveBoardHost(lineController: LineController) {
+    val boardState = lineController.boardState
 
     key(boardState) {
         PositionSearchBoardWithCoordinates(
-            gameController = gameController,
+            lineController = lineController,
             onSquareClick = {},
             onPieceMove = { fromSquare, toSquare ->
                 val updatedFen = movePieceInPreviewFen(
-                    fen = gameController.getFen(),
+                    fen = lineController.getFen(),
                     fromSquare = fromSquare,
                     toSquare = toSquare
                 )
-                gameController.loadPreviewFen(updatedFen)
+                lineController.loadPreviewFen(updatedFen)
             },
             modifier = Modifier.size(320.dp)
         )
@@ -186,19 +186,19 @@ private fun PositionSearchInteractiveBoardHost(gameController: GameController) {
 }
 
 @Composable
-private fun PositionSearchPlacementBoardHost(gameController: GameController) {
-    val boardState = gameController.boardState
+private fun PositionSearchPlacementBoardHost(lineController: LineController) {
+    val boardState = lineController.boardState
 
     key(boardState) {
         PositionSearchBoardWithCoordinates(
-            gameController = gameController,
+            lineController = lineController,
             onSquareClick = { square ->
                 val updatedFen = placePieceInPreviewFen(
-                    fen = gameController.getFen(),
+                    fen = lineController.getFen(),
                     square = square,
                     pieceLetter = 'Q'
                 )
-                gameController.loadPreviewFen(updatedFen)
+                lineController.loadPreviewFen(updatedFen)
             },
             onPieceMove = { _, _ -> },
             modifier = Modifier.size(320.dp)
@@ -207,19 +207,19 @@ private fun PositionSearchPlacementBoardHost(gameController: GameController) {
 }
 
 @Composable
-private fun PositionSearchClearBoardHost(gameController: GameController) {
+private fun PositionSearchClearBoardHost(lineController: LineController) {
     Column {
         SecondaryButton(
             text = "Clear board",
             onClick = {
-                gameController.loadPreviewFen("8/8/8/8/8/8/8/8 w - - 0 1")
+                lineController.loadPreviewFen("8/8/8/8/8/8/8/8 w - - 0 1")
             }
         )
 
-        val boardState = gameController.boardState
+        val boardState = lineController.boardState
         key(boardState) {
             PositionSearchBoardWithCoordinates(
-                gameController = gameController,
+                lineController = lineController,
                 onSquareClick = {},
                 onPieceMove = { _, _ -> },
                 modifier = Modifier.size(320.dp)
@@ -229,19 +229,19 @@ private fun PositionSearchClearBoardHost(gameController: GameController) {
 }
 
 @Composable
-private fun PositionSearchInitialPositionHost(gameController: GameController) {
+private fun PositionSearchInitialPositionHost(lineController: LineController) {
     Column {
         SecondaryButton(
             text = "Initial position",
             onClick = {
-                gameController.resetToStartPosition()
+                lineController.resetToStartPosition()
             }
         )
 
-        val boardState = gameController.boardState
+        val boardState = lineController.boardState
         key(boardState) {
             PositionSearchBoardWithCoordinates(
-                gameController = gameController,
+                lineController = lineController,
                 onSquareClick = {},
                 onPieceMove = { _, _ -> },
                 modifier = Modifier.size(320.dp)

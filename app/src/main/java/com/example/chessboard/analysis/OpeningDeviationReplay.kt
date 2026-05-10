@@ -5,7 +5,7 @@ package com.example.chessboard.analysis
  * Keep move parsing, board advancement, and normalized FEN helpers here.
  * Do not add UI state, navigation, or database access to this file.
  */
-import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.entity.LineEntity
 import com.example.chessboard.service.normalizeFenWithoutMoveNumbers
 import com.github.bhlangonijr.chesslib.Board
 import com.github.bhlangonijr.chesslib.Piece
@@ -41,7 +41,7 @@ internal object OpeningDeviationReplay {
     fun buildMoveFromUci(
         uci: String,
         board: Board,
-        game: GameEntity,
+        line: LineEntity,
         moveIndex: Int,
     ): Move {
         val from = uci.take(2).uppercase()
@@ -54,7 +54,7 @@ internal object OpeningDeviationReplay {
         }
 
         throw IllegalArgumentException(
-            "Illegal move $uci at index $moveIndex in game ${game.id}"
+            "Illegal move $uci at index $moveIndex in line ${line.id}"
         )
     }
 

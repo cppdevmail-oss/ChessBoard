@@ -4,7 +4,7 @@ package com.example.chessboard.ui.screen.createOpening
  * File role: groups create-opening save planning and persistence orchestration for this screen.
  * Allowed here:
  * - screen-specific save snapshots and results
- * - mapping create-opening state into saved games and trainings
+ * - mapping create-opening state into saved lines and trainings
  * - save helpers for manual, imported single-chapter, and imported multi-chapter flows
  * Not allowed here:
  * - compose UI rendering or launcher setup
@@ -12,20 +12,20 @@ package com.example.chessboard.ui.screen.createOpening
  * Validation date: 2026-05-05
  */
 
-import com.example.chessboard.entity.GameEntity
-import com.example.chessboard.service.GameSaver
-import com.example.chessboard.service.OneGameTrainingData
+import com.example.chessboard.entity.LineEntity
+import com.example.chessboard.service.LineSaver
+import com.example.chessboard.service.OneLineTrainingData
 import com.example.chessboard.service.TrainingService
 import com.example.chessboard.service.buildStoredPgnFromUci
 import com.example.chessboard.service.uciMovesToMoves
-import com.example.chessboard.ui.screen.EditableGameSide
+import com.example.chessboard.ui.screen.EditableLineSide
 import com.github.bhlangonijr.chesslib.move.Move
 import com.example.chessboard.repository.DatabaseProvider
 
 internal data class CreateOpeningSaveSnapshot(
     val openingName: String,
     val ecoCode: String,
-    val selectedSide: EditableGameSide,
+    val selectedSide: EditableLineSide,
     val importedChapters: List<ImportedChapter>,
     val movesSnapshot: List<Move>,
     val generatedPgn: String,
@@ -43,20 +43,20 @@ internal sealed interface CreateOpeningSaveResult {
 }
 
 internal data class ImportedOpeningLineSavePlan(
-    val entity: GameEntity,
+    val entity: LineEntity,
     val uciMoves: List<String>,
 )
 
 internal suspend fun saveOpening(
     snapshot: CreateOpeningSaveSnapshot,
     dbProvider: DatabaseProvider,
-    gameSaver: GameSaver,
+    lineSaver: LineSaver,
     trainingService: TrainingService,
 ): CreateOpeningSaveResult {
     if (snapshot.importedChapters.size > 1) {
         return saveImportedChaptersAsTrainings(
             snapshot = snapshot,
-            gameSaver = gameSaver,
+            lineSaver = lineSaver,
             trainingService = trainingService,
         )
     }
@@ -64,7 +64,7 @@ internal suspend fun saveOpening(
     return saveSingleOpening(
         snapshot = snapshot,
         dbProvider = dbProvider,
-        gameSaver = gameSaver,
+        lineSaver = lineSaver,
     )
 }
 
@@ -72,7 +72,7 @@ internal fun buildImportedLineSavePlans(
     baseName: String,
     importedChapter: ImportedChapter,
     ecoCode: String,
-    selectedSide: EditableGameSide,
+    selectedSide: EditableLineSide,
 ): List<ImportedOpeningLineSavePlan> {
     val resolvedEcoCode = resolveImportedEcoCode(
         ecoCode = ecoCode,
@@ -89,7 +89,7 @@ internal fun buildImportedLineSavePlans(
         )
 
         ImportedOpeningLineSavePlan(
-            entity = GameEntity(
+            entity = LineEntity(
                 white = importedChapter.headerValue("White"),
                 black = importedChapter.headerValue("Black"),
                 result = importedChapter.headerValue("Result"),
@@ -115,9 +115,9 @@ internal fun buildManualOpeningEntity(
     openingName: String,
     ecoCode: String,
     generatedPgn: String,
-    selectedSide: EditableGameSide,
-): GameEntity {
-    return GameEntity(
+    selectedSide: EditableLineSide,
+): LineEntity {
+    return LineEntity(
         event = openingName.ifBlank { null },
         eco = ecoCode.ifBlank { null },
         pgn = generatedPgn,
@@ -128,7 +128,7 @@ internal fun buildManualOpeningEntity(
 
 private suspend fun saveImportedChaptersAsTrainings(
     snapshot: CreateOpeningSaveSnapshot,
-    gameSaver: GameSaver,
+    lineSaver: LineSaver,
     trainingService: TrainingService,
 ): CreateOpeningSaveResult {
     var savedChaptersCount = 0
@@ -145,19 +145,19 @@ private suspend fun saveImportedChaptersAsTrainings(
             ecoCode = snapshot.ecoCode,
             selectedSide = snapshot.selectedSide,
         )
-        val savedGameIds = saveImportedLinePlans(
-            gameSaver = gameSaver,
+        val savedLineIds = saveImportedLinePlans(
+            lineSaver = lineSaver,
             savePlans = savePlans,
         )
 
-        if (savedGameIds.isEmpty()) {
+        if (savedLineIds.isEmpty()) {
             return@forEachIndexed
         }
 
-        trainingService.createTrainingFromGames(
+        trainingService.createTrainingFromLines(
             name = chapterName,
-            games = savedGameIds.map { gameId ->
-                OneGameTrainingData(gameId = gameId, weight = 1)
+            lines = savedLineIds.map { lineId ->
+                OneLineTrainingData(lineId = lineId, weight = 1)
             },
         )
         savedChaptersCount++
@@ -173,19 +173,19 @@ private suspend fun saveImportedChaptersAsTrainings(
 private suspend fun saveSingleOpening(
     snapshot: CreateOpeningSaveSnapshot,
     dbProvider: DatabaseProvider,
-    gameSaver: GameSaver,
+    lineSaver: LineSaver,
 ): CreateOpeningSaveResult {
     val firstChapter = snapshot.importedChapters.firstOrNull()
     if (firstChapter == null) {
         return saveManualOpening(
             snapshot = snapshot,
             dbProvider = dbProvider,
-            gameSaver = gameSaver,
+            lineSaver = lineSaver,
         )
     }
 
-    val savedGameIds = saveImportedLinePlans(
-        gameSaver = gameSaver,
+    val savedLineIds = saveImportedLinePlans(
+        lineSaver = lineSaver,
         savePlans = buildImportedLineSavePlans(
             baseName = snapshot.openingName,
             importedChapter = firstChapter,
@@ -193,16 +193,16 @@ private suspend fun saveSingleOpening(
             selectedSide = snapshot.selectedSide,
         ),
     )
-    if (savedGameIds.isEmpty()) {
+    if (savedLineIds.isEmpty()) {
         return CreateOpeningSaveResult.ShowError("None of the imported lines could be saved")
     }
 
     if (snapshot.simpleViewEnabled) {
         createOpeningTraining(
             dbProvider = dbProvider,
-            savedGames = SavedOpeningGames(
+            savedLines = SavedOpeningLines(
                 name = snapshot.openingName.ifBlank { "Opening" },
-                gameIds = savedGameIds,
+                lineIds = savedLineIds,
             ),
         )
         return CreateOpeningSaveResult.NavigateBack
@@ -211,7 +211,7 @@ private suspend fun saveSingleOpening(
     return CreateOpeningSaveResult.OpenPostSaveFlow(
         state = startCreateOpeningPostSaveFlow(
             openingName = snapshot.openingName,
-            savedGameIds = savedGameIds,
+            savedLineIds = savedLineIds,
         ),
     )
 }
@@ -219,7 +219,7 @@ private suspend fun saveSingleOpening(
 private suspend fun saveManualOpening(
     snapshot: CreateOpeningSaveSnapshot,
     dbProvider: DatabaseProvider,
-    gameSaver: GameSaver,
+    lineSaver: LineSaver,
 ): CreateOpeningSaveResult {
     val entity = buildManualOpeningEntity(
         openingName = snapshot.openingName,
@@ -227,21 +227,21 @@ private suspend fun saveManualOpening(
         generatedPgn = snapshot.generatedPgn,
         selectedSide = snapshot.selectedSide,
     )
-    val savedGameId = gameSaver.saveGame(
-        game = entity,
+    val savedLineId = lineSaver.saveLine(
+        line = entity,
         moves = snapshot.movesSnapshot,
         sideMask = entity.sideMask,
     )
-    if (savedGameId == null) {
+    if (savedLineId == null) {
         return CreateOpeningSaveResult.ShowError("Failed to save opening")
     }
 
     if (snapshot.simpleViewEnabled) {
         createOpeningTraining(
             dbProvider = dbProvider,
-            savedGames = SavedOpeningGames(
+            savedLines = SavedOpeningLines(
                 name = snapshot.openingName.ifBlank { "Opening" },
-                gameIds = listOf(savedGameId),
+                lineIds = listOf(savedLineId),
             ),
         )
         return CreateOpeningSaveResult.NavigateBack
@@ -250,29 +250,29 @@ private suspend fun saveManualOpening(
     return CreateOpeningSaveResult.OpenPostSaveFlow(
         state = startCreateOpeningPostSaveFlow(
             openingName = snapshot.openingName,
-            savedGameIds = listOf(savedGameId),
+            savedLineIds = listOf(savedLineId),
         ),
     )
 }
 
 private suspend fun saveImportedLinePlans(
-    gameSaver: GameSaver,
+    lineSaver: LineSaver,
     savePlans: List<ImportedOpeningLineSavePlan>,
 ): List<Long> {
-    val savedGameIds = mutableListOf<Long>()
+    val savedLineIds = mutableListOf<Long>()
 
     for (savePlan in savePlans) {
-        val savedId = gameSaver.saveOrGetExistingGameId(
-            game = savePlan.entity,
+        val savedId = lineSaver.saveOrGetExistingLineId(
+            line = savePlan.entity,
             moves = uciMovesToMoves(savePlan.uciMoves),
             sideMask = savePlan.entity.sideMask,
         )
         if (savedId != null) {
-            savedGameIds.add(savedId)
+            savedLineIds.add(savedId)
         }
     }
 
-    return savedGameIds
+    return savedLineIds
 }
 
 private fun resolveImportedChapterSaveName(

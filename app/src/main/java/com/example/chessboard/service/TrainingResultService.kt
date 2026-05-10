@@ -8,13 +8,13 @@ class TrainingResultService(
 ) {
 
     suspend fun addTrainingResult(
-        gameId: Long,
+        lineId: Long,
         mistakesCount: Int,
         trainedAt: Long = System.currentTimeMillis()
     ): Long {
         return database.trainingResultDao().insertAndTrim(
             TrainingResultEntity(
-                gameId = gameId,
+                lineId = lineId,
                 mistakesCount = mistakesCount,
                 trainedAt = trainedAt
             )
@@ -24,9 +24,9 @@ class TrainingResultService(
         return database.trainingResultDao().getRecentResults(limit)
     }
 
-    suspend fun getResultsForGame(gameId: Long, limit: Int): List<TrainingResultEntity> {
-        return database.trainingResultDao().getResultsForGame(
-            gameId = gameId,
+    suspend fun getResultsForLine(lineId: Long, limit: Int): List<TrainingResultEntity> {
+        return database.trainingResultDao().getResultsForLine(
+            lineId = lineId,
             limit = limit
         )
     }

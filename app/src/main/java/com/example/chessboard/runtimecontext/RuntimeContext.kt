@@ -16,58 +16,58 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.example.chessboard.boardmodel.InitialBoardFenWithoutMoveNumbers
 import com.example.chessboard.repository.DatabaseProvider
-import com.example.chessboard.service.SmartGamePair
+import com.example.chessboard.service.SmartLinePair
 import com.example.chessboard.ui.screen.openingDeviation.OpeningDeviationItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class RuntimeContext {
-    val gamesExplorer = ObservableGamesPage(GamesExplorerPageLimit)
+    val linesExplorer = ObservableLinesPage(LinesExplorerPageLimit)
     val openingDeviation = OpeningDeviation()
-    val orderGamesInTraining = OrderGamesInTraining()
+    val orderLinesInTraining = OrderLinesInTraining()
     internal val trainingSession = TrainingRuntimeContext()
     val positionSearch = PositionSearch()
     var trainingMoveFrom: Int = 1
     var trainingMoveTo: Int = 0
-    var smartTrainingQueue: List<SmartGamePair> = emptyList()
+    var smartTrainingQueue: List<SmartLinePair> = emptyList()
 
-    fun resolveNextSmartGamePair(currentGameId: Long): SmartGamePair? {
-        val index = smartTrainingQueue.indexOfFirst { it.gameId == currentGameId }
+    fun resolveNextSmartLinePair(currentLineId: Long): SmartLinePair? {
+        val index = smartTrainingQueue.indexOfFirst { it.lineId == currentLineId }
         if (index < 0) return null
         return smartTrainingQueue.getOrNull(index + 1)
     }
 
-    fun resolveNextTrainingGameId(trainingId: Long, currentGameId: Long): Long? {
-        return trainingSession.resolveNextGameId(trainingId, currentGameId)
+    fun resolveNextTrainingLineId(trainingId: Long, currentLineId: Long): Long? {
+        return trainingSession.resolveNextLineId(trainingId, currentLineId)
     }
 
     companion object {
-        const val GamesExplorerPageLimit = 20
+        const val LinesExplorerPageLimit = 20
     }
 
-    class OrderGamesInTraining {
-        private val lastCompletedOrderByGameId = mutableMapOf<Long, Long>()
+    class OrderLinesInTraining {
+        private val lastCompletedOrderByLineId = mutableMapOf<Long, Long>()
         private var nextOrder = 0L
 
-        fun markGameCompleted(gameId: Long) {
+        fun markLineCompleted(lineId: Long) {
             nextOrder += 1L
-            lastCompletedOrderByGameId[gameId] = nextOrder
+            lastCompletedOrderByLineId[lineId] = nextOrder
         }
 
         fun reset() {
-            lastCompletedOrderByGameId.clear()
+            lastCompletedOrderByLineId.clear()
             nextOrder = 0L
         }
 
-        fun <T> orderGames(
-            games: List<T>,
-            getGameId: (T) -> Long,
+        fun <T> orderLines(
+            lines: List<T>,
+            getLineId: (T) -> Long,
             getWeight: (T) -> Int
         ): List<T> {
-            return games.withIndex()
-                .sortedWith { leftGame, rightGame ->
-                    val leftCompletedOrder = lastCompletedOrderByGameId[getGameId(leftGame.value)]
-                    val rightCompletedOrder = lastCompletedOrderByGameId[getGameId(rightGame.value)]
+            return lines.withIndex()
+                .sortedWith { leftLine, rightLine ->
+                    val leftCompletedOrder = lastCompletedOrderByLineId[getLineId(leftLine.value)]
+                    val rightCompletedOrder = lastCompletedOrderByLineId[getLineId(rightLine.value)]
 
                     if (leftCompletedOrder == null && rightCompletedOrder != null) {
                         return@sortedWith -1
@@ -78,14 +78,14 @@ class RuntimeContext {
                     }
 
                     if (leftCompletedOrder == null && rightCompletedOrder == null) {
-                        val weightCompare = rightGame.value.let(getWeight).compareTo(
-                            leftGame.value.let(getWeight)
+                        val weightCompare = rightLine.value.let(getWeight).compareTo(
+                            leftLine.value.let(getWeight)
                         )
                         if (weightCompare != 0) {
                             return@sortedWith weightCompare
                         }
 
-                        return@sortedWith leftGame.index.compareTo(rightGame.index)
+                        return@sortedWith leftLine.index.compareTo(rightLine.index)
                     }
 
                     val completedOrderCompare = rightCompletedOrder!!.compareTo(leftCompletedOrder!!)
@@ -93,16 +93,16 @@ class RuntimeContext {
                         return@sortedWith completedOrderCompare
                     }
 
-                    val weightCompare = rightGame.value.let(getWeight).compareTo(
-                        leftGame.value.let(getWeight)
+                    val weightCompare = rightLine.value.let(getWeight).compareTo(
+                        leftLine.value.let(getWeight)
                     )
                     if (weightCompare != 0) {
                         return@sortedWith weightCompare
                     }
 
-                    leftGame.index.compareTo(rightGame.index)
+                    leftLine.index.compareTo(rightLine.index)
                 }
-                .map { indexedGame -> indexedGame.value }
+                .map { indexedLine -> indexedLine.value }
         }
     }
 
@@ -164,47 +164,47 @@ class RuntimeContext {
         }
     }
 
-    class ObservableGamesPage(
+    class ObservableLinesPage(
         private val limit: Int
     ) {
         data class State(
-            val gameIds: List<Long> = emptyList(),
+            val lineIds: List<Long> = emptyList(),
             val offset: Int = 0
         )
 
         var state by mutableStateOf(State())
             private set
 
-        suspend fun loadAllGameIds(inDbProvider: DatabaseProvider) {
-            val gameListService = inDbProvider.createGameListService()
-            val gamesCount = withContext(Dispatchers.IO) {
-                gameListService.getGamesCount()
+        suspend fun loadAllLineIds(inDbProvider: DatabaseProvider) {
+            val lineListService = inDbProvider.createLineListService()
+            val linesCount = withContext(Dispatchers.IO) {
+                lineListService.getLinesCount()
             }
-            val gameIds = withContext(Dispatchers.IO) {
-                gameListService.getGameIdsPage(
-                    limit = gamesCount.coerceAtLeast(1),
+            val lineIds = withContext(Dispatchers.IO) {
+                lineListService.getLineIdsPage(
+                    limit = linesCount.coerceAtLeast(1),
                     offset = 0
                 )
             }
 
-            state = State(gameIds = gameIds)
+            state = State(lineIds = lineIds)
         }
 
-        fun setGameIds(gameIds: List<Long>) {
-            state = State(gameIds = gameIds)
+        fun setLineIds(lineIds: List<Long>) {
+            state = State(lineIds = lineIds)
         }
 
-        fun ensureVisible(gameId: Long?) {
-            if (gameId == null) {
+        fun ensureVisible(lineId: Long?) {
+            if (lineId == null) {
                 return
             }
 
-            val gameIndex = state.gameIds.indexOf(gameId)
-            if (gameIndex < 0) {
+            val lineIndex = state.lineIds.indexOf(lineId)
+            if (lineIndex < 0) {
                 return
             }
 
-            val nextOffset = gameIndex / limit * limit
+            val nextOffset = lineIndex / limit * limit
             if (nextOffset == state.offset) {
                 return
             }
@@ -212,8 +212,8 @@ class RuntimeContext {
             state = state.copy(offset = nextOffset)
         }
 
-        fun visibleGameIds(): List<Long> {
-            return state.gameIds.drop(state.offset).take(limit)
+        fun visibleLineIds(): List<Long> {
+            return state.lineIds.drop(state.offset).take(limit)
         }
 
         fun canOpenPreviousPage(): Boolean {
@@ -221,7 +221,7 @@ class RuntimeContext {
         }
 
         fun canOpenNextPage(): Boolean {
-            return state.offset + limit < state.gameIds.size
+            return state.offset + limit < state.lineIds.size
         }
 
         fun openPreviousPage() {
@@ -242,30 +242,30 @@ class RuntimeContext {
             state = state.copy(offset = state.offset + limit)
         }
 
-        fun removeGameId(gameId: Long) {
-            val mutableGameIds = state.gameIds.toMutableList()
-            if (!mutableGameIds.remove(gameId)) {
+        fun removeLineId(lineId: Long) {
+            val mutableLineIds = state.lineIds.toMutableList()
+            if (!mutableLineIds.remove(lineId)) {
                 return
             }
 
             state = state.copy(
-                gameIds = mutableGameIds,
-                offset = resolveOffsetAfterRemove(mutableGameIds.size)
+                lineIds = mutableLineIds,
+                offset = resolveOffsetAfterRemove(mutableLineIds.size)
             )
         }
 
         private fun resolveOffsetAfterRemove(
-            nextGameCount: Int
+            nextLineCount: Int
         ): Int {
-            if (nextGameCount <= 0) {
+            if (nextLineCount <= 0) {
                 return 0
             }
 
-            if (state.offset < nextGameCount) {
+            if (state.offset < nextLineCount) {
                 return state.offset
             }
 
-            return ((nextGameCount - 1) / limit) * limit
+            return ((nextLineCount - 1) / limit) * limit
         }
     }
 }

@@ -19,13 +19,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import com.example.chessboard.boardmodel.GameController
+import com.example.chessboard.boardmodel.LineController
 import com.example.chessboard.ui.ChessBoardWithCoordinates
 import com.example.chessboard.ui.theme.AppDimens
 
 @Composable
 fun ChessBoardSection(
-    gameController: GameController,
+    lineController: LineController,
     modifier: Modifier = Modifier,
     boardModifier: Modifier = Modifier,
 ) {
@@ -47,7 +47,7 @@ fun ChessBoardSection(
             .nestedScroll(noScroll)
     ) {
         ChessBoardWithCoordinates(
-            gameController = gameController,
+            lineController = lineController,
             modifier = boardModifier.fillMaxSize(),
         )
     }

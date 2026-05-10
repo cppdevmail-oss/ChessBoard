@@ -7,7 +7,7 @@ class TrainingTemplateService(
     private val dao: TrainingTemplateDao
 ) {
 
-    enum class UpdateTemplateFromGamesResult {
+    enum class UpdateTemplateFromLinesResult {
         UPDATED,
         DELETED,
         NOT_FOUND,
@@ -29,54 +29,54 @@ class TrainingTemplateService(
         return dao.insert(TrainingTemplateEntity(name = name))
     }
 
-    suspend fun updateTemplateFromGames(
+    suspend fun updateTemplateFromLines(
         templateId: Long,
-        games: List<OneGameTrainingData>,
+        lines: List<OneLineTrainingData>,
         name: String,
-    ): UpdateTemplateFromGamesResult {
-        val template = dao.getById(templateId) ?: return UpdateTemplateFromGamesResult.NOT_FOUND
-        if (games.isEmpty()) {
+    ): UpdateTemplateFromLinesResult {
+        val template = dao.getById(templateId) ?: return UpdateTemplateFromLinesResult.NOT_FOUND
+        if (lines.isEmpty()) {
             dao.deleteById(templateId)
-            return UpdateTemplateFromGamesResult.DELETED
+            return UpdateTemplateFromLinesResult.DELETED
         }
 
         dao.update(
             template.copy(
                 name = name,
-                gamesJson = OneGameTrainingData.toJson(games)
+                linesJson = OneLineTrainingData.toJson(lines)
             )
         )
-        return UpdateTemplateFromGamesResult.UPDATED
+        return UpdateTemplateFromLinesResult.UPDATED
     }
 
-    suspend fun addGame(templateId: Long, gameId: Long, weight: Int): Boolean {
+    suspend fun addLine(templateId: Long, lineId: Long, weight: Int): Boolean {
         val template = dao.getById(templateId) ?: return false
 
-        val games = OneGameTrainingData.fromJson(template.gamesJson).toMutableList()
-        val index = games.indexOfFirst { it.gameId == gameId }
+        val lines = OneLineTrainingData.fromJson(template.linesJson).toMutableList()
+        val index = lines.indexOfFirst { it.lineId == lineId }
 
         if (index >= 0) {
-            games[index] = games[index].copy(weight = weight)
+            lines[index] = lines[index].copy(weight = weight)
         } else {
-            games.add(OneGameTrainingData(gameId, weight))
+            lines.add(OneLineTrainingData(lineId, weight))
         }
 
-        dao.update(template.copy(gamesJson = OneGameTrainingData.toJson(games)))
+        dao.update(template.copy(linesJson = OneLineTrainingData.toJson(lines)))
         return true
     }
 
-    suspend fun removeGame(templateId: Long, gameId: Long): Boolean {
+    suspend fun removeLine(templateId: Long, lineId: Long): Boolean {
         val template = dao.getById(templateId) ?: return false
 
-        val games = OneGameTrainingData.fromJson(template.gamesJson)
-            .filter { it.gameId != gameId }
+        val lines = OneLineTrainingData.fromJson(template.linesJson)
+            .filter { it.lineId != lineId }
 
-        dao.update(template.copy(gamesJson = OneGameTrainingData.toJson(games)))
+        dao.update(template.copy(linesJson = OneLineTrainingData.toJson(lines)))
         return true
     }
 
-    suspend fun getGames(templateId: Long): List<OneGameTrainingData> {
+    suspend fun getLines(templateId: Long): List<OneLineTrainingData> {
         val template = dao.getById(templateId) ?: return emptyList()
-        return OneGameTrainingData.fromJson(template.gamesJson)
+        return OneLineTrainingData.fromJson(template.linesJson)
     }
 }

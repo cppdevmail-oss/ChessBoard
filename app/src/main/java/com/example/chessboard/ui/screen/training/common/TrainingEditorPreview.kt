@@ -3,7 +3,7 @@ package com.example.chessboard.ui.screen.training.common
 /**
  * File role: groups reusable preview-session helpers for training-like editors.
  * Allowed here:
- * - parsed move previews, selected-game board state, and preview-board helpers
+ * - parsed move previews, selected-line board state, and preview-board helpers
  * - editor-session utilities reused by training and template editors
  * Not allowed here:
  * - screen scaffolds, save flows, or card layout logic
@@ -18,102 +18,102 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.example.chessboard.boardmodel.GameController
+import com.example.chessboard.boardmodel.LineController
 import com.example.chessboard.entity.SideMask
 import com.example.chessboard.service.buildMoveLabels
 import com.example.chessboard.service.parsePgnMoves
 import com.example.chessboard.ui.BoardOrientation
 
-internal data class ParsedTrainingEditorGame(
+internal data class ParsedTrainingEditorLine(
     val uciMoves: List<String>,
     val moveLabels: List<String>
 )
 
 internal data class TrainingEditorBoardSession(
-    val gameController: GameController,
-    val parsedGamesById: Map<Long, ParsedTrainingEditorGame>,
-    val selectedGameId: Long?,
-    val onSelectGame: (Long) -> Unit,
+    val lineController: LineController,
+    val parsedLinesById: Map<Long, ParsedTrainingEditorLine>,
+    val selectedLineId: Long?,
+    val onSelectLine: (Long) -> Unit,
     val onMoveToPly: (Long, Int) -> Unit,
-    val onResetSelectedGame: (Long) -> Unit,
+    val onResetSelectedLine: (Long) -> Unit,
 )
 
 @Composable
 internal fun rememberTrainingEditorBoardSession(
-    games: List<TrainingGameEditorItem>,
-    initialSelectedGameId: Long? = null,
+    lines: List<TrainingLineEditorItem>,
+    initialSelectedLineId: Long? = null,
 ): TrainingEditorBoardSession {
-    val gameController = remember { GameController() }
-    val gameIds = remember(games) { games.map { it.gameId } }
-    val gamesById = remember(gameIds) {
-        games.associateBy { game -> game.gameId }
+    val lineController = remember { LineController() }
+    val lineIds = remember(lines) { lines.map { it.lineId } }
+    val linesById = remember(lineIds) {
+        lines.associateBy { line -> line.lineId }
     }
-    val parsedGamesById = remember(gameIds) {
-        games.associate { game ->
-            val uciMoves = parsePgnMoves(game.pgn)
+    val parsedLinesById = remember(lineIds) {
+        lines.associate { line ->
+            val uciMoves = parsePgnMoves(line.pgn)
             val moveLabels = buildMoveLabels(uciMoves)
-            game.gameId to ParsedTrainingEditorGame(
+            line.lineId to ParsedTrainingEditorLine(
                 uciMoves = uciMoves,
                 moveLabels = moveLabels
             )
         }
     }
-    var selectedGameId by remember(gameIds, initialSelectedGameId) {
-        mutableStateOf(initialSelectedGameId?.takeIf { it in gameIds } ?: games.firstOrNull()?.gameId)
+    var selectedLineId by remember(lineIds, initialSelectedLineId) {
+        mutableStateOf(initialSelectedLineId?.takeIf { it in lineIds } ?: lines.firstOrNull()?.lineId)
     }
 
-    fun loadGameAtPly(gameId: Long, ply: Int) {
-        val game = gamesById[gameId] ?: return
-        val parsedGame = parsedGamesById[gameId] ?: return
-        gameController.setOrientation(resolveTrainingPreviewBoardOrientation(game))
-        gameController.loadFromUciMoves(parsedGame.uciMoves, targetPly = ply)
+    fun loadLineAtPly(lineId: Long, ply: Int) {
+        val line = linesById[lineId] ?: return
+        val parsedLine = parsedLinesById[lineId] ?: return
+        lineController.setOrientation(resolveTrainingPreviewBoardOrientation(line))
+        lineController.loadFromUciMoves(parsedLine.uciMoves, targetPly = ply)
     }
 
-    fun selectGame(gameId: Long) {
-        selectedGameId = gameId
-        loadGameAtPly(gameId, ply = 0)
+    fun selectLine(lineId: Long) {
+        selectedLineId = lineId
+        loadLineAtPly(lineId, ply = 0)
     }
 
-    fun moveToPly(gameId: Long, ply: Int) {
-        selectedGameId = gameId
-        loadGameAtPly(gameId, ply = ply)
+    fun moveToPly(lineId: Long, ply: Int) {
+        selectedLineId = lineId
+        loadLineAtPly(lineId, ply = ply)
     }
 
-    fun resetSelectedGame(gameId: Long) {
-        loadGameAtPly(gameId, ply = 0)
+    fun resetSelectedLine(lineId: Long) {
+        loadLineAtPly(lineId, ply = 0)
     }
 
     SideEffect {
-        gameController.setUserMovesEnabled(false)
+        lineController.setUserMovesEnabled(false)
     }
 
-    LaunchedEffect(gameIds, parsedGamesById) {
-        if (selectedGameId in parsedGamesById.keys) {
+    LaunchedEffect(lineIds, parsedLinesById) {
+        if (selectedLineId in parsedLinesById.keys) {
             return@LaunchedEffect
         }
 
-        selectedGameId = games.firstOrNull()?.gameId
+        selectedLineId = lines.firstOrNull()?.lineId
     }
 
-    LaunchedEffect(selectedGameId, parsedGamesById) {
-        val gameId = selectedGameId ?: return@LaunchedEffect
-        loadGameAtPly(gameId, ply = 0)
+    LaunchedEffect(selectedLineId, parsedLinesById) {
+        val lineId = selectedLineId ?: return@LaunchedEffect
+        loadLineAtPly(lineId, ply = 0)
     }
 
     return TrainingEditorBoardSession(
-        gameController = gameController,
-        parsedGamesById = parsedGamesById,
-        selectedGameId = selectedGameId,
-        onSelectGame = ::selectGame,
+        lineController = lineController,
+        parsedLinesById = parsedLinesById,
+        selectedLineId = selectedLineId,
+        onSelectLine = ::selectLine,
         onMoveToPly = ::moveToPly,
-        onResetSelectedGame = ::resetSelectedGame
+        onResetSelectedLine = ::resetSelectedLine
     )
 }
 
 internal fun resolveTrainingPreviewBoardOrientation(
-    game: TrainingGameEditorItem
+    line: TrainingLineEditorItem
 ): BoardOrientation {
-    if (game.sideMask == SideMask.BLACK) {
+    if (line.sideMask == SideMask.BLACK) {
         return BoardOrientation.BLACK
     }
 

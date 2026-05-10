@@ -12,5 +12,5 @@ const val DEFAULT_TRAINING_NAME = "FullTraining"
 data class CreateTrainingEditorState(
     val trainingName: String = DEFAULT_TRAINING_NAME,
     val currentPage: Int = 0,
-    val editableGamesForTraining: List<TrainingGameEditorItem> = emptyList()
+    val editableLinesForTraining: List<TrainingLineEditorItem> = emptyList()
 )

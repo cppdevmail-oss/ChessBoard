@@ -19,7 +19,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import com.example.chessboard.boardmodel.GameController
+import com.example.chessboard.boardmodel.LineController
 import com.example.chessboard.ui.BoardOrientation
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.CardMetaText
@@ -41,8 +41,8 @@ internal fun OpeningDeviationBoardCard(
     isSelected: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
-    val gameController = remember(fen) {
-        GameController().also { controller ->
+    val lineController = remember(fen) {
+        LineController().also { controller ->
             controller.loadPreviewFen(toLoadableDeviationFen(fen))
             controller.setOrientation(resolveDeviationBoardOrientation(fen))
             controller.setUserMovesEnabled(false)
@@ -76,7 +76,7 @@ internal fun OpeningDeviationBoardCard(
             }
             Spacer(modifier = Modifier.height(AppDimens.spaceXs))
             ChessBoardSection(
-                gameController = gameController,
+                lineController = lineController,
                 boardModifier = resolveDeviationBoardModifier(boardTestTag),
             )
         }

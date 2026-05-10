@@ -1,7 +1,7 @@
 package com.example.chessboard.ui.screen.createOpening
 
 /**
- * Post-save flow for actions offered after opening games are saved.
+ * Post-save flow for actions offered after opening lines are saved.
  *
  * Keep in this file:
  * - state models for the post-save flow
@@ -9,7 +9,7 @@ package com.example.chessboard.ui.screen.createOpening
  * - helper functions that execute training/template creation after save
  *
  * It is acceptable to add here:
- * - new post-save steps related to saved opening games
+ * - new post-save steps related to saved opening lines
  * - flow-specific validation or warning aggregation
  * - small helper functions used only by this flow
  *
@@ -23,15 +23,15 @@ import androidx.compose.runtime.Composable
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.example.chessboard.repository.DatabaseProvider
-import com.example.chessboard.service.OneGameTrainingData
+import com.example.chessboard.service.OneLineTrainingData
 import com.example.chessboard.ui.components.AppConfirmDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-data class SavedOpeningGames(
+data class SavedOpeningLines(
     val name: String,
-    val gameIds: List<Long>,
+    val lineIds: List<Long>,
 )
 
 enum class PostSaveDialogStep {
@@ -40,19 +40,19 @@ enum class PostSaveDialogStep {
 }
 
 data class CreateOpeningPostSaveState(
-    val pendingSavedGames: SavedOpeningGames? = null,
+    val pendingSavedLines: SavedOpeningLines? = null,
     val dialogStep: PostSaveDialogStep? = null,
     val warningMessage: String? = null,
 )
 
 fun startCreateOpeningPostSaveFlow(
     openingName: String,
-    savedGameIds: List<Long>,
+    savedLineIds: List<Long>,
 ): CreateOpeningPostSaveState {
     return CreateOpeningPostSaveState(
-        pendingSavedGames = SavedOpeningGames(
+        pendingSavedLines = SavedOpeningLines(
             name = openingName.ifBlank { "Opening" },
-            gameIds = savedGameIds,
+            lineIds = savedLineIds,
         ),
         dialogStep = PostSaveDialogStep.CreateTraining,
     )
@@ -61,7 +61,7 @@ fun startCreateOpeningPostSaveFlow(
 private fun advanceCreateOpeningPostSaveFlowToTemplate(
     state: CreateOpeningPostSaveState,
 ): CreateOpeningPostSaveState {
-    if (state.pendingSavedGames == null) {
+    if (state.pendingSavedLines == null) {
         return state.copy(dialogStep = null)
     }
     return state.copy(dialogStep = PostSaveDialogStep.CreateTemplate)
@@ -81,12 +81,12 @@ private fun appendCreateOpeningPostSaveWarning(
 
 internal suspend fun createOpeningTraining(
     dbProvider: DatabaseProvider,
-    savedGames: SavedOpeningGames,
+    savedLines: SavedOpeningLines,
 ): Boolean {
-    val trainingId = dbProvider.createTrainingService().createTrainingFromGames(
-        name = savedGames.name,
-        games = savedGames.gameIds.map { gameId ->
-            OneGameTrainingData(gameId = gameId, weight = 1)
+    val trainingId = dbProvider.createTrainingService().createTrainingFromLines(
+        name = savedLines.name,
+        lines = savedLines.lineIds.map { lineId ->
+            OneLineTrainingData(lineId = lineId, weight = 1)
         },
     )
     return trainingId != null
@@ -94,16 +94,16 @@ internal suspend fun createOpeningTraining(
 
 private suspend fun createOpeningTemplate(
     dbProvider: DatabaseProvider,
-    savedGames: SavedOpeningGames,
+    savedLines: SavedOpeningLines,
 ): Boolean {
     val templateService = dbProvider.createTrainingTemplateService()
-    val templateId = templateService.createTemplate(savedGames.name)
+    val templateId = templateService.createTemplate(savedLines.name)
     if (templateId <= 0L) {
         return false
     }
 
-    return savedGames.gameIds.all { gameId ->
-        templateService.addGame(templateId = templateId, gameId = gameId, weight = 1)
+    return savedLines.lineIds.all { lineId ->
+        templateService.addLine(templateId = templateId, lineId = lineId, weight = 1)
     }
 }
 
@@ -116,17 +116,17 @@ fun CreateOpeningPostSaveDialogs(
     onFinished: () -> Unit,
     onError: (String) -> Unit,
 ) {
-    val savedGames = state.pendingSavedGames ?: return
-    val savedGamesCount = savedGames.gameIds.size
-    val trainingMessage = if (savedGamesCount == 1) {
-        "Do you want to create a training from the saved game?"
+    val savedLines = state.pendingSavedLines ?: return
+    val savedLinesCount = savedLines.lineIds.size
+    val trainingMessage = if (savedLinesCount == 1) {
+        "Do you want to create a training from the saved line?"
     } else {
-        "Do you want to create a training from the $savedGamesCount saved games?"
+        "Do you want to create a training from the $savedLinesCount saved lines?"
     }
-    val templateMessage = if (savedGamesCount == 1) {
-        "Do you want to create a template from the saved game?"
+    val templateMessage = if (savedLinesCount == 1) {
+        "Do you want to create a template from the saved line?"
     } else {
-        "Do you want to create a template from the $savedGamesCount saved games?"
+        "Do you want to create a template from the $savedLinesCount saved lines?"
     }
 
     if (state.dialogStep == PostSaveDialogStep.CreateTraining) {
@@ -140,10 +140,10 @@ fun CreateOpeningPostSaveDialogs(
                 onStateChange(state.copy(dialogStep = null))
                 (activity as? LifecycleOwner)?.lifecycleScope?.launch(Dispatchers.IO) {
                     var nextState = state
-                    if (!createOpeningTraining(dbProvider, savedGames)) {
+                    if (!createOpeningTraining(dbProvider, savedLines)) {
                         nextState = appendCreateOpeningPostSaveWarning(
                             state = nextState,
-                            message = "Games were saved, but training could not be created",
+                            message = "Lines were saved, but training could not be created",
                         )
                     }
                     nextState = advanceCreateOpeningPostSaveFlowToTemplate(nextState)
@@ -173,10 +173,10 @@ fun CreateOpeningPostSaveDialogs(
                 onStateChange(state.copy(dialogStep = null))
                 (activity as? LifecycleOwner)?.lifecycleScope?.launch(Dispatchers.IO) {
                     var nextState = state
-                    if (!createOpeningTemplate(dbProvider, savedGames)) {
+                    if (!createOpeningTemplate(dbProvider, savedLines)) {
                         nextState = appendCreateOpeningPostSaveWarning(
                             state = nextState,
-                            message = "Games were saved, but template could not be created",
+                            message = "Lines were saved, but template could not be created",
                         )
                     }
 

@@ -26,7 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.chessboard.service.OneGameTrainingData
+import com.example.chessboard.service.OneLineTrainingData
 import com.example.chessboard.ui.components.AppBottomNavigation
 import com.example.chessboard.ui.components.AppConfirmDialog
 import com.example.chessboard.ui.components.AppScreenScaffold
@@ -55,7 +55,7 @@ private data class TrainingListState(
 private data class TrainingListItem(
     val trainingId: Long,
     val name: String,
-    val gamesCount: Int,
+    val linesCount: Int,
 )
 
 @Composable
@@ -75,7 +75,7 @@ fun TrainingListScreenContainer(
                 TrainingListItem(
                     trainingId = training.id,
                     name = training.name.ifBlank { "Unnamed Training" },
-                    gamesCount = OneGameTrainingData.fromJson(training.gamesJson).size,
+                    linesCount = OneLineTrainingData.fromJson(training.linesJson).size,
                 )
             }
         }
@@ -219,7 +219,7 @@ private fun TrainingListCard(
                 ScreenTitleText(text = training.name)
                 Spacer(modifier = Modifier.height(AppDimens.spaceXs))
                 CardMetaText(text = "Training ID: ${training.trainingId}")
-                CardMetaText(text = "Games: ${training.gamesCount}")
+                CardMetaText(text = "Lines: ${training.linesCount}")
             }
             DeleteIconButton(onClick = onDeleteClick, contentDescription = "Delete training")
         }

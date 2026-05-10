@@ -3,33 +3,33 @@ package com.example.chessboard.ui.screen.training.flow
 /**
  * File role: groups regular training-flow orchestration and transition rules.
  * Allowed here:
- * - runtime-context updates and navigation decisions for training editor, settings, and single-game training
- * - training-specific side-destination routing such as analysis, game editor, and create-opening entry points
+ * - runtime-context updates and navigation decisions for training editor, settings, and single-line training
+ * - training-specific side-destination routing such as analysis, line editor, and create-opening entry points
  * Not allowed here:
  * - composable UI, activity state holders, or generic app navigation unrelated to training
  * - database access, repository calls, or persistence logic
  * Validation date: 2026-04-26
  */
 
-import com.example.chessboard.boardmodel.GameDraft
-import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.boardmodel.LineDraft
+import com.example.chessboard.entity.LineEntity
 import com.example.chessboard.runtimecontext.RuntimeContext
 import com.example.chessboard.ui.screen.ScreenType
-import com.example.chessboard.ui.screen.trainSingleGame.TrainSingleGameResult
+import com.example.chessboard.ui.screen.trainSingleLine.TrainSingleLineResult
 
 class RegularTrainingFlowCoordinator(
     private val runtimeContext: RuntimeContext,
 ) {
     fun openTraining(trainingId: Long): TrainingFlowResult {
-        val startedGameId = runtimeContext.trainingSession.firstStartedGameId(trainingId)
-        if (startedGameId != null) {
-            runtimeContext.trainingSession.setCurrentGameId(trainingId, startedGameId)
+        val startedLineId = runtimeContext.trainingSession.firstStartedLineId(trainingId)
+        if (startedLineId != null) {
+            runtimeContext.trainingSession.setCurrentLineId(trainingId, startedLineId)
             return TrainingFlowResult.Navigate(
-                ScreenType.TrainSingleGame(trainingId, startedGameId)
+                ScreenType.TrainSingleLine(trainingId, startedLineId)
             )
         }
 
-        runtimeContext.orderGamesInTraining.reset()
+        runtimeContext.orderLinesInTraining.reset()
         return TrainingFlowResult.Navigate(ScreenType.EditTraining(trainingId))
     }
 
@@ -41,128 +41,128 @@ class RegularTrainingFlowCoordinator(
         return TrainingFlowResult.Navigate(ScreenType.EditTraining(trainingId))
     }
 
-    fun startGame(
+    fun startLine(
         trainingId: Long,
-        gameId: Long,
-        orderedGameIds: List<Long>,
+        lineId: Long,
+        orderedLineIds: List<Long>,
     ): TrainingFlowResult {
         runtimeContext.trainingSession.rememberLaunch(
             trainingId = trainingId,
-            gameId = gameId,
-            orderedGameIds = orderedGameIds,
+            lineId = lineId,
+            orderedLineIds = orderedLineIds,
         )
-        return TrainingFlowResult.Navigate(ScreenType.TrainSingleGame(trainingId, gameId))
+        return TrainingFlowResult.Navigate(ScreenType.TrainSingleLine(trainingId, lineId))
     }
 
-    fun hasNextGame(trainingId: Long, gameId: Long): Boolean {
-        return runtimeContext.resolveNextTrainingGameId(trainingId, gameId) != null
+    fun hasNextLine(trainingId: Long, lineId: Long): Boolean {
+        return runtimeContext.resolveNextTrainingLineId(trainingId, lineId) != null
     }
 
-    fun sessionCurrent(trainingId: Long, gameId: Long): Int {
-        return runtimeContext.trainingSession.sessionCurrent(trainingId, gameId)
+    fun sessionCurrent(trainingId: Long, lineId: Long): Int {
+        return runtimeContext.trainingSession.sessionCurrent(trainingId, lineId)
     }
 
     fun sessionTotal(trainingId: Long): Int {
         return runtimeContext.trainingSession.sessionTotal(trainingId)
     }
 
-    fun finishGame(result: TrainSingleGameResult): TrainingFlowResult {
-        runtimeContext.trainingSession.clearGameProgress(
+    fun finishLine(result: TrainSingleLineResult): TrainingFlowResult {
+        runtimeContext.trainingSession.clearLineProgress(
             trainingId = result.trainingId,
-            gameId = result.gameId,
+            lineId = result.lineId,
         )
-        runtimeContext.trainingSession.setCurrentGameId(
+        runtimeContext.trainingSession.setCurrentLineId(
             trainingId = result.trainingId,
-            gameId = null,
+            lineId = null,
         )
-        runtimeContext.orderGamesInTraining.markGameCompleted(result.gameId)
+        runtimeContext.orderLinesInTraining.markLineCompleted(result.lineId)
         return TrainingFlowResult.Navigate(ScreenType.EditTraining(result.trainingId))
     }
 
     fun interruptTraining(trainingId: Long): TrainingFlowResult {
         runtimeContext.trainingSession.clearTrainingSession(trainingId)
-        runtimeContext.orderGamesInTraining.reset()
+        runtimeContext.orderLinesInTraining.reset()
         return TrainingFlowResult.Navigate(ScreenType.EditTraining(trainingId))
     }
 
-    fun openNextGame(result: TrainSingleGameResult): TrainingFlowResult {
-        runtimeContext.trainingSession.clearGameProgress(
+    fun openNextLine(result: TrainSingleLineResult): TrainingFlowResult {
+        runtimeContext.trainingSession.clearLineProgress(
             trainingId = result.trainingId,
-            gameId = result.gameId,
+            lineId = result.lineId,
         )
-        runtimeContext.orderGamesInTraining.markGameCompleted(result.gameId)
-        val nextGameId = runtimeContext.resolveNextTrainingGameId(
+        runtimeContext.orderLinesInTraining.markLineCompleted(result.lineId)
+        val nextLineId = runtimeContext.resolveNextTrainingLineId(
             trainingId = result.trainingId,
-            currentGameId = result.gameId,
+            currentLineId = result.lineId,
         )
 
-        if (nextGameId == null) {
-            runtimeContext.trainingSession.setCurrentGameId(
+        if (nextLineId == null) {
+            runtimeContext.trainingSession.setCurrentLineId(
                 trainingId = result.trainingId,
-                gameId = null,
+                lineId = null,
             )
             return TrainingFlowResult.Navigate(ScreenType.EditTraining(result.trainingId))
         }
 
-        runtimeContext.trainingSession.setCurrentGameId(
+        runtimeContext.trainingSession.setCurrentLineId(
             trainingId = result.trainingId,
-            gameId = nextGameId,
+            lineId = nextLineId,
         )
         return TrainingFlowResult.Navigate(
-            ScreenType.TrainSingleGame(result.trainingId, nextGameId)
+            ScreenType.TrainSingleLine(result.trainingId, nextLineId)
         )
     }
 
-    fun openGameEditorFromEditor(game: GameEntity, trainingId: Long): TrainingFlowResult {
-        return TrainingFlowResult.OpenGameEditor(
-            game = game,
+    fun openLineEditorFromEditor(line: LineEntity, trainingId: Long): TrainingFlowResult {
+        return TrainingFlowResult.OpenLineEditor(
+            line = line,
             backTarget = ScreenType.EditTraining(trainingId),
         )
     }
 
-    fun openGameEditorFromTraining(
-        game: GameEntity,
+    fun openLineEditorFromTraining(
+        line: LineEntity,
         trainingId: Long,
-        gameId: Long,
+        lineId: Long,
     ): TrainingFlowResult {
-        return TrainingFlowResult.OpenGameEditor(
-            game = game,
-            backTarget = ScreenType.TrainSingleGame(trainingId, gameId),
+        return TrainingFlowResult.OpenLineEditor(
+            line = line,
+            backTarget = ScreenType.TrainSingleLine(trainingId, lineId),
         )
     }
 
     fun openCreateOpeningFromTraining(
-        draft: GameDraft,
+        draft: LineDraft,
         trainingId: Long,
-        gameId: Long,
+        lineId: Long,
     ): TrainingFlowResult {
         return TrainingFlowResult.OpenCreateOpening(
             draft = draft,
-            backTarget = ScreenType.TrainSingleGame(trainingId, gameId),
+            backTarget = ScreenType.TrainSingleLine(trainingId, lineId),
         )
     }
 
     fun openPositionSearchFromTraining(
         fen: String,
         trainingId: Long,
-        gameId: Long,
+        lineId: Long,
     ): TrainingFlowResult {
         return TrainingFlowResult.OpenPositionSearch(
             initialFen = fen,
-            backTarget = ScreenType.TrainSingleGame(trainingId, gameId),
+            backTarget = ScreenType.TrainSingleLine(trainingId, lineId),
         )
     }
 
     fun openAnalysisFromTraining(
         trainingId: Long,
-        gameId: Long,
+        lineId: Long,
         uciMoves: List<String>,
         initialPly: Int,
     ): TrainingFlowResult {
         return TrainingFlowResult.OpenAnalysis(
             uciMoves = uciMoves,
             initialPly = initialPly,
-            backTarget = ScreenType.TrainSingleGame(trainingId, gameId),
+            backTarget = ScreenType.TrainSingleLine(trainingId, lineId),
         )
     }
 }

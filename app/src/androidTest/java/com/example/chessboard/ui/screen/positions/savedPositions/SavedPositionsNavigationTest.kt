@@ -26,7 +26,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import com.example.chessboard.MainActivity
 import com.example.chessboard.boardmodel.InitialBoardFen
-import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.entity.LineEntity
 import com.example.chessboard.entity.SideMask
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.service.SaveSavedSearchPositionResult
@@ -204,8 +204,8 @@ class SavedPositionsNavigationTest {
     }
 
     @Test
-    fun savedPositionsScreen_createFromPositionCreatesTemplateFromFoundGames() {
-        saveGameContainingInitialPosition()
+    fun savedPositionsScreen_createFromPositionCreatesTemplateFromFoundLines() {
+        saveLineContainingInitialPosition()
         val positionId = savePosition(name = "Create From Position", fen = InitialBoardFen)
 
         waitForTextDisplayed("Saved Positions")
@@ -214,9 +214,9 @@ class SavedPositionsNavigationTest {
         waitForTextDisplayed("Create From Position")
         composeRule.onNodeWithTag(savedPositionCreateButtonTestTag(positionId)).performClick()
 
-        waitForTextDisplayed("Games Found")
+        waitForTextDisplayed("Lines Found")
         composeRule.onNodeWithText(
-            "saved games match this position",
+            "saved lines match this position",
             substring = true,
         ).assertIsDisplayed()
         composeRule.onNodeWithTag(PositionSearchResultTrainingActionTestTag).assertIsDisplayed()
@@ -232,17 +232,17 @@ class SavedPositionsNavigationTest {
             "Expected one template after create-from-position, got ${templates.size}"
         }
 
-        val templateGames = runBlocking {
-            dbProvider.createTrainingTemplateService().getGames(templates.first().id)
+        val templateLines = runBlocking {
+            dbProvider.createTrainingTemplateService().getLines(templates.first().id)
         }
-        check(templateGames.size == 1) {
-            "Expected one template game after create-from-position, got ${templateGames.size}"
+        check(templateLines.size == 1) {
+            "Expected one template line after create-from-position, got ${templateLines.size}"
         }
     }
 
     @Test
-    fun savedPositionsScreen_createFromPositionOpensTrainingCreationFromFoundGames() {
-        saveGameContainingInitialPosition()
+    fun savedPositionsScreen_createFromPositionOpensTrainingCreationFromFoundLines() {
+        saveLineContainingInitialPosition()
         val positionId = savePosition(name = "Training From Position", fen = InitialBoardFen)
 
         waitForTextDisplayed("Saved Positions")
@@ -251,16 +251,16 @@ class SavedPositionsNavigationTest {
         waitForTextDisplayed("Training From Position")
         composeRule.onNodeWithTag(savedPositionCreateButtonTestTag(positionId)).performClick()
 
-        waitForTextDisplayed("Games Found")
+        waitForTextDisplayed("Lines Found")
         composeRule.onNodeWithTag(PositionSearchResultTrainingActionTestTag).performClick()
 
         waitForTextDisplayed("Create Training From Position")
-        waitForTextDisplayed("Games found for position: 1")
+        waitForTextDisplayed("Lines found for position: 1")
     }
 
     @Test
     fun savedPositionsScreen_findDeviationsShowsNoDeviationsDialog() {
-        saveGameContainingInitialPosition()
+        saveLineContainingInitialPosition()
         val positionId = savePosition(name = "No Deviations Position", fen = InitialBoardFen)
 
         waitForTextDisplayed("Saved Positions")
@@ -277,11 +277,11 @@ class SavedPositionsNavigationTest {
 
     @Test
     fun savedPositionsScreen_findDeviationsOpensDeviationSelectionFlow() {
-        saveGame(
+        saveLine(
             event = "Deviation Source A",
             uciMoves = listOf("e2e4", "e7e5", "g1f3", "b8c6", "f1c4"),
         )
-        saveGame(
+        saveLine(
             event = "Deviation Source B",
             uciMoves = listOf("e2e4", "e7e5", "g1f3", "b8c6", "f1b5"),
         )
@@ -326,7 +326,7 @@ class SavedPositionsNavigationTest {
 
     @Test
     fun savedPositionsScreen_startOnSecondDeviationSelectionOpensSelectedPosition() {
-        val positionId = saveGamesWithTwoDeviationPositions()
+        val positionId = saveLinesWithTwoDeviationPositions()
 
         openDeviationSelectionFromSavedPosition(
             positionId = positionId,
@@ -349,18 +349,18 @@ class SavedPositionsNavigationTest {
     }
 
     @Test
-    fun savedPositionsScreen_findDeviationsUsesWhiteAndBothGamesOnly() {
-        saveGame(
+    fun savedPositionsScreen_findDeviationsUsesWhiteAndBothLinesOnly() {
+        saveLine(
             event = "White Side Line",
             uciMoves = listOf("e2e4"),
             sideMask = SideMask.WHITE,
         )
-        saveGame(
+        saveLine(
             event = "Both Sides Line",
             uciMoves = listOf("d2d4"),
             sideMask = SideMask.BOTH,
         )
-        saveGame(
+        saveLine(
             event = "Black Side Line",
             uciMoves = listOf("c2c4"),
             sideMask = SideMask.BLACK,
@@ -384,18 +384,18 @@ class SavedPositionsNavigationTest {
     }
 
     @Test
-    fun savedPositionsScreen_findDeviationsUsesBlackAndBothGamesOnly() {
-        saveGame(
+    fun savedPositionsScreen_findDeviationsUsesBlackAndBothLinesOnly() {
+        saveLine(
             event = "Black Side Sicilian",
             uciMoves = listOf("e2e4", "c7c5"),
             sideMask = SideMask.BLACK,
         )
-        saveGame(
-            event = "Both Sides Open Game",
+        saveLine(
+            event = "Both Sides Open Line",
             uciMoves = listOf("e2e4", "e7e5"),
             sideMask = SideMask.BOTH,
         )
-        saveGame(
+        saveLine(
             event = "White Side French",
             uciMoves = listOf("e2e4", "e7e6"),
             sideMask = SideMask.WHITE,
@@ -514,11 +514,11 @@ class SavedPositionsNavigationTest {
     }
 
     private fun saveDeviationSourcePosition(): Long {
-        saveGame(
+        saveLine(
             event = "Deviation Source A",
             uciMoves = listOf("e2e4", "e7e5", "g1f3", "b8c6", "f1c4"),
         )
-        saveGame(
+        saveLine(
             event = "Deviation Source B",
             uciMoves = listOf("e2e4", "e7e5", "g1f3", "b8c6", "f1b5"),
         )
@@ -529,23 +529,23 @@ class SavedPositionsNavigationTest {
         )
     }
 
-    private fun saveGamesWithTwoDeviationPositions(): Long {
+    private fun saveLinesWithTwoDeviationPositions(): Long {
         // Creates two distinct deviation positions reachable from the same saved source position:
         // 1. after 1.e4 e5 2.Nf3 Nc6
         // 2. after 1.d4 d5
-        saveGame(
+        saveLine(
             event = "Multiple Deviation A",
             uciMoves = listOf("e2e4", "e7e5", "g1f3", "b8c6", "f1c4"),
         )
-        saveGame(
+        saveLine(
             event = "Multiple Deviation B",
             uciMoves = listOf("e2e4", "e7e5", "g1f3", "b8c6", "f1b5"),
         )
-        saveGame(
+        saveLine(
             event = "Multiple Deviation C",
             uciMoves = listOf("d2d4", "d7d5", "c2c4"),
         )
-        saveGame(
+        saveLine(
             event = "Multiple Deviation D",
             uciMoves = listOf("d2d4", "d7d5", "c2c3"),
         )
@@ -584,33 +584,33 @@ class SavedPositionsNavigationTest {
         waitForNodeDisplayed(OpeningDeviationDisplayContentTestTag)
     }
 
-    private fun saveGameContainingInitialPosition(): Long {
-        return saveGame(
+    private fun saveLineContainingInitialPosition(): Long {
+        return saveLine(
             event = "Saved Position Source",
             uciMoves = listOf("e2e4", "e7e5"),
         )
     }
 
-    private fun saveGame(
+    private fun saveLine(
         event: String,
         uciMoves: List<String>,
         sideMask: Int = SideMask.BOTH,
     ): Long {
         return runBlocking {
-            val game = GameEntity(
+            val line = LineEntity(
                 event = event,
                 pgn = storedPgn(uciMoves),
                 initialFen = "",
                 sideMask = sideMask,
             )
-            val gameId = dbProvider.createGameSaver().saveGame(
-                game = game,
+            val lineId = dbProvider.createLineSaver().saveLine(
+                line = line,
                 moves = uciMovesToMoves(uciMoves),
-                sideMask = game.sideMask,
+                sideMask = line.sideMask,
             )
 
-            checkNotNull(gameId) {
-                "Expected source game to be saved"
+            checkNotNull(lineId) {
+                "Expected source line to be saved"
             }
         }
     }

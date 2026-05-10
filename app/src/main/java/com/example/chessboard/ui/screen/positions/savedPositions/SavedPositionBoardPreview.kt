@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.example.chessboard.boardmodel.GameController
+import com.example.chessboard.boardmodel.LineController
 import com.example.chessboard.ui.BoardOrientation
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.CardSurface
@@ -23,7 +23,7 @@ import com.example.chessboard.ui.theme.AppDimens
 @Composable
 internal fun SavedPositionBoardPreview(
     position: SavedPositionListItem,
-    gameController: GameController,
+    lineController: LineController,
     modifier: Modifier = Modifier,
 ) {
     CardSurface(modifier = modifier.fillMaxWidth()) {
@@ -31,7 +31,7 @@ internal fun SavedPositionBoardPreview(
             SectionTitleText(text = "Position Preview")
             BodySecondaryText(text = resolveSavedPositionSideToMoveLabel(position))
             Spacer(modifier = Modifier.height(AppDimens.spaceXs))
-            ChessBoardSection(gameController = gameController)
+            ChessBoardSection(lineController = lineController)
         }
     }
 }

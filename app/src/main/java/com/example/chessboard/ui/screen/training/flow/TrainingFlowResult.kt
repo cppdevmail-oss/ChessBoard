@@ -11,20 +11,20 @@ package com.example.chessboard.ui.screen.training.flow
  * Validation date: 2026-04-26
  */
 
-import com.example.chessboard.boardmodel.GameDraft
-import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.boardmodel.LineDraft
+import com.example.chessboard.entity.LineEntity
 import com.example.chessboard.ui.screen.ScreenType
 
 sealed interface TrainingFlowResult {
     data class Navigate(val screen: ScreenType) : TrainingFlowResult
 
-    data class OpenGameEditor(
-        val game: GameEntity,
+    data class OpenLineEditor(
+        val line: LineEntity,
         val backTarget: ScreenType,
     ) : TrainingFlowResult
 
     data class OpenCreateOpening(
-        val draft: GameDraft,
+        val draft: LineDraft,
         val backTarget: ScreenType,
     ) : TrainingFlowResult
 

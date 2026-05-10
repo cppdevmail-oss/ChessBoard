@@ -7,8 +7,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.example.chessboard.repository.DatabaseProvider
-import com.example.chessboard.service.GameBackupRestoreProgress
-import com.example.chessboard.service.GameBackupRestoreResult
+import com.example.chessboard.service.LineBackupRestoreProgress
+import com.example.chessboard.service.LineBackupRestoreResult
 import com.example.chessboard.ui.BackupRestoreCancelTestTag
 import com.example.chessboard.ui.BackupRestoreProgressDialogTestTag
 import com.example.chessboard.ui.theme.ChessBoardTheme
@@ -24,9 +24,9 @@ class BackupScreenTest {
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun backupScreen_restoreShowsProgressAndCanBeCanceledAtFifthGame() {
+    fun backupScreen_restoreShowsProgressAndCanBeCanceledAtFifthLine() {
         val fakeRestoreUri = Uri.parse("content://test/backup.pgn")
-        val waitForCancelAtFifthGame = CompletableDeferred<Unit>()
+        val waitForCancelAtFifthLine = CompletableDeferred<Unit>()
 
         composeRule.setContent {
             ChessBoardTheme {
@@ -37,56 +37,56 @@ class BackupScreenTest {
                     ),
                     testRestoreUri = fakeRestoreUri,
                     restoreBackupRunner = { _, onProgress ->
-                        val totalGames = 15
-                        var processedGamesCount = 0
-                        var restoredGamesCount = 0
-                        var skippedGamesCount = 0
+                        val totalLines = 15
+                        var processedLinesCount = 0
+                        var restoredLinesCount = 0
+                        var skippedLinesCount = 0
 
                         onProgress(
-                            GameBackupRestoreProgress(
-                                totalGames = totalGames,
-                                processedGamesCount = processedGamesCount,
-                                restoredGamesCount = restoredGamesCount,
-                                skippedGamesCount = skippedGamesCount,
+                            LineBackupRestoreProgress(
+                                totalLines = totalLines,
+                                processedLinesCount = processedLinesCount,
+                                restoredLinesCount = restoredLinesCount,
+                                skippedLinesCount = skippedLinesCount,
                             )
                         )
 
-                        repeat(totalGames) {
+                        repeat(totalLines) {
                             currentCoroutineContext().ensureActive()
-                            processedGamesCount += 1
-                            restoredGamesCount += 1
+                            processedLinesCount += 1
+                            restoredLinesCount += 1
                             onProgress(
-                                GameBackupRestoreProgress(
-                                    totalGames = totalGames,
-                                    processedGamesCount = processedGamesCount,
-                                    restoredGamesCount = restoredGamesCount,
-                                    skippedGamesCount = skippedGamesCount,
+                                LineBackupRestoreProgress(
+                                    totalLines = totalLines,
+                                    processedLinesCount = processedLinesCount,
+                                    restoredLinesCount = restoredLinesCount,
+                                    skippedLinesCount = skippedLinesCount,
                                 )
                             )
 
-                            if (processedGamesCount == 5) {
-                                waitForCancelAtFifthGame.await()
+                            if (processedLinesCount == 5) {
+                                waitForCancelAtFifthLine.await()
                             }
                         }
 
-                        GameBackupRestoreResult(
-                            restoredGamesCount = restoredGamesCount,
-                            skippedGamesCount = skippedGamesCount
+                        LineBackupRestoreResult(
+                            restoredLinesCount = restoredLinesCount,
+                            skippedLinesCount = skippedLinesCount
                         )
                     }
                 )
             }
         }
 
-        composeRule.onNodeWithText("Restore Games").performClick()
+        composeRule.onNodeWithText("Restore Lines").performClick()
         composeRule.onNodeWithText("Restore").performClick()
 
         waitForNodeWithTag(BackupRestoreProgressDialogTestTag)
-        waitForText("Processed games: 5/15")
+        waitForText("Processed lines: 5/15")
         composeRule.onNodeWithTag(BackupRestoreCancelTestTag).performClick()
 
         waitForText("Restore canceled.")
-        waitForText("Processed games: 5/15")
+        waitForText("Processed lines: 5/15")
         waitForNodeWithTagToDisappear(BackupRestoreProgressDialogTestTag)
     }
 

@@ -21,7 +21,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.example.chessboard.service.OneGameTrainingData
+import com.example.chessboard.service.OneLineTrainingData
 import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
@@ -36,8 +36,8 @@ import com.example.chessboard.ui.screen.training.DEFAULT_MAX_WEIGHT
 import com.example.chessboard.ui.screen.training.DEFAULT_STATISTICS_TRAINING_NAME
 import com.example.chessboard.ui.screen.training.MAX_STATISTICS_GAMES
 import com.example.chessboard.ui.screen.training.common.CreateTrainingEditorState
-import com.example.chessboard.ui.screen.training.common.TrainingGameEditorItem
-import com.example.chessboard.ui.screen.training.common.toTrainingGameEditorItem
+import com.example.chessboard.ui.screen.training.common.TrainingLineEditorItem
+import com.example.chessboard.ui.screen.training.common.toTrainingLineEditorItem
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import kotlinx.coroutines.Dispatchers
@@ -48,13 +48,13 @@ import kotlinx.coroutines.withContext
 private data class StatisticsTrainingLoadState(
     val isLoading: Boolean = true,
     val trainingName: String = DEFAULT_STATISTICS_TRAINING_NAME,
-    val gamesForTraining: List<TrainingGameEditorItem> = emptyList(),
+    val linesForTraining: List<TrainingLineEditorItem> = emptyList(),
 )
 
 private data class StatisticsTrainingSaveSuccess(
     val trainingId: Long,
     val trainingName: String,
-    val gamesCount: Int,
+    val linesCount: Int,
 )
 
 @Composable
@@ -93,11 +93,11 @@ private fun StatisticsSettingStepper(
 
 @Composable
 private fun StatisticsTrainingSettingsSection(
-    maxGames: Int,
+    maxLines: Int,
     minDaysSinceLastTraining: Int,
     maxWeight: Int,
-    onDecreaseMaxGamesClick: () -> Unit,
-    onIncreaseMaxGamesClick: () -> Unit,
+    onDecreaseMaxLinesClick: () -> Unit,
+    onIncreaseMaxLinesClick: () -> Unit,
     onDecreaseMinDaysClick: () -> Unit,
     onIncreaseMinDaysClick: () -> Unit,
     onDecreaseMaxWeightClick: () -> Unit,
@@ -110,10 +110,10 @@ private fun StatisticsTrainingSettingsSection(
             verticalArrangement = Arrangement.spacedBy(AppDimens.spaceMd),
         ) {
             StatisticsSettingStepper(
-                label = "Max games",
-                value = maxGames,
-                onDecreaseClick = onDecreaseMaxGamesClick,
-                onIncreaseClick = onIncreaseMaxGamesClick,
+                label = "Max lines",
+                value = maxLines,
+                onDecreaseClick = onDecreaseMaxLinesClick,
+                onIncreaseClick = onIncreaseMaxLinesClick,
             )
             StatisticsSettingStepper(
                 label = "Min days since last training",
@@ -143,22 +143,22 @@ fun CreateTrainingByStatisticsScreenContainer(
 ) {
     var loadState by remember { mutableStateOf(StatisticsTrainingLoadState()) }
     var trainingSaveSuccess by remember { mutableStateOf<StatisticsTrainingSaveSuccess?>(null) }
-    var maxGames by remember { mutableIntStateOf(MAX_STATISTICS_GAMES) }
+    var maxLines by remember { mutableIntStateOf(MAX_STATISTICS_GAMES) }
     var minDaysSinceLastTraining by remember { mutableIntStateOf(0) }
     var maxWeight by remember { mutableIntStateOf(DEFAULT_MAX_WEIGHT) }
-    var appliedMaxGames by remember { mutableIntStateOf(MAX_STATISTICS_GAMES) }
+    var appliedMaxLines by remember { mutableIntStateOf(MAX_STATISTICS_GAMES) }
     var appliedMinDays by remember { mutableIntStateOf(0) }
     var appliedMaxWeight by remember { mutableIntStateOf(DEFAULT_MAX_WEIGHT) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(appliedMaxGames, appliedMinDays, appliedMaxWeight) {
+    LaunchedEffect(appliedMaxLines, appliedMinDays, appliedMaxWeight) {
         loadState = loadState.copy(isLoading = true)
 
         val recommendations = withContext(Dispatchers.IO) {
             screenContext.inDbProvider
                 .createStatisticsTrainingService()
                 .getRecommendation(
-                    limit = appliedMaxGames,
+                    limit = appliedMaxLines,
                     minDaysSinceLastTraining = appliedMinDays,
                     maxWeight = appliedMaxWeight,
                 )
@@ -167,8 +167,8 @@ fun CreateTrainingByStatisticsScreenContainer(
         loadState = StatisticsTrainingLoadState(
             isLoading = false,
             trainingName = DEFAULT_STATISTICS_TRAINING_NAME,
-            gamesForTraining = recommendations.map { recommendation ->
-                recommendation.game.toTrainingGameEditorItem(weight = recommendation.weight)
+            linesForTraining = recommendations.map { recommendation ->
+                recommendation.line.toTrainingLineEditorItem(weight = recommendation.weight)
             }
         )
     }
@@ -179,8 +179,8 @@ fun CreateTrainingByStatisticsScreenContainer(
             message = buildString {
                 appendLine("ID: ${success.trainingId}")
                 appendLine("Name: ${success.trainingName}")
-                append("Games added: ")
-                append(success.gamesCount)
+                append("Lines added: ")
+                append(success.linesCount)
             },
             onDismiss = {
                 trainingSaveSuccess = null
@@ -214,20 +214,20 @@ fun CreateTrainingByStatisticsScreenContainer(
     CreateTrainingScreen(
         editorState = CreateTrainingEditorState(
             trainingName = loadState.trainingName,
-            editableGamesForTraining = loadState.gamesForTraining,
+            editableLinesForTraining = loadState.linesForTraining,
         ),
         screenTitle = "Create Training by Statistics",
-        gamesCountLabel = "Games selected by statistics",
+        linesCountLabel = "Lines selected by statistics",
         headerContent = {
             StatisticsTrainingSettingsSection(
-                maxGames = maxGames,
+                maxLines = maxLines,
                 minDaysSinceLastTraining = minDaysSinceLastTraining,
                 maxWeight = maxWeight,
-                onDecreaseMaxGamesClick = {
-                    maxGames = (maxGames - 1).coerceAtLeast(1)
+                onDecreaseMaxLinesClick = {
+                    maxLines = (maxLines - 1).coerceAtLeast(1)
                 },
-                onIncreaseMaxGamesClick = {
-                    maxGames = (maxGames + 1).coerceAtMost(MAX_STATISTICS_GAMES)
+                onIncreaseMaxLinesClick = {
+                    maxLines = (maxLines + 1).coerceAtMost(MAX_STATISTICS_GAMES)
                 },
                 onDecreaseMinDaysClick = {
                     minDaysSinceLastTraining = (minDaysSinceLastTraining - 1).coerceAtLeast(0)
@@ -242,7 +242,7 @@ fun CreateTrainingByStatisticsScreenContainer(
                     maxWeight = (maxWeight + 1).coerceAtMost(DEFAULT_MAX_WEIGHT)
                 },
                 onApplyClick = {
-                    appliedMaxGames = maxGames
+                    appliedMaxLines = maxLines
                     appliedMinDays = minDaysSinceLastTraining
                     appliedMaxWeight = maxWeight
                 },
@@ -250,28 +250,28 @@ fun CreateTrainingByStatisticsScreenContainer(
         },
         onBackClick = screenContext.onBackClick,
         onNavigate = screenContext.onNavigate,
-        onSaveTraining = { trainingName, editableGames ->
+        onSaveTraining = { trainingName, editableLines ->
             scope.launch {
                 val normalizedName = trainingName.ifBlank { DEFAULT_STATISTICS_TRAINING_NAME }
-                val trainingGames = editableGames.map { game ->
-                    OneGameTrainingData(
-                        gameId = game.gameId,
-                        weight = game.weight,
+                val trainingLines = editableLines.map { line ->
+                    OneLineTrainingData(
+                        lineId = line.lineId,
+                        weight = line.weight,
                     )
                 }
 
                 val savedTrainingId = withContext(Dispatchers.IO) {
                     val trainingService = screenContext.inDbProvider.createTrainingService()
-                    trainingService.createTrainingFromGames(
+                    trainingService.createTrainingFromLines(
                         name = normalizedName,
-                        games = trainingGames,
+                        lines = trainingLines,
                     )
                 }
 
                 trainingSaveSuccess = StatisticsTrainingSaveSuccess(
                     trainingId = savedTrainingId ?: return@launch,
                     trainingName = normalizedName,
-                    gamesCount = editableGames.size,
+                    linesCount = editableLines.size,
                 )
             }
         },

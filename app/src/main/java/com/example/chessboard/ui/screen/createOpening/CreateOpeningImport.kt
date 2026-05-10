@@ -12,7 +12,7 @@ package com.example.chessboard.ui.screen.createOpening
  * Validation date: 2026-05-05
  */
 
-import com.example.chessboard.boardmodel.GameDraft
+import com.example.chessboard.boardmodel.LineDraft
 import com.example.chessboard.service.extractPgnHeaders
 import com.example.chessboard.service.parsePgnToUciLines
 import com.example.chessboard.service.splitPgnChapters
@@ -62,20 +62,20 @@ internal fun parseImportedChapters(pgnText: String): List<ImportedChapter> {
 }
 
 internal fun applyImportedChapterToDraft(
-    gameDraft: GameDraft,
+    lineDraft: LineDraft,
     importedChapter: ImportedChapter,
-): GameDraft {
-    var updatedGame = gameDraft.game
+): LineDraft {
+    var updatedLine = lineDraft.line
 
     val importedEvent = importedChapter.headerValue("Event")
     if (importedEvent != null) {
-        updatedGame = updatedGame.copy(event = importedEvent)
+        updatedLine = updatedLine.copy(event = importedEvent)
     }
 
     val importedEco = importedChapter.headerValue("ECO")
     if (importedEco != null) {
-        updatedGame = updatedGame.copy(eco = importedEco)
+        updatedLine = updatedLine.copy(eco = importedEco)
     }
 
-    return gameDraft.copy(game = updatedGame)
+    return lineDraft.copy(line = updatedLine)
 }

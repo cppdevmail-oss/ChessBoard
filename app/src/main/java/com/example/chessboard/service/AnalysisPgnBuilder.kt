@@ -1,12 +1,12 @@
 package com.example.chessboard.service
 
 /**
- * Builds exportable PGN text from the analysis move tree collected on the game-analysis screen.
+ * Builds exportable PGN text from the analysis move tree collected on the line-analysis screen.
  *
  * Keep pure analysis-tree to PGN serialization logic here. Do not add Compose UI, clipboard
  * access, navigation, or persistence workflows to this file. Validation date: 2026-05-01.
  */
-import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.entity.LineEntity
 import com.github.bhlangonijr.chesslib.Board
 import com.github.bhlangonijr.chesslib.Piece
 import com.github.bhlangonijr.chesslib.PieceType
@@ -18,11 +18,11 @@ private data class AnalysisMoveNode(
     val children: MutableList<AnalysisMoveNode> = mutableListOf(),
 )
 
-fun buildAnalysisPgnFromGames(
-    games: List<GameEntity>,
+fun buildAnalysisPgnFromLines(
+    lines: List<LineEntity>,
 ): String {
-    val uciLines = games.mapNotNull { game ->
-        parsePgnMoves(game.pgn).takeIf { line -> line.isNotEmpty() }
+    val uciLines = lines.mapNotNull { line ->
+        parsePgnMoves(line.pgn).takeIf { line -> line.isNotEmpty() }
     }
 
     return buildAnalysisPgn(uciLines)

@@ -9,7 +9,7 @@ import com.example.chessboard.ui.screen.training.common.CreateTrainingEditorStat
  * add Compose UI dialog tests or broader screen flow tests to this file.
  */
 
-import com.example.chessboard.ui.screen.training.common.TrainingGameEditorItem
+import com.example.chessboard.ui.screen.training.common.TrainingLineEditorItem
 
 import com.example.chessboard.ui.screen.training.loadsave.hasUnsavedTrainingEditorChanges
 import org.junit.Assert.assertFalse
@@ -19,19 +19,19 @@ import org.junit.Test
 class TrainingEditorUnsavedChangesTest {
 
     @Test
-    fun `hasUnsavedTrainingEditorChanges returns false when name and games are unchanged`() {
-        val initialGames = listOf(
-            TrainingGameEditorItem(gameId = 1L, title = "Game 1", weight = 2)
+    fun `hasUnsavedTrainingEditorChanges returns false when name and lines are unchanged`() {
+        val initialLines = listOf(
+            TrainingLineEditorItem(lineId = 1L, title = "Line 1", weight = 2)
         )
         val editorState = CreateTrainingEditorState(
             trainingName = "My Training",
-            editableGamesForTraining = initialGames,
+            editableLinesForTraining = initialLines,
         )
 
         val hasChanges = hasUnsavedTrainingEditorChanges(
             editorState = editorState,
             initialTrainingName = "My Training",
-            initialGamesForTraining = initialGames,
+            initialLinesForTraining = initialLines,
         )
 
         assertFalse(hasChanges)
@@ -39,18 +39,18 @@ class TrainingEditorUnsavedChangesTest {
 
     @Test
     fun `hasUnsavedTrainingEditorChanges returns true when name changes`() {
-        val initialGames = listOf(
-            TrainingGameEditorItem(gameId = 1L, title = "Game 1", weight = 2)
+        val initialLines = listOf(
+            TrainingLineEditorItem(lineId = 1L, title = "Line 1", weight = 2)
         )
         val editorState = CreateTrainingEditorState(
             trainingName = "Updated Training",
-            editableGamesForTraining = initialGames,
+            editableLinesForTraining = initialLines,
         )
 
         val hasChanges = hasUnsavedTrainingEditorChanges(
             editorState = editorState,
             initialTrainingName = "Initial Training",
-            initialGamesForTraining = initialGames,
+            initialLinesForTraining = initialLines,
         )
 
         assertTrue(hasChanges)
@@ -58,33 +58,33 @@ class TrainingEditorUnsavedChangesTest {
 
     @Test
     fun `hasUnsavedTrainingEditorChanges treats blank name as default name`() {
-        val initialGames = listOf(
-            TrainingGameEditorItem(gameId = 1L, title = "Game 1", weight = 2)
+        val initialLines = listOf(
+            TrainingLineEditorItem(lineId = 1L, title = "Line 1", weight = 2)
         )
         val editorState = CreateTrainingEditorState(
             trainingName = "",
-            editableGamesForTraining = initialGames,
+            editableLinesForTraining = initialLines,
         )
 
         val hasChanges = hasUnsavedTrainingEditorChanges(
             editorState = editorState,
             initialTrainingName = DEFAULT_TRAINING_NAME,
-            initialGamesForTraining = initialGames,
+            initialLinesForTraining = initialLines,
         )
 
         assertFalse(hasChanges)
     }
 
     @Test
-    fun `hasUnsavedTrainingEditorChanges returns true when game list changes`() {
-        val initialGames = listOf(
-            TrainingGameEditorItem(gameId = 1L, title = "Game 1", weight = 2)
+    fun `hasUnsavedTrainingEditorChanges returns true when line list changes`() {
+        val initialLines = listOf(
+            TrainingLineEditorItem(lineId = 1L, title = "Line 1", weight = 2)
         )
         val editorState = CreateTrainingEditorState(
             trainingName = "My Training",
-            editableGamesForTraining = initialGames + TrainingGameEditorItem(
-                gameId = 2L,
-                title = "Game 2",
+            editableLinesForTraining = initialLines + TrainingLineEditorItem(
+                lineId = 2L,
+                title = "Line 2",
                 weight = 1,
             ),
         )
@@ -92,28 +92,28 @@ class TrainingEditorUnsavedChangesTest {
         val hasChanges = hasUnsavedTrainingEditorChanges(
             editorState = editorState,
             initialTrainingName = "My Training",
-            initialGamesForTraining = initialGames,
+            initialLinesForTraining = initialLines,
         )
 
         assertTrue(hasChanges)
     }
 
     @Test
-    fun `hasUnsavedTrainingEditorChanges returns true when game weight changes`() {
-        val initialGames = listOf(
-            TrainingGameEditorItem(gameId = 1L, title = "Game 1", weight = 2)
+    fun `hasUnsavedTrainingEditorChanges returns true when line weight changes`() {
+        val initialLines = listOf(
+            TrainingLineEditorItem(lineId = 1L, title = "Line 1", weight = 2)
         )
         val editorState = CreateTrainingEditorState(
             trainingName = "My Training",
-            editableGamesForTraining = listOf(
-                TrainingGameEditorItem(gameId = 1L, title = "Game 1", weight = 3)
+            editableLinesForTraining = listOf(
+                TrainingLineEditorItem(lineId = 1L, title = "Line 1", weight = 3)
             ),
         )
 
         val hasChanges = hasUnsavedTrainingEditorChanges(
             editorState = editorState,
             initialTrainingName = "My Training",
-            initialGamesForTraining = initialGames,
+            initialLinesForTraining = initialLines,
         )
 
         assertTrue(hasChanges)

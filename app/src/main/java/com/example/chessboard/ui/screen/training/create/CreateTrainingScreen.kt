@@ -25,7 +25,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
-import com.example.chessboard.service.OneGameTrainingData
+import com.example.chessboard.service.OneLineTrainingData
 import com.example.chessboard.ui.components.AppBottomNavigation
 import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.components.AppScreenScaffold
@@ -43,16 +43,16 @@ import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
-import com.example.chessboard.ui.screen.training.TrainingGameRowHeight
-import com.example.chessboard.ui.screen.training.TrainingGameRowSpacing
-import com.example.chessboard.ui.screen.training.TrainingGamesHeaderHeight
-import com.example.chessboard.ui.screen.training.TrainingGamesNavigationHeight
+import com.example.chessboard.ui.screen.training.TrainingLineRowHeight
+import com.example.chessboard.ui.screen.training.TrainingLineRowSpacing
+import com.example.chessboard.ui.screen.training.TrainingLinesHeaderHeight
+import com.example.chessboard.ui.screen.training.TrainingLinesNavigationHeight
 import com.example.chessboard.ui.screen.training.common.CreateTrainingEditorState
 import com.example.chessboard.ui.screen.training.common.DEFAULT_TRAINING_NAME
-import com.example.chessboard.ui.screen.training.common.TrainingGameEditorItem
-import com.example.chessboard.ui.screen.training.common.decreaseTrainingGameWeight
-import com.example.chessboard.ui.screen.training.common.increaseTrainingGameWeight
-import com.example.chessboard.ui.screen.training.common.removeTrainingGame
+import com.example.chessboard.ui.screen.training.common.TrainingLineEditorItem
+import com.example.chessboard.ui.screen.training.common.decreaseTrainingLineWeight
+import com.example.chessboard.ui.screen.training.common.increaseTrainingLineWeight
+import com.example.chessboard.ui.screen.training.common.removeTrainingLine
 import com.example.chessboard.ui.screen.training.loadsave.TrainingSaveSuccess
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TrainingAccentTeal
@@ -62,7 +62,7 @@ import kotlinx.coroutines.withContext
 
 internal data class CreateTrainingInitialData(
     val trainingName: String = DEFAULT_TRAINING_NAME,
-    val gamesForTraining: List<TrainingGameEditorItem> = emptyList()
+    val linesForTraining: List<TrainingLineEditorItem> = emptyList()
 )
 
 @Composable
@@ -70,7 +70,7 @@ internal fun CreateTrainingScreenContainer(
     screenContext: ScreenContainerContext,
     initialData: CreateTrainingInitialData,
     screenTitle: String = "Create Training",
-    gamesCountLabel: String = "Games loaded for training",
+    linesCountLabel: String = "Lines loaded for training",
     modifier: Modifier = Modifier,
 ) {
     var trainingSaveSuccess by remember { mutableStateOf<TrainingSaveSuccess?>(null) }
@@ -89,34 +89,34 @@ internal fun CreateTrainingScreenContainer(
     CreateTrainingScreen(
         editorState = CreateTrainingEditorState(
             trainingName = initialData.trainingName,
-            editableGamesForTraining = initialData.gamesForTraining
+            editableLinesForTraining = initialData.linesForTraining
         ),
         screenTitle = screenTitle,
-        gamesCountLabel = gamesCountLabel,
+        linesCountLabel = linesCountLabel,
         onBackClick = screenContext.onBackClick,
         onNavigate = screenContext.onNavigate,
-        onSaveTraining = { trainingName, editableGames ->
+        onSaveTraining = { trainingName, editableLines ->
             scope.launch {
                 val normalizedName = trainingName.ifBlank { DEFAULT_TRAINING_NAME }
-                val trainingGames = editableGames.map { game ->
-                    OneGameTrainingData(
-                        gameId = game.gameId,
-                        weight = game.weight
+                val trainingLines = editableLines.map { line ->
+                    OneLineTrainingData(
+                        lineId = line.lineId,
+                        weight = line.weight
                     )
                 }
 
                 val savedTrainingId = withContext(Dispatchers.IO) {
                     val trainingService = screenContext.inDbProvider.createTrainingService()
-                    trainingService.createTrainingFromGames(
+                    trainingService.createTrainingFromLines(
                         name = normalizedName,
-                        games = trainingGames
+                        lines = trainingLines
                     )
                 }
 
                 trainingSaveSuccess = TrainingSaveSuccess(
                     trainingId = savedTrainingId ?: return@launch,
                     trainingName = normalizedName,
-                    gamesCount = editableGames.size
+                    linesCount = editableLines.size
                 )
             }
         },
@@ -128,11 +128,11 @@ internal fun CreateTrainingScreenContainer(
 internal fun CreateTrainingScreen(
     editorState: CreateTrainingEditorState = CreateTrainingEditorState(),
     screenTitle: String = "Create Training",
-    gamesCountLabel: String = "Games loaded for training",
+    linesCountLabel: String = "Lines loaded for training",
     headerContent: (@Composable () -> Unit)? = null,
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
-    onSaveTraining: (String, List<TrainingGameEditorItem>) -> Unit,
+    onSaveTraining: (String, List<TrainingLineEditorItem>) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
@@ -153,7 +153,7 @@ internal fun CreateTrainingScreen(
                 actions = {
                     Spacer(modifier = Modifier.width(AppDimens.spaceSm))
                     IconButton(
-                        onClick = { onSaveTraining(currentEditorState.trainingName, currentEditorState.editableGamesForTraining) }
+                        onClick = { onSaveTraining(currentEditorState.trainingName, currentEditorState.editableLinesForTraining) }
                     ) {
                         IconMd(
                             imageVector = Icons.Default.Save,
@@ -198,10 +198,10 @@ internal fun CreateTrainingScreen(
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
 
             ScreenSection {
-                BodySecondaryText(text = "$gamesCountLabel: ${currentEditorState.editableGamesForTraining.size}")
+                BodySecondaryText(text = "$linesCountLabel: ${currentEditorState.editableLinesForTraining.size}")
             }
 
-            TrainingGamesEditorSection(
+            TrainingLinesEditorSection(
                 editorState = currentEditorState,
                 onEditorStateChange = { currentEditorState = it },
                 modifier = Modifier
@@ -213,33 +213,33 @@ internal fun CreateTrainingScreen(
 }
 
 @Composable
-private fun TrainingGamesEditorSection(
+private fun TrainingLinesEditorSection(
     editorState: CreateTrainingEditorState,
     onEditorStateChange: (CreateTrainingEditorState) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    data class TrainingGamesPageState(
-        val currentPageItems: List<TrainingGameEditorItem>,
+    data class TrainingLinesPageState(
+        val currentPageItems: List<TrainingLineEditorItem>,
         val currentPage: Int,
         val totalPages: Int,
         val canGoPrevious: Boolean,
         val canGoNext: Boolean,
     )
 
-    fun resolveTrainingGamesPageState(maxHeight: Dp): TrainingGamesPageState {
+    fun resolveTrainingLinesPageState(maxHeight: Dp): TrainingLinesPageState {
         val availableHeightForRows =
-            (maxHeight - TrainingGamesHeaderHeight - TrainingGamesNavigationHeight)
-                .coerceAtLeast(TrainingGameRowHeight)
-        val trainingGameSlotHeight = TrainingGameRowHeight + TrainingGameRowSpacing
-        val pageSize = (availableHeightForRows / trainingGameSlotHeight)
+            (maxHeight - TrainingLinesHeaderHeight - TrainingLinesNavigationHeight)
+                .coerceAtLeast(TrainingLineRowHeight)
+        val trainingLineSlotHeight = TrainingLineRowHeight + TrainingLineRowSpacing
+        val pageSize = (availableHeightForRows / trainingLineSlotHeight)
             .toInt()
             .coerceAtLeast(1)
-        val totalPages = ((editorState.editableGamesForTraining.size + pageSize - 1) / pageSize)
+        val totalPages = ((editorState.editableLinesForTraining.size + pageSize - 1) / pageSize)
             .coerceAtLeast(1)
         val safeCurrentPage = editorState.currentPage.coerceIn(0, totalPages - 1)
 
-        return TrainingGamesPageState(
-            currentPageItems = editorState.editableGamesForTraining
+        return TrainingLinesPageState(
+            currentPageItems = editorState.editableLinesForTraining
                 .drop(safeCurrentPage * pageSize)
                 .take(pageSize),
             currentPage = safeCurrentPage,
@@ -250,58 +250,58 @@ private fun TrainingGamesEditorSection(
     }
 
     BoxWithConstraints(modifier = modifier) {
-        val pageState = resolveTrainingGamesPageState(maxHeight)
+        val pageState = resolveTrainingLinesPageState(maxHeight)
         ScreenSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = AppDimens.spaceLg)
         ) {
-            TrainingGamesPage(
-                games = pageState.currentPageItems,
+            TrainingLinesPage(
+                lines = pageState.currentPageItems,
                 currentPage = pageState.currentPage,
                 totalPages = pageState.totalPages,
                 canGoPrevious = pageState.canGoPrevious,
                 canGoNext = pageState.canGoNext,
-                onDecreaseWeightClick = { gameId ->
+                onDecreaseWeightClick = { lineId ->
                     onEditorStateChange(
                         editorState.copy(
-                            editableGamesForTraining = decreaseTrainingGameWeight(
-                                games = editorState.editableGamesForTraining,
-                                gameId = gameId
+                            editableLinesForTraining = decreaseTrainingLineWeight(
+                                lines = editorState.editableLinesForTraining,
+                                lineId = lineId
                             )
                         )
                     )
                 },
-                onIncreaseWeightClick = { gameId ->
+                onIncreaseWeightClick = { lineId ->
                     onEditorStateChange(
                         editorState.copy(
-                            editableGamesForTraining = increaseTrainingGameWeight(
-                                games = editorState.editableGamesForTraining,
-                                gameId = gameId
+                            editableLinesForTraining = increaseTrainingLineWeight(
+                                lines = editorState.editableLinesForTraining,
+                                lineId = lineId
                             )
                         )
                     )
                 },
-                onRemoveGameClick = { gameId ->
+                onRemoveLineClick = { lineId ->
                     onEditorStateChange(
                         editorState.copy(
-                            editableGamesForTraining = removeTrainingGame(
-                                games = editorState.editableGamesForTraining,
-                                gameId = gameId
+                            editableLinesForTraining = removeTrainingLine(
+                                lines = editorState.editableLinesForTraining,
+                                lineId = lineId
                             )
                         )
                     )
                 },
                 onPreviousPageClick = {
                     if (!pageState.canGoPrevious) {
-                        return@TrainingGamesPage
+                        return@TrainingLinesPage
                     }
 
                     onEditorStateChange(editorState.copy(currentPage = pageState.currentPage - 1))
                 },
                 onNextPageClick = {
                     if (!pageState.canGoNext) {
-                        return@TrainingGamesPage
+                        return@TrainingLinesPage
                     }
 
                     onEditorStateChange(editorState.copy(currentPage = pageState.currentPage + 1))
@@ -312,21 +312,21 @@ private fun TrainingGamesEditorSection(
 }
 
 @Composable
-private fun TrainingGamesPage(
-    games: List<TrainingGameEditorItem>,
+private fun TrainingLinesPage(
+    lines: List<TrainingLineEditorItem>,
     currentPage: Int,
     totalPages: Int,
     canGoPrevious: Boolean,
     canGoNext: Boolean,
     onDecreaseWeightClick: (Long) -> Unit,
     onIncreaseWeightClick: (Long) -> Unit,
-    onRemoveGameClick: (Long) -> Unit,
+    onRemoveLineClick: (Long) -> Unit,
     onPreviousPageClick: () -> Unit,
     onNextPageClick: () -> Unit
 ) {
     CardSurface(modifier = Modifier.fillMaxWidth()) {
         SectionTitleText(
-            text = "Games in Training"
+            text = "Lines in Training"
         )
 
         Spacer(modifier = Modifier.height(AppDimens.spaceSm))
@@ -337,18 +337,18 @@ private fun TrainingGamesPage(
 
         Spacer(modifier = Modifier.height(AppDimens.spaceLg))
 
-        if (games.isEmpty()) {
-            BodySecondaryText(text = "No games available.")
+        if (lines.isEmpty()) {
+            BodySecondaryText(text = "No lines available.")
         } else {
-            games.forEachIndexed { index, game ->
-                TrainingGamePageRow(
-                    game = game,
-                    onDecreaseWeightClick = { onDecreaseWeightClick(game.gameId) },
-                    onIncreaseWeightClick = { onIncreaseWeightClick(game.gameId) },
-                    onRemoveGameClick = { onRemoveGameClick(game.gameId) },
+            lines.forEachIndexed { index, line ->
+                TrainingLinePageRow(
+                    line = line,
+                    onDecreaseWeightClick = { onDecreaseWeightClick(line.lineId) },
+                    onIncreaseWeightClick = { onIncreaseWeightClick(line.lineId) },
+                    onRemoveLineClick = { onRemoveLineClick(line.lineId) },
                 )
-                if (index + 1 < games.size) {
-                    Spacer(modifier = Modifier.height(TrainingGameRowSpacing))
+                if (index + 1 < lines.size) {
+                    Spacer(modifier = Modifier.height(TrainingLineRowSpacing))
                 }
             }
         }
@@ -376,11 +376,11 @@ private fun TrainingGamesPage(
 }
 
 @Composable
-private fun TrainingGamePageRow(
-    game: TrainingGameEditorItem,
+private fun TrainingLinePageRow(
+    line: TrainingLineEditorItem,
     onDecreaseWeightClick: () -> Unit,
     onIncreaseWeightClick: () -> Unit,
-    onRemoveGameClick: () -> Unit,
+    onRemoveLineClick: () -> Unit,
 ) {
     CardSurface(
         modifier = Modifier.fillMaxWidth(),
@@ -394,14 +394,14 @@ private fun TrainingGamePageRow(
                 modifier = Modifier.weight(1f)
             ) {
                 SectionTitleText(
-                    text = game.title,
+                    text = line.title,
                 )
                 Spacer(modifier = Modifier.height(AppDimens.spaceXs))
                 CardMetaText(
-                    text = "ID: ${game.gameId}"
+                    text = "ID: ${line.lineId}"
                 )
                 CardMetaText(
-                    text = "Weight: ${game.weight}"
+                    text = "Weight: ${line.weight}"
                 )
             }
 
@@ -413,18 +413,18 @@ private fun TrainingGamePageRow(
                 ) {
                     RepeatStepIconButton(
                         icon = Icons.Default.Remove,
-                        contentDescription = "Decrease game weight",
+                        contentDescription = "Decrease line weight",
                         onStep = onDecreaseWeightClick,
                     )
                     RepeatStepIconButton(
                         icon = Icons.Default.Add,
-                        contentDescription = "Increase game weight",
+                        contentDescription = "Increase line weight",
                         onStep = onIncreaseWeightClick,
                     )
                 }
                 DeleteIconButton(
-                    onClick = onRemoveGameClick,
-                    contentDescription = "Remove game from training",
+                    onClick = onRemoveLineClick,
+                    contentDescription = "Remove line from training",
                 )
             }
         }
@@ -441,8 +441,8 @@ private fun TrainingSaveSuccessDialog(
         message = buildString {
             appendLine("ID: ${success.trainingId}")
             appendLine("Name: ${success.trainingName}")
-            append("Games added: ")
-            append(success.gamesCount)
+            append("Lines added: ")
+            append(success.linesCount)
         },
         onDismiss = onDismiss
     )

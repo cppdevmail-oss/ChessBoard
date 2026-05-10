@@ -1,9 +1,9 @@
 package com.example.chessboard.ui.screen.positions
 
 /**
- * Shared position-search result flow for screens that search games by board position.
+ * Shared position-search result flow for screens that search lines by board position.
  *
- * Keep reusable found-games dialogs and create-template helpers here. Do not add screen layout,
+ * Keep reusable found-lines dialogs and create-template helpers here. Do not add screen layout,
  * card rendering, or position-search board editing logic to this file.
  */
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.ui.PositionTemplateNameConfirmTestTag
-import com.example.chessboard.service.OneGameTrainingData
+import com.example.chessboard.service.OneLineTrainingData
 import com.example.chessboard.ui.PositionSearchResultShowLinesActionTestTag
 import com.example.chessboard.ui.PositionSearchResultTemplateActionTestTag
 import com.example.chessboard.ui.PositionSearchResultTrainingActionTestTag
@@ -32,7 +32,7 @@ import com.example.chessboard.ui.theme.Background
 internal const val PositionTemplateDefaultName = "Template From Position"
 
 internal data class PositionTemplateNameDialogState(
-    val gameIds: List<Long>,
+    val lineIds: List<Long>,
     val templateName: String = PositionTemplateDefaultName,
 )
 
@@ -49,7 +49,7 @@ internal data class PositionSearchResultDialogActions(
 
 @Composable
 internal fun RenderPositionSearchResultDialog(
-    foundGameIds: List<Long>?,
+    foundLineIds: List<Long>?,
     actions: PositionSearchResultDialogActions,
 ) {
     RenderPositionTemplateNameDialog(
@@ -59,14 +59,14 @@ internal fun RenderPositionSearchResultDialog(
         onConfirm = actions.onConfirmTemplateName,
     )
 
-    if (foundGameIds == null) {
+    if (foundLineIds == null) {
         return
     }
 
-    if (foundGameIds.isEmpty()) {
+    if (foundLineIds.isEmpty()) {
         AppMessageDialog(
-            title = resolveFoundGameIdsTitle(foundGameIds),
-            message = resolveFoundGameIdsMessage(foundGameIds),
+            title = resolveFoundLineIdsTitle(foundLineIds),
+            message = resolveFoundLineIdsMessage(foundLineIds),
             onDismiss = actions.onDismiss,
         )
         return
@@ -99,16 +99,16 @@ internal fun RenderPositionSearchResultDialog(
     }
 
     AppMessageDialog(
-        title = resolveFoundGameIdsTitle(foundGameIds),
-        message = resolveFoundGameIdsMessage(foundGameIds),
+        title = resolveFoundLineIdsTitle(foundLineIds),
+        message = resolveFoundLineIdsMessage(foundLineIds),
         onDismiss = actions.onDismiss,
         actions = resultActions,
     )
 }
 
-internal suspend fun createPositionTemplateFromGameIds(
+internal suspend fun createPositionTemplateFromLineIds(
     dbProvider: DatabaseProvider,
-    gameIds: List<Long>,
+    lineIds: List<Long>,
     templateName: String = PositionTemplateDefaultName,
 ): Long? {
     val templateService = dbProvider.createTrainingTemplateService()
@@ -119,15 +119,15 @@ internal suspend fun createPositionTemplateFromGameIds(
         return null
     }
 
-    val allGamesAdded = gameIds.all { gameId ->
-        templateService.addGame(
+    val allLinesAdded = lineIds.all { lineId ->
+        templateService.addLine(
             templateId = templateId,
-            gameId = gameId,
-            weight = OneGameTrainingData(gameId = gameId, weight = 1).weight,
+            lineId = lineId,
+            weight = OneLineTrainingData(lineId = lineId, weight = 1).weight,
         )
     }
 
-    return templateId.takeIf { allGamesAdded }
+    return templateId.takeIf { allLinesAdded }
 }
 
 @Composable
@@ -148,7 +148,7 @@ private fun RenderPositionTemplateNameDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)) {
                 BodySecondaryText(
-                    text = "Name the template created from the matched games."
+                    text = "Name the template created from the matched lines."
                 )
                 AppTextField(
                     value = currentState.templateName,
@@ -173,20 +173,20 @@ private fun RenderPositionTemplateNameDialog(
     )
 }
 
-private fun resolveFoundGameIdsTitle(foundGameIds: List<Long>): String {
-    if (foundGameIds.isEmpty()) {
-        return "Games Not Found"
+private fun resolveFoundLineIdsTitle(foundLineIds: List<Long>): String {
+    if (foundLineIds.isEmpty()) {
+        return "Lines Not Found"
     }
 
-    return "Games Found"
+    return "Lines Found"
 }
 
-private fun resolveFoundGameIdsMessage(foundGameIds: List<Long>): String {
-    if (foundGameIds.isEmpty()) {
-        return "No saved games contain this position."
+private fun resolveFoundLineIdsMessage(foundLineIds: List<Long>): String {
+    if (foundLineIds.isEmpty()) {
+        return "No saved lines contain this position."
     }
 
-    return "${foundGameIds.size} saved games match this position. Choose what to create from them."
+    return "${foundLineIds.size} saved lines match this position. Choose what to create from them."
 }
 
 private fun resolvePositionTemplateName(templateName: String): String {

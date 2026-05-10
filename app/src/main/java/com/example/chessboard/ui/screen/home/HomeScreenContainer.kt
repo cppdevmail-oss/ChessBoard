@@ -20,7 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.example.chessboard.entity.SideMask
-import com.example.chessboard.service.OneGameTrainingData
+import com.example.chessboard.service.OneLineTrainingData
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
 import kotlinx.coroutines.Dispatchers
@@ -29,7 +29,7 @@ import kotlinx.coroutines.withContext
 internal data class HomeTrainingItem(
     val trainingId: Long,
     val name: String,
-    val gamesCount: Int,
+    val linesCount: Int,
     val supportsWhite: Boolean,
     val supportsBlack: Boolean,
 )
@@ -57,19 +57,19 @@ fun HomeScreenContainer(
             return@LaunchedEffect
         }
         trainings = withContext(Dispatchers.IO) {
-            val allGames = screenContext.inDbProvider.getAllGames().associateBy { it.id }
+            val allLines = screenContext.inDbProvider.getAllLines().associateBy { it.id }
             trainingService.getAllTrainings().map { training ->
-                val trainingGames = OneGameTrainingData.fromJson(training.gamesJson)
-                val includedGames = trainingGames.mapNotNull { allGames[it.gameId] }
+                val trainingLines = OneLineTrainingData.fromJson(training.linesJson)
+                val includedLines = trainingLines.mapNotNull { allLines[it.lineId] }
                 HomeTrainingItem(
                     trainingId = training.id,
                     name = training.name.ifBlank { "Unnamed Training" },
-                    gamesCount = trainingGames.size,
-                    supportsWhite = includedGames.any { game ->
-                        (game.sideMask and SideMask.WHITE) != 0
+                    linesCount = trainingLines.size,
+                    supportsWhite = includedLines.any { line ->
+                        (line.sideMask and SideMask.WHITE) != 0
                     },
-                    supportsBlack = includedGames.any { game ->
-                        (game.sideMask and SideMask.BLACK) != 0
+                    supportsBlack = includedLines.any { line ->
+                        (line.sideMask and SideMask.BLACK) != 0
                     },
                 )
             }

@@ -11,7 +11,7 @@ package com.example.chessboard.ui.screen.createOpening
  * Validation date: 2026-05-05
  */
 
-import com.example.chessboard.boardmodel.GameDraft
+import com.example.chessboard.boardmodel.LineDraft
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -57,7 +57,7 @@ class CreateOpeningImportTest {
 
     @Test
     fun `applyImportedChapterToDraft updates only meaningful imported fields`() {
-        val draft = GameDraft()
+        val draft = LineDraft()
         val importedChapter = importedChapter(
             headers = mapOf(
                 "Event" to "Caro-Kann Defense",
@@ -66,18 +66,18 @@ class CreateOpeningImportTest {
         )
 
         val updatedDraft = applyImportedChapterToDraft(
-            gameDraft = draft,
+            lineDraft = draft,
             importedChapter = importedChapter,
         )
 
-        assertEquals("Caro-Kann Defense", updatedDraft.game.event)
-        assertEquals("B12", updatedDraft.game.eco)
+        assertEquals("Caro-Kann Defense", updatedDraft.line.event)
+        assertEquals("B12", updatedDraft.line.eco)
     }
 
     @Test
     fun `applyImportedChapterToDraft keeps existing values when imported headers are not meaningful`() {
-        val draft = GameDraft(
-            game = GameDraft().game.copy(
+        val draft = LineDraft(
+            line = LineDraft().line.copy(
                 event = "Existing Opening",
                 eco = "A00",
             ),
@@ -90,12 +90,12 @@ class CreateOpeningImportTest {
         )
 
         val updatedDraft = applyImportedChapterToDraft(
-            gameDraft = draft,
+            lineDraft = draft,
             importedChapter = importedChapter,
         )
 
-        assertEquals("Existing Opening", updatedDraft.game.event)
-        assertEquals("A00", updatedDraft.game.eco)
+        assertEquals("Existing Opening", updatedDraft.line.event)
+        assertEquals("A00", updatedDraft.line.eco)
     }
 
     private fun importedChapter(

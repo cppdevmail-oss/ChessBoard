@@ -1,6 +1,6 @@
 package com.example.chessboard.service
 
-import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.entity.LineEntity
 import com.github.bhlangonijr.chesslib.Board
 import com.github.bhlangonijr.chesslib.Piece
 import com.github.bhlangonijr.chesslib.PieceType
@@ -9,9 +9,9 @@ import com.github.bhlangonijr.chesslib.move.Move
 import kotlin.collections.ArrayDeque
 
 /**
- * Splits a PGN text that contains one or more games/chapters into individual PGN strings.
+ * Splits a PGN text that contains one or more lines/chapters into individual PGN strings.
  * A new chapter is detected by a fresh [Event ...] header block.
- * Returns a list with one entry per chapter; single-game files return a list of size 1.
+ * Returns a list with one entry per chapter; single-line files return a list of size 1.
  */
 fun splitPgnChapters(pgnText: String): List<String> {
     return pgnText
@@ -352,9 +352,9 @@ private fun charToPieceType(c: Char?): PieceType? = when (c?.uppercaseChar()) {
 // Stored-PGN parsing (app's own UCI-notation PGN format)
 // ──────────────────────────────────────────────────────────────────────────────
 
-/** Game entity bundled with its pre-computed UCI moves and algebraic labels. */
-data class ParsedGame(
-    val game: GameEntity,
+/** Line entity bundled with its pre-computed UCI moves and algebraic labels. */
+data class ParsedLine(
+    val line: LineEntity,
     val uciMoves: List<String>,
     val moveLabels: List<String>
 )

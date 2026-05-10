@@ -21,8 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
-import com.example.chessboard.service.GameBackupRestoreProgress
-import com.example.chessboard.service.GameBackupRestoreResult
+import com.example.chessboard.service.LineBackupRestoreProgress
+import com.example.chessboard.service.LineBackupRestoreResult
 import com.example.chessboard.ui.BackupRestoreCancelTestTag
 import com.example.chessboard.ui.BackupRestoreProgressDialogTestTag
 import com.example.chessboard.ui.components.AppBottomNavigation
@@ -51,8 +51,8 @@ import java.util.Locale
 
 typealias BackupRestoreRunner = suspend (
     uri: Uri,
-    onProgress: suspend (GameBackupRestoreProgress) -> Unit,
-) -> GameBackupRestoreResult
+    onProgress: suspend (LineBackupRestoreProgress) -> Unit,
+) -> LineBackupRestoreResult
 
 @Composable
 fun BackupScreenContainer(
@@ -62,12 +62,12 @@ fun BackupScreenContainer(
     testRestoreUri: Uri? = null,
     restoreBackupRunner: BackupRestoreRunner? = null,
 ) {
-    val gameBackupService = remember { screenContext.inDbProvider.createGameBackupService() }
+    val lineBackupService = remember { screenContext.inDbProvider.createLineBackupService() }
 
     fun resolveDefaultBackupFileName(): String {
         val formatter = SimpleDateFormat("yyyy-MM-dd-HH-mm", Locale.US)
         val timestamp = formatter.format(Date())
-        return "games-backup-$timestamp.pgn"
+        return "lines-backup-$timestamp.pgn"
     }
 
     fun ensureBackupFileName(fileName: String): String {
@@ -79,32 +79,32 @@ fun BackupScreenContainer(
         return "$trimmed.pgn"
     }
 
-    fun resolveRestoreMessage(result: GameBackupRestoreResult): String {
-        if (result.restoredGamesCount == 0 && result.skippedGamesCount == 0) {
-            return "No games were found in the selected backup."
+    fun resolveRestoreMessage(result: LineBackupRestoreResult): String {
+        if (result.restoredLinesCount == 0 && result.skippedLinesCount == 0) {
+            return "No lines were found in the selected backup."
         }
 
         return buildString {
-            appendLine("Restored games: ${result.restoredGamesCount}")
-            append("Skipped games: ${result.skippedGamesCount}")
+            appendLine("Restored lines: ${result.restoredLinesCount}")
+            append("Skipped lines: ${result.skippedLinesCount}")
         }
     }
 
-    fun resolveRestoreCanceledMessage(progress: GameBackupRestoreProgress?): String {
+    fun resolveRestoreCanceledMessage(progress: LineBackupRestoreProgress?): String {
         val currentProgress = progress ?: return "Restore canceled."
 
         return buildString {
             appendLine("Restore canceled.")
-            appendLine("Processed games: ${currentProgress.processedGamesCount}/${currentProgress.totalGames}")
-            appendLine("Restored games: ${currentProgress.restoredGamesCount}")
-            append("Skipped games: ${currentProgress.skippedGamesCount}")
+            appendLine("Processed lines: ${currentProgress.processedLinesCount}/${currentProgress.totalLines}")
+            appendLine("Restored lines: ${currentProgress.restoredLinesCount}")
+            append("Skipped lines: ${currentProgress.skippedLinesCount}")
         }
     }
 
     suspend fun runRestoreBackup(
         restoreUri: Uri,
-        onProgress: suspend (GameBackupRestoreProgress) -> Unit,
-    ): GameBackupRestoreResult {
+        onProgress: suspend (LineBackupRestoreProgress) -> Unit,
+    ): LineBackupRestoreResult {
         if (restoreBackupRunner != null) {
             return restoreBackupRunner(restoreUri, onProgress)
         }
@@ -115,7 +115,7 @@ fun BackupScreenContainer(
         }
 
         return inputStream.use { stream ->
-            gameBackupService.restoreBackup(stream, onProgress)
+            lineBackupService.restoreBackup(stream, onProgress)
         }
     }
 
@@ -126,7 +126,7 @@ fun BackupScreenContainer(
     var restoreMessage by remember { mutableStateOf<String?>(null) }
     var restoreError by remember { mutableStateOf<String?>(null) }
     var pendingRestoreUri by remember { mutableStateOf<Uri?>(null) }
-    var restoreProgress by remember { mutableStateOf<GameBackupRestoreProgress?>(null) }
+    var restoreProgress by remember { mutableStateOf<LineBackupRestoreProgress?>(null) }
     var restoreJob by remember { mutableStateOf<Job?>(null) }
 
     val backupLauncher = rememberLauncherForActivityResult(
@@ -147,7 +147,7 @@ fun BackupScreenContainer(
                 }
 
                 outputStream.use { stream ->
-                    gameBackupService.writeBackup(stream)
+                    lineBackupService.writeBackup(stream)
                 }
 
                 withContext(Dispatchers.Main) {
@@ -189,7 +189,7 @@ fun BackupScreenContainer(
 
     if (restoreMessage != null) {
         AppMessageDialog(
-            title = "Restore Games",
+            title = "Restore Lines",
             message = restoreMessage!!,
             onDismiss = { restoreMessage = null }
         )
@@ -214,8 +214,8 @@ fun BackupScreenContainer(
 
     if (pendingRestoreUri != null) {
         AppConfirmDialog(
-            title = "Restore Games",
-            message = "Restore games from the selected backup file?",
+            title = "Restore Lines",
+            message = "Restore lines from the selected backup file?",
             onDismiss = { pendingRestoreUri = null },
             onConfirm = {
                 val restoreUri = pendingRestoreUri!!
@@ -245,7 +245,7 @@ fun BackupScreenContainer(
                         withContext(Dispatchers.Main) {
                             restoreProgress = null
                             restoreJob = null
-                            restoreError = error.message ?: "Failed to restore games"
+                            restoreError = error.message ?: "Failed to restore lines"
                         }
                     }
                 }
@@ -276,7 +276,7 @@ fun BackupScreenContainer(
             backupFileName = resolveDefaultBackupFileName()
             showBackupDialog = true
         },
-        onRestoreGamesClick = {
+        onRestoreLinesClick = {
             if (testRestoreUri != null) {
                 pendingRestoreUri = testRestoreUri
                 return@BackupScreen
@@ -293,7 +293,7 @@ private fun BackupScreen(
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
     onCreateBackupClick: () -> Unit = {},
-    onRestoreGamesClick: () -> Unit = {},
+    onRestoreLinesClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     AppScreenScaffold(
@@ -301,7 +301,7 @@ private fun BackupScreen(
         topBar = {
             AppTopBar(
                 title = "Backup",
-                subtitle = "Export and restore saved games",
+                subtitle = "Export and restore saved lines",
                 onBackClick = onBackClick,
                 filledBackButton = true,
             )
@@ -326,16 +326,16 @@ private fun BackupScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(AppDimens.spaceLg),
                 ) {
-                    ScreenTitleText(text = "Game Backup")
-                    BodySecondaryText(text = "Create a PGN backup or restore games later.")
+                    ScreenTitleText(text = "Line Backup")
+                    BodySecondaryText(text = "Create a PGN backup or restore lines later.")
                     PrimaryButton(
                         text = "Create Backup",
                         onClick = onCreateBackupClick,
                         modifier = Modifier.fillMaxWidth()
                     )
                     PrimaryButton(
-                        text = "Restore Games",
-                        onClick = onRestoreGamesClick,
+                        text = "Restore Lines",
+                        onClick = onRestoreLinesClick,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -354,7 +354,7 @@ private fun BackupFileNameDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            ScreenTitleText(text = "Backup Games")
+            ScreenTitleText(text = "Backup Lines")
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)) {
@@ -365,7 +365,7 @@ private fun BackupFileNameDialog(
                     value = fileName,
                     onValueChange = onFileNameChange,
                     label = "File name",
-                    placeholder = "games-backup.pgn"
+                    placeholder = "lines-backup.pgn"
                 )
             }
         },
@@ -389,23 +389,23 @@ private fun BackupFileNameDialog(
 
 @Composable
 private fun BackupRestoreProgressDialog(
-    progress: GameBackupRestoreProgress,
+    progress: LineBackupRestoreProgress,
     onCancel: () -> Unit,
 ) {
     AlertDialog(
         modifier = Modifier.testTag(BackupRestoreProgressDialogTestTag),
         onDismissRequest = {},
         title = {
-            ScreenTitleText(text = "Restoring Games")
+            ScreenTitleText(text = "Restoring Lines")
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(AppDimens.spaceSm)) {
-                BodySecondaryText(text = "Total games: ${progress.totalGames}")
+                BodySecondaryText(text = "Total lines: ${progress.totalLines}")
                 BodySecondaryText(
-                    text = "Processed games: ${progress.processedGamesCount}/${progress.totalGames}"
+                    text = "Processed lines: ${progress.processedLinesCount}/${progress.totalLines}"
                 )
-                BodySecondaryText(text = "Restored games: ${progress.restoredGamesCount}")
-                BodySecondaryText(text = "Skipped games: ${progress.skippedGamesCount}")
+                BodySecondaryText(text = "Restored lines: ${progress.restoredLinesCount}")
+                BodySecondaryText(text = "Skipped lines: ${progress.skippedLinesCount}")
             }
         },
         confirmButton = {

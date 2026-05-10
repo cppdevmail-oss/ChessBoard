@@ -10,11 +10,11 @@ package com.example.chessboard.ui.screen.training.template
 
 import com.example.chessboard.ui.screen.training.loadsave.buildTrainingEditorItems
 import com.example.chessboard.ui.screen.training.loadsave.normalizeTrainingEditorName
-import com.example.chessboard.ui.screen.training.common.TrainingGameEditorItem
+import com.example.chessboard.ui.screen.training.common.TrainingLineEditorItem
 
-import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.entity.LineEntity
 import com.example.chessboard.repository.DatabaseProvider
-import com.example.chessboard.service.OneGameTrainingData
+import com.example.chessboard.service.OneLineTrainingData
 import com.example.chessboard.service.TrainingTemplateService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -23,15 +23,15 @@ internal const val DEFAULT_TEMPLATE_NAME = "Unnamed Template"
 
 internal data class TrainingTemplateLoadState(
     val templateName: String = DEFAULT_TEMPLATE_NAME,
-    val gamesForTemplate: List<TrainingGameEditorItem> = emptyList(),
-    val allGamesById: Map<Long, GameEntity> = emptyMap(),
+    val linesForTemplate: List<TrainingLineEditorItem> = emptyList(),
+    val allLinesById: Map<Long, LineEntity> = emptyMap(),
     val templateLoadFailed: Boolean = false,
 )
 
 internal data class TrainingTemplateSaveSuccess(
     val templateId: Long,
     val templateName: String,
-    val gamesCount: Int,
+    val linesCount: Int,
 )
 
 internal enum class TrainingTemplateSaveResult {
@@ -44,15 +44,15 @@ internal suspend fun loadEditTrainingTemplateState(
     trainingTemplateService: TrainingTemplateService,
     templateId: Long,
 ): TrainingTemplateLoadState {
-    val allGames = withContext(Dispatchers.IO) {
-        inDbProvider.getAllGames()
+    val allLines = withContext(Dispatchers.IO) {
+        inDbProvider.getAllLines()
     }
 
     val template = withContext(Dispatchers.IO) {
         trainingTemplateService.getTemplateById(templateId)
     } ?: return TrainingTemplateLoadState(
         templateName = DEFAULT_TEMPLATE_NAME,
-        gamesForTemplate = emptyList(),
+        linesForTemplate = emptyList(),
         templateLoadFailed = true,
     )
 
@@ -61,11 +61,11 @@ internal suspend fun loadEditTrainingTemplateState(
             trainingName = template.name,
             defaultName = DEFAULT_TEMPLATE_NAME,
         ),
-        gamesForTemplate = buildTrainingEditorItems(
-            allGames = allGames,
-            trainingGames = OneGameTrainingData.fromJson(template.gamesJson),
+        linesForTemplate = buildTrainingEditorItems(
+            allLines = allLines,
+            trainingLines = OneLineTrainingData.fromJson(template.linesJson),
         ),
-        allGamesById = allGames.associateBy { game -> game.id },
+        allLinesById = allLines.associateBy { line -> line.id },
     )
 }
 
@@ -73,37 +73,37 @@ internal suspend fun saveEditedTrainingTemplate(
     trainingTemplateService: TrainingTemplateService,
     templateId: Long,
     templateName: String,
-    editableGames: List<TrainingGameEditorItem>,
+    editableLines: List<TrainingLineEditorItem>,
 ): Pair<TrainingTemplateSaveResult, TrainingTemplateSaveSuccess?>? {
     val normalizedName = normalizeTrainingEditorName(
         trainingName = templateName,
         defaultName = DEFAULT_TEMPLATE_NAME,
     )
-    val templateGames = editableGames.map { game ->
-        OneGameTrainingData(
-            gameId = game.gameId,
-            weight = game.weight,
+    val templateLines = editableLines.map { line ->
+        OneLineTrainingData(
+            lineId = line.lineId,
+            weight = line.weight,
         )
     }
 
     val updateResult = withContext(Dispatchers.IO) {
-        trainingTemplateService.updateTemplateFromGames(
+        trainingTemplateService.updateTemplateFromLines(
             templateId = templateId,
-            games = templateGames,
+            lines = templateLines,
             name = normalizedName,
         )
     }
 
     when (updateResult) {
-        TrainingTemplateService.UpdateTemplateFromGamesResult.NOT_FOUND -> return null
-        TrainingTemplateService.UpdateTemplateFromGamesResult.DELETED -> {
+        TrainingTemplateService.UpdateTemplateFromLinesResult.NOT_FOUND -> return null
+        TrainingTemplateService.UpdateTemplateFromLinesResult.DELETED -> {
             return TrainingTemplateSaveResult.DELETED to null
         }
-        TrainingTemplateService.UpdateTemplateFromGamesResult.UPDATED -> {
+        TrainingTemplateService.UpdateTemplateFromLinesResult.UPDATED -> {
             return TrainingTemplateSaveResult.UPDATED to TrainingTemplateSaveSuccess(
                 templateId = templateId,
                 templateName = normalizedName,
-                gamesCount = editableGames.size,
+                linesCount = editableLines.size,
             )
         }
     }

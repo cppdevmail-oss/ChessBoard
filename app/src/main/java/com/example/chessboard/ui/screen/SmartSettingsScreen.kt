@@ -208,7 +208,7 @@ private fun OnlyWithMistakesRow(
 ) {
     AppSettingsToggleRow(
         icon = Icons.Filled.Warning,
-        title = "Only Games with Mistakes",
+        title = "Only Lines with Mistakes",
         subtitle = "Skip well-known lines, focus on errors",
         checked = checked,
         onCheckedChange = onCheckedChange,

@@ -8,7 +8,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
-import com.example.chessboard.boardmodel.GameController
+import com.example.chessboard.boardmodel.LineController
 import com.example.chessboard.testing.normalizeFenForAssertion
 import com.example.chessboard.ui.theme.ChessBoardTheme
 import org.junit.Assert.assertEquals
@@ -22,12 +22,12 @@ class ChessBoardWithCoordinatesTest {
 
     @Test
     fun chessBoardWithCoordinates_allowsTapToMovePiece() {
-        val gameController = GameController()
+        val lineController = LineController()
 
         composeRule.setContent {
             ChessBoardTheme {
                 ChessBoardWithCoordinates(
-                    gameController = gameController,
+                    lineController = lineController,
                     modifier = androidx.compose.ui.Modifier.size(320.dp)
                 )
             }
@@ -47,19 +47,19 @@ class ChessBoardWithCoordinatesTest {
         composeRule.runOnIdle {
             assertEquals(
                 "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
-                normalizeFenForAssertion(gameController.getFen())
+                normalizeFenForAssertion(lineController.getFen())
             )
         }
     }
 
     @Test
     fun chessBoardWithCoordinates_allowsDragToMovePiece() {
-        val gameController = GameController()
+        val lineController = LineController()
 
         composeRule.setContent {
             ChessBoardTheme {
                 ChessBoardWithCoordinates(
-                    gameController = gameController,
+                    lineController = lineController,
                     modifier = androidx.compose.ui.Modifier.size(320.dp)
                 )
             }
@@ -79,7 +79,7 @@ class ChessBoardWithCoordinatesTest {
         composeRule.runOnIdle {
             assertEquals(
                 "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
-                normalizeFenForAssertion(gameController.getFen())
+                normalizeFenForAssertion(lineController.getFen())
             )
         }
     }

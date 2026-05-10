@@ -19,71 +19,71 @@ import org.junit.Test
 class RuntimeContextTest {
 
     @Test
-    fun `resolveNextTrainingGameId returns next id from stored order`() {
+    fun `resolveNextTrainingLineId returns next id from stored order`() {
         val runtimeContext = RuntimeContext()
         runtimeContext.trainingSession.rememberLaunch(
             trainingId = 1L,
-            gameId = 10L,
-            orderedGameIds = listOf(10L, 20L, 30L),
+            lineId = 10L,
+            orderedLineIds = listOf(10L, 20L, 30L),
         )
 
-        val nextGameId = runtimeContext.resolveNextTrainingGameId(
+        val nextLineId = runtimeContext.resolveNextTrainingLineId(
             trainingId = 1L,
-            currentGameId = 10L,
+            currentLineId = 10L,
         )
 
-        assertEquals(20L, nextGameId)
+        assertEquals(20L, nextLineId)
     }
 
     @Test
-    fun `resolveNextTrainingGameId returns null for last game in stored order`() {
+    fun `resolveNextTrainingLineId returns null for last line in stored order`() {
         val runtimeContext = RuntimeContext()
         runtimeContext.trainingSession.rememberLaunch(
             trainingId = 1L,
-            gameId = 10L,
-            orderedGameIds = listOf(10L, 20L, 30L),
+            lineId = 10L,
+            orderedLineIds = listOf(10L, 20L, 30L),
         )
 
-        val nextGameId = runtimeContext.resolveNextTrainingGameId(
+        val nextLineId = runtimeContext.resolveNextTrainingLineId(
             trainingId = 1L,
-            currentGameId = 30L,
+            currentLineId = 30L,
         )
 
-        assertNull(nextGameId)
+        assertNull(nextLineId)
     }
 
     @Test
-    fun `resolveNextTrainingGameId returns null when current game is missing`() {
+    fun `resolveNextTrainingLineId returns null when current line is missing`() {
         val runtimeContext = RuntimeContext()
         runtimeContext.trainingSession.rememberLaunch(
             trainingId = 1L,
-            gameId = 10L,
-            orderedGameIds = listOf(10L, 20L, 30L),
+            lineId = 10L,
+            orderedLineIds = listOf(10L, 20L, 30L),
         )
 
-        val nextGameId = runtimeContext.resolveNextTrainingGameId(
+        val nextLineId = runtimeContext.resolveNextTrainingLineId(
             trainingId = 1L,
-            currentGameId = 99L,
+            currentLineId = 99L,
         )
 
-        assertNull(nextGameId)
+        assertNull(nextLineId)
     }
 
     @Test
-    fun `resolveNextTrainingGameId keeps using stored order after completion marks`() {
+    fun `resolveNextTrainingLineId keeps using stored order after completion marks`() {
         val runtimeContext = RuntimeContext()
         runtimeContext.trainingSession.rememberLaunch(
             trainingId = 1L,
-            gameId = 10L,
-            orderedGameIds = listOf(10L, 20L, 30L),
+            lineId = 10L,
+            orderedLineIds = listOf(10L, 20L, 30L),
         )
-        runtimeContext.orderGamesInTraining.markGameCompleted(10L)
+        runtimeContext.orderLinesInTraining.markLineCompleted(10L)
 
-        val nextGameId = runtimeContext.resolveNextTrainingGameId(
+        val nextLineId = runtimeContext.resolveNextTrainingLineId(
             trainingId = 1L,
-            currentGameId = 10L,
+            currentLineId = 10L,
         )
 
-        assertEquals(20L, nextGameId)
+        assertEquals(20L, nextLineId)
     }
 }

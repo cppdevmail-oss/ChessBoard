@@ -26,7 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.ui.OpeningDeviationDisplayContentTestTag
 import com.example.chessboard.ui.OpeningDeviationEmptyStateTestTag
-import com.example.chessboard.ui.OpeningDeviationOpenGamesTestTag
+import com.example.chessboard.ui.OpeningDeviationOpenLinesTestTag
 import com.example.chessboard.ui.OpeningDeviationSourceBoardCardTestTag
 import com.example.chessboard.ui.OpeningDeviationSourceBoardTestTag
 import com.example.chessboard.ui.components.AppScreenScaffold
@@ -46,7 +46,7 @@ fun OpeningDeviationDisplayScreen(
     modifier: Modifier = Modifier,
     selectedBranchIndex: Int? = null,
     onBranchSelected: (Int) -> Unit = {},
-    onOpenGamesClick: (OpeningDeviationBranch) -> Unit = {},
+    onOpenLinesClick: (OpeningDeviationBranch) -> Unit = {},
     onBackClick: () -> Unit = {},
 ) {
     val selectedBranch = deviationItem.branches.getOrNull(selectedBranchIndex ?: -1)
@@ -63,14 +63,14 @@ fun OpeningDeviationDisplayScreen(
                     IconButton(
                         onClick = {
                             val branch = selectedBranch ?: return@IconButton
-                            onOpenGamesClick(branch)
+                            onOpenLinesClick(branch)
                         },
                         enabled = selectedBranch != null,
-                        modifier = Modifier.testTag(OpeningDeviationOpenGamesTestTag),
+                        modifier = Modifier.testTag(OpeningDeviationOpenLinesTestTag),
                     ) {
                         IconMd(
                             imageVector = Icons.Default.MenuBook,
-                            contentDescription = "Open games with selected branch position",
+                            contentDescription = "Open lines with selected branch position",
                             tint = if (selectedBranch == null) {
                                 TrainingIconInactive
                             } else {
@@ -116,7 +116,7 @@ fun OpeningDeviationDisplayScreen(
                     title = "Branch ${index + 1}",
                     fen = branch.resultFen,
                     subtitle = "Move: ${branch.moveUci}",
-                    metaText = "Games: ${branch.gamesCount}\nFEN: ${branch.resultFen}",
+                    metaText = "Lines: ${branch.linesCount}\nFEN: ${branch.resultFen}",
                     modifier = Modifier.testTag(openingDeviationBranchCardTestTag(index)),
                     boardTestTag = openingDeviationBranchBoardTestTag(index),
                     isSelected = index == selectedBranchIndex,

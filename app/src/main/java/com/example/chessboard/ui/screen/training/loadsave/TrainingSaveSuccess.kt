@@ -11,5 +11,5 @@ package com.example.chessboard.ui.screen.training.loadsave
 internal data class TrainingSaveSuccess(
     val trainingId: Long,
     val trainingName: String,
-    val gamesCount: Int,
+    val linesCount: Int,
 )

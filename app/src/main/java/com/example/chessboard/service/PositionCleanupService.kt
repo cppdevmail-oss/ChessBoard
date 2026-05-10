@@ -8,7 +8,7 @@ class PositionCleanupService(
 ) {
 
     private val positionDao = database.positionDao()
-    private val gamePositionDao = database.gamePositionDao()
+    private val linePositionDao = database.linePositionDao()
 
     suspend fun cleanupPositions(positionIds: List<Long>) {
         for (positionId in positionIds) {
@@ -17,7 +17,7 @@ class PositionCleanupService(
     }
 
     private suspend fun cleanupPosition(positionId: Long) {
-        val usage = gamePositionDao.getUsage(positionId)
+        val usage = linePositionDao.getUsage(positionId)
 
         if (usage.isEmpty()) {
             positionDao.deleteById(positionId)

@@ -8,7 +8,7 @@ import com.example.chessboard.ui.screen.training.template.EditTrainingTemplateSc
  * loading, database wiring, or route-level navigation tests to this file.
  */
 
-import com.example.chessboard.ui.screen.training.common.TrainingGameEditorItem
+import com.example.chessboard.ui.screen.training.common.TrainingLineEditorItem
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
@@ -46,18 +46,18 @@ class EditTrainingTemplateScreenTest {
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun editTrainingTemplateScreen_showsTemplateNameAndGamesCount() {
+    fun editTrainingTemplateScreen_showsTemplateNameAndLinesCount() {
         composeRule.setContent {
             ChessBoardTheme {
                 EditTrainingTemplateScreen(
                     initialTemplateName = "Sicilian Templates",
-                    gamesForTemplate = listOf(TestTemplateGame),
+                    linesForTemplate = listOf(TestTemplateLine),
                 )
             }
         }
 
         composeRule.onNodeWithText("Sicilian Templates").assertIsDisplayed()
-        composeRule.onNodeWithText("Games in template: 1").assertIsDisplayed()
+        composeRule.onNodeWithText("Lines in template: 1").assertIsDisplayed()
     }
 
 
@@ -67,7 +67,7 @@ class EditTrainingTemplateScreenTest {
             ChessBoardTheme {
                 EditTrainingTemplateScreen(
                     initialTemplateName = "Sicilian Templates",
-                    gamesForTemplate = listOf(TestTemplateGame),
+                    linesForTemplate = listOf(TestTemplateLine),
                 )
             }
         }
@@ -86,7 +86,7 @@ class EditTrainingTemplateScreenTest {
             ChessBoardTheme {
                 EditTrainingTemplateScreen(
                     initialTemplateName = "Sicilian Templates",
-                    gamesForTemplate = listOf(TestTemplateGame),
+                    linesForTemplate = listOf(TestTemplateLine),
                 )
             }
         }
@@ -110,7 +110,7 @@ class EditTrainingTemplateScreenTest {
             ChessBoardTheme {
                 EditTrainingTemplateScreen(
                     initialTemplateName = "Sicilian Templates",
-                    gamesForTemplate = listOf(TestTemplateGame),
+                    linesForTemplate = listOf(TestTemplateLine),
                 )
             }
         }
@@ -129,7 +129,7 @@ class EditTrainingTemplateScreenTest {
             ChessBoardTheme {
                 EditTrainingTemplateScreen(
                     initialTemplateName = "Sicilian Templates",
-                    gamesForTemplate = listOf(TestTemplateGame),
+                    linesForTemplate = listOf(TestTemplateLine),
                 )
             }
         }
@@ -143,14 +143,14 @@ class EditTrainingTemplateScreenTest {
     }
 
     @Test
-    fun editTrainingTemplateScreen_removeSelectedGameRemovesItFromTemplate() {
+    fun editTrainingTemplateScreen_removeSelectedLineRemovesItFromTemplate() {
         composeRule.setContent {
             ChessBoardTheme {
                 EditTrainingTemplateScreen(
                     initialTemplateName = "Sicilian Templates",
-                    gamesForTemplate = listOf(
-                        TestTemplateGame,
-                        SecondTemplateGame,
+                    linesForTemplate = listOf(
+                        TestTemplateLine,
+                        SecondTemplateLine,
                     ),
                 )
             }
@@ -158,13 +158,13 @@ class EditTrainingTemplateScreenTest {
 
         waitForTextDisplayed("Delete")
         composeRule.onNodeWithText("Delete").performClick()
-        waitForTextDisplayed("Remove Game")
+        waitForTextDisplayed("Remove Line")
         composeRule.onNode(hasText("Remove") and hasClickAction()).performClick()
 
-        waitForTextInTree("Games in template: 1")
+        waitForTextInTree("Lines in template: 1")
         composeRule.onNodeWithTag(EditTrainingListTestTag)
-            .performScrollToNode(hasText("Games in template: 1"))
-        waitForTextDisplayed("Games in template: 1")
+            .performScrollToNode(hasText("Lines in template: 1"))
+        waitForTextDisplayed("Lines in template: 1")
     }
 
 
@@ -215,15 +215,15 @@ class EditTrainingTemplateScreenTest {
     }
 
     private companion object {
-        val TestTemplateGame = TrainingGameEditorItem(
-            gameId = 1L,
+        val TestTemplateLine = TrainingLineEditorItem(
+            lineId = 1L,
             title = "Sicilian Defense",
             weight = 2,
             pgn = "1. e2e4 c7c5 *",
             sideMask = SideMask.WHITE,
         )
-        val SecondTemplateGame = TrainingGameEditorItem(
-            gameId = 2L,
+        val SecondTemplateLine = TrainingLineEditorItem(
+            lineId = 2L,
             title = "French Defense",
             weight = 1,
             pgn = "1. e2e4 e7e6 *",

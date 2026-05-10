@@ -124,10 +124,10 @@ internal fun RegularHomeScreen(
                         onClick = { onNavigate(ScreenType.Training) },
                     )
                     HomeActionCard(
-                        title = "Games",
+                        title = "Lines",
                         subtitle = "Browse saved openings",
                         modifier = Modifier.weight(1f),
-                        onClick = { onNavigate(ScreenType.GamesExplorer) },
+                        onClick = { onNavigate(ScreenType.LinesExplorer) },
                     )
                 }
             }
@@ -139,7 +139,7 @@ internal fun RegularHomeScreen(
                 ) {
                     HomeActionCard(
                         title = "Create Training",
-                        subtitle = "Build a training from saved games",
+                        subtitle = "Build a training from saved lines",
                         modifier = Modifier.weight(1f),
                         onClick = onCreateTrainingClick,
                     )
@@ -184,8 +184,8 @@ internal fun RegularHomeScreen(
                         onClick = onOpenSavedPositionsClick,
                     )
                     HomeActionCard(
-                        title = "Backup Games",
-                        subtitle = "Export all games to a PGN file",
+                        title = "Backup Lines",
+                        subtitle = "Export all lines to a PGN file",
                         modifier = Modifier.weight(1f),
                         onClick = onOpenBackupClick,
                     )

@@ -16,7 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
-import com.example.chessboard.boardmodel.GameController
+import com.example.chessboard.boardmodel.LineController
 import com.example.chessboard.ui.components.AppTextField
 import com.example.chessboard.ui.components.IconSm
 import com.example.chessboard.ui.components.MoveSequenceSection
@@ -90,18 +90,18 @@ fun MoveLegendSection(
 
 @Composable
 fun TrainingActionButtons(
-    onSaveGame: () -> Unit,
+    onSaveLine: () -> Unit,
     onDatabaseClear: () -> Unit,
-    gameController: GameController,
+    lineController: LineController,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        // Primary actions: Save game, Clear database
+        // Primary actions: Save line, Clear database
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            PrimaryButton("Save game", onClick = onSaveGame)
+            PrimaryButton("Save line", onClick = onSaveLine)
             PrimaryButton("Clear database", onClick = onDatabaseClear)
         }
 
@@ -112,9 +112,9 @@ fun TrainingActionButtons(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            PrimaryButton("Back", onClick = { gameController.undoMove() })
-            PrimaryButton("Forward", onClick = { gameController.redoMove() })
-            PrimaryButton("Reset", onClick = { gameController.resetToStartPosition() })
+            PrimaryButton("Back", onClick = { lineController.undoMove() })
+            PrimaryButton("Forward", onClick = { lineController.redoMove() })
+            PrimaryButton("Reset", onClick = { lineController.resetToStartPosition() })
         }
     }
 }

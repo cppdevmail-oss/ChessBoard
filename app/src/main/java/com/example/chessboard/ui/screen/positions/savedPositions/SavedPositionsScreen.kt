@@ -40,7 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
 import com.example.chessboard.analysis.OpeningDeviationItemBuilder
 import com.example.chessboard.analysis.OpeningSide
-import com.example.chessboard.boardmodel.GameController
+import com.example.chessboard.boardmodel.LineController
 import com.example.chessboard.boardmodel.InitialBoardFen
 import com.example.chessboard.entity.SavedSearchPositionEntity
 import com.example.chessboard.entity.SideMask
@@ -62,7 +62,7 @@ import com.example.chessboard.ui.screen.openingDeviation.OpeningDeviationItem
 import com.example.chessboard.ui.screen.positions.PositionSearchResultDialogActions
 import com.example.chessboard.ui.screen.positions.PositionTemplateNameDialogState
 import com.example.chessboard.ui.screen.positions.RenderPositionSearchResultDialog
-import com.example.chessboard.ui.screen.positions.createPositionTemplateFromGameIds
+import com.example.chessboard.ui.screen.positions.createPositionTemplateFromLineIds
 import com.example.chessboard.ui.SavedPositionsDeviationSearchDialogTestTag
 import com.example.chessboard.ui.SavedPositionsDeviationSearchCancelTestTag
 import com.example.chessboard.ui.theme.Background
@@ -82,7 +82,7 @@ private data class SavedPositionsState(
     val positionToDelete: SavedPositionListItem? = null,
     val deviationDialog: SavedPositionsDeviationDialog? = null,
     val deviationSearchDialog: SavedPositionsDeviationSearchDialog? = null,
-    val foundGameIds: List<Long>? = null,
+    val foundLineIds: List<Long>? = null,
     val templateNameDialogState: PositionTemplateNameDialogState? = null,
     val infoDialog: SavedPositionsInfoDialog? = null,
 )
@@ -151,16 +151,16 @@ internal fun SavedPositionsScreenContainer(
         )
     }
 
-    fun searchGamesForPosition(position: SavedPositionListItem) {
+    fun searchLinesForPosition(position: SavedPositionListItem) {
         scope.launch {
-            val foundGameIds = withContext(Dispatchers.IO) {
-                findGameIdsForSavedPosition(
+            val foundLineIds = withContext(Dispatchers.IO) {
+                findLineIdsForSavedPosition(
                     dbProvider = screenContext.inDbProvider,
                     position = position,
                 )
             }
 
-            state = state.copy(foundGameIds = foundGameIds)
+            state = state.copy(foundLineIds = foundLineIds)
         }
     }
 
@@ -208,34 +208,34 @@ internal fun SavedPositionsScreenContainer(
         }
     }
 
-    fun openTrainingFromFoundGames() {
-        val foundGameIds = state.foundGameIds ?: return
-        state = state.copy(foundGameIds = null)
+    fun openTrainingFromFoundLines() {
+        val foundLineIds = state.foundLineIds ?: return
+        state = state.copy(foundLineIds = null)
         screenContext.onNavigate(
-            ScreenType.CreateTrainingFromGameIds(
-                gameIds = foundGameIds,
+            ScreenType.CreateTrainingFromLineIds(
+                lineIds = foundLineIds,
                 backTarget = ScreenType.SavedPositions,
             )
         )
     }
 
     fun openTemplateNameDialog() {
-        val foundGameIds = state.foundGameIds ?: return
+        val foundLineIds = state.foundLineIds ?: return
         state = state.copy(
-            foundGameIds = null,
-            templateNameDialogState = PositionTemplateNameDialogState(gameIds = foundGameIds),
+            foundLineIds = null,
+            templateNameDialogState = PositionTemplateNameDialogState(lineIds = foundLineIds),
         )
     }
 
-    fun createTemplateFromFoundGames() {
+    fun createTemplateFromFoundLines() {
         val currentDialogState = state.templateNameDialogState ?: return
         state = state.copy(templateNameDialogState = null)
 
         scope.launch {
             val templateId = withContext(Dispatchers.IO) {
-                createPositionTemplateFromGameIds(
+                createPositionTemplateFromLineIds(
                     dbProvider = screenContext.inDbProvider,
-                    gameIds = currentDialogState.gameIds,
+                    lineIds = currentDialogState.lineIds,
                     templateName = currentDialogState.templateName,
                 )
             }
@@ -243,7 +243,7 @@ internal fun SavedPositionsScreenContainer(
             state = state.copy(
                 infoDialog = resolveCreateTemplateInfoDialog(
                     templateId = templateId,
-                    foundGameIds = currentDialogState.gameIds,
+                    foundLineIds = currentDialogState.lineIds,
                 )
             )
         }
@@ -276,7 +276,7 @@ internal fun SavedPositionsScreenContainer(
         onPositionSelected = { positionId ->
             state = state.copy(selectedPositionId = positionId)
         },
-        onCreateFromPositionClick = ::searchGamesForPosition,
+        onCreateFromPositionClick = ::searchLinesForPosition,
         onFindDeviationsClick = ::findOpeningDeviations,
         onOpenPreviousPageClick = {
             state = state.copy(
@@ -343,15 +343,15 @@ internal fun SavedPositionsScreenContainer(
                 )
             }
         },
-        onFoundGamesDismiss = {
-            state = state.copy(foundGameIds = null)
+        onFoundLinesDismiss = {
+            state = state.copy(foundLineIds = null)
         },
-        onCreateTrainingFromFoundGames = ::openTrainingFromFoundGames,
-        onCreateTemplateFromFoundGames = ::openTemplateNameDialog,
+        onCreateTrainingFromFoundLines = ::openTrainingFromFoundLines,
+        onCreateTemplateFromFoundLines = ::openTemplateNameDialog,
         onTemplateNameDialogStateChange = { dialogState ->
             state = state.copy(templateNameDialogState = dialogState)
         },
-        onConfirmTemplateName = ::createTemplateFromFoundGames,
+        onConfirmTemplateName = ::createTemplateFromFoundLines,
         onInfoDialogDismiss = {
             state = state.copy(infoDialog = null)
         },
@@ -371,29 +371,29 @@ internal fun SavedPositionsScreenContainer(
     )
 }
 
-private suspend fun findGameIdsForSavedPosition(
+private suspend fun findLineIdsForSavedPosition(
     dbProvider: DatabaseProvider,
     position: SavedPositionListItem,
 ): List<Long> {
-    return dbProvider.findGameIdsByFenWithoutMoveNumber(
+    return dbProvider.findLineIdsByFenWithoutMoveNumber(
         toLoadableSavedPositionFen(resolveDisplayedFen(position))
     )
 }
 
 private fun resolveCreateTemplateInfoDialog(
     templateId: Long?,
-    foundGameIds: List<Long>,
+    foundLineIds: List<Long>,
 ): SavedPositionsInfoDialog {
     if (templateId == null) {
         return SavedPositionsInfoDialog(
             title = "Template Error",
-            message = "Found games could not be saved as a template.",
+            message = "Found lines could not be saved as a template.",
         )
     }
 
     return SavedPositionsInfoDialog(
         title = "Template Created",
-        message = "Template ID: $templateId\nGames added: ${foundGameIds.size}",
+        message = "Template ID: $templateId\nLines added: ${foundLineIds.size}",
     )
 }
 
@@ -421,9 +421,9 @@ private fun SavedPositionsScreen(
     onDraftFilterStateChange: (SavedPositionsFilterState) -> Unit,
     onApplyFilter: () -> Unit,
     onDeletePosition: (SavedPositionListItem) -> Unit,
-    onFoundGamesDismiss: () -> Unit,
-    onCreateTrainingFromFoundGames: () -> Unit,
-    onCreateTemplateFromFoundGames: () -> Unit,
+    onFoundLinesDismiss: () -> Unit,
+    onCreateTrainingFromFoundLines: () -> Unit,
+    onCreateTemplateFromFoundLines: () -> Unit,
     onTemplateNameDialogStateChange: (PositionTemplateNameDialogState?) -> Unit,
     onConfirmTemplateName: () -> Unit,
     onInfoDialogDismiss: () -> Unit,
@@ -432,13 +432,13 @@ private fun SavedPositionsScreen(
     onShowOpeningDeviationSelection: (SavedPositionsDeviationDialog) -> Unit,
 ) {
     val selectedPosition = resolveSelectedPosition(state)
-    val previewGameController = remember(
+    val previewLineController = remember(
         selectedPosition?.id,
         selectedPosition?.fenForSearch,
         selectedPosition?.fenFull,
     ) {
         selectedPosition?.let { position ->
-            GameController().also { controller ->
+            LineController().also { controller ->
                 controller.loadPreviewFen(
                     toLoadableSavedPositionFen(resolveDisplayedFen(position))
                 )
@@ -478,11 +478,11 @@ private fun SavedPositionsScreen(
         onApplyClick = onApplyFilter,
     )
     RenderPositionSearchResultDialog(
-        foundGameIds = state.foundGameIds,
+        foundLineIds = state.foundLineIds,
         actions = PositionSearchResultDialogActions(
-            onDismiss = onFoundGamesDismiss,
-            onCreateTrainingClick = onCreateTrainingFromFoundGames,
-            onCreateTemplateClick = onCreateTemplateFromFoundGames,
+            onDismiss = onFoundLinesDismiss,
+            onCreateTrainingClick = onCreateTrainingFromFoundLines,
+            onCreateTemplateClick = onCreateTemplateFromFoundLines,
             templateNameDialogState = state.templateNameDialogState,
             onTemplateNameChange = { templateName ->
                 state.templateNameDialogState?.let { currentDialogState ->
@@ -549,7 +549,7 @@ private fun SavedPositionsScreen(
                     state = state,
                     displayedPositions = displayedPositions,
                     selectedPosition = selectedPosition,
-                    previewGameController = previewGameController,
+                    previewLineController = previewLineController,
                     onOpenPosition = onOpenPosition,
                     onPositionSelected = onPositionSelected,
                     onCreateFromPositionClick = onCreateFromPositionClick,
@@ -584,7 +584,7 @@ internal fun RenderSavedPositionsDeviationSearchDialog(
                 Row(horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)) {
                     CircularProgressIndicator(color = TrainingAccentTeal)
                     BodySecondaryText(
-                        text = "Analyzing saved games for \"${currentDialog.positionName}\".",
+                        text = "Analyzing saved lines for \"${currentDialog.positionName}\".",
                         modifier = Modifier.padding(top = AppDimens.spaceXs),
                     )
                 }
@@ -698,7 +698,7 @@ private fun LazyListScope.renderSavedPositionsContent(
     state: SavedPositionsState,
     displayedPositions: List<SavedPositionListItem>,
     selectedPosition: SavedPositionListItem?,
-    previewGameController: GameController?,
+    previewLineController: LineController?,
     onOpenPosition: (SavedPositionListItem) -> Unit,
     onPositionSelected: (Long) -> Unit,
     onCreateFromPositionClick: (SavedPositionListItem) -> Unit,
@@ -727,7 +727,7 @@ private fun LazyListScope.renderSavedPositionsContent(
         if (position.id == selectedPosition?.id) {
             SavedPositionBoardPreview(
                 position = position,
-                gameController = previewGameController ?: return@items,
+                lineController = previewLineController ?: return@items,
             )
             Spacer(modifier = Modifier.height(AppDimens.spaceMd))
         }
@@ -832,24 +832,24 @@ private suspend fun buildOpeningDeviationItemsForSavedPosition(
 ): List<OpeningDeviationItem> {
     val displayedFen = resolveDisplayedFen(position)
     val selectedSide = resolveOpeningDeviationSide(displayedFen)
-    fun matchesOpeningDeviationSide(gameSideMask: Int): Boolean {
+    fun matchesOpeningDeviationSide(lineSideMask: Int): Boolean {
         var requiredSideMask = SideMask.WHITE
         if (selectedSide == OpeningSide.BLACK) {
             requiredSideMask = SideMask.BLACK
         }
 
-        return (gameSideMask and requiredSideMask) != 0
+        return (lineSideMask and requiredSideMask) != 0
     }
 
-    val gameIds = findGameIdsForSavedPosition(
+    val lineIds = findLineIdsForSavedPosition(
         dbProvider = dbProvider,
         position = position,
     )
-    val games = dbProvider.createGameListService().getGamesByIds(gameIds)
-        .filter { game -> matchesOpeningDeviationSide(game.sideMask) }
+    val lines = dbProvider.createLineListService().getLinesByIds(lineIds)
+        .filter { line -> matchesOpeningDeviationSide(line.sideMask) }
 
     return builder.build(
-        games = games,
+        lines = lines,
         selectedSide = selectedSide,
     )
 }

@@ -3,7 +3,7 @@ package com.example.chessboard.runtimecontext
 /**
  * File role: groups unit tests for TrainingRuntimeContext session and progress behavior.
  * Allowed here:
- * - pure runtime-state tests for launch tracking, next-game resolution, and snapshot restore
+ * - pure runtime-state tests for launch tracking, next-line resolution, and snapshot restore
  * - assertions about progress sanitization and training-session isolation
  * Not allowed here:
  * - Compose UI tests, navigation rendering checks, or persistence-backed behavior
@@ -11,8 +11,8 @@ package com.example.chessboard.runtimecontext
  * Validation date: 2026-04-26
  */
 
-import com.example.chessboard.ui.screen.trainSingleGame.TrainSingleGamePhase
-import com.example.chessboard.ui.screen.trainSingleGame.TrainSingleGameUiState
+import com.example.chessboard.ui.screen.trainSingleLine.TrainSingleLinePhase
+import com.example.chessboard.ui.screen.trainSingleLine.TrainSingleLineUiState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -20,112 +20,112 @@ import org.junit.Test
 class TrainingRuntimeContextTest {
 
     @Test
-    fun `rememberLaunch creates new session with active game and ordered ids`() {
+    fun `rememberLaunch creates new session with active line and ordered ids`() {
         val runtimeContext = TrainingRuntimeContext()
 
         runtimeContext.rememberLaunch(
             trainingId = 1L,
-            gameId = 20L,
-            orderedGameIds = listOf(10L, 20L, 30L),
+            lineId = 20L,
+            orderedLineIds = listOf(10L, 20L, 30L),
         )
 
-        assertEquals(20L, runtimeContext.activeGameId(1L))
-        assertEquals(listOf(10L, 20L, 30L), runtimeContext.orderedGameIds(1L))
+        assertEquals(20L, runtimeContext.activeLineId(1L))
+        assertEquals(listOf(10L, 20L, 30L), runtimeContext.orderedLineIds(1L))
     }
 
     @Test
-    fun `rememberLaunch replaces current game for existing session`() {
+    fun `rememberLaunch replaces current line for existing session`() {
         val runtimeContext = TrainingRuntimeContext()
         runtimeContext.rememberLaunch(
             trainingId = 1L,
-            gameId = 10L,
-            orderedGameIds = listOf(10L, 20L, 30L),
+            lineId = 10L,
+            orderedLineIds = listOf(10L, 20L, 30L),
         )
 
         runtimeContext.rememberLaunch(
             trainingId = 1L,
-            gameId = 30L,
-            orderedGameIds = listOf(10L, 20L, 30L),
+            lineId = 30L,
+            orderedLineIds = listOf(10L, 20L, 30L),
         )
 
-        assertEquals(30L, runtimeContext.activeGameId(1L))
+        assertEquals(30L, runtimeContext.activeLineId(1L))
     }
 
     @Test
-    fun `activeGameId returns null for unknown training`() {
+    fun `activeLineId returns null for unknown training`() {
         val runtimeContext = TrainingRuntimeContext()
 
-        assertNull(runtimeContext.activeGameId(99L))
+        assertNull(runtimeContext.activeLineId(99L))
     }
 
     @Test
-    fun `firstStartedGameId returns null for unknown training`() {
+    fun `firstStartedLineId returns null for unknown training`() {
         val runtimeContext = TrainingRuntimeContext()
 
-        assertNull(runtimeContext.firstStartedGameId(99L))
+        assertNull(runtimeContext.firstStartedLineId(99L))
     }
 
     @Test
-    fun `firstStartedGameId returns null when session has no saved progress`() {
-        val runtimeContext = TrainingRuntimeContext()
-        runtimeContext.rememberLaunch(
-            trainingId = 1L,
-            gameId = 20L,
-            orderedGameIds = listOf(10L, 20L, 30L),
-        )
-
-        assertNull(runtimeContext.firstStartedGameId(1L))
-    }
-
-    @Test
-    fun `resolveNextGameId returns next item in ordered list`() {
+    fun `firstStartedLineId returns null when session has no saved progress`() {
         val runtimeContext = TrainingRuntimeContext()
         runtimeContext.rememberLaunch(
             trainingId = 1L,
-            gameId = 10L,
-            orderedGameIds = listOf(10L, 20L, 30L),
+            lineId = 20L,
+            orderedLineIds = listOf(10L, 20L, 30L),
         )
 
-        val nextGameId = runtimeContext.resolveNextGameId(
-            trainingId = 1L,
-            currentGameId = 20L,
-        )
-
-        assertEquals(30L, nextGameId)
+        assertNull(runtimeContext.firstStartedLineId(1L))
     }
 
     @Test
-    fun `resolveNextGameId returns null for last item`() {
+    fun `resolveNextLineId returns next item in ordered list`() {
         val runtimeContext = TrainingRuntimeContext()
         runtimeContext.rememberLaunch(
             trainingId = 1L,
-            gameId = 10L,
-            orderedGameIds = listOf(10L, 20L, 30L),
+            lineId = 10L,
+            orderedLineIds = listOf(10L, 20L, 30L),
         )
 
-        val nextGameId = runtimeContext.resolveNextGameId(
+        val nextLineId = runtimeContext.resolveNextLineId(
             trainingId = 1L,
-            currentGameId = 30L,
+            currentLineId = 20L,
         )
 
-        assertNull(nextGameId)
+        assertEquals(30L, nextLineId)
     }
 
     @Test
-    fun `resolveNextGameId returns null for missing current game`() {
+    fun `resolveNextLineId returns null for last item`() {
         val runtimeContext = TrainingRuntimeContext()
         runtimeContext.rememberLaunch(
             trainingId = 1L,
-            gameId = 10L,
-            orderedGameIds = listOf(10L, 20L, 30L),
+            lineId = 10L,
+            orderedLineIds = listOf(10L, 20L, 30L),
         )
 
-        val nextGameId = runtimeContext.resolveNextGameId(
+        val nextLineId = runtimeContext.resolveNextLineId(
             trainingId = 1L,
-            currentGameId = 99L,
+            currentLineId = 30L,
         )
 
-        assertNull(nextGameId)
+        assertNull(nextLineId)
+    }
+
+    @Test
+    fun `resolveNextLineId returns null for missing current line`() {
+        val runtimeContext = TrainingRuntimeContext()
+        runtimeContext.rememberLaunch(
+            trainingId = 1L,
+            lineId = 10L,
+            orderedLineIds = listOf(10L, 20L, 30L),
+        )
+
+        val nextLineId = runtimeContext.resolveNextLineId(
+            trainingId = 1L,
+            currentLineId = 99L,
+        )
+
+        assertNull(nextLineId)
     }
 
     @Test
@@ -133,8 +133,8 @@ class TrainingRuntimeContextTest {
         val runtimeContext = TrainingRuntimeContext()
         runtimeContext.rememberLaunch(
             trainingId = 1L,
-            gameId = 10L,
-            orderedGameIds = listOf(10L, 20L, 30L),
+            lineId = 10L,
+            orderedLineIds = listOf(10L, 20L, 30L),
         )
 
         assertEquals(1, runtimeContext.sessionCurrent(1L, 10L))
@@ -143,12 +143,12 @@ class TrainingRuntimeContextTest {
     }
 
     @Test
-    fun `sessionCurrent falls back to one for unknown game`() {
+    fun `sessionCurrent falls back to one for unknown line`() {
         val runtimeContext = TrainingRuntimeContext()
         runtimeContext.rememberLaunch(
             trainingId = 1L,
-            gameId = 10L,
-            orderedGameIds = listOf(10L, 20L, 30L),
+            lineId = 10L,
+            orderedLineIds = listOf(10L, 20L, 30L),
         )
 
         assertEquals(1, runtimeContext.sessionCurrent(1L, 99L))
@@ -159,8 +159,8 @@ class TrainingRuntimeContextTest {
         val runtimeContext = TrainingRuntimeContext()
         runtimeContext.rememberLaunch(
             trainingId = 1L,
-            gameId = 10L,
-            orderedGameIds = listOf(10L, 20L, 30L),
+            lineId = 10L,
+            orderedLineIds = listOf(10L, 20L, 30L),
         )
 
         assertEquals(3, runtimeContext.sessionTotal(1L))
@@ -174,23 +174,23 @@ class TrainingRuntimeContextTest {
     }
 
     @Test
-    fun `saveGameProgress stores snapshot for game`() {
+    fun `saveLineProgress stores snapshot for line`() {
         val runtimeContext = TrainingRuntimeContext()
         val uiState = trainUiState(
-            phase = TrainSingleGamePhase.Training,
+            phase = TrainSingleLinePhase.Training,
             expectedPly = 4,
             mistakesCount = 2,
         )
 
-        runtimeContext.saveGameProgress(
+        runtimeContext.saveLineProgress(
             trainingId = 1L,
-            gameId = 10L,
+            lineId = 10L,
             currentPly = 4,
             lineFingerprint = "line-a",
             uiState = uiState,
         )
 
-        val restored = runtimeContext.restoreGameProgress(1L, 10L)
+        val restored = runtimeContext.restoreLineProgress(1L, 10L)
 
         assertEquals(4, restored?.currentPly)
         assertEquals("line-a", restored?.lineFingerprint)
@@ -198,51 +198,51 @@ class TrainingRuntimeContextTest {
     }
 
     @Test
-    fun `firstStartedGameId returns first started game by stored order`() {
+    fun `firstStartedLineId returns first started line by stored order`() {
         val runtimeContext = TrainingRuntimeContext()
         runtimeContext.rememberLaunch(
             trainingId = 1L,
-            gameId = 30L,
-            orderedGameIds = listOf(10L, 20L, 30L),
+            lineId = 30L,
+            orderedLineIds = listOf(10L, 20L, 30L),
         )
-        runtimeContext.saveGameProgress(
+        runtimeContext.saveLineProgress(
             trainingId = 1L,
-            gameId = 30L,
+            lineId = 30L,
             currentPly = 5,
             lineFingerprint = "line-c",
             uiState = trainUiState(expectedPly = 5),
         )
-        runtimeContext.saveGameProgress(
+        runtimeContext.saveLineProgress(
             trainingId = 1L,
-            gameId = 20L,
+            lineId = 20L,
             currentPly = 3,
             lineFingerprint = "line-b",
             uiState = trainUiState(expectedPly = 3),
         )
 
-        assertEquals(20L, runtimeContext.firstStartedGameId(1L))
+        assertEquals(20L, runtimeContext.firstStartedLineId(1L))
     }
 
     @Test
-    fun `saveGameProgress overwrites previous snapshot for same game`() {
+    fun `saveLineProgress overwrites previous snapshot for same line`() {
         val runtimeContext = TrainingRuntimeContext()
-        runtimeContext.saveGameProgress(
+        runtimeContext.saveLineProgress(
             trainingId = 1L,
-            gameId = 10L,
+            lineId = 10L,
             currentPly = 2,
             lineFingerprint = "line-a",
             uiState = trainUiState(expectedPly = 2, mistakesCount = 1),
         )
 
-        runtimeContext.saveGameProgress(
+        runtimeContext.saveLineProgress(
             trainingId = 1L,
-            gameId = 10L,
+            lineId = 10L,
             currentPly = 5,
             lineFingerprint = "line-b",
             uiState = trainUiState(expectedPly = 5, mistakesCount = 3),
         )
 
-        val restored = runtimeContext.restoreGameProgress(1L, 10L)
+        val restored = runtimeContext.restoreLineProgress(1L, 10L)
 
         assertEquals(5, restored?.currentPly)
         assertEquals("line-b", restored?.lineFingerprint)
@@ -251,25 +251,25 @@ class TrainingRuntimeContextTest {
     }
 
     @Test
-    fun `saveGameProgress for one game does not affect another game`() {
+    fun `saveLineProgress for one line does not affect another line`() {
         val runtimeContext = TrainingRuntimeContext()
-        runtimeContext.saveGameProgress(
+        runtimeContext.saveLineProgress(
             trainingId = 1L,
-            gameId = 10L,
+            lineId = 10L,
             currentPly = 2,
             lineFingerprint = "line-a",
             uiState = trainUiState(expectedPly = 2),
         )
-        runtimeContext.saveGameProgress(
+        runtimeContext.saveLineProgress(
             trainingId = 1L,
-            gameId = 20L,
+            lineId = 20L,
             currentPly = 6,
             lineFingerprint = "line-b",
             uiState = trainUiState(expectedPly = 6, mistakesCount = 4),
         )
 
-        val first = runtimeContext.restoreGameProgress(1L, 10L)
-        val second = runtimeContext.restoreGameProgress(1L, 20L)
+        val first = runtimeContext.restoreLineProgress(1L, 10L)
+        val second = runtimeContext.restoreLineProgress(1L, 20L)
 
         assertEquals(2, first?.currentPly)
         assertEquals(6, second?.currentPly)
@@ -277,199 +277,199 @@ class TrainingRuntimeContextTest {
     }
 
     @Test
-    fun `restoreGameProgress returns null for unsaved game`() {
+    fun `restoreLineProgress returns null for unsaved line`() {
         val runtimeContext = TrainingRuntimeContext()
 
-        assertNull(runtimeContext.restoreGameProgress(1L, 10L))
+        assertNull(runtimeContext.restoreLineProgress(1L, 10L))
     }
 
     @Test
-    fun `clearGameProgress removes only target game snapshot`() {
+    fun `clearLineProgress removes only target line snapshot`() {
         val runtimeContext = TrainingRuntimeContext()
-        runtimeContext.saveGameProgress(
+        runtimeContext.saveLineProgress(
             trainingId = 1L,
-            gameId = 10L,
+            lineId = 10L,
             currentPly = 2,
             lineFingerprint = "line-a",
             uiState = trainUiState(expectedPly = 2),
         )
-        runtimeContext.saveGameProgress(
+        runtimeContext.saveLineProgress(
             trainingId = 1L,
-            gameId = 20L,
+            lineId = 20L,
             currentPly = 4,
             lineFingerprint = "line-b",
             uiState = trainUiState(expectedPly = 4),
         )
 
-        runtimeContext.clearGameProgress(trainingId = 1L, gameId = 10L)
+        runtimeContext.clearLineProgress(trainingId = 1L, lineId = 10L)
 
-        assertNull(runtimeContext.restoreGameProgress(1L, 10L))
-        assertEquals(4, runtimeContext.restoreGameProgress(1L, 20L)?.currentPly)
+        assertNull(runtimeContext.restoreLineProgress(1L, 10L))
+        assertEquals(4, runtimeContext.restoreLineProgress(1L, 20L)?.currentPly)
     }
 
     @Test
-    fun `clearGameProgress keeps session metadata`() {
+    fun `clearLineProgress keeps session metadata`() {
         val runtimeContext = TrainingRuntimeContext()
         runtimeContext.rememberLaunch(
             trainingId = 1L,
-            gameId = 20L,
-            orderedGameIds = listOf(10L, 20L, 30L),
+            lineId = 20L,
+            orderedLineIds = listOf(10L, 20L, 30L),
         )
-        runtimeContext.saveGameProgress(
+        runtimeContext.saveLineProgress(
             trainingId = 1L,
-            gameId = 20L,
+            lineId = 20L,
             currentPly = 4,
             lineFingerprint = "line-a",
             uiState = trainUiState(expectedPly = 4),
         )
 
-        runtimeContext.clearGameProgress(trainingId = 1L, gameId = 20L)
+        runtimeContext.clearLineProgress(trainingId = 1L, lineId = 20L)
 
-        assertEquals(20L, runtimeContext.activeGameId(1L))
-        assertEquals(listOf(10L, 20L, 30L), runtimeContext.orderedGameIds(1L))
+        assertEquals(20L, runtimeContext.activeLineId(1L))
+        assertEquals(listOf(10L, 20L, 30L), runtimeContext.orderedLineIds(1L))
     }
 
     @Test
-    fun `saveGameProgress clears wrongMoveSquare before storing`() {
+    fun `saveLineProgress clears wrongMoveSquare before storing`() {
         val runtimeContext = TrainingRuntimeContext()
 
-        runtimeContext.saveGameProgress(
+        runtimeContext.saveLineProgress(
             trainingId = 1L,
-            gameId = 10L,
+            lineId = 10L,
             currentPly = 3,
             lineFingerprint = "line-a",
             uiState = trainUiState(
-                phase = TrainSingleGamePhase.Mistake,
+                phase = TrainSingleLinePhase.Mistake,
                 wrongMoveSquare = "e4",
             ),
         )
 
-        val restored = runtimeContext.restoreGameProgress(1L, 10L)
+        val restored = runtimeContext.restoreLineProgress(1L, 10L)
 
         assertNull(restored?.uiState?.wrongMoveSquare)
     }
 
     @Test
-    fun `saveGameProgress converts ShowingLine phase to Idle`() {
+    fun `saveLineProgress converts ShowingLine phase to Idle`() {
         val runtimeContext = TrainingRuntimeContext()
 
-        runtimeContext.saveGameProgress(
+        runtimeContext.saveLineProgress(
             trainingId = 1L,
-            gameId = 10L,
+            lineId = 10L,
             currentPly = 3,
             lineFingerprint = "line-a",
-            uiState = trainUiState(phase = TrainSingleGamePhase.ShowingLine),
+            uiState = trainUiState(phase = TrainSingleLinePhase.ShowingLine),
         )
 
-        val restored = runtimeContext.restoreGameProgress(1L, 10L)
+        val restored = runtimeContext.restoreLineProgress(1L, 10L)
 
-        assertEquals(TrainSingleGamePhase.Idle, restored?.uiState?.phase)
+        assertEquals(TrainSingleLinePhase.Idle, restored?.uiState?.phase)
     }
 
     @Test
-    fun `saveGameProgress preserves non ShowingLine phases`() {
+    fun `saveLineProgress preserves non ShowingLine phases`() {
         val runtimeContext = TrainingRuntimeContext()
 
-        runtimeContext.saveGameProgress(
+        runtimeContext.saveLineProgress(
             trainingId = 1L,
-            gameId = 10L,
+            lineId = 10L,
             currentPly = 3,
             lineFingerprint = "line-a",
-            uiState = trainUiState(phase = TrainSingleGamePhase.Training),
+            uiState = trainUiState(phase = TrainSingleLinePhase.Training),
         )
-        runtimeContext.saveGameProgress(
+        runtimeContext.saveLineProgress(
             trainingId = 1L,
-            gameId = 20L,
+            lineId = 20L,
             currentPly = 6,
             lineFingerprint = "line-b",
-            uiState = trainUiState(phase = TrainSingleGamePhase.Mistake),
+            uiState = trainUiState(phase = TrainSingleLinePhase.Mistake),
         )
 
         assertEquals(
-            TrainSingleGamePhase.Training,
-            runtimeContext.restoreGameProgress(1L, 10L)?.uiState?.phase,
+            TrainSingleLinePhase.Training,
+            runtimeContext.restoreLineProgress(1L, 10L)?.uiState?.phase,
         )
         assertEquals(
-            TrainSingleGamePhase.Mistake,
-            runtimeContext.restoreGameProgress(1L, 20L)?.uiState?.phase,
+            TrainSingleLinePhase.Mistake,
+            runtimeContext.restoreLineProgress(1L, 20L)?.uiState?.phase,
         )
     }
 
     @Test
     fun `sessions are isolated by trainingId`() {
         val runtimeContext = TrainingRuntimeContext()
-        runtimeContext.saveGameProgress(
+        runtimeContext.saveLineProgress(
             trainingId = 1L,
-            gameId = 10L,
+            lineId = 10L,
             currentPly = 2,
             lineFingerprint = "line-a",
             uiState = trainUiState(expectedPly = 2),
         )
-        runtimeContext.saveGameProgress(
+        runtimeContext.saveLineProgress(
             trainingId = 2L,
-            gameId = 10L,
+            lineId = 10L,
             currentPly = 7,
             lineFingerprint = "line-b",
             uiState = trainUiState(expectedPly = 7),
         )
 
-        assertEquals(2, runtimeContext.restoreGameProgress(1L, 10L)?.currentPly)
-        assertEquals(7, runtimeContext.restoreGameProgress(2L, 10L)?.currentPly)
+        assertEquals(2, runtimeContext.restoreLineProgress(1L, 10L)?.currentPly)
+        assertEquals(7, runtimeContext.restoreLineProgress(2L, 10L)?.currentPly)
     }
 
     @Test
-    fun `saveGameProgress updates active game`() {
+    fun `saveLineProgress updates active line`() {
         val runtimeContext = TrainingRuntimeContext()
 
-        runtimeContext.saveGameProgress(
+        runtimeContext.saveLineProgress(
             trainingId = 1L,
-            gameId = 30L,
+            lineId = 30L,
             currentPly = 3,
             lineFingerprint = "line-a",
             uiState = trainUiState(expectedPly = 3),
         )
 
-        assertEquals(30L, runtimeContext.activeGameId(1L))
+        assertEquals(30L, runtimeContext.activeLineId(1L))
     }
 
     @Test
-    fun `setCurrentGameId updates active game without touching snapshots`() {
+    fun `setCurrentLineId updates active line without touching snapshots`() {
         val runtimeContext = TrainingRuntimeContext()
         runtimeContext.rememberLaunch(
             trainingId = 1L,
-            gameId = 10L,
-            orderedGameIds = listOf(10L, 20L),
+            lineId = 10L,
+            orderedLineIds = listOf(10L, 20L),
         )
-        runtimeContext.saveGameProgress(
+        runtimeContext.saveLineProgress(
             trainingId = 1L,
-            gameId = 10L,
+            lineId = 10L,
             currentPly = 2,
             lineFingerprint = "line-a",
             uiState = trainUiState(expectedPly = 2),
         )
 
-        runtimeContext.setCurrentGameId(trainingId = 1L, gameId = 20L)
+        runtimeContext.setCurrentLineId(trainingId = 1L, lineId = 20L)
 
-        assertEquals(20L, runtimeContext.activeGameId(1L))
-        assertEquals(2, runtimeContext.restoreGameProgress(1L, 10L)?.currentPly)
+        assertEquals(20L, runtimeContext.activeLineId(1L))
+        assertEquals(2, runtimeContext.restoreLineProgress(1L, 10L)?.currentPly)
     }
 
     @Test
-    fun `setCurrentGameId does nothing for unknown training`() {
+    fun `setCurrentLineId does nothing for unknown training`() {
         val runtimeContext = TrainingRuntimeContext()
 
-        runtimeContext.setCurrentGameId(trainingId = 99L, gameId = 20L)
+        runtimeContext.setCurrentLineId(trainingId = 99L, lineId = 20L)
 
-        assertNull(runtimeContext.activeGameId(99L))
+        assertNull(runtimeContext.activeLineId(99L))
     }
 
     private fun trainUiState(
-        phase: TrainSingleGamePhase = TrainSingleGamePhase.Idle,
+        phase: TrainSingleLinePhase = TrainSingleLinePhase.Idle,
         expectedPly: Int = 0,
         mistakesCount: Int = 0,
         wrongMoveSquare: String? = null,
-    ): TrainSingleGameUiState {
-        return TrainSingleGameUiState(
+    ): TrainSingleLineUiState {
+        return TrainSingleLineUiState(
             phase = phase,
             expectedPly = expectedPly,
             mistakesCount = mistakesCount,

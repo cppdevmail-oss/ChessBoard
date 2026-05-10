@@ -8,8 +8,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.example.chessboard.entity.GameEntity
-import com.example.chessboard.entity.GamePositionEntity
+import com.example.chessboard.entity.LineEntity
+import com.example.chessboard.entity.LinePositionEntity
 import com.example.chessboard.entity.GlobalTrainingStatsEntity
 import com.example.chessboard.entity.PositionEntity
 import com.example.chessboard.entity.SavedSearchPositionEntity
@@ -19,16 +19,16 @@ import com.example.chessboard.entity.TrainingTemplateEntity
 import com.example.chessboard.entity.UserProfileEntity
 import com.example.chessboard.service.SmartTrainingService
 import com.example.chessboard.service.TrainingResultService
-import com.example.chessboard.service.GameBackupService
-import com.example.chessboard.service.GameDeleter
-import com.example.chessboard.service.GameListService
-import com.example.chessboard.service.GameSaver
-import com.example.chessboard.service.GameUpdater
+import com.example.chessboard.service.LineBackupService
+import com.example.chessboard.service.LineDeleter
+import com.example.chessboard.service.LineListService
+import com.example.chessboard.service.LineSaver
+import com.example.chessboard.service.LineUpdater
 import com.example.chessboard.service.GlobalTrainingStatsService
 import com.example.chessboard.service.PositionService
 import com.example.chessboard.service.SavedSearchPositionService
 import com.example.chessboard.service.StatisticsTrainingService
-import com.example.chessboard.service.TrainSingleGameService
+import com.example.chessboard.service.TrainSingleLineService
 import com.example.chessboard.service.TrainingService
 import com.example.chessboard.service.TrainingTemplateService
 import com.example.chessboard.service.UserProfileService
@@ -36,9 +36,9 @@ import com.github.bhlangonijr.chesslib.move.Move
 
 @Database(
     entities = [
-        GameEntity::class,
+        LineEntity::class,
         PositionEntity::class,
-        GamePositionEntity::class,
+        LinePositionEntity::class,
         SavedSearchPositionEntity::class,
         GlobalTrainingStatsEntity::class,
         TrainingTemplateEntity::class,
@@ -46,12 +46,12 @@ import com.github.bhlangonijr.chesslib.move.Move
         TrainingResultEntity::class,
         UserProfileEntity::class,
     ],
-    version = 15
+    version = 16
 )
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun gameDao(): GameDao
+    abstract fun lineDao(): LineDao
     abstract fun positionDao(): PositionDao
-    abstract fun gamePositionDao(): GamePositionDao
+    abstract fun linePositionDao(): LinePositionDao
     abstract fun savedSearchPositionDao(): SavedSearchPositionDao
     abstract fun globalTrainingStatsDao(): GlobalTrainingStatsDao
     abstract fun trainingTemplateDao(): TrainingTemplateDao
@@ -75,7 +75,7 @@ class DatabaseProvider private constructor(
             DB_NAME
         )
             .addCallback(databaseCallback)
-            .addMigrations(MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15)
+            .addMigrations(MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16)
             .fallbackToDestructiveMigration()
             .build()
     }
@@ -93,67 +93,67 @@ class DatabaseProvider private constructor(
         }
     }
 
-    suspend fun updateGame(game: GameEntity, moves: List<Move>): Boolean {
-        val gameUpdater = GameUpdater(database)
-        return gameUpdater.updateGame(game, moves)
+    suspend fun updateLine(line: LineEntity, moves: List<Move>): Boolean {
+        val lineUpdater = LineUpdater(database)
+        return lineUpdater.updateLine(line, moves)
     }
 
-    suspend fun getAllGames(): List<GameEntity> {
-        return database.gameDao().getAllGames()
+    suspend fun getAllLines(): List<LineEntity> {
+        return database.lineDao().getAllLines()
     }
 
     fun clearAllData() {
         database.clearAllTables()
     }
 
-    fun createGameBackupService(): GameBackupService {
-        return GameBackupService(database)
+    fun createLineBackupService(): LineBackupService {
+        return LineBackupService(database)
     }
 
-    fun createGameSaver(): GameSaver {
-        return GameSaver(database)
+    fun createLineSaver(): LineSaver {
+        return LineSaver(database)
     }
 
-    fun createTrainSingleGameService(): TrainSingleGameService {
-        return TrainSingleGameService(database)
+    fun createTrainSingleLineService(): TrainSingleLineService {
+        return TrainSingleLineService(database)
     }
 
-    suspend fun findGameIdsByFenWithoutMoveNumber(fen: String): List<Long> {
+    suspend fun findLineIdsByFenWithoutMoveNumber(fen: String): List<Long> {
         val positionService = PositionService(database)
-        return positionService.findGameIdsByFenWithoutMoveNumber(fen)
+        return positionService.findLineIdsByFenWithoutMoveNumber(fen)
     }
 
-    suspend fun loadTrainingGame(gameId: Long): GameEntity? {
-        val trainSingleGameService = TrainSingleGameService(database)
-        return trainSingleGameService.loadGame(gameId)
+    suspend fun loadTrainingLine(lineId: Long): LineEntity? {
+        val trainSingleLineService = TrainSingleLineService(database)
+        return trainSingleLineService.loadLine(lineId)
     }
 
-    suspend fun deleteGame(id: Long) {
-        val gameDeleter = GameDeleter(database)
-        gameDeleter.deleteGame(id)
+    suspend fun deleteLine(id: Long) {
+        val lineDeleter = LineDeleter(database)
+        lineDeleter.deleteLine(id)
     }
 
-    suspend fun recordTrainingGameStats(gameId: Long, mistakesCount: Int) {
-        val trainSingleGameService = TrainSingleGameService(database)
-        trainSingleGameService.recordTrainingStats(gameId = gameId, mistakesCount = mistakesCount)
+    suspend fun recordTrainingLineStats(lineId: Long, mistakesCount: Int) {
+        val trainSingleLineService = TrainSingleLineService(database)
+        trainSingleLineService.recordTrainingStats(lineId = lineId, mistakesCount = mistakesCount)
     }
 
-    suspend fun recordTrainingGameStatsCheckingLevelUp(gameId: Long, mistakesCount: Int): Int? {
-        val trainSingleGameService = TrainSingleGameService(database)
-        return trainSingleGameService.recordTrainingStatsCheckingLevelUp(gameId = gameId, mistakesCount = mistakesCount)
+    suspend fun recordTrainingLineStatsCheckingLevelUp(lineId: Long, mistakesCount: Int): Int? {
+        val trainSingleLineService = TrainSingleLineService(database)
+        return trainSingleLineService.recordTrainingStatsCheckingLevelUp(lineId = lineId, mistakesCount = mistakesCount)
     }
 
-    suspend fun finishTrainingGame(
+    suspend fun finishTrainingLine(
         trainingId: Long,
-        gameId: Long,
+        lineId: Long,
         mistakesCount: Int,
         keepLineIfZero: Boolean = false
     ): Boolean {
-        val trainSingleGameService = TrainSingleGameService(database)
+        val trainSingleLineService = TrainSingleLineService(database)
 
-        return trainSingleGameService.finishTraining(
+        return trainSingleLineService.finishTraining(
             trainingId = trainingId,
-            gameId = gameId,
+            lineId = lineId,
             mistakesCount = mistakesCount,
             keepLineIfZero = keepLineIfZero
         )
@@ -168,8 +168,8 @@ class DatabaseProvider private constructor(
         return StatisticsTrainingService(database)
     }
 
-    fun createGameListService(): GameListService {
-        return GameListService(database.gameDao())
+    fun createLineListService(): LineListService {
+        return LineListService(database.lineDao())
     }
 
     fun createSavedSearchPositionService(): SavedSearchPositionService {
@@ -199,7 +199,7 @@ class DatabaseProvider private constructor(
     fun createTrainingService(): TrainingService {
         return TrainingService(
             database = database,
-            gameDao = database.gameDao(),
+            lineDao = database.lineDao(),
             dao = database.trainingDao(),
             templateDao = database.trainingTemplateDao()
         )
@@ -245,6 +245,10 @@ class DatabaseProvider private constructor(
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE `user_profile` ADD COLUMN `autoNextLine` INTEGER NOT NULL DEFAULT 0")
             }
+        }
+
+        val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(database: SupportSQLiteDatabase) = Unit
         }
 
         @SuppressLint("StaticFieldLeak")

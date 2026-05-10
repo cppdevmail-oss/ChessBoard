@@ -48,8 +48,8 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import com.example.chessboard.service.OneGameTrainingData
-import com.example.chessboard.service.SmartGamePair
+import com.example.chessboard.service.OneLineTrainingData
+import com.example.chessboard.service.SmartLinePair
 import com.example.chessboard.ui.components.AppBottomNavigation
 import com.example.chessboard.ui.components.AppDivider
 import com.example.chessboard.ui.components.AppIconSizes
@@ -79,14 +79,14 @@ private val SmartTrainingItemBorder = Color(0xFF222222)
 data class SmartTrainingItem(
     val trainingId: Long,
     val name: String,
-    val gamesCount: Int,
+    val linesCount: Int,
     val masteredCount: Int,
 )
 
 @Composable
 fun SmartTrainingScreenContainer(
     screenContext: ScreenContainerContext,
-    onStartTraining: (List<SmartGamePair>) -> Unit,
+    onStartTraining: (List<SmartLinePair>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val inDbProvider = screenContext.inDbProvider
@@ -98,7 +98,7 @@ fun SmartTrainingScreenContainer(
     var smartMaxLines by remember { mutableStateOf(10) }
     var smartOnlyWithMistakes by remember { mutableStateOf(false) }
     var trainings by remember { mutableStateOf<List<SmartTrainingItem>>(emptyList()) }
-    var noGamesFound by remember { mutableStateOf(false) }
+    var noLinesFound by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
@@ -109,12 +109,12 @@ fun SmartTrainingScreenContainer(
 
         trainings = withContext(Dispatchers.IO) {
             trainingService.getAllTrainings().map { entity ->
-                val gameIds = OneGameTrainingData.fromJson(entity.gamesJson).map { it.gameId }
+                val lineIds = OneLineTrainingData.fromJson(entity.linesJson).map { it.lineId }
                 SmartTrainingItem(
                     trainingId = entity.id,
                     name = entity.name.ifBlank { "Unnamed Training" },
-                    gamesCount = gameIds.size,
-                    masteredCount = smartTrainingService.countMasteredGames(gameIds),
+                    linesCount = lineIds.size,
+                    masteredCount = smartTrainingService.countMasteredLines(lineIds),
                 )
             }
         }
@@ -123,8 +123,8 @@ fun SmartTrainingScreenContainer(
     SmartTrainingScreen(
         infoCardHidden = infoCardHidden,
         trainings = trainings,
-        noGamesFound = noGamesFound,
-        onDismissNoGamesFound = { noGamesFound = false },
+        noLinesFound = noLinesFound,
+        onDismissNoLinesFound = { noLinesFound = false },
         onDismissInfoCard = {
             infoCardHidden = true
             scope.launch(Dispatchers.IO) { userProfileService.setHideSmartTrainingInfoCard(true) }
@@ -135,7 +135,7 @@ fun SmartTrainingScreenContainer(
                     smartTrainingService.resolveSmartQueue(selectedIds, smartOnlyWithMistakes).take(smartMaxLines)
                 }
                 if (queue.isEmpty()) {
-                    noGamesFound = true
+                    noLinesFound = true
                 } else {
                     onStartTraining(queue)
                 }
@@ -151,8 +151,8 @@ fun SmartTrainingScreenContainer(
 fun SmartTrainingScreen(
     infoCardHidden: Boolean = false,
     trainings: List<SmartTrainingItem> = emptyList(),
-    noGamesFound: Boolean = false,
-    onDismissNoGamesFound: () -> Unit = {},
+    noLinesFound: Boolean = false,
+    onDismissNoLinesFound: () -> Unit = {},
     onDismissInfoCard: () -> Unit = {},
     onStartTraining: (Set<Long>) -> Unit = { _ -> },
     onSettingsClick: () -> Unit = {},
@@ -168,13 +168,13 @@ fun SmartTrainingScreen(
         selectionInitialized = true
     }
 
-    if (noGamesFound) {
+    if (noLinesFound) {
         AlertDialog(
-            onDismissRequest = onDismissNoGamesFound,
-            title = { Text("No Games Found") },
-            text = { Text("No games are due right now.\n\nGames with no mistakes are skipped until 3 days have passed. If nothing is due at 3 days, games from 5+ days ago are shown instead.\n\nTry turning on \"Only Games with Mistakes\" to train lines you haven't perfected yet.") },
+            onDismissRequest = onDismissNoLinesFound,
+            title = { Text("No Lines Found") },
+            text = { Text("No lines are due right now.\n\nLines with no mistakes are skipped until 3 days have passed. If nothing is due at 3 days, lines from 5+ days ago are shown instead.\n\nTry turning on \"Only Lines with Mistakes\" to train lines you haven't perfected yet.") },
             confirmButton = {
-                TextButton(onClick = onDismissNoGamesFound) { Text("OK") }
+                TextButton(onClick = onDismissNoLinesFound) { Text("OK") }
             },
             containerColor = SmartTrainingItemBg,
             titleContentColor = TextColor.Primary,
@@ -192,7 +192,7 @@ fun SmartTrainingScreen(
     val progressSource = remember(trainings, selectedIds.value) {
         val source = if (selectedIds.value.isEmpty()) trainings
                      else trainings.filter { it.trainingId in selectedIds.value }
-        val total = source.sumOf { it.gamesCount }
+        val total = source.sumOf { it.linesCount }
         val mastered = source.sumOf { it.masteredCount }
         total to mastered
     }
@@ -535,7 +535,7 @@ private fun TrainingSelectRow(
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                text = "${item.gamesCount} ${if (item.gamesCount == 1) "game" else "games"}",
+                text = "${item.linesCount} ${if (item.linesCount == 1) "line" else "lines"}",
                 style = MaterialTheme.typography.bodySmall,
                 color = TextColor.Secondary,
             )

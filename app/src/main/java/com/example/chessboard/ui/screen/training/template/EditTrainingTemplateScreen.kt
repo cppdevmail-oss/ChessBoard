@@ -12,14 +12,14 @@ import com.example.chessboard.ui.screen.training.common.CreateTrainingEditorStat
 import com.example.chessboard.ui.screen.training.common.TrainingCollectionEditorBarsFactory
 import com.example.chessboard.ui.screen.training.common.TrainingCollectionEditorScreen
 import com.example.chessboard.ui.screen.training.common.TrainingCollectionEditorStrings
-import com.example.chessboard.ui.screen.training.common.TrainingEditorGameSection
-import com.example.chessboard.ui.screen.training.common.TrainingEditorGameSectionActions
-import com.example.chessboard.ui.screen.training.common.TrainingEditorGameSectionState
-import com.example.chessboard.ui.screen.training.common.TrainingGameEditorItem
-import com.example.chessboard.ui.screen.training.common.decreaseTrainingGameWeight
-import com.example.chessboard.ui.screen.training.common.increaseTrainingGameWeight
-import com.example.chessboard.ui.screen.training.common.removeTrainingGame
-import com.example.chessboard.ui.screen.training.common.resolveNextSelectedTrainingGameId
+import com.example.chessboard.ui.screen.training.common.TrainingEditorLineSection
+import com.example.chessboard.ui.screen.training.common.TrainingEditorLineSectionActions
+import com.example.chessboard.ui.screen.training.common.TrainingEditorLineSectionState
+import com.example.chessboard.ui.screen.training.common.TrainingLineEditorItem
+import com.example.chessboard.ui.screen.training.common.decreaseTrainingLineWeight
+import com.example.chessboard.ui.screen.training.common.increaseTrainingLineWeight
+import com.example.chessboard.ui.screen.training.common.removeTrainingLine
+import com.example.chessboard.ui.screen.training.common.resolveNextSelectedTrainingLineId
 import com.example.chessboard.ui.screen.training.common.rememberTrainingEditorBoardSession
 
 import androidx.activity.compose.BackHandler
@@ -31,7 +31,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.entity.LineEntity
 import com.example.chessboard.ui.components.AppConfirmDialog
 import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.screen.ScreenContainerContext
@@ -70,20 +70,20 @@ private fun RenderEditTrainingTemplateSaveSuccessDialog(
         message = buildString {
             appendLine("ID: ${currentSuccess.templateId}")
             appendLine("Name: ${currentSuccess.templateName}")
-            append("Games in template: ")
-            append(currentSuccess.gamesCount)
+            append("Lines in template: ")
+            append(currentSuccess.linesCount)
         },
         onDismiss = onDismiss,
     )
 }
 
-private fun createOpenEditTrainingTemplateGameEditorAction(
-    allGamesById: Map<Long, GameEntity>,
-    onOpenGameEditorClick: (GameEntity) -> Unit,
+private fun createOpenEditTrainingTemplateLineEditorAction(
+    allLinesById: Map<Long, LineEntity>,
+    onOpenLineEditorClick: (LineEntity) -> Unit,
 ): (Long) -> Unit {
-    return openGameEditor@{ gameId ->
-        val game = allGamesById[gameId] ?: return@openGameEditor
-        onOpenGameEditorClick(game)
+    return openLineEditor@{ lineId ->
+        val line = allLinesById[lineId] ?: return@openLineEditor
+        onOpenLineEditorClick(line)
     }
 }
 
@@ -91,7 +91,7 @@ private fun createOpenEditTrainingTemplateGameEditorAction(
 fun EditTrainingTemplateScreenContainer(
     templateId: Long,
     screenContext: ScreenContainerContext,
-    onOpenGameEditorClick: (GameEntity) -> Unit = {},
+    onOpenLineEditorClick: (LineEntity) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val onBackClick = screenContext.onBackClick
@@ -128,20 +128,20 @@ fun EditTrainingTemplateScreenContainer(
 
     EditTrainingTemplateScreen(
         initialTemplateName = loadState.templateName,
-        gamesForTemplate = loadState.gamesForTemplate,
+        linesForTemplate = loadState.linesForTemplate,
         onBackClick = onBackClick,
         onNavigate = onNavigate,
-        onOpenGameEditorClick = createOpenEditTrainingTemplateGameEditorAction(
-            allGamesById = loadState.allGamesById,
-            onOpenGameEditorClick = onOpenGameEditorClick,
+        onOpenLineEditorClick = createOpenEditTrainingTemplateLineEditorAction(
+            allLinesById = loadState.allLinesById,
+            onOpenLineEditorClick = onOpenLineEditorClick,
         ),
-        onSaveTemplate = { templateName, editableGames, onSaved ->
+        onSaveTemplate = { templateName, editableLines, onSaved ->
             scope.launch {
                 val saveResult = saveEditedTrainingTemplate(
                     trainingTemplateService = trainingTemplateService,
                     templateId = templateId,
                     templateName = templateName,
-                    editableGames = editableGames,
+                    editableLines = editableLines,
                 ) ?: return@launch
 
                 onSaved?.invoke()
@@ -161,45 +161,45 @@ private val EditTrainingTemplateScreenStrings = TrainingCollectionEditorStrings(
     screenTitle = "Edit Template",
     collectionNameLabel = "Template Name",
     collectionNamePlaceholder = DEFAULT_TEMPLATE_NAME,
-    gamesCountLabel = "Games in template",
+    linesCountLabel = "Lines in template",
 )
 
 @Composable
 fun EditTrainingTemplateScreen(
     initialTemplateName: String = DEFAULT_TEMPLATE_NAME,
-    gamesForTemplate: List<TrainingGameEditorItem> = emptyList(),
+    linesForTemplate: List<TrainingLineEditorItem> = emptyList(),
     onBackClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
-    onOpenGameEditorClick: (Long) -> Unit = {},
-    onSaveTemplate: (String, List<TrainingGameEditorItem>, (() -> Unit)?) -> Unit = { _, _, _ -> },
+    onOpenLineEditorClick: (Long) -> Unit = {},
+    onSaveTemplate: (String, List<TrainingLineEditorItem>, (() -> Unit)?) -> Unit = { _, _, _ -> },
     modifier: Modifier = Modifier,
 ) {
     var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
-    var hasUserSelectedGame by remember { mutableStateOf(false) }
-    var editorState by remember(initialTemplateName, gamesForTemplate) {
+    var hasUserSelectedLine by remember { mutableStateOf(false) }
+    var editorState by remember(initialTemplateName, linesForTemplate) {
         mutableStateOf(
             CreateTrainingEditorState(
                 trainingName = initialTemplateName,
-                editableGamesForTraining = gamesForTemplate,
+                editableLinesForTraining = linesForTemplate,
             )
         )
     }
     var savedTemplateName by remember(initialTemplateName) { mutableStateOf(initialTemplateName) }
-    var savedGamesForTemplate by remember(gamesForTemplate) { mutableStateOf(gamesForTemplate) }
+    var savedLinesForTemplate by remember(linesForTemplate) { mutableStateOf(linesForTemplate) }
     var pendingLeaveAction by remember { mutableStateOf<(() -> Unit)?>(null) }
-    var pendingRemoveGame by remember { mutableStateOf<TrainingGameEditorItem?>(null) }
-    val boardSession = rememberTrainingEditorBoardSession(editorState.editableGamesForTraining)
-    val selectedGame = editorState.editableGamesForTraining.firstOrNull { game ->
-        game.gameId == boardSession.selectedGameId
+    var pendingRemoveLine by remember { mutableStateOf<TrainingLineEditorItem?>(null) }
+    val boardSession = rememberTrainingEditorBoardSession(editorState.editableLinesForTraining)
+    val selectedLine = editorState.editableLinesForTraining.firstOrNull { line ->
+        line.lineId == boardSession.selectedLineId
     }
-    val canUndo = selectedGame != null && boardSession.gameController.canUndo
-    val canRedo = selectedGame != null && boardSession.gameController.canRedo
+    val canUndo = selectedLine != null && boardSession.lineController.canUndo
+    val canRedo = selectedLine != null && boardSession.lineController.canRedo
 
     fun hasUnsavedChanges(): Boolean {
         return hasUnsavedTrainingEditorChanges(
             editorState = editorState,
             initialTrainingName = savedTemplateName,
-            initialGamesForTraining = savedGamesForTemplate,
+            initialLinesForTraining = savedLinesForTemplate,
             defaultName = DEFAULT_TEMPLATE_NAME,
         )
     }
@@ -209,13 +209,13 @@ fun EditTrainingTemplateScreen(
             trainingName = editorState.trainingName,
             defaultName = DEFAULT_TEMPLATE_NAME,
         )
-        savedGamesForTemplate = editorState.editableGamesForTraining
+        savedLinesForTemplate = editorState.editableLinesForTraining
     }
 
     fun saveTemplate(afterSave: (() -> Unit)? = null) {
         onSaveTemplate(
             editorState.trainingName,
-            editorState.editableGamesForTraining,
+            editorState.editableLinesForTraining,
         ) {
             updateSavedState()
             afterSave?.invoke()
@@ -231,50 +231,50 @@ fun EditTrainingTemplateScreen(
         pendingLeaveAction = action
     }
 
-    fun removeGameFromTemplate(gameId: Long) {
-        val nextSelectedGameId = resolveNextSelectedTrainingGameId(
-            games = editorState.editableGamesForTraining,
-            removedGameId = gameId,
+    fun removeLineFromTemplate(lineId: Long) {
+        val nextSelectedLineId = resolveNextSelectedTrainingLineId(
+            lines = editorState.editableLinesForTraining,
+            removedLineId = lineId,
         )
         editorState = editorState.copy(
-            editableGamesForTraining = removeTrainingGame(
-                games = editorState.editableGamesForTraining,
-                gameId = gameId,
+            editableLinesForTraining = removeTrainingLine(
+                lines = editorState.editableLinesForTraining,
+                lineId = lineId,
             )
         )
 
-        if (nextSelectedGameId == null) {
-            hasUserSelectedGame = false
+        if (nextSelectedLineId == null) {
+            hasUserSelectedLine = false
             return
         }
 
-        hasUserSelectedGame = true
-        boardSession.onSelectGame(nextSelectedGameId)
+        hasUserSelectedLine = true
+        boardSession.onSelectLine(nextSelectedLineId)
     }
 
-    fun withSelectedGame(action: (TrainingGameEditorItem) -> Unit) {
-        selectedGame?.let(action)
+    fun withSelectedLine(action: (TrainingLineEditorItem) -> Unit) {
+        selectedLine?.let(action)
     }
 
-    fun openSelectedGameEditor() {
-        withSelectedGame { game ->
-            requestLeave { onOpenGameEditorClick(game.gameId) }
+    fun openSelectedLineEditor() {
+        withSelectedLine { line ->
+            requestLeave { onOpenLineEditorClick(line.lineId) }
         }
     }
 
-    fun removeSelectedGame() {
-        withSelectedGame { game ->
-            pendingRemoveGame = game
+    fun removeSelectedLine() {
+        withSelectedLine { line ->
+            pendingRemoveLine = line
         }
     }
 
-    LaunchedEffect(initialTemplateName, gamesForTemplate) {
+    LaunchedEffect(initialTemplateName, linesForTemplate) {
         editorState = editorState.copy(
             trainingName = initialTemplateName,
-            editableGamesForTraining = gamesForTemplate,
+            editableLinesForTraining = linesForTemplate,
         )
         savedTemplateName = initialTemplateName
-        savedGamesForTemplate = gamesForTemplate
+        savedLinesForTemplate = linesForTemplate
         pendingLeaveAction = null
     }
 
@@ -295,14 +295,14 @@ fun EditTrainingTemplateScreen(
         },
     )
 
-    pendingRemoveGame?.let { gameToRemove ->
+    pendingRemoveLine?.let { lineToRemove ->
         AppConfirmDialog(
-            title = "Remove Game",
-            message = "Remove \"${gameToRemove.title}\" from template?",
-            onDismiss = { pendingRemoveGame = null },
+            title = "Remove Line",
+            message = "Remove \"${lineToRemove.title}\" from template?",
+            onDismiss = { pendingRemoveLine = null },
             onConfirm = {
-                pendingRemoveGame = null
-                removeGameFromTemplate(gameToRemove.gameId)
+                pendingRemoveLine = null
+                removeLineFromTemplate(lineToRemove.lineId)
             },
             confirmText = "Remove",
             isDestructive = true,
@@ -313,9 +313,9 @@ fun EditTrainingTemplateScreen(
         requestLeave(onBackClick)
     }
 
-    val autoScrollToGameIndex = if (hasUserSelectedGame) {
-        editorState.editableGamesForTraining.indexOfFirst { game ->
-            game.gameId == boardSession.selectedGameId
+    val autoScrollToLineIndex = if (hasUserSelectedLine) {
+        editorState.editableLinesForTraining.indexOfFirst { line ->
+            line.lineId == boardSession.selectedLineId
         }.takeIf { it >= 0 }
     } else {
         null
@@ -323,21 +323,21 @@ fun EditTrainingTemplateScreen(
 
     val editorBars = TrainingCollectionEditorBarsFactory(
         onHomeClick = { requestLeave { onNavigate(ScreenType.Home) } },
-        hasSelection = selectedGame != null,
-        onEditClick = ::openSelectedGameEditor,
-        onDeleteClick = ::removeSelectedGame,
-        deleteContentDescription = "Remove game from template",
+        hasSelection = selectedLine != null,
+        onEditClick = ::openSelectedLineEditor,
+        onDeleteClick = ::removeSelectedLine,
+        deleteContentDescription = "Remove line from template",
         canUndo = canUndo,
-        onPrevClick = { boardSession.gameController.undoMove() },
+        onPrevClick = { boardSession.lineController.undoMove() },
         canRedo = canRedo,
-        onNextClick = { boardSession.gameController.redoMove() },
+        onNextClick = { boardSession.lineController.redoMove() },
     )
 
     TrainingCollectionEditorScreen(
         strings = EditTrainingTemplateScreenStrings,
         collectionName = editorState.trainingName,
         onCollectionNameChange = { editorState = editorState.copy(trainingName = it) },
-        games = editorState.editableGamesForTraining,
+        lines = editorState.editableLinesForTraining,
         selectedNavItem = selectedNavItem,
         onBackClick = {
             requestLeave(onBackClick)
@@ -352,51 +352,51 @@ fun EditTrainingTemplateScreen(
             }
         },
         modifier = modifier,
-        autoScrollToGameIndex = autoScrollToGameIndex,
+        autoScrollToLineIndex = autoScrollToLineIndex,
         bottomBarOverride = editorBars.buildBottomBar(),
         topBarActions = editorBars.buildTopBarActions(),
-    ) { game ->
-        val parsedGame = boardSession.parsedGamesById[game.gameId]
-        val isSelected = boardSession.selectedGameId == game.gameId
+    ) { line ->
+        val parsedLine = boardSession.parsedLinesById[line.lineId]
+        val isSelected = boardSession.selectedLineId == line.lineId
 
-        TrainingEditorGameSection(
-            state = TrainingEditorGameSectionState(
-                game = game,
-                parsedGame = parsedGame,
+        TrainingEditorLineSection(
+            state = TrainingEditorLineSectionState(
+                line = line,
+                parsedLine = parsedLine,
                 isSelected = isSelected,
-                gameController = boardSession.gameController,
-                currentPly = if (isSelected) boardSession.gameController.currentMoveIndex else 0,
+                lineController = boardSession.lineController,
+                currentPly = if (isSelected) boardSession.lineController.currentMoveIndex else 0,
             ),
-            actions = TrainingEditorGameSectionActions(
+            actions = TrainingEditorLineSectionActions(
                 onDecreaseWeightClick = {
                     editorState = editorState.copy(
-                        editableGamesForTraining = decreaseTrainingGameWeight(
-                            games = editorState.editableGamesForTraining,
-                            gameId = game.gameId,
+                        editableLinesForTraining = decreaseTrainingLineWeight(
+                            lines = editorState.editableLinesForTraining,
+                            lineId = line.lineId,
                         )
                     )
                 },
                 onIncreaseWeightClick = {
                     editorState = editorState.copy(
-                        editableGamesForTraining = increaseTrainingGameWeight(
-                            games = editorState.editableGamesForTraining,
-                            gameId = game.gameId,
+                        editableLinesForTraining = increaseTrainingLineWeight(
+                            lines = editorState.editableLinesForTraining,
+                            lineId = line.lineId,
                         )
                     )
                 },
                 onSelect = {
-                    hasUserSelectedGame = true
-                    boardSession.onSelectGame(game.gameId)
+                    hasUserSelectedLine = true
+                    boardSession.onSelectLine(line.lineId)
                 },
-                onPrevClick = { boardSession.gameController.undoMove() },
-                onNextClick = { boardSession.gameController.redoMove() },
-                onResetClick = { boardSession.onResetSelectedGame(game.gameId) },
-                onEditGameClick = {
+                onPrevClick = { boardSession.lineController.undoMove() },
+                onNextClick = { boardSession.lineController.redoMove() },
+                onResetClick = { boardSession.onResetSelectedLine(line.lineId) },
+                onEditLineClick = {
                     requestLeave {
-                        onOpenGameEditorClick(game.gameId)
+                        onOpenLineEditorClick(line.lineId)
                     }
                 },
-                onMovePlyClick = { ply -> boardSession.onMoveToPly(game.gameId, ply) },
+                onMovePlyClick = { ply -> boardSession.onMoveToPly(line.lineId, ply) },
             ),
             removeCollectionLabel = "template",
         )

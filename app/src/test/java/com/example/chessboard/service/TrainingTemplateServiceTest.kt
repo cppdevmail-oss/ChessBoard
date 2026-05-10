@@ -17,72 +17,72 @@ import org.junit.Test
 class TrainingTemplateServiceTest {
 
     @Test
-    fun `updateTemplateFromGames returns not found when template is missing`() = runBlocking {
+    fun `updateTemplateFromLines returns not found when template is missing`() = runBlocking {
         val dao = FakeTrainingTemplateDao()
         val service = TrainingTemplateService(dao)
 
-        val updateResult = service.updateTemplateFromGames(
+        val updateResult = service.updateTemplateFromLines(
             templateId = 1L,
-            games = listOf(OneGameTrainingData(gameId = 10L, weight = 2)),
+            lines = listOf(OneLineTrainingData(lineId = 10L, weight = 2)),
             name = "Updated Template",
         )
 
-        assertEquals(TrainingTemplateService.UpdateTemplateFromGamesResult.NOT_FOUND, updateResult)
+        assertEquals(TrainingTemplateService.UpdateTemplateFromLinesResult.NOT_FOUND, updateResult)
     }
 
     @Test
-    fun `updateTemplateFromGames updates template name and games json`() = runBlocking {
+    fun `updateTemplateFromLines updates template name and lines json`() = runBlocking {
         val dao = FakeTrainingTemplateDao(
             templates = mutableMapOf(
                 1L to TrainingTemplateEntity(
                     id = 1L,
                     name = "Initial Template",
-                    gamesJson = "[]",
+                    linesJson = "[]",
                 )
             )
         )
         val service = TrainingTemplateService(dao)
-        val updatedGames = listOf(
-            OneGameTrainingData(gameId = 10L, weight = 2),
-            OneGameTrainingData(gameId = 20L, weight = 1),
+        val updatedLines = listOf(
+            OneLineTrainingData(lineId = 10L, weight = 2),
+            OneLineTrainingData(lineId = 20L, weight = 1),
         )
 
-        val updateResult = service.updateTemplateFromGames(
+        val updateResult = service.updateTemplateFromLines(
             templateId = 1L,
-            games = updatedGames,
+            lines = updatedLines,
             name = "Updated Template",
         )
 
-        assertEquals(TrainingTemplateService.UpdateTemplateFromGamesResult.UPDATED, updateResult)
+        assertEquals(TrainingTemplateService.UpdateTemplateFromLinesResult.UPDATED, updateResult)
         assertEquals("Updated Template", dao.templates.getValue(1L).name)
         assertEquals(
-            OneGameTrainingData.toJson(updatedGames),
-            dao.templates.getValue(1L).gamesJson,
+            OneLineTrainingData.toJson(updatedLines),
+            dao.templates.getValue(1L).linesJson,
         )
     }
 
     @Test
-    fun `updateTemplateFromGames deletes template when games list is empty`() = runBlocking {
+    fun `updateTemplateFromLines deletes template when lines list is empty`() = runBlocking {
         val dao = FakeTrainingTemplateDao(
             templates = mutableMapOf(
                 1L to TrainingTemplateEntity(
                     id = 1L,
                     name = "Initial Template",
-                    gamesJson = OneGameTrainingData.toJson(
-                        listOf(OneGameTrainingData(gameId = 10L, weight = 2))
+                    linesJson = OneLineTrainingData.toJson(
+                        listOf(OneLineTrainingData(lineId = 10L, weight = 2))
                     ),
                 )
             )
         )
         val service = TrainingTemplateService(dao)
 
-        val updateResult = service.updateTemplateFromGames(
+        val updateResult = service.updateTemplateFromLines(
             templateId = 1L,
-            games = emptyList(),
+            lines = emptyList(),
             name = "Empty Template",
         )
 
-        assertEquals(TrainingTemplateService.UpdateTemplateFromGamesResult.DELETED, updateResult)
+        assertEquals(TrainingTemplateService.UpdateTemplateFromLinesResult.DELETED, updateResult)
         assertNull(dao.templates[1L])
     }
 

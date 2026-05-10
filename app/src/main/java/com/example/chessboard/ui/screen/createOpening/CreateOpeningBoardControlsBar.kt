@@ -14,14 +14,14 @@ import com.example.chessboard.ui.components.AppIconSizes
 import com.example.chessboard.ui.components.BoardActionNavigationBar
 import com.example.chessboard.ui.components.BoardActionNavigationItem
 import com.example.chessboard.ui.components.IconMd
-import com.example.chessboard.ui.screen.EditableGameSide
+import com.example.chessboard.ui.screen.EditableLineSide
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import com.example.chessboard.ui.theme.TrainingIconInactive
 
 @Composable
 internal fun CreateOpeningBoardControlsBar(
-    selectedSide: EditableGameSide,
-    onSideSelected: (EditableGameSide) -> Unit,
+    selectedSide: EditableLineSide,
+    onSideSelected: (EditableLineSide) -> Unit,
     canUndo: Boolean,
     canRedo: Boolean,
     onUndoClick: () -> Unit,
@@ -31,9 +31,9 @@ internal fun CreateOpeningBoardControlsBar(
 ) {
     BoardActionNavigationBar(
         modifier = modifier,
-        items = EditableGameSide.entries.map { side ->
+        items = EditableLineSide.entries.map { side ->
             BoardActionNavigationItem(
-                label = if (side == EditableGameSide.AS_WHITE) "White" else "Black",
+                label = if (side == EditableLineSide.AS_WHITE) "White" else "Black",
                 selected = side == selectedSide,
                 onClick = { onSideSelected(side) },
             ) {
@@ -81,7 +81,7 @@ internal fun CreateOpeningBoardControlsBar(
 
 @Composable
 private fun SideSymbolNavigationIcon(
-    side: EditableGameSide,
+    side: EditableLineSide,
     selected: Boolean,
     modifier: Modifier = Modifier,
 ) {

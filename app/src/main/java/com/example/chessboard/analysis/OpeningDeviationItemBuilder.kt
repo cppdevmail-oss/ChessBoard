@@ -5,7 +5,7 @@ package com.example.chessboard.analysis
  * Keep branch aggregation and one-ply replay logic here.
  * Do not add screen wiring, navigation, or database queries to this file.
  */
-import com.example.chessboard.entity.GameEntity
+import com.example.chessboard.entity.LineEntity
 import com.example.chessboard.service.parsePgnMoves
 import com.example.chessboard.ui.screen.openingDeviation.OpeningDeviationBranch
 import com.example.chessboard.ui.screen.openingDeviation.OpeningDeviationItem
@@ -15,11 +15,11 @@ class OpeningDeviationItemBuilder(
 ) {
 
     fun build(
-        games: List<GameEntity>,
+        lines: List<LineEntity>,
         selectedSide: OpeningSide,
     ): List<OpeningDeviationItem> {
         return finder.findDeviations(
-            games = games,
+            lines = lines,
             selectedSide = selectedSide,
         ).map { deviation ->
             OpeningDeviationItem(
@@ -38,9 +38,9 @@ class OpeningDeviationItemBuilder(
     ): List<OpeningDeviationBranch> {
         val branchesByResultFen = linkedMapOf<String, BranchBucket>()
 
-        deviation.games.forEach { game ->
-            recordGameBranch(
-                game = game,
+        deviation.lines.forEach { line ->
+            recordLineBranch(
+                line = line,
                 deviationPositionFen = deviation.positionFen,
                 selectedSide = selectedSide,
                 branchesByResultFen = branchesByResultFen,
@@ -51,26 +51,26 @@ class OpeningDeviationItemBuilder(
             OpeningDeviationBranch(
                 moveUci = bucket.moveUci,
                 resultFen = bucket.resultFen,
-                gamesCount = bucket.gamesCount,
+                linesCount = bucket.linesCount,
             )
         }
     }
 
-    private fun recordGameBranch(
-        game: GameEntity,
+    private fun recordLineBranch(
+        line: LineEntity,
         deviationPositionFen: String,
         selectedSide: OpeningSide,
         branchesByResultFen: MutableMap<String, BranchBucket>,
     ) {
-        val board = OpeningDeviationReplay.buildInitialBoard(game.initialFen)
-        val moves = parsePgnMoves(game.pgn)
+        val board = OpeningDeviationReplay.buildInitialBoard(line.initialFen)
+        val moves = parsePgnMoves(line.pgn)
 
         for ((moveIndex, uciMove) in moves.withIndex()) {
             val positionKey = OpeningDeviationReplay.buildPositionKey(board)
             val move = OpeningDeviationReplay.buildMoveFromUci(
                 uci = uciMove,
                 board = board,
-                game = game,
+                line = line,
                 moveIndex = moveIndex,
             )
 
@@ -99,20 +99,20 @@ class OpeningDeviationItemBuilder(
     ) {
         val existingBucket = branchesByResultFen[resultFen]
         if (existingBucket != null) {
-            existingBucket.gamesCount += 1
+            existingBucket.linesCount += 1
             return
         }
 
         branchesByResultFen[resultFen] = BranchBucket(
             moveUci = moveUci,
             resultFen = resultFen,
-            gamesCount = 1,
+            linesCount = 1,
         )
     }
 
     private data class BranchBucket(
         val moveUci: String,
         val resultFen: String,
-        var gamesCount: Int,
+        var linesCount: Int,
     )
 }
