@@ -114,6 +114,7 @@ private fun HomeScreen(
             },
             onNavigate = onNavigate,
             onSmartTrainingClick = onSmartTrainingClick,
+            onOpenSavedPositionsClick = onOpenSavedPositionsClick,
             modifier = modifier,
         )
         return

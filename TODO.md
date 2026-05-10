@@ -40,3 +40,4 @@
   старый MoveLegendSection пометить как deprecated
 - Копирование фена из позиции линии
 - Сохранить историю ходов в поиске после поиска позиции
+- replace return null everywhere to empty, to avoid NPE

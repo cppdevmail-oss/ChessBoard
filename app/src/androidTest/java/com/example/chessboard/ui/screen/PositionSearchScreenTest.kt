@@ -36,12 +36,7 @@ class PositionSearchScreenTest {
 
     @Test
     fun positionSearchScreen_clearBoardButtonUpdatesVisibleFen() {
-        // Home content depends on async startup work, including reading persisted profile settings.
-        // On a slow emulator the card may not exist yet when the test starts, so wait for it
-        // before clicking instead of assuming the first frame is already stable.
-        waitForTextDisplayed("Position Search")
-        composeRule.onNodeWithText("Position Search").performClick()
-        composeRule.waitForIdle()
+        openPositionSearchScreen()
 
         waitForNodeDisplayed(PositionSearchClearBoardTestTag)
         composeRule.onNodeWithTag(PositionSearchClearBoardTestTag).performClick()
@@ -52,9 +47,7 @@ class PositionSearchScreenTest {
 
     @Test
     fun positionSearchScreen_castlingCheckboxUpdatesVisibleFen() {
-        waitForTextDisplayed("Position Search")
-        composeRule.onNodeWithText("Position Search").performClick()
-        composeRule.waitForIdle()
+        openPositionSearchScreen()
 
         composeRule.onNodeWithContentDescription("Settings").performClick()
         waitForTextDisplayed("Position Search Settings")
@@ -70,9 +63,7 @@ class PositionSearchScreenTest {
 
     @Test
     fun positionSearchScreen_saveButtonOpensSaveDialog() {
-        waitForTextDisplayed("Position Search")
-        composeRule.onNodeWithText("Position Search").performClick()
-        composeRule.waitForIdle()
+        openPositionSearchScreen()
 
         composeRule.onNodeWithContentDescription("Save").performClick()
 
@@ -169,6 +160,15 @@ class PositionSearchScreenTest {
         }
     }
 
+    private fun waitForContentDescriptionDisplayed(contentDescription: String) {
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching {
+                composeRule.onNodeWithContentDescription(contentDescription).assertIsDisplayed()
+                true
+            }.getOrDefault(false)
+        }
+    }
+
     private fun assertBoardFen(expectedFen: String) {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(InteractiveChessBoardTestTag).assert(
@@ -177,14 +177,19 @@ class PositionSearchScreenTest {
     }
 
     private fun openPositionSearchSaveDialog() {
-        waitForTextDisplayed("Position Search")
-        composeRule.onNodeWithText("Position Search").performClick()
-        composeRule.waitForIdle()
+        openPositionSearchScreen()
         assertBoardFen(InitialBoardFen)
 
         composeRule.onNodeWithContentDescription("Save").performClick()
 
         waitForTextDisplayed("Save Position")
         composeRule.onNodeWithTag(PositionSearchSaveNameFieldTestTag).assertIsDisplayed()
+    }
+
+    private fun openPositionSearchScreen() {
+        waitForContentDescriptionDisplayed("Search")
+        composeRule.onNodeWithContentDescription("Search").performClick()
+        composeRule.waitForIdle()
+        waitForTextDisplayed("Position Search")
     }
 }

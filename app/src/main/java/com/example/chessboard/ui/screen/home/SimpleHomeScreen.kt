@@ -81,6 +81,7 @@ internal fun SimpleHomeScreen(
     onOpenTraining: (Long) -> Unit,
     onNavigate: (ScreenType) -> Unit,
     onSmartTrainingClick: () -> Unit,
+    onOpenSavedPositionsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -178,6 +179,10 @@ internal fun SimpleHomeScreen(
 
             item {
                 SmartTrainingBanner(onClick = onSmartTrainingClick)
+            }
+
+            item {
+                SavedPositionsBanner(onClick = onOpenSavedPositionsClick)
             }
 
             if (filteredTrainings.isEmpty()) {
@@ -413,6 +418,32 @@ private fun SmartTrainingBanner(
                 text = "Create personalized practice sessions",
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.White.copy(alpha = 0.85f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SavedPositionsBanner(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    CardSurface(
+        modifier = modifier.fillMaxWidth(),
+        color = Background.CardDark,
+        onClick = onClick,
+        contentPadding = PaddingValues(18.dp),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+                text = "Saved Positions",
+                style = MaterialTheme.typography.headlineSmall,
+                color = TextColor.Primary,
+                fontWeight = FontWeight.Bold,
+            )
+            BodySecondaryText(
+                text = "Open saved board positions",
+                color = TextColor.Secondary,
             )
         }
     }
