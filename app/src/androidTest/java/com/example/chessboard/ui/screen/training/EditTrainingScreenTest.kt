@@ -20,6 +20,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
 import com.example.chessboard.runtimecontext.RuntimeContext
+import com.example.chessboard.runtimecontext.TrainingRuntimeContext
 import com.example.chessboard.boardmodel.InitialBoardFen
 import com.example.chessboard.entity.SideMask
 import com.example.chessboard.testing.fenStateDescriptionMatcher
@@ -191,11 +192,22 @@ class EditTrainingScreenTest {
         linesForTraining: List<TrainingLineEditorItem>,
         onStartLineTrainingClick: (Long, List<Long>) -> Unit,
     ) {
+        val trainingRuntimeContext = TrainingRuntimeContext()
+        val orderedLineIds = linesForTraining.map { it.lineId }
+        orderedLineIds.firstOrNull()?.let { firstLineId ->
+            trainingRuntimeContext.rememberLaunch(
+                trainingId = TestTrainingId,
+                lineId = firstLineId,
+                orderedLineIds = orderedLineIds,
+            )
+        }
         composeRule.setContent {
             ChessBoardTheme {
                 EditTrainingScreen(
+                    trainingId = TestTrainingId,
                     linesForTraining = linesForTraining,
                     orderLinesInTraining = RuntimeContext.OrderLinesInTraining(),
+                    trainingRuntimeContext = trainingRuntimeContext,
                     onBackClick = ::ignoreBackClick,
                     onNavigate = ::ignoreNavigate,
                     onStartLineTrainingClick = onStartLineTrainingClick,
@@ -208,6 +220,8 @@ class EditTrainingScreenTest {
     }
 
     private companion object {
+        const val TestTrainingId = 1L
+
         fun ignoreBackClick() = Unit
 
         fun ignoreNavigate(screenType: com.example.chessboard.ui.screen.ScreenType) = Unit
