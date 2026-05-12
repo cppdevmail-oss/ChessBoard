@@ -44,6 +44,7 @@ import com.example.chessboard.ui.BoardOrientation
 import com.example.chessboard.ui.components.AppBottomNavigation
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
+import com.example.chessboard.ui.components.HomeIconButton
 import com.example.chessboard.ui.components.IconMd
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.screen.ScreenContainerContext
@@ -201,7 +202,7 @@ private fun TrainSingleLineScreen(
     modifier: Modifier = Modifier
 ) {
     val loadedLine = trainingLineData.line
-    var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
+    var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Training) }
     var showShowLineDialog by remember(loadedLine.id) { mutableStateOf(false) }
     val uciMoves = trainingLineData.uciMoves
     val startFen = trainingLineData.startFen
@@ -528,6 +529,7 @@ private fun TrainSingleLineScreen(
                     title = "Train Line",
                     onBackClick = onBackClick,
                     actions = {
+                        HomeIconButton(onClick = { onNavigate(ScreenType.Home) })
                         if (!simpleViewEnabled) {
                             IconButton(
                                 onClick = {
@@ -649,4 +651,3 @@ private fun TrainSingleLineScreen(
     }
     } // Box
 }
-

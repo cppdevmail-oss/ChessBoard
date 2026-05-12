@@ -54,7 +54,7 @@ import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingIconInactive
+import com.example.chessboard.ui.theme.MutedContentColor
 
 @Composable
 internal fun RenderCompletionDialog(
@@ -138,7 +138,7 @@ internal fun TrainSingleLineContent(
                         IconLg(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                             contentDescription = "Previous move",
-                            tint = if (canUndo) TextColor.Primary else TrainingIconInactive,
+                            tint = if (canUndo) TextColor.Primary else MutedContentColor,
                         )
                     }
                     TextButton(onClick = actions.onResetMovesClick, enabled = canUndo) {
@@ -151,7 +151,7 @@ internal fun TrainSingleLineContent(
                         IconLg(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                             contentDescription = "Next move",
-                            tint = if (canRedo) TextColor.Primary else TrainingIconInactive,
+                            tint = if (canRedo) TextColor.Primary else MutedContentColor,
                         )
                     }
                 }

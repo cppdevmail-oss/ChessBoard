@@ -40,7 +40,7 @@ import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import com.example.chessboard.ui.theme.TrainingErrorRed
-import com.example.chessboard.ui.theme.TrainingIconInactive
+import com.example.chessboard.ui.theme.MutedContentColor
 import com.example.chessboard.ui.theme.TrainingTextSecondary
 
 /** Displays the standard text field used for labeled form input across the app. */
@@ -85,7 +85,7 @@ fun AppTextField(
                     if (value.isEmpty()) {
                         BodySecondaryText(
                             text = placeholder,
-                            color = TrainingIconInactive
+                            color = MutedContentColor
                         )
                     }
                     innerTextField()

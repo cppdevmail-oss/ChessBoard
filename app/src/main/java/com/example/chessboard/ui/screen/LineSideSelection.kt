@@ -24,7 +24,7 @@ import com.example.chessboard.ui.BoardOrientation
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TextColor
-import com.example.chessboard.ui.theme.TrainingIconInactive
+import com.example.chessboard.ui.theme.MutedContentColor
 import com.example.chessboard.ui.theme.TrainingTextPrimary
 
 internal val SideButtonSelectedBg = Color(0xFF2C2C2C)
@@ -129,5 +129,5 @@ private fun resolveSideSelectionContentColor(
         return TrainingTextPrimary
     }
 
-    return TrainingIconInactive
+    return MutedContentColor
 }

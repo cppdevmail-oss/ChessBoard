@@ -515,6 +515,7 @@ private fun SavedPositionsScreen(
             topBar = {
                 SavedPositionsTopBar(
                     onBackClick = onBackClick,
+                    onHomeClick = { onNavigate(ScreenType.Home) },
                     paginationState = SavedPositionsTopBarPaginationState(
                         totalPositionsCount = state.listState.positions.size,
                         currentPage = currentPage,

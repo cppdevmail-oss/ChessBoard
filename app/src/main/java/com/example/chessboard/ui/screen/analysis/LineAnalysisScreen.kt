@@ -65,7 +65,7 @@ import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.components.LineMoveTreeSection
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingIconInactive
+import com.example.chessboard.ui.theme.BottomBarContentColor
 import com.github.bhlangonijr.chesslib.Piece
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.Dispatchers
@@ -256,7 +256,7 @@ internal fun LineAnalysisScreen(
                         IconMd(
                             imageVector = Icons.Default.ContentCopy,
                             contentDescription = "Copy analysis PGN",
-                            tint = if (canCopyAnalysisPgn) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
+                            tint = if (canCopyAnalysisPgn) BottomBarContentColor else BottomBarContentColor.copy(alpha = 0.5f),
                         )
                     }
                     IconButton(
@@ -360,7 +360,7 @@ private fun LineAnalysisBoardControlsBar(
                 Icon(
                     painter = painterResource(R.drawable.ic_king),
                     contentDescription = side.toDisplayText(),
-                    tint = if (side == selectedSide) TrainingAccentTeal else TrainingIconInactive,
+                    tint = if (side == selectedSide) TrainingAccentTeal else BottomBarContentColor,
                     modifier = Modifier.size(AppIconSizes.Lg),
                 )
             }
@@ -374,7 +374,7 @@ private fun LineAnalysisBoardControlsBar(
                 IconMd(
                     imageVector = Icons.Default.Refresh,
                     contentDescription = "Reset",
-                    tint = if (canUndo) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
+                    tint = if (canUndo) BottomBarContentColor else BottomBarContentColor.copy(alpha = 0.5f),
                 )
             },
             BoardActionNavigationItem(
@@ -386,7 +386,7 @@ private fun LineAnalysisBoardControlsBar(
                 IconMd(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                     contentDescription = "Previous move",
-                    tint = if (canUndo) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
+                    tint = if (canUndo) BottomBarContentColor else BottomBarContentColor.copy(alpha = 0.5f),
                 )
             },
             BoardActionNavigationItem(
@@ -398,7 +398,7 @@ private fun LineAnalysisBoardControlsBar(
                 IconMd(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = "Next move",
-                    tint = if (canRedo) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
+                    tint = if (canRedo) BottomBarContentColor else BottomBarContentColor.copy(alpha = 0.5f),
                 )
             },
         ),

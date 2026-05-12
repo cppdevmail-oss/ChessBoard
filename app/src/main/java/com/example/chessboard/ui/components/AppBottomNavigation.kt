@@ -14,11 +14,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
@@ -34,7 +32,7 @@ import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingIconInactive
+import com.example.chessboard.ui.theme.BottomBarContentColor
 
 data class AppBottomNavigationItem<T>(
     val value: T,
@@ -45,12 +43,6 @@ data class AppBottomNavigationItem<T>(
 
 fun defaultAppBottomNavigationItems(): List<AppBottomNavigationItem<ScreenType>> {
     return listOf(
-        AppBottomNavigationItem(
-            value = ScreenType.Home,
-            label = ScreenType.Home.toString(),
-            iconUnselected = Icons.Outlined.Home,
-            iconSelected = Icons.Filled.Home
-        ),
         AppBottomNavigationItem(
             value = ScreenType.Training,
             label = ScreenType.Training.toString(),
@@ -113,7 +105,7 @@ fun <T> AppBottomNavigation(
                 ) {
                     items.forEach { item ->
                         val isSelected = selectedItem == item.value
-                        val color = if (isSelected) TrainingAccentTeal else TrainingIconInactive
+                        val color = if (isSelected) TrainingAccentTeal else BottomBarContentColor
 
                         Column(
                             modifier = Modifier

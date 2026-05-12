@@ -32,7 +32,7 @@ import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingIconInactive
+import com.example.chessboard.ui.theme.MutedContentColor
 import com.github.bhlangonijr.chesslib.Piece
 
 private fun resolveVisibleMoveLines(
@@ -122,7 +122,7 @@ fun LineMoveTreeSection(
                 if (segments.isEmpty() && maxVisiblePly == null) {
                     BodySecondaryText(
                         text = "No moves yet. Import a PGN or add moves on the board.",
-                        color = TrainingIconInactive,
+                        color = MutedContentColor,
                     )
                 }
                 segments.forEachIndexed { segIndex, segment ->

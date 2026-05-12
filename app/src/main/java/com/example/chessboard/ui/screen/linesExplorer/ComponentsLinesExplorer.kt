@@ -53,7 +53,7 @@ import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TextColor
-import com.example.chessboard.ui.theme.TrainingIconInactive
+import com.example.chessboard.ui.theme.MutedContentColor
 
 internal data class LinesExplorerFilterState(
     val query: String = "",
@@ -251,10 +251,10 @@ internal fun LinesExplorerBoardControlsBar(
 
 private fun resolveLinesExplorerActionTint(isEnabled: Boolean): Color {
     if (isEnabled) {
-        return TrainingIconInactive
+        return MutedContentColor
     }
 
-    return TrainingIconInactive.copy(alpha = 0.5f)
+    return MutedContentColor.copy(alpha = 0.5f)
 }
 
 @Composable

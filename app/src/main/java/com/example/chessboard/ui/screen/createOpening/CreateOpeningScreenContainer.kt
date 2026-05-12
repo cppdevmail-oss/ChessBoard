@@ -30,6 +30,7 @@ import com.example.chessboard.entity.LineEntity
 import com.example.chessboard.service.parsePgnMoves
 import com.example.chessboard.ui.screen.EditableLineSide
 import com.example.chessboard.ui.screen.ScreenContainerContext
+import com.example.chessboard.ui.screen.ScreenType
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -180,6 +181,7 @@ internal fun CreateOpeningScreenContainer(
                 }
             },
             onBackClick = screenContext.onBackClick,
+            onHomeClick = { screenContext.onNavigate(ScreenType.Home) },
             onOpeningNameChange = {
                 lineDraft = updateDraftLine(lineDraft) { draftLine ->
                     draftLine.copy(event = it)

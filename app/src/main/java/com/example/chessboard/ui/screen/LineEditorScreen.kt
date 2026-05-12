@@ -55,7 +55,7 @@ import com.example.chessboard.ui.components.LineMoveTreeSection
 import com.example.chessboard.ui.screen.training.DarkInputField
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingIconInactive
+import com.example.chessboard.ui.theme.BottomBarContentColor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -180,7 +180,7 @@ private fun LineEditorBoardControlsBar(
                 Icon(
                     painter = painterResource(R.drawable.ic_king),
                     contentDescription = side.toDisplayText(),
-                    tint = if (side == selectedSide) TrainingAccentTeal else TrainingIconInactive,
+                    tint = if (side == selectedSide) TrainingAccentTeal else BottomBarContentColor,
                     modifier = Modifier.size(AppIconSizes.Lg),
                 )
             }
@@ -193,7 +193,7 @@ private fun LineEditorBoardControlsBar(
                 IconMd(
                     imageVector = Icons.Default.Refresh,
                     contentDescription = "Reset",
-                    tint = if (canUndo) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
+                    tint = if (canUndo) BottomBarContentColor else BottomBarContentColor.copy(alpha = 0.5f),
                 )
             },
             BoardActionNavigationItem(
@@ -205,7 +205,7 @@ private fun LineEditorBoardControlsBar(
                 IconMd(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                     contentDescription = "Previous move",
-                    tint = if (canUndo) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
+                    tint = if (canUndo) BottomBarContentColor else BottomBarContentColor.copy(alpha = 0.5f),
                 )
             },
             BoardActionNavigationItem(
@@ -217,7 +217,7 @@ private fun LineEditorBoardControlsBar(
                 IconMd(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = "Next move",
-                    tint = if (canRedo) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
+                    tint = if (canRedo) BottomBarContentColor else BottomBarContentColor.copy(alpha = 0.5f),
                 )
             },
         ),

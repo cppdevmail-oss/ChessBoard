@@ -174,7 +174,7 @@ fun EditTrainingTemplateScreen(
     onSaveTemplate: (String, List<TrainingLineEditorItem>, (() -> Unit)?) -> Unit = { _, _, _ -> },
     modifier: Modifier = Modifier,
 ) {
-    var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
+    var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Training) }
     var hasUserSelectedLine by remember { mutableStateOf(false) }
     var editorState by remember(initialTemplateName, linesForTemplate) {
         mutableStateOf(

@@ -64,6 +64,7 @@ import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.ChessBoardSection
+import com.example.chessboard.ui.components.HomeIconButton
 import com.example.chessboard.ui.components.IconMd
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.screen.ScreenContainerContext
@@ -71,7 +72,7 @@ import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingIconInactive
+import com.example.chessboard.ui.theme.MutedContentColor
 import com.example.chessboard.ui.theme.TrainingTextPrimary
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -292,7 +293,7 @@ internal fun LinesExplorerScreen(
     fun resolvePageArrowTint(isEnabled: Boolean) = if (isEnabled) {
         TrainingTextPrimary
     } else {
-        TrainingIconInactive
+        MutedContentColor
     }
 
     fun resolveLinesExplorerSubtitle(): String {
@@ -353,6 +354,7 @@ internal fun LinesExplorerScreen(
                 onBackClick = onBackClick,
                 filledBackButton = true,
                 actions = {
+                    HomeIconButton(onClick = { screenContext.onNavigate(ScreenType.Home) })
                     IconButton(
                         onClick = {
                             draftFilterState = activeFilterState

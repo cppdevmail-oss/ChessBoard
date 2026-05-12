@@ -20,7 +20,7 @@ import com.example.chessboard.ui.components.BoardActionNavigationBar
 import com.example.chessboard.ui.components.BoardActionNavigationItem
 import com.example.chessboard.ui.components.HomeIconButton
 import com.example.chessboard.ui.components.IconMd
-import com.example.chessboard.ui.theme.TrainingIconInactive
+import com.example.chessboard.ui.theme.BottomBarContentColor
 
 private data class TrainingCollectionEditorTopBarAction(
     val content: @Composable () -> Unit,
@@ -236,8 +236,8 @@ private fun createNextBottomBarAction(
 
 private fun resolveTrainingCollectionEditorActionTint(enabled: Boolean): Color {
     if (enabled) {
-        return TrainingIconInactive
+        return BottomBarContentColor
     }
 
-    return TrainingIconInactive.copy(alpha = 0.5f)
+    return BottomBarContentColor.copy(alpha = 0.5f)
 }
