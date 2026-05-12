@@ -3,7 +3,7 @@ package com.example.chessboard.runtimecontext
 /**
  * File role: groups runtime-only state for in-progress training sessions.
  * Allowed here:
- * - active training line tracking, move-range state, and per-line progress snapshots
+ * - active training line tracking, editor-selected line state, and per-line progress snapshots
  * - in-memory helpers that restore unfinished training sessions after screen changes
  * Not allowed here:
  * - composable UI, navigation rendering, or screen layout code
@@ -11,6 +11,7 @@ package com.example.chessboard.runtimecontext
  * Validation date: 2026-04-25
  */
 
+import androidx.compose.runtime.mutableStateMapOf
 import com.example.chessboard.ui.screen.trainSingleLine.TrainSingleLinePhase
 import com.example.chessboard.ui.screen.trainSingleLine.TrainSingleLineUiState
 
@@ -28,6 +29,7 @@ class TrainingRuntimeContext {
     )
 
     private val sessionsByTrainingId = mutableMapOf<Long, TrainingSession>()
+    private val selectedLineIdByTrainingId = mutableStateMapOf<Long, Long?>()
 
     fun rememberLaunch(
         trainingId: Long,
@@ -39,6 +41,7 @@ class TrainingRuntimeContext {
             currentLineId = lineId,
             orderedLineIds = orderedLineIds,
         )
+        selectedLineIdByTrainingId[trainingId] = lineId
     }
 
     fun orderedLineIds(trainingId: Long): List<Long> {
@@ -47,6 +50,15 @@ class TrainingRuntimeContext {
 
     fun activeLineId(trainingId: Long): Long? {
         return sessionsByTrainingId[trainingId]?.currentLineId
+    }
+
+    fun selectedLineId(trainingId: Long): Long? {
+        val selectedLineId = selectedLineIdByTrainingId[trainingId]
+        if (selectedLineId != null) {
+            return selectedLineId
+        }
+
+        return orderedLineIds(trainingId).firstOrNull()
     }
 
     fun firstStartedLineId(trainingId: Long): Long? {
@@ -73,6 +85,10 @@ class TrainingRuntimeContext {
     fun setCurrentLineId(trainingId: Long, lineId: Long?) {
         val currentSession = sessionsByTrainingId[trainingId] ?: return
         sessionsByTrainingId[trainingId] = currentSession.copy(currentLineId = lineId)
+    }
+
+    fun setSelectedLineId(trainingId: Long, lineId: Long?) {
+        selectedLineIdByTrainingId[trainingId] = lineId
     }
 
     fun resolveNextLineId(trainingId: Long, currentLineId: Long): Long? {
@@ -126,6 +142,7 @@ class TrainingRuntimeContext {
 
     fun clearTrainingSession(trainingId: Long) {
         sessionsByTrainingId.remove(trainingId)
+        selectedLineIdByTrainingId.remove(trainingId)
     }
 
     private fun sanitizeUiState(uiState: TrainSingleLineUiState): TrainSingleLineUiState {
