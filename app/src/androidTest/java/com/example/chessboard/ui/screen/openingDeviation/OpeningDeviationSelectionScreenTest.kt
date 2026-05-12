@@ -42,6 +42,7 @@ class OpeningDeviationSelectionScreenTest {
                     selectedDeviationIndex = null,
                     onDeviationSelected = {},
                     onStartClick = {},
+                    onHomeClick = {},
                     onBackClick = {},
                 )
             }
@@ -68,6 +69,7 @@ class OpeningDeviationSelectionScreenTest {
                     onStartClick = { index ->
                         startedWithIndex = index
                     },
+                    onHomeClick = {},
                     onBackClick = {},
                 )
             }
@@ -96,6 +98,7 @@ class OpeningDeviationSelectionScreenTest {
                     selectedDeviationIndex = null,
                     onDeviationSelected = {},
                     onStartClick = {},
+                    onHomeClick = {},
                     onBackClick = {
                         backClicks += 1
                     },
