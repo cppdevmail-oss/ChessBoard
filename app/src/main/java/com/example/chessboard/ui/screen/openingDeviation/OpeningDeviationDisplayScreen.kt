@@ -38,7 +38,7 @@ import com.example.chessboard.ui.openingDeviationBranchCardTestTag
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingIconInactive
+import com.example.chessboard.ui.theme.MutedContentColor
 
 @Composable
 fun OpeningDeviationDisplayScreen(
@@ -72,7 +72,7 @@ fun OpeningDeviationDisplayScreen(
                             imageVector = Icons.Default.MenuBook,
                             contentDescription = "Open lines with selected branch position",
                             tint = if (selectedBranch == null) {
-                                TrainingIconInactive
+                                MutedContentColor
                             } else {
                                 TrainingAccentTeal
                             },

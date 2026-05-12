@@ -29,7 +29,7 @@ import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingIconInactive
+import com.example.chessboard.ui.theme.MutedContentColor
 
 @Composable
 fun PasteInputBlock(
@@ -93,7 +93,7 @@ fun PasteInputBlock(
                     if (text.isEmpty()) {
                         BodySecondaryText(
                             text = placeholder,
-                            color = TrainingIconInactive
+                            color = MutedContentColor
                         )
                     }
                     innerTextField()

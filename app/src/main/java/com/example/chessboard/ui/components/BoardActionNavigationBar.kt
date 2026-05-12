@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingIconInactive
+import com.example.chessboard.ui.theme.BottomBarContentColor
 
 data class BoardActionNavigationItem(
     val label: String,
@@ -119,8 +119,8 @@ private fun resolveBoardActionNavigationItemColor(
     enabled: Boolean,
 ): Color {
     if (!enabled) {
-        return TrainingIconInactive.copy(alpha = 0.5f)
+        return BottomBarContentColor.copy(alpha = 0.5f)
     }
 
-    return if (selected) TrainingAccentTeal else TrainingIconInactive
+    return if (selected) TrainingAccentTeal else BottomBarContentColor
 }

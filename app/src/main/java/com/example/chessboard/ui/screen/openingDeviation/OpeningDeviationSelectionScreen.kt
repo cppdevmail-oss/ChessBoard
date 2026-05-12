@@ -45,7 +45,7 @@ import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingIconInactive
+import com.example.chessboard.ui.theme.MutedContentColor
 
 @Composable
 fun OpeningDeviationSelectionScreenContainer(
@@ -79,7 +79,7 @@ internal fun OpeningDeviationSelectionScreen(
 
     fun resolveStartTint(): Color {
         if (selectedDeviationItem == null) {
-            return TrainingIconInactive
+            return MutedContentColor
         }
 
         return TrainingAccentTeal

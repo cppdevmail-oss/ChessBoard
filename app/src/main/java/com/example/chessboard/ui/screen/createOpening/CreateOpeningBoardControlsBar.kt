@@ -16,7 +16,7 @@ import com.example.chessboard.ui.components.BoardActionNavigationItem
 import com.example.chessboard.ui.components.IconMd
 import com.example.chessboard.ui.screen.EditableLineSide
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingIconInactive
+import com.example.chessboard.ui.theme.BottomBarContentColor
 
 @Composable
 internal fun CreateOpeningBoardControlsBar(
@@ -50,7 +50,7 @@ internal fun CreateOpeningBoardControlsBar(
                 IconMd(
                     imageVector = Icons.Filled.Refresh,
                     contentDescription = "Reset",
-                    tint = TrainingIconInactive,
+                    tint = BottomBarContentColor,
                 )
             },
             BoardActionNavigationItem(
@@ -61,7 +61,7 @@ internal fun CreateOpeningBoardControlsBar(
                 IconMd(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                     contentDescription = "Back",
-                    tint = if (canUndo) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
+                    tint = if (canUndo) BottomBarContentColor else BottomBarContentColor.copy(alpha = 0.5f),
                 )
             },
             BoardActionNavigationItem(
@@ -72,7 +72,7 @@ internal fun CreateOpeningBoardControlsBar(
                 IconMd(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = "Forward",
-                    tint = if (canRedo) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
+                    tint = if (canRedo) BottomBarContentColor else BottomBarContentColor.copy(alpha = 0.5f),
                 )
             },
         ),
@@ -88,7 +88,7 @@ private fun SideSymbolNavigationIcon(
     Icon(
         painter = painterResource(R.drawable.ic_king),
         contentDescription = side.toDisplayText(),
-        tint = if (selected) TrainingAccentTeal else TrainingIconInactive,
+        tint = if (selected) TrainingAccentTeal else BottomBarContentColor,
         modifier = modifier.size(AppIconSizes.Lg),
     )
 }

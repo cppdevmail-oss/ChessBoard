@@ -34,7 +34,7 @@ import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingIconInactive
+import com.example.chessboard.ui.theme.BottomBarContentColor
 
 data class AppBottomNavigationItem<T>(
     val value: T,
@@ -113,7 +113,7 @@ fun <T> AppBottomNavigation(
                 ) {
                     items.forEach { item ->
                         val isSelected = selectedItem == item.value
-                        val color = if (isSelected) TrainingAccentTeal else TrainingIconInactive
+                        val color = if (isSelected) TrainingAccentTeal else BottomBarContentColor
 
                         Column(
                             modifier = Modifier

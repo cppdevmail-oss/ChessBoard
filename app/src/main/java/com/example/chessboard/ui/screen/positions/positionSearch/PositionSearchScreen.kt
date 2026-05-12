@@ -75,7 +75,7 @@ import com.example.chessboard.ui.screen.positions.RenderPositionSearchResultDial
 import com.example.chessboard.ui.screen.positions.createPositionTemplateFromLineIds
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingIconInactive
+import com.example.chessboard.ui.theme.BottomBarContentColor
 import com.example.chessboard.ui.theme.TrainingTextPrimary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -843,7 +843,7 @@ private fun PositionSearchBoardControlsBar(
                 IconMd(
                     imageVector = Icons.Filled.Refresh,
                     contentDescription = "Initial position",
-                    tint = TrainingIconInactive,
+                    tint = BottomBarContentColor,
                 )
             },
             BoardActionNavigationItem(
@@ -854,7 +854,7 @@ private fun PositionSearchBoardControlsBar(
                 IconMd(
                     imageVector = Icons.Filled.Delete,
                     contentDescription = "Clear board",
-                    tint = TrainingIconInactive,
+                    tint = BottomBarContentColor,
                 )
             },
             BoardActionNavigationItem(
@@ -865,7 +865,7 @@ private fun PositionSearchBoardControlsBar(
                 IconMd(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                     contentDescription = "Back",
-                    tint = if (canGoBack) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
+                    tint = if (canGoBack) BottomBarContentColor else BottomBarContentColor.copy(alpha = 0.5f),
                 )
             },
             BoardActionNavigationItem(
@@ -876,7 +876,7 @@ private fun PositionSearchBoardControlsBar(
                 IconMd(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = "Forward",
-                    tint = if (canGoForward) TrainingIconInactive else TrainingIconInactive.copy(alpha = 0.5f),
+                    tint = if (canGoForward) BottomBarContentColor else BottomBarContentColor.copy(alpha = 0.5f),
                 )
             },
         ),
@@ -892,7 +892,7 @@ private fun PositionSearchSideIcon(
     Icon(
         painter = painterResource(R.drawable.ic_king),
         contentDescription = side.toDisplayText(),
-        tint = if (selected) TrainingAccentTeal else TrainingIconInactive,
+        tint = if (selected) TrainingAccentTeal else BottomBarContentColor,
         modifier = modifier.size(AppIconSizes.Lg),
     )
 }

@@ -71,7 +71,7 @@ import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TextColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
-import com.example.chessboard.ui.theme.TrainingIconInactive
+import com.example.chessboard.ui.theme.MutedContentColor
 import com.example.chessboard.ui.theme.TrainingTextPrimary
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -292,7 +292,7 @@ internal fun LinesExplorerScreen(
     fun resolvePageArrowTint(isEnabled: Boolean) = if (isEnabled) {
         TrainingTextPrimary
     } else {
-        TrainingIconInactive
+        MutedContentColor
     }
 
     fun resolveLinesExplorerSubtitle(): String {

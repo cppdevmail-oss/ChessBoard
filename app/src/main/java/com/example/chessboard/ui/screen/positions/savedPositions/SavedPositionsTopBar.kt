@@ -20,7 +20,7 @@ import com.example.chessboard.ui.SavedPositionsSearchActionTestTag
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.IconMd
 import com.example.chessboard.ui.theme.TextColor
-import com.example.chessboard.ui.theme.TrainingIconInactive
+import com.example.chessboard.ui.theme.MutedContentColor
 
 internal data class SavedPositionsTopBarPaginationState(
     val totalPositionsCount: Int,
@@ -40,7 +40,7 @@ internal fun SavedPositionsTopBar(
 ) {
     fun resolvePageArrowTint(isEnabled: Boolean): Color {
         if (!isEnabled) {
-            return TrainingIconInactive
+            return MutedContentColor
         }
 
         return TextColor.Primary

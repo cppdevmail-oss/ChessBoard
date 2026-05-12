@@ -41,5 +41,6 @@ val TrainingAccentTeal = ButtonColor.PrimaryContainer
 val TrainingSuccessGreen = Color(0xFF4CAF50)
 val TrainingErrorRed = ButtonColor.DestructiveContainer
 val TrainingWarningOrange = Color(0xFFFF9800)
-val TrainingIconInactive = Color(0xFF666666)
+val MutedContentColor = Color(0xFF666666)
+val BottomBarContentColor = Color(0xFFB2B2B2)
 val TrainingDividerColor = Color(0xFF2A2A2A)

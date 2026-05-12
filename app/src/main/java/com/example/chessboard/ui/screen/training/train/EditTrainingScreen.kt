@@ -52,7 +52,7 @@ import com.example.chessboard.ui.screen.training.loadsave.hasUnsavedTrainingEdit
 import com.example.chessboard.ui.screen.training.loadsave.loadEditTrainingState
 import com.example.chessboard.ui.screen.training.loadsave.normalizeTrainingEditorName
 import com.example.chessboard.ui.screen.training.loadsave.saveEditedTraining
-import com.example.chessboard.ui.theme.TrainingIconInactive
+import com.example.chessboard.ui.theme.BottomBarContentColor
 import kotlinx.coroutines.launch
 
 @Composable
@@ -405,9 +405,9 @@ fun EditTrainingScreen(
                 imageVector = Icons.Rounded.PlayArrow,
                 contentDescription = "Start training",
                 tint = if (isEnabled) {
-                    TrainingIconInactive
+                    BottomBarContentColor
                 } else {
-                    TrainingIconInactive.copy(alpha = 0.5f)
+                    BottomBarContentColor.copy(alpha = 0.5f)
                 },
             )
         }

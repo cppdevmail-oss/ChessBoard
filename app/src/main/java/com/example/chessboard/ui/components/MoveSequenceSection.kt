@@ -28,7 +28,7 @@ import com.example.chessboard.ui.MoveLegendNextTestTag
 import com.example.chessboard.ui.MoveLegendPreviousTestTag
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TextColor
-import com.example.chessboard.ui.theme.TrainingIconInactive
+import com.example.chessboard.ui.theme.MutedContentColor
 
 @Composable
 fun MoveSequenceSection(
@@ -158,5 +158,5 @@ private fun resolveMoveSequenceNavigationTint(isEnabled: Boolean): Color {
         return TextColor.Primary
     }
 
-    return TrainingIconInactive
+    return MutedContentColor
 }
