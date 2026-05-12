@@ -354,7 +354,7 @@ internal fun LinesExplorerScreen(
                 onBackClick = onBackClick,
                 filledBackButton = true,
                 actions = {
-                    HomeIconButton(onClick = { screenContext.onNavigate(ScreenType.Home) })
+                    HomeIconButton(onClick = { onNavigate(ScreenType.Home) })
                     IconButton(
                         onClick = {
                             draftFilterState = activeFilterState
