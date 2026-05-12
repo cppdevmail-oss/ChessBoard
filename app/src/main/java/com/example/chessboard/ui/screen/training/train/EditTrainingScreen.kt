@@ -152,11 +152,12 @@ fun EditTrainingScreenContainer(
     }
 
     EditTrainingScreen(
+        trainingId = trainingId,
         initialTrainingName = loadState.trainingName,
         linesForTraining = visibleLinesForTraining,
         orderLinesInTraining = orderLinesInTraining,
+        trainingRuntimeContext = trainingRuntimeContext,
         simpleViewEnabled = simpleViewEnabled,
-        initialSelectedLineId = trainingRuntimeContext.activeLineId(trainingId),
         onBackClick = onBackClick,
         onNavigate = onNavigate,
         onStartLineTrainingClick = onStartLineTrainingClick,
@@ -196,11 +197,12 @@ private val EditTrainingScreenStrings = TrainingCollectionEditorStrings(
 
 @Composable
 fun EditTrainingScreen(
+    trainingId: Long,
     initialTrainingName: String = DEFAULT_TRAINING_NAME,
     linesForTraining: List<TrainingLineEditorItem> = emptyList(),
     orderLinesInTraining: RuntimeContext.OrderLinesInTraining,
+    trainingRuntimeContext: TrainingRuntimeContext,
     simpleViewEnabled: Boolean = false,
-    initialSelectedLineId: Long? = null,
     onBackClick: () -> Unit,
     onNavigate: (ScreenType) -> Unit,
     onStartLineTrainingClick: (Long, List<Long>) -> Unit,
@@ -210,9 +212,6 @@ fun EditTrainingScreen(
     modifier: Modifier = Modifier
 ) {
     var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Training) }
-    var hasUserSelectedLine by remember(initialSelectedLineId) {
-        mutableStateOf(initialSelectedLineId != null)
-    }
     var editorState by remember(initialTrainingName, linesForTraining) {
         mutableStateOf(
             CreateTrainingEditorState(
@@ -234,12 +233,27 @@ fun EditTrainingScreen(
     }
     val currentLinesById = editorState.editableLinesForTraining.associateBy { it.lineId }
     val orderedLinesForTraining = orderedLineIds.mapNotNull { currentLinesById[it] }
+
+    fun resolveSelectedLineId(): Long? {
+        val selectedLineId = trainingRuntimeContext.selectedLineId(trainingId)
+        if (selectedLineId != null) {
+            return selectedLineId
+        }
+
+        val activeLineId = trainingRuntimeContext.activeLineId(trainingId)
+        if (activeLineId != null) {
+            return activeLineId
+        }
+
+        return orderedLinesForTraining.firstOrNull()?.lineId
+    }
+
     val boardSession = rememberTrainingEditorBoardSession(
         lines = orderedLinesForTraining,
-        initialSelectedLineId = initialSelectedLineId,
+        initialSelectedLineId = resolveSelectedLineId(),
     )
-    val selectedLine = editorState.editableLinesForTraining.firstOrNull { line ->
-        line.lineId == boardSession.selectedLineId
+    val selectedLine = orderedLinesForTraining.firstOrNull { line ->
+        line.lineId == resolveSelectedLineId()
     }
     @Suppress("UNUSED_VARIABLE")
     val boardState = boardSession.lineController.boardState
@@ -295,11 +309,11 @@ fun EditTrainingScreen(
         )
 
         if (nextSelectedLineId == null) {
-            hasUserSelectedLine = false
+            trainingRuntimeContext.setSelectedLineId(trainingId, null)
             return
         }
 
-        hasUserSelectedLine = true
+        trainingRuntimeContext.setSelectedLineId(trainingId, nextSelectedLineId)
         boardSession.onSelectLine(nextSelectedLineId)
     }
 
@@ -337,6 +351,31 @@ fun EditTrainingScreen(
         pendingLeaveAction = null
     }
 
+    // If the previously selected line disappeared after list changes
+    // (for example after removal or reordering), move selection to the
+    // first remaining line so editor actions always point to a valid line.
+    LaunchedEffect(trainingId, orderedLineIds) {
+        if (resolveSelectedLineId() in orderedLineIds) {
+            return@LaunchedEffect
+        }
+
+        trainingRuntimeContext.setSelectedLineId(
+            trainingId = trainingId,
+            lineId = orderedLinesForTraining.firstOrNull()?.lineId,
+        )
+    }
+
+    // Mirror runtime selection into the preview-board session so the
+    // visible board and move controls always follow the selected line.
+    LaunchedEffect(resolveSelectedLineId()) {
+        val lineId = resolveSelectedLineId() ?: return@LaunchedEffect
+        if (boardSession.selectedLineId == lineId) {
+            return@LaunchedEffect
+        }
+
+        boardSession.onSelectLine(lineId)
+    }
+
     RenderUnsavedTrainingChangesDialog(
         pendingLeaveAction = pendingLeaveAction,
         onDismiss = { pendingLeaveAction = null },
@@ -372,9 +411,8 @@ fun EditTrainingScreen(
         requestLeave(onBackClick)
     }
 
-    var autoScrollToLineIndex : Int? = null
-    if (hasUserSelectedLine) {
-        autoScrollToLineIndex = orderedLinesForTraining.indexOfFirst { it.lineId == boardSession.selectedLineId }
+    fun resolveAutoScrollToLineIndex(): Int? {
+        return orderedLinesForTraining.indexOfFirst { it.lineId == resolveSelectedLineId() }
             .takeIf { it >= 0 }
     }
 
@@ -432,12 +470,12 @@ fun EditTrainingScreen(
         },
         modifier = modifier,
         simpleViewEnabled = simpleViewEnabled,
-        autoScrollToLineIndex = autoScrollToLineIndex,
+        autoScrollToLineIndex = resolveAutoScrollToLineIndex(),
         bottomBarOverride = editorBars.buildBottomBar(),
         topBarActions = editorBars.buildTopBarActions(),
     ) { line ->
         val parsedLine = boardSession.parsedLinesById[line.lineId]
-        val isSelected = boardSession.selectedLineId == line.lineId
+        val isSelected = resolveSelectedLineId() == line.lineId
 
         TrainingEditorLineSection(
             state = TrainingEditorLineSectionState(
@@ -466,8 +504,7 @@ fun EditTrainingScreen(
                     )
                 },
                 onSelect = {
-                    hasUserSelectedLine = true
-                    boardSession.onSelectLine(line.lineId)
+                    trainingRuntimeContext.setSelectedLineId(trainingId, line.lineId)
                 },
                 onPrevClick = { boardSession.lineController.undoMove() },
                 onNextClick = { boardSession.lineController.redoMove() },
@@ -477,7 +514,10 @@ fun EditTrainingScreen(
                         onOpenLineEditorClick(line.lineId)
                     }
                 },
-                onMovePlyClick = { ply -> boardSession.onMoveToPly(line.lineId, ply) },
+                onMovePlyClick = { ply ->
+                    trainingRuntimeContext.setSelectedLineId(trainingId, line.lineId)
+                    boardSession.onMoveToPly(line.lineId, ply)
+                },
             ),
             removeCollectionLabel = "training",
         )
