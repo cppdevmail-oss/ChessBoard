@@ -38,6 +38,7 @@ import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.CardMetaText
 import com.example.chessboard.ui.components.CardSurface
+import com.example.chessboard.ui.components.HomeIconButton
 import com.example.chessboard.ui.components.IconMd
 import com.example.chessboard.ui.components.ScreenTitleText
 import com.example.chessboard.ui.openingDeviationSelectionCardTestTag
@@ -53,6 +54,7 @@ fun OpeningDeviationSelectionScreenContainer(
     selectedDeviationIndex: Int?,
     onDeviationSelected: (Int) -> Unit,
     onStartClick: (Int) -> Unit,
+    onHomeClick: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -61,6 +63,7 @@ fun OpeningDeviationSelectionScreenContainer(
         selectedDeviationIndex = selectedDeviationIndex,
         onDeviationSelected = onDeviationSelected,
         onStartClick = onStartClick,
+        onHomeClick = onHomeClick,
         onBackClick = onBackClick,
         modifier = modifier,
     )
@@ -72,6 +75,7 @@ internal fun OpeningDeviationSelectionScreen(
     selectedDeviationIndex: Int?,
     onDeviationSelected: (Int) -> Unit,
     onStartClick: (Int) -> Unit,
+    onHomeClick: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -94,6 +98,7 @@ internal fun OpeningDeviationSelectionScreen(
                 onBackClick = onBackClick,
                 filledBackButton = true,
                 actions = {
+                    HomeIconButton(onClick = onHomeClick)
                     IconButton(
                         onClick = {
                             val currentSelectedDeviationIndex = selectedDeviationIndex

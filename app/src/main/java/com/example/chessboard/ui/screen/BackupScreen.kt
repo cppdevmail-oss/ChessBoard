@@ -33,6 +33,7 @@ import com.example.chessboard.ui.components.AppTextField
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.CardMetaText
+import com.example.chessboard.ui.components.HomeIconButton
 import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.ScreenSection
 import com.example.chessboard.ui.components.ScreenTitleText
@@ -304,6 +305,9 @@ private fun BackupScreen(
                 subtitle = "Export and restore saved lines",
                 onBackClick = onBackClick,
                 filledBackButton = true,
+                actions = {
+                    HomeIconButton(onClick = { onNavigate(ScreenType.Home) })
+                },
             )
         },
         bottomBar = {

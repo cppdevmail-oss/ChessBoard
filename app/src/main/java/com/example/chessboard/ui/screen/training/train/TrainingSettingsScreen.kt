@@ -17,8 +17,10 @@ import com.example.chessboard.service.OneLineTrainingData
 import com.example.chessboard.service.parsePgnMoves
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
+import com.example.chessboard.ui.components.HomeIconButton
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.screen.ScreenContainerContext
+import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.theme.AppDimens
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -50,6 +52,7 @@ fun TrainingSettingsScreenContainer(
         maxMove = maxMove,
         onMoveRangeChange = onMoveRangeChange,
         onBackClick = onBackClick,
+        onHomeClick = { screenContext.onNavigate(ScreenType.Home) },
         modifier = modifier,
     )
 }
@@ -76,6 +79,7 @@ fun TrainingSettingsScreen(
     maxMove: Int = DefaultMaxMove,
     onMoveRangeChange: (Int, Int) -> Unit,
     onBackClick: () -> Unit,
+    onHomeClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var moveRange by remember {
@@ -88,6 +92,9 @@ fun TrainingSettingsScreen(
             AppTopBar(
                 title = "Training Settings",
                 onBackClick = onBackClick,
+                actions = {
+                    HomeIconButton(onClick = onHomeClick)
+                },
             )
         }
     ) { paddingValues ->

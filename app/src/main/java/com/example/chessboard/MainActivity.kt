@@ -371,6 +371,7 @@ class MainActivity : ComponentActivity() {
                             runtimeContext.openingDeviation.selectDeviation(index)
                             navigateToOpeningDeviationDisplay()
                         },
+                        onHomeClick = { currentScreen = ScreenType.Home },
                         onBackClick = { currentScreen = ScreenType.SavedPositions },
                     )
 
@@ -384,6 +385,7 @@ class MainActivity : ComponentActivity() {
                             onOpenLinesClick = { branch ->
                                 openLinesExplorerForOpeningDeviationBranch(branch.resultFen)
                             },
+                            onHomeClick = { currentScreen = ScreenType.Home },
                             onBackClick = { currentScreen = ScreenType.SelectOpeningDeviationPosition },
                         )
                     } ?: run {

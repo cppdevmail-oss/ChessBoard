@@ -26,6 +26,7 @@ import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.BodySecondaryText
+import com.example.chessboard.ui.components.HomeIconButton
 import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.RepeatStepIconButton
 import com.example.chessboard.ui.components.ScreenSection
@@ -196,6 +197,9 @@ fun CreateTrainingByStatisticsScreenContainer(
                 AppTopBar(
                     title = "Create Training by Statistics",
                     onBackClick = screenContext.onBackClick,
+                    actions = {
+                        HomeIconButton(onClick = { screenContext.onNavigate(ScreenType.Home) })
+                    },
                 )
             },
         ) { paddingValues ->

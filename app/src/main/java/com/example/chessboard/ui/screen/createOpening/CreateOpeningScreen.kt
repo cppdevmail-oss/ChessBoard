@@ -45,6 +45,7 @@ import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.ChessBoardSection
+import com.example.chessboard.ui.components.HomeIconButton
 import com.example.chessboard.ui.components.IconMd
 import com.example.chessboard.ui.components.PasteInputBlock
 import com.example.chessboard.ui.components.ScreenSection
@@ -70,6 +71,7 @@ internal data class CreateOpeningScreenState(
 internal data class CreateOpeningScreenActions(
     val onSideSelected: (EditableLineSide) -> Unit,
     val onBackClick: () -> Unit,
+    val onHomeClick: () -> Unit,
     val onOpeningNameChange: (String) -> Unit,
     val onEcoCodeChange: (String) -> Unit,
     val onPgnTextChange: (String) -> Unit,
@@ -114,6 +116,7 @@ internal fun CreateOpeningScreen(
                 subtitle = "Build your custom opening",
                 onBackClick = actions.onBackClick,
                 actions = {
+                    HomeIconButton(onClick = actions.onHomeClick)
                     IconButton(onClick = {
                         actions.onSave {
                             coroutineScope.launch {
@@ -220,5 +223,4 @@ internal fun buildImportedLineEventName(
 
     return "$resolvedBaseName (Line ${index + 1})"
 }
-
 

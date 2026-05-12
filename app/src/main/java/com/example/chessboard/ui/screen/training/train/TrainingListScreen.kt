@@ -35,6 +35,7 @@ import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.CardMetaText
 import com.example.chessboard.ui.components.CardSurface
 import com.example.chessboard.ui.components.DeleteIconButton
+import com.example.chessboard.ui.components.HomeIconButton
 import com.example.chessboard.ui.components.ScreenTitleText
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.screen.ScreenContainerContext
@@ -134,6 +135,9 @@ private fun TrainingListScreen(
                 title = "Trainings",
                 onBackClick = onBackClick,
                 filledBackButton = true,
+                actions = {
+                    HomeIconButton(onClick = { onNavigate(ScreenType.Home) })
+                },
             )
         },
         bottomBar = {

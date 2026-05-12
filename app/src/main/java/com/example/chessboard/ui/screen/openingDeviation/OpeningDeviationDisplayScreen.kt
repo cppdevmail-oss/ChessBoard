@@ -32,6 +32,7 @@ import com.example.chessboard.ui.OpeningDeviationSourceBoardTestTag
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.BodySecondaryText
+import com.example.chessboard.ui.components.HomeIconButton
 import com.example.chessboard.ui.components.IconMd
 import com.example.chessboard.ui.openingDeviationBranchBoardTestTag
 import com.example.chessboard.ui.openingDeviationBranchCardTestTag
@@ -47,6 +48,7 @@ fun OpeningDeviationDisplayScreen(
     selectedBranchIndex: Int? = null,
     onBranchSelected: (Int) -> Unit = {},
     onOpenLinesClick: (OpeningDeviationBranch) -> Unit = {},
+    onHomeClick: () -> Unit,
     onBackClick: () -> Unit = {},
 ) {
     val selectedBranch = deviationItem.branches.getOrNull(selectedBranchIndex ?: -1)
@@ -60,6 +62,7 @@ fun OpeningDeviationDisplayScreen(
                 onBackClick = onBackClick,
                 filledBackButton = true,
                 actions = {
+                    HomeIconButton(onClick = onHomeClick)
                     IconButton(
                         onClick = {
                             val branch = selectedBranch ?: return@IconButton

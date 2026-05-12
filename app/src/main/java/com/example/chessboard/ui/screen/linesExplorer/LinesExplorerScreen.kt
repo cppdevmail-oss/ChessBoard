@@ -64,6 +64,7 @@ import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.ChessBoardSection
+import com.example.chessboard.ui.components.HomeIconButton
 import com.example.chessboard.ui.components.IconMd
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.screen.ScreenContainerContext
@@ -353,6 +354,7 @@ internal fun LinesExplorerScreen(
                 onBackClick = onBackClick,
                 filledBackButton = true,
                 actions = {
+                    HomeIconButton(onClick = { screenContext.onNavigate(ScreenType.Home) })
                     IconButton(
                         onClick = {
                             draftFilterState = activeFilterState

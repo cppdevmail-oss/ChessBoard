@@ -35,6 +35,7 @@ import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.CardMetaText
 import com.example.chessboard.ui.components.CardSurface
 import com.example.chessboard.ui.components.DeleteIconButton
+import com.example.chessboard.ui.components.HomeIconButton
 import com.example.chessboard.ui.components.IconMd
 import com.example.chessboard.ui.components.RepeatStepIconButton
 import com.example.chessboard.ui.components.ScreenSection
@@ -151,7 +152,7 @@ internal fun CreateTrainingScreen(
                 title = screenTitle,
                 onBackClick = onBackClick,
                 actions = {
-                    Spacer(modifier = Modifier.width(AppDimens.spaceSm))
+                    HomeIconButton(onClick = { onNavigate(ScreenType.Home) })
                     IconButton(
                         onClick = { onSaveTraining(currentEditorState.trainingName, currentEditorState.editableLinesForTraining) }
                     ) {

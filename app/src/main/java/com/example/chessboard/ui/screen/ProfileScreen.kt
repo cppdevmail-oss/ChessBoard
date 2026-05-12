@@ -49,6 +49,7 @@ import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.CardMetaText
 import com.example.chessboard.ui.components.CardSurface
+import com.example.chessboard.ui.components.HomeIconButton
 import com.example.chessboard.ui.components.ScreenTitleText
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
@@ -120,6 +121,9 @@ private fun ProfileScreen(
                 subtitle = "Your achievements and settings",
                 onBackClick = onBackClick,
                 filledBackButton = true,
+                actions = {
+                    HomeIconButton(onClick = { onNavigate(ScreenType.Home) })
+                },
             )
         },
         bottomBar = {

@@ -38,6 +38,7 @@ import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.BodySecondaryText
+import com.example.chessboard.ui.components.HomeIconButton
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
@@ -174,6 +175,9 @@ private fun TrainingTemplateBrowserScreen(
                 title = "Training Templates",
                 onBackClick = onBackClick,
                 filledBackButton = true,
+                actions = {
+                    HomeIconButton(onClick = { onNavigate(ScreenType.Home) })
+                },
             )
         },
         bottomBar = {

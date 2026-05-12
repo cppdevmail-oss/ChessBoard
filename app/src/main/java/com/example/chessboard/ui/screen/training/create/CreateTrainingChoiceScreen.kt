@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import com.example.chessboard.ui.components.AppBottomNavigation
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
+import com.example.chessboard.ui.components.HomeIconButton
 import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.ScreenSection
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
@@ -50,7 +51,10 @@ private fun CreateTrainingChoiceScreen(
         topBar = {
             AppTopBar(
                 title = "Training Creation Choice",
-                onBackClick = onBackClick
+                onBackClick = onBackClick,
+                actions = {
+                    HomeIconButton(onClick = { onNavigate(ScreenType.Home) })
+                },
             )
         },
         bottomBar = {
