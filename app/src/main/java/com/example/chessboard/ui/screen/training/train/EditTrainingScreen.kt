@@ -209,7 +209,7 @@ fun EditTrainingScreen(
     onSaveTraining: (String, List<TrainingLineEditorItem>, Boolean, (() -> Unit)?) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
+    var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Training) }
     var hasUserSelectedLine by remember(initialSelectedLineId) {
         mutableStateOf(initialSelectedLineId != null)
     }

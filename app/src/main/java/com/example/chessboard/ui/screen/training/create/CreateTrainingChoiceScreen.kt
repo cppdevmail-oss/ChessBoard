@@ -44,7 +44,7 @@ private fun CreateTrainingChoiceScreen(
     onNavigate: (ScreenType) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
+    var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Training) }
 
     AppScreenScaffold(
         modifier = modifier.fillMaxSize(),

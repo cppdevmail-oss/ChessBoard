@@ -183,7 +183,7 @@ private fun TrainingTemplateBrowserScreen(
         bottomBar = {
             AppBottomNavigation(
                 items = defaultAppBottomNavigationItems(),
-                selectedItem = ScreenType.Home,
+                selectedItem = ScreenType.Training,
                 onItemSelected = onNavigate,
             )
         },

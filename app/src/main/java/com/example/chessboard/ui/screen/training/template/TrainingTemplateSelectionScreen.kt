@@ -183,7 +183,7 @@ private fun TrainingTemplateSelectionScreen(
         bottomBar = {
             AppBottomNavigation(
                 items = defaultAppBottomNavigationItems(),
-                selectedItem = ScreenType.Home,
+                selectedItem = ScreenType.Training,
                 onItemSelected = onNavigate,
             )
         },

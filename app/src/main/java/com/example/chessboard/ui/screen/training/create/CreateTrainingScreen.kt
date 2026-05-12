@@ -136,7 +136,7 @@ internal fun CreateTrainingScreen(
     onSaveTraining: (String, List<TrainingLineEditorItem>) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
+    var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Training) }
     var currentEditorState by remember(editorState) {
         mutableStateOf(editorState)
     }

@@ -202,7 +202,7 @@ private fun TrainSingleLineScreen(
     modifier: Modifier = Modifier
 ) {
     val loadedLine = trainingLineData.line
-    var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Home) }
+    var selectedNavItem by remember { mutableStateOf<ScreenType>(ScreenType.Training) }
     var showShowLineDialog by remember(loadedLine.id) { mutableStateOf(false) }
     val uciMoves = trainingLineData.uciMoves
     val startFen = trainingLineData.startFen
