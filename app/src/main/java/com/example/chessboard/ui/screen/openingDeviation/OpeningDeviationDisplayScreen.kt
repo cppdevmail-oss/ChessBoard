@@ -48,7 +48,7 @@ fun OpeningDeviationDisplayScreen(
     selectedBranchIndex: Int? = null,
     onBranchSelected: (Int) -> Unit = {},
     onOpenLinesClick: (OpeningDeviationBranch) -> Unit = {},
-    onHomeClick: () -> Unit,
+    onHomeClick: () -> Unit = {},
     onBackClick: () -> Unit = {},
 ) {
     val selectedBranch = deviationItem.branches.getOrNull(selectedBranchIndex ?: -1)
