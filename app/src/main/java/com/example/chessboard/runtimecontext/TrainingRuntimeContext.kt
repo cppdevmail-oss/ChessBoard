@@ -23,42 +23,49 @@ class TrainingRuntimeContext {
     )
 
     private data class TrainingSession(
-        val currentLineId: Long? = null,
+        val selectedLineId: Long? = null,
+        val lineIdInTraining: Long? = null,
         val orderedLineIds: List<Long> = emptyList(),
         val lineProgressById: Map<Long, LineProgressSnapshot> = emptyMap(),
     )
 
-    private val sessionsByTrainingId = mutableMapOf<Long, TrainingSession>()
-    private val selectedLineIdByTrainingId = mutableStateMapOf<Long, Long?>()
+    private val sessionsByTrainingId = mutableStateMapOf<Long, TrainingSession>()
 
     fun rememberLaunch(
         trainingId: Long,
         lineId: Long,
         orderedLineIds: List<Long>,
     ) {
-        val currentSession = sessionsByTrainingId[trainingId] ?: TrainingSession()
-        sessionsByTrainingId[trainingId] = currentSession.copy(
-            currentLineId = lineId,
-            orderedLineIds = orderedLineIds,
-        )
-        selectedLineIdByTrainingId[trainingId] = lineId
+        updateSession(trainingId) { session ->
+            session.copy(
+                selectedLineId = lineId,
+                lineIdInTraining = lineId,
+                orderedLineIds = orderedLineIds,
+            )
+        }
     }
 
     fun orderedLineIds(trainingId: Long): List<Long> {
         return sessionsByTrainingId[trainingId]?.orderedLineIds ?: emptyList()
     }
 
-    fun activeLineId(trainingId: Long): Long? {
-        return sessionsByTrainingId[trainingId]?.currentLineId
+    fun lineIdInTraining(trainingId: Long): Long? {
+        return sessionsByTrainingId[trainingId]?.lineIdInTraining
     }
 
     fun selectedLineId(trainingId: Long): Long? {
-        val selectedLineId = selectedLineIdByTrainingId[trainingId]
+        val session = sessionsByTrainingId[trainingId]
+        val lineIdInTraining = session?.lineIdInTraining
+        if (lineIdInTraining != null) {
+            return lineIdInTraining
+        }
+
+        val selectedLineId = session?.selectedLineId
         if (selectedLineId != null) {
             return selectedLineId
         }
 
-        return orderedLineIds(trainingId).firstOrNull()
+        return session?.orderedLineIds?.firstOrNull()
     }
 
     fun firstStartedLineId(trainingId: Long): Long? {
@@ -74,21 +81,24 @@ class TrainingRuntimeContext {
             return firstStartedOrderedLineId
         }
 
-        val activeLineId = session.currentLineId
-        if (activeLineId != null && session.lineProgressById.containsKey(activeLineId)) {
-            return activeLineId
+        val lineIdInTraining = session.lineIdInTraining
+        if (lineIdInTraining != null && session.lineProgressById.containsKey(lineIdInTraining)) {
+            return lineIdInTraining
         }
 
         return session.lineProgressById.keys.firstOrNull()
     }
 
-    fun setCurrentLineId(trainingId: Long, lineId: Long?) {
-        val currentSession = sessionsByTrainingId[trainingId] ?: return
-        sessionsByTrainingId[trainingId] = currentSession.copy(currentLineId = lineId)
+    fun setLineIdInTraining(trainingId: Long, lineId: Long?) {
+        updateSession(trainingId) { session ->
+            session.copy(lineIdInTraining = lineId)
+        }
     }
 
     fun setSelectedLineId(trainingId: Long, lineId: Long?) {
-        selectedLineIdByTrainingId[trainingId] = lineId
+        updateSession(trainingId) { session ->
+            session.copy(selectedLineId = lineId)
+        }
     }
 
     fun resolveNextLineId(trainingId: Long, currentLineId: Long): Long? {
@@ -120,17 +130,18 @@ class TrainingRuntimeContext {
         lineFingerprint: String,
         uiState: TrainSingleLineUiState,
     ) {
-        val currentSession = sessionsByTrainingId[trainingId] ?: TrainingSession()
-        sessionsByTrainingId[trainingId] = currentSession.copy(
-            currentLineId = lineId,
-            lineProgressById = currentSession.lineProgressById + (
-                lineId to LineProgressSnapshot(
-                    currentPly = currentPly,
-                    lineFingerprint = lineFingerprint,
-                    uiState = sanitizeUiState(uiState),
-                )
-            ),
-        )
+        updateSession(trainingId) { session ->
+            session.copy(
+                lineIdInTraining = lineId,
+                lineProgressById = session.lineProgressById + (
+                    lineId to LineProgressSnapshot(
+                        currentPly = currentPly,
+                        lineFingerprint = lineFingerprint,
+                        uiState = sanitizeUiState(uiState),
+                    )
+                ),
+            )
+        }
     }
 
     fun clearLineProgress(trainingId: Long, lineId: Long) {
@@ -142,7 +153,14 @@ class TrainingRuntimeContext {
 
     fun clearTrainingSession(trainingId: Long) {
         sessionsByTrainingId.remove(trainingId)
-        selectedLineIdByTrainingId.remove(trainingId)
+    }
+
+    private fun updateSession(
+        trainingId: Long,
+        update: (TrainingSession) -> TrainingSession,
+    ) {
+        val currentSession = sessionsByTrainingId[trainingId] ?: TrainingSession()
+        sessionsByTrainingId[trainingId] = update(currentSession)
     }
 
     private fun sanitizeUiState(uiState: TrainSingleLineUiState): TrainSingleLineUiState {
