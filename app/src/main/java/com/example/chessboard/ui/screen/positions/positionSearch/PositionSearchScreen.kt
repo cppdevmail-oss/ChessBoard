@@ -69,6 +69,7 @@ import com.example.chessboard.ui.screen.EditableLineSide
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.screen.SideButtonSelectedBg
+import com.example.chessboard.service.OneLineTrainingData
 import com.example.chessboard.ui.screen.positions.PositionSearchResultDialogActions
 import com.example.chessboard.ui.screen.positions.PositionTemplateNameDialogState
 import com.example.chessboard.ui.screen.positions.RenderPositionSearchResultDialog
@@ -193,6 +194,7 @@ private data class PositionSearchHistory(
 fun PositionSearchScreenContainer(
     initialFen: String = InitialBoardFenWithoutMoveNumbers,
     screenContext: ScreenContainerContext,
+    simpleViewEnabled: Boolean = false,
     onNavigateToSettings: (currentFen: String) -> Unit = {},
     onShowFoundLinesClick: (lineIds: List<Long>, currentFen: String) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
@@ -537,9 +539,40 @@ fun PositionSearchScreenContainer(
                 onDismiss = { uiState = uiState.copy(foundLineIds = null) },
                 onCreateTrainingClick = createTrainingFromFoundLines@{
                     val foundLineIds = uiState.foundLineIds ?: return@createTrainingFromFoundLines
-                    screenContext.onNavigate(ScreenType.CreateTrainingFromLineIds(foundLineIds))
                     uiState = uiState.copy(foundLineIds = null)
+                    if (simpleViewEnabled) {
+                        scope.launch {
+                            val trainingId = withContext(Dispatchers.IO) {
+                                val allLinesById = screenContext.inDbProvider.getAllLines().associateBy { it.id }
+                                val trainingLines = foundLineIds.mapNotNull { lineId ->
+                                    allLinesById[lineId]?.let { OneLineTrainingData(lineId = lineId, weight = 1) }
+                                }
+                                screenContext.inDbProvider.createTrainingService().createTrainingFromLines(
+                                    name = "Games from position",
+                                    lines = trainingLines,
+                                )
+                            }
+                            uiState = if (trainingId != null) {
+                                uiState.copy(
+                                    infoDialog = PositionSearchInfoDialog(
+                                        title = "Training Created",
+                                        message = "Training created with ${foundLineIds.size} lines."
+                                    )
+                                )
+                            } else {
+                                uiState.copy(
+                                    infoDialog = PositionSearchInfoDialog(
+                                        title = "Training Error",
+                                        message = "Found lines could not be saved as a training."
+                                    )
+                                )
+                            }
+                        }
+                        return@createTrainingFromFoundLines
+                    }
+                    screenContext.onNavigate(ScreenType.CreateTrainingFromLineIds(foundLineIds))
                 },
+                showTemplateAction = !simpleViewEnabled,
                 onCreateTemplateClick = ::openTemplateNameDialog,
                 onShowLinesClick = showLinesFromFoundLines@{
                     val foundLineIds = uiState.foundLineIds ?: return@showLinesFromFoundLines

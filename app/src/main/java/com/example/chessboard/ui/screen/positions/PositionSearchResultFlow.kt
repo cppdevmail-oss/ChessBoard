@@ -41,6 +41,7 @@ internal data class PositionSearchResultDialogActions(
     val onCreateTrainingClick: () -> Unit,
     val onCreateTemplateClick: () -> Unit,
     val onShowLinesClick: (() -> Unit)? = null,
+    val showTemplateAction: Boolean = true,
     val templateNameDialogState: PositionTemplateNameDialogState? = null,
     val onTemplateNameChange: (String) -> Unit = {},
     val onTemplateNameDismiss: () -> Unit = {},
@@ -82,13 +83,15 @@ internal fun RenderPositionSearchResultDialog(
                 )
             )
         }
-        add(
-            AppMessageDialogAction(
-                text = "Template",
-                onClick = actions.onCreateTemplateClick,
-                testTag = PositionSearchResultTemplateActionTestTag,
+        if (actions.showTemplateAction) {
+            add(
+                AppMessageDialogAction(
+                    text = "Template",
+                    onClick = actions.onCreateTemplateClick,
+                    testTag = PositionSearchResultTemplateActionTestTag,
+                )
             )
-        )
+        }
         add(
             AppMessageDialogAction(
                 text = "Training",

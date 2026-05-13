@@ -320,6 +320,7 @@ class MainActivity : ComponentActivity() {
                         screenContext = createScreenContext(
                             onBackClick = { runtimeContext.positionSearch.onBackClick() },
                         ),
+                        simpleViewEnabled = simpleViewEnabled,
                         onNavigateToSettings = { currentFen ->
                             runtimeContext.positionSearch.initialFen = currentFen
                             currentScreen = ScreenType.PositionSearchSettings
