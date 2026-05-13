@@ -53,6 +53,7 @@ internal fun CreateOpeningScreenContainer(
     val lineController = remember { LineController() }
     var lineDraft by remember(initialDraft) { mutableStateOf(initialDraft) }
     var showOpeningNameError by remember { mutableStateOf(false) }
+    var isSaving by remember { mutableStateOf(false) }
     var pgnText by remember { mutableStateOf("") }
     var pgnImportError by remember { mutableStateOf<String?>(null) }
     var saveError by remember { mutableStateOf<String?>(null) }
@@ -173,6 +174,7 @@ internal fun CreateOpeningScreenContainer(
             importedChapterCount = importedChapters.size,
             pgnImportError = pgnImportError,
             saveError = saveError,
+            isSaving = isSaving,
         ),
         actions = CreateOpeningScreenActions(
             onSideSelected = { selectedSide ->
@@ -209,7 +211,10 @@ internal fun CreateOpeningScreenContainer(
                     return@onSaveAction
                 }
 
+                if (isSaving) return@onSaveAction
                 val lifecycleOwner = activity as? LifecycleOwner ?: return@onSaveAction
+                isSaving = true
+
                 val saveSnapshot = buildCreateOpeningSaveSnapshot(
                     lineDraft = lineDraft,
                     importedChapters = importedChapters,
@@ -225,6 +230,7 @@ internal fun CreateOpeningScreenContainer(
                         trainingService = trainingService,
                     )
                     withContext(Dispatchers.Main) {
+                        isSaving = false
                         applyCreateOpeningSaveResult(
                             saveResult = saveResult,
                             onBackClick = screenContext.onBackClick,

@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Psychology
@@ -51,12 +50,12 @@ import androidx.compose.ui.unit.dp
 import com.example.chessboard.service.OneLineTrainingData
 import com.example.chessboard.service.SmartLinePair
 import com.example.chessboard.ui.components.AppBottomNavigation
-import com.example.chessboard.ui.components.AppDivider
 import com.example.chessboard.ui.components.AppIconSizes
 import com.example.chessboard.ui.components.AppProgressCard
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppSearchField
-import com.example.chessboard.ui.components.IconMd
+import com.example.chessboard.ui.components.AppTopBar
+import com.example.chessboard.ui.components.HomeIconButton
 import com.example.chessboard.ui.components.IconSm
 import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.SettingsIconButton
@@ -142,6 +141,8 @@ fun SmartTrainingScreenContainer(
             }
         },
         onSettingsClick = { screenContext.onNavigate(ScreenType.SmartSettings) },
+        onBackClick = screenContext.onBackClick,
+        onHomeClick = { screenContext.onNavigate(ScreenType.Home) },
         onNavigate = screenContext.onNavigate,
         modifier = modifier,
     )
@@ -156,6 +157,8 @@ fun SmartTrainingScreen(
     onDismissInfoCard: () -> Unit = {},
     onStartTraining: (Set<Long>) -> Unit = { _ -> },
     onSettingsClick: () -> Unit = {},
+    onBackClick: () -> Unit = {},
+    onHomeClick: () -> Unit = {},
     onNavigate: (ScreenType) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -200,7 +203,20 @@ fun SmartTrainingScreen(
 
     AppScreenScaffold(
         modifier = modifier.fillMaxSize(),
-        topBar = { SmartTrainingTopBar(onSettingsClick = onSettingsClick) },
+        topBar = {
+            AppTopBar(
+                title = "Smart Training",
+                subtitle = "Select openings to practice",
+                onBackClick = onBackClick,
+                actions = {
+                    HomeIconButton(onClick = onHomeClick)
+                    SettingsIconButton(
+                        onClick = onSettingsClick,
+                        contentDescription = "Smart training settings",
+                    )
+                },
+            )
+        },
         bottomBar = {
             Column {
                 PrimaryButton(
@@ -281,61 +297,6 @@ fun SmartTrainingScreen(
     }
 }
 
-@Composable
-private fun SmartTrainingTopBar(
-    onSettingsClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = AppDimens.spaceLg, vertical = AppDimens.spaceMd),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(SmartTrainingIconBg),
-                contentAlignment = Alignment.Center,
-            ) {
-                IconMd(
-                    imageVector = Icons.Filled.Psychology,
-                    contentDescription = null,
-                    tint = Color.White,
-                )
-            }
-            Spacer(modifier = Modifier.width(AppDimens.spaceLg))
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "Smart Training",
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = TextColor.Primary,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    IconMd(
-                        imageVector = Icons.Filled.Bolt,
-                        contentDescription = null,
-                        tint = TrainingAccentTeal,
-                    )
-                }
-                Text(
-                    text = "Select openings to practice",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextColor.Secondary,
-                )
-            }
-            SettingsIconButton(
-                onClick = onSettingsClick,
-                contentDescription = "Smart training settings",
-            )
-        }
-        AppDivider()
-    }
-}
 
 @Composable
 private fun HowItWorksCard(

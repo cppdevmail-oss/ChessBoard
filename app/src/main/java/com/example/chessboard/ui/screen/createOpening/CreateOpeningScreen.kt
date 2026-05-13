@@ -66,6 +66,7 @@ internal data class CreateOpeningScreenState(
     val importedChapterCount: Int,
     val pgnImportError: String?,
     val saveError: String?,
+    val isSaving: Boolean = false,
 )
 
 internal data class CreateOpeningScreenActions(
@@ -117,14 +118,17 @@ internal fun CreateOpeningScreen(
                 onBackClick = actions.onBackClick,
                 actions = {
                     HomeIconButton(onClick = actions.onHomeClick)
-                    IconButton(onClick = {
-                        actions.onSave {
-                            coroutineScope.launch {
-                                scrollState.animateScrollTo(0)
-                                nameFocusRequester.requestFocus()
+                    IconButton(
+                        onClick = {
+                            actions.onSave {
+                                coroutineScope.launch {
+                                    scrollState.animateScrollTo(0)
+                                    nameFocusRequester.requestFocus()
+                                }
                             }
-                        }
-                    }) {
+                        },
+                        enabled = !state.isSaving,
+                    ) {
                         IconMd(
                             imageVector = Icons.Default.Save,
                             contentDescription = "Save",
