@@ -78,8 +78,8 @@ fun TrainSingleLineLauncherScreenContainer(
 
     fun clearInvalidTrainingRuntimeState() {
         trainingRuntimeContext.clearLineProgress(trainingId, lineId)
-        if (trainingRuntimeContext.activeLineId(trainingId) == lineId) {
-            trainingRuntimeContext.setCurrentLineId(trainingId, null)
+        if (trainingRuntimeContext.lineIdInTraining(trainingId) == lineId) {
+            trainingRuntimeContext.setLineIdInTraining(trainingId, null)
         }
     }
 
