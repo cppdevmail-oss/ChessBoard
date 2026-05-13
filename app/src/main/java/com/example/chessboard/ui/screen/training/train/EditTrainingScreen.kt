@@ -235,17 +235,8 @@ fun EditTrainingScreen(
     val orderedLinesForTraining = orderedLineIds.mapNotNull { currentLinesById[it] }
 
     fun resolveSelectedLineId(): Long? {
-        val selectedLineId = trainingRuntimeContext.selectedLineId(trainingId)
-        if (selectedLineId != null) {
-            return selectedLineId
-        }
-
-        val activeLineId = trainingRuntimeContext.activeLineId(trainingId)
-        if (activeLineId != null) {
-            return activeLineId
-        }
-
-        return orderedLinesForTraining.firstOrNull()?.lineId
+        return trainingRuntimeContext.selectedLineId(trainingId)
+            ?: orderedLinesForTraining.firstOrNull()?.lineId
     }
 
     val boardSession = rememberTrainingEditorBoardSession(

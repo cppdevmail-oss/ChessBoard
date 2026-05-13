@@ -23,7 +23,7 @@ class RegularTrainingFlowCoordinator(
     fun openTraining(trainingId: Long): TrainingFlowResult {
         val startedLineId = runtimeContext.trainingSession.firstStartedLineId(trainingId)
         if (startedLineId != null) {
-            runtimeContext.trainingSession.setCurrentLineId(trainingId, startedLineId)
+            runtimeContext.trainingSession.setLineIdInTraining(trainingId, startedLineId)
             return TrainingFlowResult.Navigate(
                 ScreenType.TrainSingleLine(trainingId, startedLineId)
             )
@@ -71,7 +71,7 @@ class RegularTrainingFlowCoordinator(
             trainingId = result.trainingId,
             lineId = result.lineId,
         )
-        runtimeContext.trainingSession.setCurrentLineId(
+        runtimeContext.trainingSession.setLineIdInTraining(
             trainingId = result.trainingId,
             lineId = null,
         )
@@ -97,14 +97,14 @@ class RegularTrainingFlowCoordinator(
         )
 
         if (nextLineId == null) {
-            runtimeContext.trainingSession.setCurrentLineId(
+            runtimeContext.trainingSession.setLineIdInTraining(
                 trainingId = result.trainingId,
                 lineId = null,
             )
             return TrainingFlowResult.Navigate(ScreenType.EditTraining(result.trainingId))
         }
 
-        runtimeContext.trainingSession.setCurrentLineId(
+        runtimeContext.trainingSession.setLineIdInTraining(
             trainingId = result.trainingId,
             lineId = nextLineId,
         )
