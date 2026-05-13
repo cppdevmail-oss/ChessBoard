@@ -29,7 +29,7 @@ class TrainingRuntimeContextTest {
             orderedLineIds = listOf(10L, 20L, 30L),
         )
 
-        assertEquals(20L, runtimeContext.activeLineId(1L))
+        assertEquals(20L, runtimeContext.lineIdInTraining(1L))
         assertEquals(listOf(10L, 20L, 30L), runtimeContext.orderedLineIds(1L))
     }
 
@@ -48,14 +48,14 @@ class TrainingRuntimeContextTest {
             orderedLineIds = listOf(10L, 20L, 30L),
         )
 
-        assertEquals(30L, runtimeContext.activeLineId(1L))
+        assertEquals(30L, runtimeContext.lineIdInTraining(1L))
     }
 
     @Test
-    fun `activeLineId returns null for unknown training`() {
+    fun `lineIdInTraining returns null for unknown training`() {
         val runtimeContext = TrainingRuntimeContext()
 
-        assertNull(runtimeContext.activeLineId(99L))
+        assertNull(runtimeContext.lineIdInTraining(99L))
     }
 
     @Test
@@ -325,7 +325,7 @@ class TrainingRuntimeContextTest {
 
         runtimeContext.clearLineProgress(trainingId = 1L, lineId = 20L)
 
-        assertEquals(20L, runtimeContext.activeLineId(1L))
+        assertEquals(20L, runtimeContext.lineIdInTraining(1L))
         assertEquals(listOf(10L, 20L, 30L), runtimeContext.orderedLineIds(1L))
     }
 
@@ -429,11 +429,11 @@ class TrainingRuntimeContextTest {
             uiState = trainUiState(expectedPly = 3),
         )
 
-        assertEquals(30L, runtimeContext.activeLineId(1L))
+        assertEquals(30L, runtimeContext.lineIdInTraining(1L))
     }
 
     @Test
-    fun `setCurrentLineId updates active line without touching snapshots`() {
+    fun `setLineIdInTraining updates active line without touching snapshots`() {
         val runtimeContext = TrainingRuntimeContext()
         runtimeContext.rememberLaunch(
             trainingId = 1L,
@@ -448,19 +448,19 @@ class TrainingRuntimeContextTest {
             uiState = trainUiState(expectedPly = 2),
         )
 
-        runtimeContext.setCurrentLineId(trainingId = 1L, lineId = 20L)
+        runtimeContext.setLineIdInTraining(trainingId = 1L, lineId = 20L)
 
-        assertEquals(20L, runtimeContext.activeLineId(1L))
+        assertEquals(20L, runtimeContext.lineIdInTraining(1L))
         assertEquals(2, runtimeContext.restoreLineProgress(1L, 10L)?.currentPly)
     }
 
     @Test
-    fun `setCurrentLineId does nothing for unknown training`() {
+    fun `setLineIdInTraining creates session for unknown training`() {
         val runtimeContext = TrainingRuntimeContext()
 
-        runtimeContext.setCurrentLineId(trainingId = 99L, lineId = 20L)
+        runtimeContext.setLineIdInTraining(trainingId = 99L, lineId = 20L)
 
-        assertNull(runtimeContext.activeLineId(99L))
+        assertEquals(20L, runtimeContext.lineIdInTraining(99L))
     }
 
     private fun trainUiState(

@@ -78,7 +78,7 @@ class RegularTrainingFlowCoordinatorTest {
 
         val result = coordinator.openTraining(trainingId = 5L)
 
-        assertEquals(20L, runtimeContext.trainingSession.activeLineId(5L))
+        assertEquals(20L, runtimeContext.trainingSession.lineIdInTraining(5L))
         assertEquals(
             TrainingFlowResult.Navigate(ScreenType.TrainSingleLine(5L, 20L)),
             result,
@@ -96,7 +96,7 @@ class RegularTrainingFlowCoordinatorTest {
             orderedLineIds = listOf(10L, 20L, 30L),
         )
 
-        assertEquals(20L, runtimeContext.trainingSession.activeLineId(7L))
+        assertEquals(20L, runtimeContext.trainingSession.lineIdInTraining(7L))
         assertEquals(listOf(10L, 20L, 30L), runtimeContext.trainingSession.orderedLineIds(7L))
         assertEquals(
             TrainingFlowResult.Navigate(ScreenType.TrainSingleLine(7L, 20L)),
@@ -130,7 +130,7 @@ class RegularTrainingFlowCoordinatorTest {
         )
 
         assertNull(runtimeContext.trainingSession.restoreLineProgress(1L, 10L))
-        assertNull(runtimeContext.trainingSession.activeLineId(1L))
+        assertNull(runtimeContext.trainingSession.lineIdInTraining(1L))
         assertEquals(
             TrainingFlowResult.Navigate(ScreenType.EditTraining(1L)),
             result,
@@ -157,7 +157,7 @@ class RegularTrainingFlowCoordinatorTest {
 
         val result = coordinator.interruptTraining(trainingId = 1L)
 
-        assertNull(runtimeContext.trainingSession.activeLineId(1L))
+        assertNull(runtimeContext.trainingSession.lineIdInTraining(1L))
         assertEquals(emptyList<Long>(), runtimeContext.trainingSession.orderedLineIds(1L))
         assertNull(runtimeContext.trainingSession.restoreLineProgress(1L, 10L))
         assertEquals(
@@ -192,7 +192,7 @@ class RegularTrainingFlowCoordinatorTest {
         )
 
         assertNull(runtimeContext.trainingSession.restoreLineProgress(1L, 10L))
-        assertEquals(20L, runtimeContext.trainingSession.activeLineId(1L))
+        assertEquals(20L, runtimeContext.trainingSession.lineIdInTraining(1L))
         assertEquals(
             TrainingFlowResult.Navigate(ScreenType.TrainSingleLine(1L, 20L)),
             result,
@@ -217,7 +217,7 @@ class RegularTrainingFlowCoordinatorTest {
             )
         )
 
-        assertNull(runtimeContext.trainingSession.activeLineId(1L))
+        assertNull(runtimeContext.trainingSession.lineIdInTraining(1L))
         assertEquals(
             TrainingFlowResult.Navigate(ScreenType.EditTraining(1L)),
             result,
