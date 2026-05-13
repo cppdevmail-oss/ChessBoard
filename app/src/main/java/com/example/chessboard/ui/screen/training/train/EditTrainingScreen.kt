@@ -318,7 +318,9 @@ fun EditTrainingScreen(
     }
 
     fun withSelectedLine(action: (TrainingLineEditorItem) -> Unit) {
-        selectedLine?.let(action)
+        val lineId = resolveSelectedLineId() ?: return
+        val line = currentLinesById[lineId] ?: return
+        action(line)
     }
 
     fun openSelectedLineEditor() {

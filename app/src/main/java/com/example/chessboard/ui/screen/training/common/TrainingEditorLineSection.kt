@@ -8,6 +8,7 @@ package com.example.chessboard.ui.screen.training.common
  * loading, save flows, or list scaffolds to this file.
  */
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -102,6 +103,7 @@ internal fun TrainingEditorLineSection(
                 { showRemoveConfirm = true }
             } else null,
             removeCollectionLabel = removeCollectionLabel,
+            onSelect = if (!state.isSelected) actions.onSelect else null,
         )
 
         Spacer(modifier = Modifier.height(AppDimens.spaceSm))
@@ -135,13 +137,19 @@ private fun TrainingEditorLineHeader(
     onIncreaseWeightClick: () -> Unit,
     onRemoveClick: (() -> Unit)? = null,
     removeCollectionLabel: String = "training",
+    onSelect: (() -> Unit)? = null,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Column(modifier = Modifier.weight(1f)) {
+        val titleModifier = if (onSelect != null) {
+            Modifier.weight(1f).clickable(onClick = onSelect)
+        } else {
+            Modifier.weight(1f)
+        }
+        Column(modifier = titleModifier) {
             Text(
                 text = line.title,
                 color = TextColor.Primary,

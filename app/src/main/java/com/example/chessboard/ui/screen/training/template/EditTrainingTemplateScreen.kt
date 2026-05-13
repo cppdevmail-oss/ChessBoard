@@ -189,6 +189,7 @@ fun EditTrainingTemplateScreen(
     var pendingLeaveAction by remember { mutableStateOf<(() -> Unit)?>(null) }
     var pendingRemoveLine by remember { mutableStateOf<TrainingLineEditorItem?>(null) }
     val boardSession = rememberTrainingEditorBoardSession(editorState.editableLinesForTraining)
+    var currentSelectedLineId by remember { mutableStateOf(boardSession.selectedLineId) }
     val selectedLine = editorState.editableLinesForTraining.firstOrNull { line ->
         line.lineId == boardSession.selectedLineId
     }
@@ -245,15 +246,19 @@ fun EditTrainingTemplateScreen(
 
         if (nextSelectedLineId == null) {
             hasUserSelectedLine = false
+            currentSelectedLineId = null
             return
         }
 
         hasUserSelectedLine = true
+        currentSelectedLineId = nextSelectedLineId
         boardSession.onSelectLine(nextSelectedLineId)
     }
 
     fun withSelectedLine(action: (TrainingLineEditorItem) -> Unit) {
-        selectedLine?.let(action)
+        val lineId = currentSelectedLineId ?: return
+        val line = editorState.editableLinesForTraining.firstOrNull { it.lineId == lineId } ?: return
+        action(line)
     }
 
     fun openSelectedLineEditor() {
@@ -386,6 +391,7 @@ fun EditTrainingTemplateScreen(
                 },
                 onSelect = {
                     hasUserSelectedLine = true
+                    currentSelectedLineId = line.lineId
                     boardSession.onSelectLine(line.lineId)
                 },
                 onPrevClick = { boardSession.lineController.undoMove() },
@@ -396,7 +402,10 @@ fun EditTrainingTemplateScreen(
                         onOpenLineEditorClick(line.lineId)
                     }
                 },
-                onMovePlyClick = { ply -> boardSession.onMoveToPly(line.lineId, ply) },
+                onMovePlyClick = { ply ->
+                    currentSelectedLineId = line.lineId
+                    boardSession.onMoveToPly(line.lineId, ply)
+                },
             ),
             removeCollectionLabel = "template",
         )
