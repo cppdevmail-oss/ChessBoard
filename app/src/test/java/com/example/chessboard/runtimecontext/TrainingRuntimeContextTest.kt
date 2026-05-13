@@ -59,6 +59,60 @@ class TrainingRuntimeContextTest {
     }
 
     @Test
+    fun `selectedLineId returns selected editor line when training is not active`() {
+        val runtimeContext = TrainingRuntimeContext()
+
+        runtimeContext.setSelectedLineId(trainingId = 1L, lineId = 20L)
+
+        assertEquals(20L, runtimeContext.selectedLineId(1L))
+    }
+
+    @Test
+    fun `selectedLineId prefers lineIdInTraining over selected editor line`() {
+        val runtimeContext = TrainingRuntimeContext()
+        runtimeContext.setSelectedLineId(trainingId = 1L, lineId = 20L)
+
+        runtimeContext.setLineIdInTraining(trainingId = 1L, lineId = 30L)
+
+        assertEquals(30L, runtimeContext.selectedLineId(1L))
+    }
+
+    @Test
+    fun `setSelectedLineId does not change lineIdInTraining`() {
+        val runtimeContext = TrainingRuntimeContext()
+        runtimeContext.setLineIdInTraining(trainingId = 1L, lineId = 30L)
+
+        runtimeContext.setSelectedLineId(trainingId = 1L, lineId = 20L)
+
+        assertEquals(30L, runtimeContext.lineIdInTraining(1L))
+        assertEquals(30L, runtimeContext.selectedLineId(1L))
+    }
+
+    @Test
+    fun `setLineIdInTraining null restores selected editor line`() {
+        val runtimeContext = TrainingRuntimeContext()
+        runtimeContext.setSelectedLineId(trainingId = 1L, lineId = 20L)
+        runtimeContext.setLineIdInTraining(trainingId = 1L, lineId = 30L)
+
+        runtimeContext.setLineIdInTraining(trainingId = 1L, lineId = null)
+
+        assertNull(runtimeContext.lineIdInTraining(1L))
+        assertEquals(20L, runtimeContext.selectedLineId(1L))
+    }
+
+    @Test
+    fun `clearTrainingSession clears selected editor line`() {
+        val runtimeContext = TrainingRuntimeContext()
+        runtimeContext.setSelectedLineId(trainingId = 1L, lineId = 20L)
+        runtimeContext.setLineIdInTraining(trainingId = 1L, lineId = 30L)
+
+        runtimeContext.clearTrainingSession(1L)
+
+        assertNull(runtimeContext.lineIdInTraining(1L))
+        assertNull(runtimeContext.selectedLineId(1L))
+    }
+
+    @Test
     fun `firstStartedLineId returns null for unknown training`() {
         val runtimeContext = TrainingRuntimeContext()
 
