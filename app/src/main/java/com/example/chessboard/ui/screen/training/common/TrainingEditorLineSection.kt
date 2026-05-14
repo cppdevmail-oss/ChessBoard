@@ -77,25 +77,40 @@ internal fun TrainingEditorLineSection(
 
         Spacer(modifier = Modifier.height(AppDimens.spaceSm))
 
-        if (state.isSelected && state.parsedLine != null) {
-            ChessBoardSection(lineController = state.lineController)
-            Spacer(modifier = Modifier.height(AppDimens.spaceMd))
-            LineMoveTreeSection(
-                importedUciLines = listOf(state.parsedLine.uciMoves),
-                lineController = state.lineController,
-                modifier = Modifier.testTag(EditTrainingMoveLegendSectionTestTag),
-            )
-        } else if (state.parsedLine != null) {
-            LineMoveTreeSection(
-                importedUciLines = listOf(state.parsedLine.uciMoves),
-                lineController = displayController,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag(EditTrainingMoveLegendSectionTestTag),
-                onMoveSelected = { _, ply -> actions.onMovePlyClick(ply) },
-            )
-        }
+        TrainingEditorLinePreview(
+            state = state,
+            actions = actions,
+            displayController = displayController,
+        )
     }
+}
+
+@Composable
+private fun TrainingEditorLinePreview(
+    state: TrainingEditorLineSectionState,
+    actions: TrainingEditorLineSectionActions,
+    displayController: LineController,
+) {
+    val parsedLine = state.parsedLine ?: return
+    if (state.isSelected) {
+        ChessBoardSection(lineController = state.lineController)
+        Spacer(modifier = Modifier.height(AppDimens.spaceMd))
+        LineMoveTreeSection(
+            importedUciLines = listOf(parsedLine.uciMoves),
+            lineController = state.lineController,
+            modifier = Modifier.testTag(EditTrainingMoveLegendSectionTestTag),
+        )
+        return
+    }
+
+    LineMoveTreeSection(
+        importedUciLines = listOf(parsedLine.uciMoves),
+        lineController = displayController,
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(EditTrainingMoveLegendSectionTestTag),
+        onMoveSelected = { _, ply -> actions.onMovePlyClick(ply) },
+    )
 }
 
 @Composable
@@ -111,11 +126,16 @@ private fun TrainingEditorLineHeader(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        val titleModifier = if (onSelect != null) {
-            Modifier.weight(1f).clickable(onClick = onSelect)
-        } else {
-            Modifier.weight(1f)
+        fun resolveTitleModifier(): Modifier {
+            val baseModifier = Modifier.weight(1f)
+            if (onSelect == null) {
+                return baseModifier
+            }
+
+            return baseModifier.clickable(onClick = onSelect)
         }
+
+        val titleModifier = resolveTitleModifier()
         Column(modifier = titleModifier) {
             Text(
                 text = line.title,
