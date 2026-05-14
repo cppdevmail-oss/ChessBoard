@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -61,6 +62,9 @@ internal fun rememberTrainingEditorBoardSession(
     var selectedLineId by remember(lineIds, initialSelectedLineId) {
         mutableStateOf(initialSelectedLineId?.takeIf { it in lineIds } ?: lines.firstOrNull()?.lineId)
     }
+    var selectedPly by remember(lineIds, initialSelectedLineId) {
+        mutableIntStateOf(0)
+    }
 
     fun loadLineAtPly(lineId: Long, ply: Int) {
         val line = linesById[lineId] ?: return
@@ -71,16 +75,17 @@ internal fun rememberTrainingEditorBoardSession(
 
     fun selectLine(lineId: Long) {
         selectedLineId = lineId
-        loadLineAtPly(lineId, ply = 0)
+        selectedPly = 0
     }
 
     fun moveToPly(lineId: Long, ply: Int) {
         selectedLineId = lineId
-        loadLineAtPly(lineId, ply = ply)
+        selectedPly = ply
     }
 
     fun resetSelectedLine(lineId: Long) {
-        loadLineAtPly(lineId, ply = 0)
+        selectedLineId = lineId
+        selectedPly = 0
     }
 
     SideEffect {
@@ -93,11 +98,12 @@ internal fun rememberTrainingEditorBoardSession(
         }
 
         selectedLineId = lines.firstOrNull()?.lineId
+        selectedPly = 0
     }
 
-    LaunchedEffect(selectedLineId, parsedLinesById) {
+    LaunchedEffect(selectedLineId, selectedPly, parsedLinesById) {
         val lineId = selectedLineId ?: return@LaunchedEffect
-        loadLineAtPly(lineId, ply = 0)
+        loadLineAtPly(lineId, ply = selectedPly)
     }
 
     return TrainingEditorBoardSession(

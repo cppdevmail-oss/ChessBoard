@@ -103,6 +103,31 @@ class EditTrainingTemplateScreenTest {
         assertBoardFenEventually(AfterE4Fen)
     }
 
+    @Test
+    fun editTrainingTemplateScreen_moveChipOnUnselectedLineSelectsLineAndKeepsClickedPly() {
+        composeRule.setContent {
+            ChessBoardTheme {
+                EditTrainingTemplateScreen(
+                    initialTemplateName = "Sicilian Templates",
+                    linesForTemplate = listOf(
+                        TestTemplateLine,
+                        SecondTemplateLine,
+                    ),
+                )
+            }
+        }
+
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditTrainingListTestTag)
+            .performScrollToNode(hasText("French Defense"))
+        waitForTextDisplayed("French Defense")
+        composeRule.onNodeWithTag(moveChipTestTag("d4")).performScrollTo()
+        waitForNodeDisplayed(moveChipTestTag("d4"))
+        composeRule.onNodeWithTag(moveChipTestTag("d4"))
+            .performSemanticsAction(SemanticsActions.OnClick)
+
+        assertBoardFenEventually(AfterD4Fen)
+    }
 
     @Test
     fun editTrainingTemplateScreen_backShowsUnsavedChangesDialog_afterTemplateNameChange() {
@@ -226,9 +251,10 @@ class EditTrainingTemplateScreenTest {
             lineId = 2L,
             title = "French Defense",
             weight = 1,
-            pgn = "1. e2e4 e7e6 *",
+            pgn = "1. d2d4 d7d5 *",
             sideMask = SideMask.WHITE,
         )
         const val AfterE4Fen = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
+        const val AfterD4Fen = "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1"
     }
 }

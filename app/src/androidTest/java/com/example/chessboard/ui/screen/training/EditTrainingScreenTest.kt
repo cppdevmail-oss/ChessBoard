@@ -58,6 +58,27 @@ class EditTrainingScreenTest {
     }
 
     @Test
+    fun editTrainingScreen_moveChipOnUnselectedLineSelectsLineAndKeepsClickedPly() {
+        setEditTrainingScreenContent(
+            linesForTraining = listOf(
+                TestTrainingLine,
+                SecondTrainingLine,
+            )
+        )
+
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditTrainingListTestTag)
+            .performScrollToNode(hasText("Second Opening"))
+        waitForTextDisplayed("Second Opening")
+        composeRule.onNodeWithTag(moveChipTestTag("d4")).performScrollTo()
+        waitForNodeDisplayed(moveChipTestTag("d4"))
+        composeRule.onNodeWithTag(moveChipTestTag("d4"))
+            .performSemanticsAction(SemanticsActions.OnClick)
+
+        assertBoardFenEventually(AfterD4Fen)
+    }
+
+    @Test
     fun editTrainingScreen_nextArrowUpdatesVisibleBoardPosition() {
         setEditTrainingScreenContent(linesForTraining = listOf(TestTrainingLine))
 
@@ -254,5 +275,6 @@ class EditTrainingScreenTest {
             sideMask = SideMask.WHITE
         )
         const val AfterE4Fen = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
+        const val AfterD4Fen = "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1"
     }
 }
