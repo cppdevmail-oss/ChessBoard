@@ -48,16 +48,26 @@ internal fun RegularHomeScreen(
     onNavigate: (ScreenType) -> Unit = {},
     onCreateOpeningClick: () -> Unit = { onNavigate(ScreenType.CreateOpening) },
     onCreateTrainingClick: () -> Unit = {},
+    onOpenTrainingsClick: () -> Unit = { onNavigate(ScreenType.Training) },
     onOpenPositionSearchClick: () -> Unit = {},
     onOpenSavedPositionsClick: () -> Unit = {},
     onOpenBackupClick: () -> Unit = {},
     onExitClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    fun navigateFromHome(screen: ScreenType) {
+        if (screen == ScreenType.Training) {
+            onOpenTrainingsClick()
+            return
+        }
+
+        onNavigate(screen)
+    }
+
     AppScreenScaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
-            HomeBottomNavigation(onItemSelected = onNavigate)
+            HomeBottomNavigation(onItemSelected = ::navigateFromHome)
         },
     ) { paddingValues ->
         LazyColumn(
@@ -121,7 +131,7 @@ internal fun RegularHomeScreen(
                         title = "Trainings",
                         subtitle = "Open saved training plans",
                         modifier = Modifier.weight(1f),
-                        onClick = { onNavigate(ScreenType.Training) },
+                        onClick = onOpenTrainingsClick,
                     )
                     HomeActionCard(
                         title = "Lines",

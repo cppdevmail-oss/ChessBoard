@@ -80,6 +80,7 @@ internal fun SimpleHomeScreen(
     onCreateOpeningClick: () -> Unit,
     onOpenTraining: (Long) -> Unit,
     onNavigate: (ScreenType) -> Unit,
+    onOpenTrainingsClick: () -> Unit,
     onSmartTrainingClick: () -> Unit,
     onOpenSavedPositionsClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -100,10 +101,19 @@ internal fun SimpleHomeScreen(
         }
     }
 
+    fun navigateFromHome(screen: ScreenType) {
+        if (screen == ScreenType.Training) {
+            onOpenTrainingsClick()
+            return
+        }
+
+        onNavigate(screen)
+    }
+
     AppScreenScaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
-            HomeBottomNavigation(onItemSelected = onNavigate)
+            HomeBottomNavigation(onItemSelected = ::navigateFromHome)
         },
     ) { paddingValues ->
         LazyColumn(

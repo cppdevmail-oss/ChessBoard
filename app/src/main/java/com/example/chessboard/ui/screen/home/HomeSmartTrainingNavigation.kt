@@ -12,29 +12,16 @@ package com.example.chessboard.ui.screen.home
  * - persistence rules beyond calling an injected screen service
  * Validation date: 2026-05-14
  */
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import com.example.chessboard.service.LineListService
 import com.example.chessboard.service.TrainingService
 import com.example.chessboard.ui.components.AppMessageDialog
-import com.example.chessboard.ui.components.BodySecondaryText
-import com.example.chessboard.ui.components.CardMetaText
-import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.error.AppErrorReporter
-import com.example.chessboard.ui.theme.AppDimens
-import com.example.chessboard.ui.theme.Background
-import com.example.chessboard.ui.theme.TrainingAccentTeal
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -121,19 +108,20 @@ internal fun HomeSmartTrainingNavigationHost(
     content(::prepareSmartTrainingNavigation)
 
     if (state.job != null) {
-        SmartTrainingPreparationDialog(onCancel = ::cancelSmartTrainingPreparation)
+        HomeNavigationPreparationDialog(
+            title = "Preparing Smart Training",
+            message = "Checking available openings and trainings...",
+            onCancel = ::cancelSmartTrainingPreparation,
+        )
     }
 
     if (state.dialog == SmartTrainingNavigationDialog.NoLines) {
-        AppMessageDialog(
-            title = "No openings yet",
+        HomeNoLinesDialog(
             message = "Create at least one opening or line before starting Smart Training.",
-            confirmText = "Create Opening",
-            onConfirm = {
+            onCreateOpeningClick = {
                 state = state.copy(dialog = null)
                 onCreateOpeningClick()
             },
-            dismissText = "Cancel",
             onDismiss = {
                 state = state.copy(dialog = null)
             },
@@ -182,34 +170,4 @@ private suspend fun resolveSmartTrainingNavigationTarget(
     }
 
     return SmartTrainingNavigationTarget.SmartTraining
-}
-
-@Composable
-private fun SmartTrainingPreparationDialog(
-    onCancel: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = {},
-        containerColor = Background.ScreenDark,
-        title = {
-            SectionTitleText(text = "Preparing Smart Training")
-        },
-        text = {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd),
-            ) {
-                CircularProgressIndicator(color = TrainingAccentTeal)
-                BodySecondaryText(
-                    text = "Checking available openings and trainings...",
-                    modifier = Modifier.padding(top = AppDimens.spaceXs),
-                )
-            }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onCancel) {
-                CardMetaText(text = "Cancel")
-            }
-        },
-    )
 }

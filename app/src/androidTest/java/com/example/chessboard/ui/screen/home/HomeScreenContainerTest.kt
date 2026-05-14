@@ -12,8 +12,11 @@ package com.example.chessboard.ui.screen.home
  */
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.example.chessboard.entity.LineEntity
@@ -21,6 +24,7 @@ import com.example.chessboard.entity.SideMask
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.service.OneLineTrainingData
 import com.example.chessboard.service.uciMovesToMoves
+import com.example.chessboard.ui.HomeNoLinesCreateOpeningTestTag
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
 import com.example.chessboard.ui.theme.ChessBoardTheme
@@ -60,7 +64,7 @@ class HomeScreenContainerTest {
             "Create at least one opening or line before starting Smart Training."
         ).assertIsDisplayed()
 
-        composeRule.onNodeWithText("Create Opening").performClick()
+        composeRule.onNodeWithTag(HomeNoLinesCreateOpeningTestTag).performClick()
 
         composeRule.runOnIdle {
             check(createOpeningClicks == 1) {
@@ -136,7 +140,120 @@ class HomeScreenContainerTest {
             }
     }
 
+    @Test
+    fun regularHome_trainingsCardWithoutLinesShowsCreateOpeningDialog() {
+        var createOpeningClicks = 0
+        var navigatedScreen: ScreenType? = null
+
+        setHomeContent(
+            simpleViewEnabled = false,
+            onNavigate = { screen ->
+                navigatedScreen = screen
+            },
+            onCreateOpeningClick = {
+                createOpeningClicks += 1
+            },
+        )
+
+        waitForTextDisplayed("Trainings")
+        composeRule.onNode(hasText("Trainings") and hasClickAction()).performClick()
+
+        assertNoLinesDialogAndCreateOpening(
+            expectedMessage = "Create at least one opening or line before opening Trainings.",
+            createOpeningClicks = { createOpeningClicks },
+        )
+        composeRule.runOnIdle {
+            check(navigatedScreen == null) {
+                "Expected Training navigation to be blocked, got $navigatedScreen"
+            }
+        }
+    }
+
+    @Test
+    fun regularHome_trainingBottomBarWithoutLinesShowsCreateOpeningDialog() {
+        var createOpeningClicks = 0
+        var navigatedScreen: ScreenType? = null
+
+        setHomeContent(
+            simpleViewEnabled = false,
+            onNavigate = { screen ->
+                navigatedScreen = screen
+            },
+            onCreateOpeningClick = {
+                createOpeningClicks += 1
+            },
+        )
+
+        waitForTextDisplayed("Training")
+        composeRule.onNode(hasText("Training") and hasClickAction()).performClick()
+
+        assertNoLinesDialogAndCreateOpening(
+            expectedMessage = "Create at least one opening or line before opening Trainings.",
+            createOpeningClicks = { createOpeningClicks },
+        )
+        composeRule.runOnIdle {
+            check(navigatedScreen == null) {
+                "Expected Training navigation to be blocked, got $navigatedScreen"
+            }
+        }
+    }
+
+    @Test
+    fun simpleHome_trainingBottomBarWithoutLinesShowsCreateOpeningDialog() {
+        var createOpeningClicks = 0
+        var navigatedScreen: ScreenType? = null
+
+        setHomeContent(
+            onNavigate = { screen ->
+                navigatedScreen = screen
+            },
+            onCreateOpeningClick = {
+                createOpeningClicks += 1
+            },
+        )
+
+        waitForTextDisplayed("Training")
+        composeRule.onNode(hasText("Training") and hasClickAction()).performClick()
+
+        assertNoLinesDialogAndCreateOpening(
+            expectedMessage = "Create at least one opening or line before opening Trainings.",
+            createOpeningClicks = { createOpeningClicks },
+        )
+        composeRule.runOnIdle {
+            check(navigatedScreen == null) {
+                "Expected Training navigation to be blocked, got $navigatedScreen"
+            }
+        }
+    }
+
+    @Test
+    fun regularHome_trainingsCardWithLineNavigatesToTraining() {
+        saveLine()
+        var navigatedScreen: ScreenType? = null
+
+        setHomeContent(
+            simpleViewEnabled = false,
+            onNavigate = { screen ->
+                navigatedScreen = screen
+            },
+        )
+
+        waitForTextDisplayed("Trainings")
+        composeRule.onNode(hasText("Trainings") and hasClickAction()).performClick()
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            navigatedScreen == ScreenType.Training
+        }
+        composeRule.onAllNodesWithText("No openings yet").fetchSemanticsNodes()
+            .let { nodes ->
+                check(nodes.isEmpty()) {
+                    "Expected no missing-openings dialog after Training navigation"
+                }
+            }
+    }
+
     private fun setHomeContent(
+        simpleViewEnabled: Boolean = true,
         onNavigate: (ScreenType) -> Unit = {},
         onCreateOpeningClick: () -> Unit = {},
         onCreateTrainingClick: () -> Unit = {},
@@ -149,7 +266,7 @@ class HomeScreenContainerTest {
                         onNavigate = onNavigate,
                         inDbProvider = dbProvider,
                     ),
-                    simpleViewEnabled = true,
+                    simpleViewEnabled = simpleViewEnabled,
                     onCreateOpeningClick = onCreateOpeningClick,
                     onCreateTrainingClick = onCreateTrainingClick,
                 )
@@ -162,6 +279,22 @@ class HomeScreenContainerTest {
             composeRule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText(text).assertIsDisplayed()
+    }
+
+    private fun assertNoLinesDialogAndCreateOpening(
+        expectedMessage: String,
+        createOpeningClicks: () -> Int,
+    ) {
+        waitForTextDisplayed("No openings yet")
+        composeRule.onNodeWithText(expectedMessage).assertIsDisplayed()
+
+        composeRule.onNodeWithTag(HomeNoLinesCreateOpeningTestTag).performClick()
+
+        composeRule.runOnIdle {
+            check(createOpeningClicks() == 1) {
+                "Expected Create Opening callback to be called once, got ${createOpeningClicks()}"
+            }
+        }
     }
 
     private fun saveLine(): Long {
