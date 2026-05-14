@@ -66,7 +66,6 @@ internal data class CreateOpeningScreenState(
     val importedChapterCount: Int,
     val pgnImportError: String?,
     val saveError: String?,
-    val isSaving: Boolean = false,
 )
 
 internal data class CreateOpeningScreenActions(
@@ -127,7 +126,6 @@ internal fun CreateOpeningScreen(
                                 }
                             }
                         },
-                        enabled = !state.isSaving,
                     ) {
                         IconMd(
                             imageVector = Icons.Default.Save,
@@ -227,4 +225,3 @@ internal fun buildImportedLineEventName(
 
     return "$resolvedBaseName (Line ${index + 1})"
 }
-

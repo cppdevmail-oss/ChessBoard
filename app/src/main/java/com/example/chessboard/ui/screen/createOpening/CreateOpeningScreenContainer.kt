@@ -28,11 +28,14 @@ import com.example.chessboard.boardmodel.LineController
 import com.example.chessboard.boardmodel.LineDraft
 import com.example.chessboard.entity.LineEntity
 import com.example.chessboard.service.parsePgnMoves
+import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.screen.EditableLineSide
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -45,6 +48,7 @@ internal fun CreateOpeningScreenContainer(
     screenContext: ScreenContainerContext,
     initialDraft: LineDraft = LineDraft(),
     modifier: Modifier = Modifier,
+    saveOpeningRunner: CreateOpeningSaveRunner? = null,
 ) {
     val dbProvider = screenContext.inDbProvider
     val lineSaver = remember(dbProvider) { dbProvider.createLineSaver() }
@@ -53,10 +57,10 @@ internal fun CreateOpeningScreenContainer(
     val lineController = remember { LineController() }
     var lineDraft by remember(initialDraft) { mutableStateOf(initialDraft) }
     var showOpeningNameError by remember { mutableStateOf(false) }
-    var isSaving by remember { mutableStateOf(false) }
     var pgnText by remember { mutableStateOf("") }
     var pgnImportError by remember { mutableStateOf<String?>(null) }
     var saveError by remember { mutableStateOf<String?>(null) }
+    var saveRuntimeState by remember { mutableStateOf(CreateOpeningSaveRuntimeState()) }
     var postSaveState by remember { mutableStateOf(CreateOpeningPostSaveState()) }
     var importedChapters by remember { mutableStateOf<List<ImportedChapter>>(emptyList()) }
     var simpleViewEnabled by remember { mutableStateOf(false) }
@@ -162,6 +166,26 @@ internal fun CreateOpeningScreenContainer(
         },
     )
 
+    val currentSaveRuntimeState = saveRuntimeState
+    if (currentSaveRuntimeState.message != null) {
+        AppMessageDialog(
+            title = "Save Lines",
+            message = currentSaveRuntimeState.message,
+            onDismiss = {
+                saveRuntimeState = saveRuntimeState.copy(message = null)
+            }
+        )
+    }
+
+    if (currentSaveRuntimeState.progress != null) {
+        CreateOpeningSaveProgressDialog(
+            progress = currentSaveRuntimeState.progress,
+            onCancel = {
+                saveRuntimeState.job?.cancel()
+            }
+        )
+    }
+
     CreateOpeningScreen(
         lineController = lineController,
         state = CreateOpeningScreenState(
@@ -174,7 +198,6 @@ internal fun CreateOpeningScreenContainer(
             importedChapterCount = importedChapters.size,
             pgnImportError = pgnImportError,
             saveError = saveError,
-            isSaving = isSaving,
         ),
         actions = CreateOpeningScreenActions(
             onSideSelected = { selectedSide ->
@@ -211,9 +234,8 @@ internal fun CreateOpeningScreenContainer(
                     return@onSaveAction
                 }
 
-                if (isSaving) return@onSaveAction
+                if (saveRuntimeState.job != null) return@onSaveAction
                 val lifecycleOwner = activity as? LifecycleOwner ?: return@onSaveAction
-                isSaving = true
 
                 val saveSnapshot = buildCreateOpeningSaveSnapshot(
                     lineDraft = lineDraft,
@@ -221,24 +243,57 @@ internal fun CreateOpeningScreenContainer(
                     lineController = lineController,
                     simpleViewEnabled = simpleViewEnabled,
                 )
+                val initialSaveProgress = CreateOpeningSaveProgress(
+                    totalLines = countCreateOpeningSaveTargets(saveSnapshot),
+                    processedLinesCount = 0,
+                    savedLinesCount = 0,
+                    skippedLinesCount = 0,
+                )
 
-                lifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-                    val saveResult = saveOpening(
-                        snapshot = saveSnapshot,
-                        dbProvider = dbProvider,
-                        lineSaver = lineSaver,
-                        trainingService = trainingService,
-                    )
-                    withContext(Dispatchers.Main) {
-                        isSaving = false
-                        applyCreateOpeningSaveResult(
-                            saveResult = saveResult,
-                            onBackClick = screenContext.onBackClick,
-                            onPostSaveStateChange = { postSaveState = it },
-                            onSaveError = { message -> saveError = message },
-                        )
+                val runner = saveOpeningRunner ?: ::saveOpening
+                val job = lifecycleOwner.lifecycleScope.launch(
+                    context = Dispatchers.IO,
+                    start = CoroutineStart.LAZY,
+                ) {
+                    try {
+                        val saveResult = runner(
+                            saveSnapshot,
+                            dbProvider,
+                            lineSaver,
+                            trainingService,
+                        ) { progress ->
+                            withContext(Dispatchers.Main) {
+                                saveRuntimeState = saveRuntimeState.copy(progress = progress)
+                            }
+                        }
+
+                        withContext(Dispatchers.Main) {
+                            saveRuntimeState = CreateOpeningSaveRuntimeState()
+                            applyCreateOpeningSaveResult(
+                                saveResult = saveResult,
+                                onBackClick = screenContext.onBackClick,
+                                onPostSaveStateChange = { postSaveState = it },
+                                onSaveError = { message -> saveError = message },
+                            )
+                        }
+                    } catch (_: CancellationException) {
+                        withContext(NonCancellable + Dispatchers.Main) {
+                            saveRuntimeState = CreateOpeningSaveRuntimeState(
+                                message = resolveCreateOpeningSaveCanceledMessage(saveRuntimeState.progress)
+                            )
+                        }
+                    } catch (error: Exception) {
+                        withContext(Dispatchers.Main) {
+                            saveRuntimeState = CreateOpeningSaveRuntimeState()
+                            saveError = error.message ?: "Failed to save opening"
+                        }
                     }
                 }
+                saveRuntimeState = CreateOpeningSaveRuntimeState(
+                    progress = initialSaveProgress,
+                    job = job,
+                )
+                job.start()
             }
         ),
         modifier = modifier,

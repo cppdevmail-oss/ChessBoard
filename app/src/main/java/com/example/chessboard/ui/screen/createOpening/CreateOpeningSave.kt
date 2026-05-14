@@ -13,6 +13,7 @@ package com.example.chessboard.ui.screen.createOpening
  */
 
 import com.example.chessboard.entity.LineEntity
+import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.service.LineSaver
 import com.example.chessboard.service.OneLineTrainingData
 import com.example.chessboard.service.TrainingService
@@ -20,7 +21,8 @@ import com.example.chessboard.service.buildStoredPgnFromUci
 import com.example.chessboard.service.uciMovesToMoves
 import com.example.chessboard.ui.screen.EditableLineSide
 import com.github.bhlangonijr.chesslib.move.Move
-import com.example.chessboard.repository.DatabaseProvider
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 
 internal data class CreateOpeningSaveSnapshot(
     val openingName: String,
@@ -42,6 +44,13 @@ internal sealed interface CreateOpeningSaveResult {
     ) : CreateOpeningSaveResult
 }
 
+internal data class CreateOpeningSaveProgress(
+    val totalLines: Int,
+    val processedLinesCount: Int,
+    val savedLinesCount: Int,
+    val skippedLinesCount: Int,
+)
+
 internal data class ImportedOpeningLineSavePlan(
     val entity: LineEntity,
     val uciMoves: List<String>,
@@ -52,12 +61,20 @@ internal suspend fun saveOpening(
     dbProvider: DatabaseProvider,
     lineSaver: LineSaver,
     trainingService: TrainingService,
+    onProgress: suspend (CreateOpeningSaveProgress) -> Unit,
 ): CreateOpeningSaveResult {
+    val progressTracker = CreateOpeningSaveProgressTracker(
+        totalLines = countCreateOpeningSaveTargets(snapshot),
+        onProgress = onProgress,
+    )
+    progressTracker.report()
+
     if (snapshot.importedChapters.size > 1) {
         return saveImportedChaptersAsTrainings(
             snapshot = snapshot,
             lineSaver = lineSaver,
             trainingService = trainingService,
+            progressTracker = progressTracker,
         )
     }
 
@@ -65,7 +82,18 @@ internal suspend fun saveOpening(
         snapshot = snapshot,
         dbProvider = dbProvider,
         lineSaver = lineSaver,
+        progressTracker = progressTracker,
     )
+}
+
+internal fun countCreateOpeningSaveTargets(snapshot: CreateOpeningSaveSnapshot): Int {
+    if (snapshot.importedChapters.isEmpty()) {
+        return 1
+    }
+
+    return snapshot.importedChapters.sumOf { importedChapter ->
+        importedChapter.uciLines.size
+    }
 }
 
 internal fun buildImportedLineSavePlans(
@@ -130,10 +158,13 @@ private suspend fun saveImportedChaptersAsTrainings(
     snapshot: CreateOpeningSaveSnapshot,
     lineSaver: LineSaver,
     trainingService: TrainingService,
+    progressTracker: CreateOpeningSaveProgressTracker,
 ): CreateOpeningSaveResult {
     var savedChaptersCount = 0
 
     snapshot.importedChapters.forEachIndexed { chapterIndex, importedChapter ->
+        currentCoroutineContext().ensureActive()
+
         val chapterName = resolveImportedChapterSaveName(
             importedChapter = importedChapter,
             fallbackOpeningName = snapshot.openingName,
@@ -148,12 +179,14 @@ private suspend fun saveImportedChaptersAsTrainings(
         val savedLineIds = saveImportedLinePlans(
             lineSaver = lineSaver,
             savePlans = savePlans,
+            progressTracker = progressTracker,
         )
 
         if (savedLineIds.isEmpty()) {
             return@forEachIndexed
         }
 
+        currentCoroutineContext().ensureActive()
         trainingService.createTrainingFromLines(
             name = chapterName,
             lines = savedLineIds.map { lineId ->
@@ -174,6 +207,7 @@ private suspend fun saveSingleOpening(
     snapshot: CreateOpeningSaveSnapshot,
     dbProvider: DatabaseProvider,
     lineSaver: LineSaver,
+    progressTracker: CreateOpeningSaveProgressTracker,
 ): CreateOpeningSaveResult {
     val firstChapter = snapshot.importedChapters.firstOrNull()
     if (firstChapter == null) {
@@ -181,6 +215,7 @@ private suspend fun saveSingleOpening(
             snapshot = snapshot,
             dbProvider = dbProvider,
             lineSaver = lineSaver,
+            progressTracker = progressTracker,
         )
     }
 
@@ -192,12 +227,14 @@ private suspend fun saveSingleOpening(
             ecoCode = snapshot.ecoCode,
             selectedSide = snapshot.selectedSide,
         ),
+        progressTracker = progressTracker,
     )
     if (savedLineIds.isEmpty()) {
         return CreateOpeningSaveResult.ShowError("None of the imported lines could be saved")
     }
 
     if (snapshot.simpleViewEnabled) {
+        currentCoroutineContext().ensureActive()
         createOpeningTraining(
             dbProvider = dbProvider,
             savedLines = SavedOpeningLines(
@@ -220,6 +257,7 @@ private suspend fun saveManualOpening(
     snapshot: CreateOpeningSaveSnapshot,
     dbProvider: DatabaseProvider,
     lineSaver: LineSaver,
+    progressTracker: CreateOpeningSaveProgressTracker,
 ): CreateOpeningSaveResult {
     val entity = buildManualOpeningEntity(
         openingName = snapshot.openingName,
@@ -227,16 +265,20 @@ private suspend fun saveManualOpening(
         generatedPgn = snapshot.generatedPgn,
         selectedSide = snapshot.selectedSide,
     )
+    currentCoroutineContext().ensureActive()
     val savedLineId = lineSaver.saveLine(
         line = entity,
         moves = snapshot.movesSnapshot,
         sideMask = entity.sideMask,
     )
     if (savedLineId == null) {
+        progressTracker.recordSkipped()
         return CreateOpeningSaveResult.ShowError("Failed to save opening")
     }
 
+    progressTracker.recordSaved()
     if (snapshot.simpleViewEnabled) {
+        currentCoroutineContext().ensureActive()
         createOpeningTraining(
             dbProvider = dbProvider,
             savedLines = SavedOpeningLines(
@@ -258,21 +300,60 @@ private suspend fun saveManualOpening(
 private suspend fun saveImportedLinePlans(
     lineSaver: LineSaver,
     savePlans: List<ImportedOpeningLineSavePlan>,
+    progressTracker: CreateOpeningSaveProgressTracker,
 ): List<Long> {
     val savedLineIds = mutableListOf<Long>()
 
     for (savePlan in savePlans) {
+        currentCoroutineContext().ensureActive()
+
         val savedId = lineSaver.saveOrGetExistingLineId(
             line = savePlan.entity,
             moves = uciMovesToMoves(savePlan.uciMoves),
             sideMask = savePlan.entity.sideMask,
         )
-        if (savedId != null) {
-            savedLineIds.add(savedId)
+        if (savedId == null) {
+            progressTracker.recordSkipped()
+            continue
         }
+
+        savedLineIds.add(savedId)
+        progressTracker.recordSaved()
     }
 
     return savedLineIds
+}
+
+private class CreateOpeningSaveProgressTracker(
+    private val totalLines: Int,
+    private val onProgress: suspend (CreateOpeningSaveProgress) -> Unit,
+) {
+    private var processedLinesCount = 0
+    private var savedLinesCount = 0
+    private var skippedLinesCount = 0
+
+    suspend fun report() {
+        onProgress(
+            CreateOpeningSaveProgress(
+                totalLines = totalLines,
+                processedLinesCount = processedLinesCount,
+                savedLinesCount = savedLinesCount,
+                skippedLinesCount = skippedLinesCount,
+            )
+        )
+    }
+
+    suspend fun recordSaved() {
+        processedLinesCount++
+        savedLinesCount++
+        report()
+    }
+
+    suspend fun recordSkipped() {
+        processedLinesCount++
+        skippedLinesCount++
+        report()
+    }
 }
 
 private fun resolveImportedChapterSaveName(

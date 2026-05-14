@@ -87,4 +87,55 @@ class CreateOpeningSaveTest {
         assertEquals("1. e4 e5 *", entity.pgn)
         assertEquals(SideMask.WHITE, entity.sideMask)
     }
+
+    @Test
+    fun `countCreateOpeningSaveTargets returns one for manual opening`() {
+        val snapshot = createSaveSnapshot(importedChapters = emptyList())
+
+        assertEquals(1, countCreateOpeningSaveTargets(snapshot))
+    }
+
+    @Test
+    fun `countCreateOpeningSaveTargets sums imported chapter lines`() {
+        val snapshot = createSaveSnapshot(
+            importedChapters = listOf(
+                importedChapter(
+                    uciLines = listOf(
+                        listOf("e2e4", "e7e5"),
+                        listOf("d2d4", "d7d5"),
+                    ),
+                ),
+                importedChapter(
+                    uciLines = listOf(
+                        listOf("c2c4", "g8f6"),
+                    ),
+                ),
+            )
+        )
+
+        assertEquals(3, countCreateOpeningSaveTargets(snapshot))
+    }
+
+    private fun createSaveSnapshot(
+        importedChapters: List<ImportedChapter>,
+    ): CreateOpeningSaveSnapshot {
+        return CreateOpeningSaveSnapshot(
+            openingName = "Opening",
+            ecoCode = "",
+            selectedSide = EditableLineSide.AS_WHITE,
+            importedChapters = importedChapters,
+            movesSnapshot = emptyList(),
+            generatedPgn = "",
+            simpleViewEnabled = false,
+        )
+    }
+
+    private fun importedChapter(
+        uciLines: List<List<String>>,
+    ): ImportedChapter {
+        return ImportedChapter(
+            headers = emptyMap(),
+            uciLines = uciLines,
+        )
+    }
 }
