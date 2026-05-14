@@ -26,19 +26,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.boardmodel.LineController
 import com.example.chessboard.ui.EditTrainingMoveLegendSectionTestTag
-import com.example.chessboard.ui.components.AppConfirmDialog
 import com.example.chessboard.ui.components.AppIconSizes
-import com.example.chessboard.ui.components.DeleteIconButton
 import com.example.chessboard.ui.components.ChessBoardSection
 import com.example.chessboard.ui.components.IconXs
 import com.example.chessboard.ui.components.LineMoveTreeSection
@@ -64,32 +59,15 @@ internal data class TrainingEditorLineSectionActions(
     val onResetClick: () -> Unit,
     val onEditLineClick: () -> Unit,
     val onMovePlyClick: (Int) -> Unit,
-    val onRemoveClick: (() -> Unit)? = null,
 )
 
 @Composable
 internal fun TrainingEditorLineSection(
     state: TrainingEditorLineSectionState,
     actions: TrainingEditorLineSectionActions,
-    removeCollectionLabel: String = "training",
     modifier: Modifier = Modifier,
 ) {
-    var showRemoveConfirm by remember { mutableStateOf(false) }
     val displayController = remember { LineController() }
-
-    if (showRemoveConfirm) {
-        AppConfirmDialog(
-            title = "Remove Line",
-            message = "Remove \"${state.line.title}\" from $removeCollectionLabel?",
-            onDismiss = { showRemoveConfirm = false },
-            onConfirm = {
-                showRemoveConfirm = false
-                actions.onRemoveClick?.invoke()
-            },
-            confirmText = "Remove",
-            isDestructive = true,
-        )
-    }
 
     Column(
         modifier = modifier.fillMaxWidth()
@@ -99,10 +77,6 @@ internal fun TrainingEditorLineSection(
             simpleViewEnabled = state.simpleViewEnabled,
             onDecreaseWeightClick = actions.onDecreaseWeightClick,
             onIncreaseWeightClick = actions.onIncreaseWeightClick,
-            onRemoveClick = if (state.isSelected && actions.onRemoveClick != null) {
-                { showRemoveConfirm = true }
-            } else null,
-            removeCollectionLabel = removeCollectionLabel,
             onSelect = if (!state.isSelected) actions.onSelect else null,
         )
 
@@ -135,8 +109,6 @@ private fun TrainingEditorLineHeader(
     simpleViewEnabled: Boolean,
     onDecreaseWeightClick: () -> Unit,
     onIncreaseWeightClick: () -> Unit,
-    onRemoveClick: (() -> Unit)? = null,
-    removeCollectionLabel: String = "training",
     onSelect: (() -> Unit)? = null,
 ) {
     Row(
@@ -194,13 +166,6 @@ private fun TrainingEditorLineHeader(
                         tint = TrainingAccentTeal,
                     )
                 }
-            }
-            if (onRemoveClick != null) {
-                DeleteIconButton(
-                    onClick = onRemoveClick,
-                    contentDescription = "Remove line from $removeCollectionLabel",
-                    modifier = Modifier.size(AppIconSizes.Lg),
-                )
             }
         }
     }
