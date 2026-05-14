@@ -46,7 +46,6 @@ internal data class TrainingEditorLineSectionState(
     val parsedLine: ParsedTrainingEditorLine?,
     val isSelected: Boolean,
     val lineController: LineController,
-    val currentPly: Int,
     val simpleViewEnabled: Boolean = false,
 )
 
@@ -54,10 +53,6 @@ internal data class TrainingEditorLineSectionActions(
     val onDecreaseWeightClick: () -> Unit,
     val onIncreaseWeightClick: () -> Unit,
     val onSelect: () -> Unit,
-    val onPrevClick: () -> Unit,
-    val onNextClick: () -> Unit,
-    val onResetClick: () -> Unit,
-    val onEditLineClick: () -> Unit,
     val onMovePlyClick: (Int) -> Unit,
 )
 

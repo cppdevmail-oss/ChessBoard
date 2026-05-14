@@ -476,7 +476,6 @@ fun EditTrainingScreen(
                 parsedLine = parsedLine,
                 isSelected = isSelected,
                 lineController = boardSession.lineController,
-                currentPly = if (isSelected) boardSession.lineController.currentMoveIndex else 0,
                 simpleViewEnabled = simpleViewEnabled,
             ),
             actions = TrainingEditorLineSectionActions(
@@ -498,14 +497,6 @@ fun EditTrainingScreen(
                 },
                 onSelect = {
                     trainingRuntimeContext.setSelectedLineId(trainingId, line.lineId)
-                },
-                onPrevClick = { boardSession.lineController.undoMove() },
-                onNextClick = { boardSession.lineController.redoMove() },
-                onResetClick = { boardSession.onResetSelectedLine(line.lineId) },
-                onEditLineClick = {
-                    requestLeave {
-                        onOpenLineEditorClick(line.lineId)
-                    }
                 },
                 onMovePlyClick = { ply ->
                     trainingRuntimeContext.setSelectedLineId(trainingId, line.lineId)

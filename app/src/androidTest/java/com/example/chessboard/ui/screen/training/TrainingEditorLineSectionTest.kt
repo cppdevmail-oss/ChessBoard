@@ -115,14 +115,12 @@ class TrainingEditorLineSectionTest {
         line: TrainingLineEditorItem = createSampleLine(),
         parsedLine: ParsedTrainingEditorLine? = createParsedSampleLine(line),
         isSelected: Boolean = false,
-        currentPly: Int = 0,
     ): TrainingEditorLineSectionState {
         return TrainingEditorLineSectionState(
             line = line,
             parsedLine = parsedLine,
             isSelected = isSelected,
             lineController = LineController(),
-            currentPly = currentPly
         )
     }
 
@@ -130,20 +128,12 @@ class TrainingEditorLineSectionTest {
         onDecreaseWeightClick: () -> Unit = {},
         onIncreaseWeightClick: () -> Unit = {},
         onSelect: () -> Unit = {},
-        onPrevClick: () -> Unit = {},
-        onNextClick: () -> Unit = {},
-        onResetClick: () -> Unit = {},
-        onEditLineClick: () -> Unit = {},
         onMovePlyClick: (Int) -> Unit = {},
     ): TrainingEditorLineSectionActions {
         return TrainingEditorLineSectionActions(
             onDecreaseWeightClick = onDecreaseWeightClick,
             onIncreaseWeightClick = onIncreaseWeightClick,
             onSelect = onSelect,
-            onPrevClick = onPrevClick,
-            onNextClick = onNextClick,
-            onResetClick = onResetClick,
-            onEditLineClick = onEditLineClick,
             onMovePlyClick = onMovePlyClick
         )
     }
