@@ -407,7 +407,6 @@ fun EditTrainingTemplateScreen(
                     boardSession.onMoveToPly(line.lineId, ply)
                 },
             ),
-            removeCollectionLabel = "template",
         )
     }
 }

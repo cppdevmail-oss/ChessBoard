@@ -512,7 +512,6 @@ fun EditTrainingScreen(
                     boardSession.onMoveToPly(line.lineId, ply)
                 },
             ),
-            removeCollectionLabel = "training",
         )
     }
 }
