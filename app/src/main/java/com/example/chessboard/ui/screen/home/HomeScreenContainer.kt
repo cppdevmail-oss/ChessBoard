@@ -87,19 +87,27 @@ fun HomeScreenContainer(
         onCreateOpeningClick = onCreateOpeningClick,
         onCreateTrainingClick = onCreateTrainingClick,
     ) { preparedSmartTrainingClick ->
-        HomeScreen(
-            simpleViewEnabled = simpleViewEnabled,
-            trainings = trainings,
-            onNavigate = screenContext.onNavigate,
+        HomeTrainingNavigationHost(
+            lineListService = lineListService,
+            errorReporter = screenContext.errorReporter,
+            onTrainingClick = { screenContext.onNavigate(ScreenType.Training) },
             onCreateOpeningClick = onCreateOpeningClick,
-            onCreateTrainingClick = onCreateTrainingClick,
-            onSmartTrainingClick = preparedSmartTrainingClick,
-            onOpenPositionSearchClick = onOpenPositionSearchClick,
-            onOpenSavedPositionsClick = onOpenSavedPositionsClick,
-            onOpenBackupClick = { screenContext.onNavigate(ScreenType.Backup) },
-            onExitClick = { activity.finishAffinity() },
-            modifier = modifier,
-        )
+        ) { preparedTrainingClick ->
+            HomeScreen(
+                simpleViewEnabled = simpleViewEnabled,
+                trainings = trainings,
+                onNavigate = screenContext.onNavigate,
+                onCreateOpeningClick = onCreateOpeningClick,
+                onCreateTrainingClick = onCreateTrainingClick,
+                onOpenTrainingsClick = preparedTrainingClick,
+                onSmartTrainingClick = preparedSmartTrainingClick,
+                onOpenPositionSearchClick = onOpenPositionSearchClick,
+                onOpenSavedPositionsClick = onOpenSavedPositionsClick,
+                onOpenBackupClick = { screenContext.onNavigate(ScreenType.Backup) },
+                onExitClick = { activity.finishAffinity() },
+                modifier = modifier,
+            )
+        }
     }
 }
 
@@ -110,6 +118,7 @@ private fun HomeScreen(
     onNavigate: (ScreenType) -> Unit = {},
     onCreateOpeningClick: () -> Unit = { onNavigate(ScreenType.CreateOpening) },
     onCreateTrainingClick: () -> Unit = {},
+    onOpenTrainingsClick: () -> Unit = { onNavigate(ScreenType.Training) },
     onSmartTrainingClick: () -> Unit = {},
     onOpenPositionSearchClick: () -> Unit = {},
     onOpenSavedPositionsClick: () -> Unit = {},
@@ -125,6 +134,7 @@ private fun HomeScreen(
                 onNavigate(ScreenType.EditTraining(trainingId))
             },
             onNavigate = onNavigate,
+            onOpenTrainingsClick = onOpenTrainingsClick,
             onSmartTrainingClick = onSmartTrainingClick,
             onOpenSavedPositionsClick = onOpenSavedPositionsClick,
             modifier = modifier,
@@ -136,6 +146,7 @@ private fun HomeScreen(
         onNavigate = onNavigate,
         onCreateOpeningClick = onCreateOpeningClick,
         onCreateTrainingClick = onCreateTrainingClick,
+        onOpenTrainingsClick = onOpenTrainingsClick,
         onOpenPositionSearchClick = onOpenPositionSearchClick,
         onOpenSavedPositionsClick = onOpenSavedPositionsClick,
         onOpenBackupClick = onOpenBackupClick,
