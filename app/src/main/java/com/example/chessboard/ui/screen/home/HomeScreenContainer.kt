@@ -81,9 +81,11 @@ fun HomeScreenContainer(
 
     HomeSmartTrainingNavigationHost(
         lineListService = lineListService,
+        trainingService = trainingService,
         errorReporter = screenContext.errorReporter,
         onSmartTrainingClick = onSmartTrainingClick,
         onCreateOpeningClick = onCreateOpeningClick,
+        onCreateTrainingClick = onCreateTrainingClick,
     ) { preparedSmartTrainingClick ->
         HomeScreen(
             simpleViewEnabled = simpleViewEnabled,

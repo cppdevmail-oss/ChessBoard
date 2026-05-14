@@ -1,5 +1,16 @@
 package com.example.chessboard.service
 
+/**
+ * File role: coordinates persistence operations for training records and their line lists.
+ * Allowed here:
+ * - loading, creating, updating, validating, and deleting stored trainings
+ * - translating stored training JSON into training line data
+ * - database-backed rules for keeping trainings consistent with saved lines
+ * Not allowed here:
+ * - composable UI state or navigation decisions
+ * - active training runtime/session state
+ * Validation date: 2026-05-14
+ */
 import androidx.room.withTransaction
 import com.example.chessboard.entity.TrainingEntity
 import com.example.chessboard.repository.AppDatabase
@@ -27,6 +38,10 @@ class TrainingService(
 
     suspend fun getAllTrainings(): List<TrainingEntity> {
         return dao.getAll()
+    }
+
+    suspend fun hasAnyTraining(): Boolean {
+        return dao.getFirst() != null
     }
 
     suspend fun getTrainingById(trainingId: Long): TrainingEntity? {
