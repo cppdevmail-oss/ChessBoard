@@ -79,6 +79,24 @@ class TrainingEditorLineSectionTest {
     }
 
     @Test
+    fun trainingEditorLineSection_clickingUnselectedTitleInvokesOnSelect() {
+        var selectClicks = 0
+
+        setTrainingEditorLineSectionContent(
+            state = createSectionState(isSelected = false),
+            actions = createSectionActions(
+                onSelect = { selectClicks += 1 }
+            )
+        )
+
+        composeRule.onNodeWithText("Italian Line").performClick()
+
+        composeRule.runOnIdle {
+            assertEquals(1, selectClicks)
+        }
+    }
+
+    @Test
     fun trainingEditorLineSection_clickingMoveInUnselectedTreeInvokesOnMovePlyClick() {
         var movePlyClicks = 0
 
