@@ -65,6 +65,70 @@ Follow these directory-role rules when adding or moving code in this project.
 - If the code defines how multiple records are validated, transformed, or saved together, prefer `service`.
 
 
+## Analysis Layer Role
+
+- `app/src/main/java/com/example/chessboard/analysis` is for pure chess-analysis logic that is independent from UI rendering and database access.
+- This layer may contain algorithms that inspect loaded chess data, replay moves, compare positions, or derive analysis results from already available models.
+- Typical examples for this directory:
+  - opening deviation detection
+  - move replay helpers used by analysis algorithms
+  - builders that convert algorithm output into analysis-facing result structures
+- This layer is not for Room DAO access or database persistence.
+- This layer is not for composable UI or screen workflow orchestration.
+- This layer is not for app-session runtime state.
+
+## Analysis Practical Rule
+
+- If the code answers a chess-analysis question from data already passed into it, `analysis` is usually the right place.
+- If the code loads or saves the data being analyzed, prefer `service` or `repository`.
+- If the code exists mainly to display analysis results or navigate between analysis screens, keep it in `ui/screen/...`.
+
+
+## Board Model Layer Role
+
+- `app/src/main/java/com/example/chessboard/boardmodel` is for board-facing models and controllers that represent chessboard state, line drafts, moves, FEN constants, and chesslib-to-app model mapping.
+- This layer may contain stateful board controllers when their state represents the board or move line itself rather than one concrete screen workflow.
+- Typical examples for this directory:
+  - board position and piece models
+  - initial-board FEN constants
+  - line draft models used while creating or editing a chess line
+  - move-line controllers that apply, undo, redo, preview, or restrict chess moves
+  - mapping chesslib board data into app board models
+- This layer is not for composable UI rendering.
+- This layer is not for Room DAO access or persistence services.
+- This layer is not for screen navigation or dialog flow orchestration.
+- This layer is not for app-session runtime state that should survive moving between screens.
+
+## Board Model Practical Rule
+
+- If the code models or mutates chessboard or line state independently from one concrete screen, `boardmodel` is usually the right place.
+- If the code exists mainly to render the board, keep it in `ui` or `ui/components`.
+- If the code exists mainly to save, load, or validate stored lines, prefer `service`, `repository`, or `entity`.
+- If the state exists mainly to restore a screen/session after navigation, prefer `runtimecontext`.
+
+
+## Root UI Layer Role
+
+- `app/src/main/java/com/example/chessboard/ui` is for app-wide UI primitives that are shared directly by screens or reusable UI components but do not belong to one specific screen package.
+- This package may contain the core chessboard renderer, UI-facing visual helpers, board orientation types, and shared UI test tag constants.
+- Typical examples for this package:
+  - the interactive chessboard composable and its board-rendering helpers
+  - piece glyph and piece-color drawing helpers
+  - shared test tag constants and test tag builders
+  - small UI-facing enums used across board rendering and board interaction
+- This layer is not for screen-specific containers or navigation flows.
+- This layer is not for persistence, repository, or service logic.
+- This layer is not for pure board/domain models that belong in `boardmodel`.
+- This layer is not for reusable design-system components that belong more specifically in `ui/components`.
+
+## Root UI Practical Rule
+
+- If the code is shared UI infrastructure used across screens and does not fit a narrower UI package, the root `ui` package is acceptable.
+- If the code is a reusable Material/design-system building block, prefer `ui/components`.
+- If the code is tied to one concrete screen or flow, keep it under `ui/screen/...`.
+- If the code models chessboard state without rendering it, prefer `boardmodel`.
+
+
 ## UI Components Layer Role
 
 - `app/src/main/java/com/example/chessboard/ui/components` is for reusable general-purpose UI components.
@@ -108,6 +172,28 @@ Follow these directory-role rules when adding or moving code in this project.
 - If the code exists mainly because one concrete screen must load, display, save, confirm, or navigate something, `ui/screen` is usually the right place.
 - If the code can be reused outside one screen or does not directly belong to screen orchestration, prefer moving it out of `ui/screen` into a more specific layer.
 
+## Training Screen Area Role
+
+- `app/src/main/java/com/example/chessboard/ui/screen/training` is for screen-level UI, containers, shared screen helpers, and feature-flow coordination for multi-line training and training templates.
+- This area is split by feature responsibility:
+  - `training/create` is for screens and containers that create trainings from all lines, selected lines, templates, or statistics.
+  - `training/train` is for training list, training settings, and editing an existing training.
+  - `training/template` is for training-template browsing, selection, creation, and editing.
+  - `training/common` is for reusable training-editor UI and state shared by training and template editors.
+  - `training/loadsave` is for screen-facing load/save mapping, unsaved-change checks, and save-result helpers used by training editor flows.
+  - `training/flow` is for coordinators and result models that describe higher-level training navigation flows.
+- Root files directly under `training` should be limited to shared training UI pieces or constants that do not fit one narrower subpackage.
+- Active single-line training remains in `ui/screen/trainSingleLine`; not every training-related screen belongs under `ui/screen/training`.
+
+## Training Screen Area Practical Rule
+
+- If the code belongs to one training subfeature, place it in the matching `create`, `train`, or `template` package.
+- If the code is shared by training and template editor screens, prefer `training/common`.
+- If the code maps database-loaded training data into screen-editor state or handles screen-level save semantics, prefer `training/loadsave`.
+- If the code coordinates navigation between training screens at a feature-flow level, prefer `training/flow`.
+- If the code is for the active single-line training experience, keep it under `ui/screen/trainSingleLine`.
+- If the code becomes reusable outside training screens, consider `ui/components`, `service`, `runtimecontext`, or another broader layer instead.
+
 ## Runtime Context Role
 
 - `app/src/main/java/com/example/chessboard/runtimecontext` is for in-memory runtime state that should survive screen changes during the current app process.
@@ -125,9 +211,37 @@ Follow these directory-role rules when adding or moving code in this project.
 - If the state exists mainly to let the user leave a screen and come back to a still-valid in-memory session, `runtimecontext` is usually the right place.
 - If the state must survive app restart, it does not belong only in `runtimecontext`; persist it in the appropriate storage layer.
 
+## Main Activity Role
+
+- `app/src/main/java/com/example/chessboard/MainActivity.kt` is the Android entry activity and the app-level orchestration point for screen dispatch, app shell setup, shared runtime context creation, and top-level cross-screen navigation.
+- This file may coordinate transitions between major app screens and connect screen containers, runtime contexts, services, and feature-flow coordinators.
+- Typical code for this file:
+  - Android activity setup such as edge-to-edge and system bar behavior
+  - `setContent` and app theme entry
+  - top-level `ScreenType` dispatch
+  - construction of app-owned dependencies and `RuntimeContext`
+  - top-level navigation decisions between app screens
+  - thin adapters that map screen or flow results to app-level navigation state
+- This file is not for persistence helper logic or DAO-level work.
+- This file is not for reusable composable UI components.
+- This file is not for pure chess-analysis or board-model logic.
+- This file is not the preferred place for detailed feature-internal flow rules when those rules can live in dedicated screen, flow, or runtime-context files.
+
+## Main Activity Project Note
+
+- `MainActivity.kt` currently carries more responsibility than the target architecture would ideally keep in one file.
+- This is an accepted current state of the project, not a reason to avoid all new top-level orchestration there.
+- Future work should gradually extract detailed feature-specific flow logic when it can be done safely and without making navigation harder to follow.
+
+## Main Activity Practical Rule
+
+- If the code coordinates which major screen is shown next or connects app-level state to screen containers, `MainActivity.kt` is usually the right place.
+- If the code defines detailed behavior inside one feature flow, prefer a dedicated coordinator, screen container, or runtime-context holder.
+- If the code grows a reusable UI, domain, persistence, or analysis helper, move it to the appropriate `ui`, `boardmodel`, `analysis`, `service`, `repository`, `entity`, or `runtimecontext` layer.
+
 ## File Header Contract
 
-- Every project source file should start with a file-level comment immediately after the `package` line.
+- Project source files should have a file-level comment immediately after the `package` line when they are created or materially edited.
 - Treat that header comment as the local contract for the file.
 - The header should explain:
   - why the file exists
@@ -135,20 +249,22 @@ Follow these directory-role rules when adding or moving code in this project.
   - what code should not be added to the file
 - The header must describe the file as it actually exists now, not as an idealized future version.
 - Include a validation date in the header so future edits can quickly judge whether the comment is still trustworthy.
+- Existing files without headers are allowed as legacy or externally contributed files until they are touched.
 
 ## Read Header Before Edit
 
-- Before adding functions, classes, helpers, or doing refactors in an existing file, read the file header first.
+- Before adding functions, classes, helpers, or doing refactors in an existing file, read the file header first when it exists.
 - Use the header comment as the first check for whether the new logic belongs in that file.
 - If the requested change conflicts with the header, prefer moving the code to a more appropriate file instead of silently stretching the file's responsibility.
+- If the file has no header and you need to edit it, first understand the file's current role and responsibility, then add a truthful header as part of the change.
 
 ## Mixed File Rule
 
-- If an older file has no header comment, treat it as a legacy file that may contain mixed responsibilities.
-- Before making substantial changes in such a file, add a header comment first.
+- If an older or externally contributed file has no header comment, treat it as a file whose responsibility must be rediscovered before editing.
+- Before making meaningful changes in such a file, add a header comment first.
 - If the file already mixes multiple responsibilities, say that explicitly in the header instead of pretending the file is clean.
 - In that case, the header should state:
-  - that the file is currently a legacy mixed-responsibility file
+  - that the file is currently a legacy or mixed-responsibility file
   - what kinds of code are currently mixed together there
   - what kinds of new code should preferably not be added there
 
