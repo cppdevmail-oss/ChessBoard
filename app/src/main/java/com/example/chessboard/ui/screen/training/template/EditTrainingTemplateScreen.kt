@@ -370,7 +370,6 @@ fun EditTrainingTemplateScreen(
                 parsedLine = parsedLine,
                 isSelected = isSelected,
                 lineController = boardSession.lineController,
-                currentPly = if (isSelected) boardSession.lineController.currentMoveIndex else 0,
             ),
             actions = TrainingEditorLineSectionActions(
                 onDecreaseWeightClick = {
@@ -393,14 +392,6 @@ fun EditTrainingTemplateScreen(
                     hasUserSelectedLine = true
                     currentSelectedLineId = line.lineId
                     boardSession.onSelectLine(line.lineId)
-                },
-                onPrevClick = { boardSession.lineController.undoMove() },
-                onNextClick = { boardSession.lineController.redoMove() },
-                onResetClick = { boardSession.onResetSelectedLine(line.lineId) },
-                onEditLineClick = {
-                    requestLeave {
-                        onOpenLineEditorClick(line.lineId)
-                    }
                 },
                 onMovePlyClick = { ply ->
                     currentSelectedLineId = line.lineId
