@@ -50,6 +50,9 @@ fun HomeScreenContainer(
     val trainingService = remember(screenContext.inDbProvider) {
         screenContext.inDbProvider.createTrainingService()
     }
+    val lineListService = remember(screenContext.inDbProvider) {
+        screenContext.inDbProvider.createLineListService()
+    }
 
     LaunchedEffect(simpleViewEnabled) {
         if (!simpleViewEnabled) {
@@ -76,19 +79,26 @@ fun HomeScreenContainer(
         }
     }
 
-    HomeScreen(
-        simpleViewEnabled = simpleViewEnabled,
-        trainings = trainings,
-        onNavigate = screenContext.onNavigate,
-        onCreateOpeningClick = onCreateOpeningClick,
-        onCreateTrainingClick = onCreateTrainingClick,
+    HomeSmartTrainingNavigationHost(
+        lineListService = lineListService,
+        errorReporter = screenContext.errorReporter,
         onSmartTrainingClick = onSmartTrainingClick,
-        onOpenPositionSearchClick = onOpenPositionSearchClick,
-        onOpenSavedPositionsClick = onOpenSavedPositionsClick,
-        onOpenBackupClick = { screenContext.onNavigate(ScreenType.Backup) },
-        onExitClick = { activity.finishAffinity() },
-        modifier = modifier,
-    )
+        onCreateOpeningClick = onCreateOpeningClick,
+    ) { preparedSmartTrainingClick ->
+        HomeScreen(
+            simpleViewEnabled = simpleViewEnabled,
+            trainings = trainings,
+            onNavigate = screenContext.onNavigate,
+            onCreateOpeningClick = onCreateOpeningClick,
+            onCreateTrainingClick = onCreateTrainingClick,
+            onSmartTrainingClick = preparedSmartTrainingClick,
+            onOpenPositionSearchClick = onOpenPositionSearchClick,
+            onOpenSavedPositionsClick = onOpenSavedPositionsClick,
+            onOpenBackupClick = { screenContext.onNavigate(ScreenType.Backup) },
+            onExitClick = { activity.finishAffinity() },
+            modifier = modifier,
+        )
+    }
 }
 
 @Composable
