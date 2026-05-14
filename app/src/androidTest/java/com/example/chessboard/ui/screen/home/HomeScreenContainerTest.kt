@@ -19,6 +19,7 @@ import androidx.compose.ui.test.performClick
 import com.example.chessboard.entity.LineEntity
 import com.example.chessboard.entity.SideMask
 import com.example.chessboard.repository.DatabaseProvider
+import com.example.chessboard.service.OneLineTrainingData
 import com.example.chessboard.service.uciMovesToMoves
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
@@ -69,8 +70,44 @@ class HomeScreenContainerTest {
     }
 
     @Test
-    fun simpleHome_smartTrainingClickWithLineNavigatesToSmartTraining() {
+    fun simpleHome_smartTrainingClickWithLineWithoutTrainingShowsCreateTrainingDialog() {
         saveLine()
+        var createTrainingClicks = 0
+        var navigatedScreen: ScreenType? = null
+
+        setHomeContent(
+            onNavigate = { screen ->
+                navigatedScreen = screen
+            },
+            onCreateTrainingClick = {
+                createTrainingClicks += 1
+            },
+        )
+
+        waitForTextDisplayed("Smart Training")
+        composeRule.onNodeWithText("Smart Training").performClick()
+
+        waitForTextDisplayed("No training yet")
+        composeRule.onNodeWithText(
+            "Create at least one training before starting Smart Training."
+        ).assertIsDisplayed()
+
+        composeRule.onNodeWithText("Create Training").performClick()
+
+        composeRule.runOnIdle {
+            check(createTrainingClicks == 1) {
+                "Expected Create Training callback to be called once, got $createTrainingClicks"
+            }
+            check(navigatedScreen == null) {
+                "Expected Smart Training navigation to be blocked, got $navigatedScreen"
+            }
+        }
+    }
+
+    @Test
+    fun simpleHome_smartTrainingClickWithLineAndTrainingNavigatesToSmartTraining() {
+        val lineId = saveLine()
+        saveTraining(lineId)
         var navigatedScreen: ScreenType? = null
 
         setHomeContent(
@@ -91,11 +128,18 @@ class HomeScreenContainerTest {
                     "Expected no missing-openings dialog after Smart Training navigation"
                 }
             }
+        composeRule.onAllNodesWithText("No training yet").fetchSemanticsNodes()
+            .let { nodes ->
+                check(nodes.isEmpty()) {
+                    "Expected no missing-training dialog after Smart Training navigation"
+                }
+            }
     }
 
     private fun setHomeContent(
         onNavigate: (ScreenType) -> Unit = {},
         onCreateOpeningClick: () -> Unit = {},
+        onCreateTrainingClick: () -> Unit = {},
     ) {
         composeRule.setContent {
             ChessBoardTheme {
@@ -107,6 +151,7 @@ class HomeScreenContainerTest {
                     ),
                     simpleViewEnabled = true,
                     onCreateOpeningClick = onCreateOpeningClick,
+                    onCreateTrainingClick = onCreateTrainingClick,
                 )
             }
         }
@@ -119,8 +164,8 @@ class HomeScreenContainerTest {
         composeRule.onNodeWithText(text).assertIsDisplayed()
     }
 
-    private fun saveLine() {
-        runBlocking {
+    private fun saveLine(): Long {
+        return runBlocking {
             val line = LineEntity(
                 event = "Smart Training Source",
                 pgn = storedPgn(listOf("e2e4", "e7e5")),
@@ -135,6 +180,17 @@ class HomeScreenContainerTest {
             )
             checkNotNull(lineId) {
                 "Expected test line to be saved"
+            }
+        }
+    }
+
+    private fun saveTraining(lineId: Long) {
+        runBlocking {
+            val trainingId = dbProvider.createTrainingService().createTrainingFromLines(
+                lines = listOf(OneLineTrainingData(lineId = lineId, weight = 1)),
+            )
+            checkNotNull(trainingId) {
+                "Expected test training to be saved"
             }
         }
     }
