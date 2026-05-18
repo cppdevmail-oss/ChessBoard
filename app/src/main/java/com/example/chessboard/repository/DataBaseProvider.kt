@@ -13,6 +13,7 @@ import com.example.chessboard.entity.LinePositionEntity
 import com.example.chessboard.entity.GlobalTrainingStatsEntity
 import com.example.chessboard.entity.PositionEntity
 import com.example.chessboard.entity.SavedSearchPositionEntity
+import com.example.chessboard.entity.StatisticsTrainingFormulaSettingsEntity
 import com.example.chessboard.entity.TrainingEntity
 import com.example.chessboard.entity.TrainingResultEntity
 import com.example.chessboard.entity.TrainingTemplateEntity
@@ -27,6 +28,7 @@ import com.example.chessboard.service.LineUpdater
 import com.example.chessboard.service.GlobalTrainingStatsService
 import com.example.chessboard.service.PositionService
 import com.example.chessboard.service.SavedSearchPositionService
+import com.example.chessboard.service.StatisticsTrainingFormulaSettingsService
 import com.example.chessboard.service.StatisticsTrainingService
 import com.example.chessboard.service.TrainSingleLineService
 import com.example.chessboard.service.TrainingService
@@ -45,8 +47,9 @@ import com.github.bhlangonijr.chesslib.move.Move
         TrainingEntity::class,
         TrainingResultEntity::class,
         UserProfileEntity::class,
+        StatisticsTrainingFormulaSettingsEntity::class,
     ],
-    version = 16
+    version = 17
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun lineDao(): LineDao
@@ -58,6 +61,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun trainingDao(): TrainingDao
     abstract fun trainingResultDao(): TrainingResultDao
     abstract fun userProfileDao(): UserProfileDao
+    abstract fun statisticsTrainingFormulaSettingsDao(): StatisticsTrainingFormulaSettingsDao
 }
 
 class DatabaseProvider private constructor(
@@ -75,7 +79,7 @@ class DatabaseProvider private constructor(
             DB_NAME
         )
             .addCallback(databaseCallback)
-            .addMigrations(MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16)
+            .addMigrations(MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17)
             .fallbackToDestructiveMigration()
             .build()
     }
@@ -168,6 +172,10 @@ class DatabaseProvider private constructor(
         return StatisticsTrainingService(database)
     }
 
+    fun createStatisticsTrainingFormulaSettingsService(): StatisticsTrainingFormulaSettingsService {
+        return StatisticsTrainingFormulaSettingsService(database.statisticsTrainingFormulaSettingsDao())
+    }
+
     fun createLineListService(): LineListService {
         return LineListService(database.lineDao())
     }
@@ -249,6 +257,32 @@ class DatabaseProvider private constructor(
 
         val MIGRATION_15_16 = object : Migration(15, 16) {
             override fun migrate(database: SupportSQLiteDatabase) = Unit
+        }
+
+        val MIGRATION_16_17 = object : Migration(16, 17) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    """CREATE TABLE IF NOT EXISTS `statistics_training_formula_settings` (
+                        `id` INTEGER NOT NULL,
+                        `recentResultsPerLine` INTEGER NOT NULL,
+                        `recencyDaysCap` INTEGER NOT NULL,
+                        `lastMistakeWeight` REAL NOT NULL,
+                        `maxMistakesLast` INTEGER NOT NULL,
+                        `avgMistakesWeight` REAL NOT NULL,
+                        `maxAvgMistakesRecent` REAL NOT NULL,
+                        `recencyWeight` REAL NOT NULL,
+                        `perfectRatePenaltyWeight` REAL NOT NULL,
+                        `noAttemptsBoost` REAL NOT NULL,
+                        `oneAttemptBoost` REAL NOT NULL,
+                        `twoAttemptsBoost` REAL NOT NULL,
+                        `weight5ScoreThreshold` REAL NOT NULL,
+                        `weight4ScoreThreshold` REAL NOT NULL,
+                        `weight3ScoreThreshold` REAL NOT NULL,
+                        `weight2ScoreThreshold` REAL NOT NULL,
+                        PRIMARY KEY(`id`)
+                    )"""
+                )
+            }
         }
 
         @SuppressLint("StaticFieldLeak")
