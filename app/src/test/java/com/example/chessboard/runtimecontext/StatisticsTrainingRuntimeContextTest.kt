@@ -33,6 +33,7 @@ class StatisticsTrainingRuntimeContextTest {
             minDaysSinceLastTraining = 3,
             maxWeight = 4,
         )
+        runtimeContext.updateRecommendationSettings(settings)
         runtimeContext.markFormulaChanged()
 
         runtimeContext.rememberLoadedSelection(
@@ -46,5 +47,19 @@ class StatisticsTrainingRuntimeContextTest {
         assertEquals(settings, runtimeContext.loadedRecommendationSettings)
         assertEquals(1, runtimeContext.loadedFormulaRevision)
         assertTrue(runtimeContext.hasLoadedSelection)
+    }
+
+    @Test
+    fun `markFormulaChanged makes loaded selection formula revision outdated`() {
+        val runtimeContext = StatisticsTrainingRuntimeContext()
+        runtimeContext.rememberLoadedSelection(
+            newEditorState = CreateTrainingEditorState(),
+            settings = StatisticsTrainingRecommendationSettings(),
+        )
+
+        runtimeContext.markFormulaChanged()
+
+        assertEquals(1, runtimeContext.formulaRevision)
+        assertEquals(0, runtimeContext.loadedFormulaRevision)
     }
 }
