@@ -10,6 +10,7 @@ package com.example.chessboard.service
  */
 
 import com.example.chessboard.entity.LineEntity
+import com.example.chessboard.entity.StatisticsTrainingFormulaSettingsEntity
 import com.example.chessboard.entity.TrainingResultEntity
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -31,9 +32,9 @@ class StatisticsTrainingServiceTest {
         )
 
         assertEquals(listOf(3L, 2L, 1L), recommendations.map { recommendation -> recommendation.line.id })
-        assertEquals(listOf(5, 5, 1), recommendations.map { recommendation -> recommendation.weight })
-        assertEquals(14.0, recommendations[0].score, 0.0001)
-        assertEquals(10.0, recommendations[1].score, 0.0001)
+        assertEquals(listOf(5, 5, 2), recommendations.map { recommendation -> recommendation.weight })
+        assertEquals(18.0, recommendations[0].score, 0.0001)
+        assertEquals(16.0, recommendations[1].score, 0.0001)
         assertEquals(2.0, recommendations[2].score, 0.0001)
     }
 
@@ -46,7 +47,7 @@ class StatisticsTrainingServiceTest {
                 result(id = 2L, lineId = 1L, mistakesCount = 3, daysAgo = 2),
             ),
             nowMillis = nowMillis,
-            formulaSettings = StatisticsTrainingFormulaSettings(recentResultsPerLine = 1),
+            formulaSettings = StatisticsTrainingFormulaSettingsEntity(recentResultsPerLine = 1),
         )
 
         val stats = recommendations.single().stats
@@ -54,7 +55,7 @@ class StatisticsTrainingServiceTest {
         assertEquals(0, stats.mistakesLast)
         assertEquals(0.0, stats.avgMistakesRecent, 0.0001)
         assertEquals(1.0, stats.perfectRateRecent, 0.0001)
-        assertEquals(0.0, recommendations.single().score, 0.0001)
+        assertEquals(1.0, recommendations.single().score, 0.0001)
     }
 
     @Test
@@ -85,7 +86,7 @@ class StatisticsTrainingServiceTest {
             recommendationSettings = StatisticsTrainingRecommendationSettings(
                 maxWeight = 4,
             ),
-            formulaSettings = StatisticsTrainingFormulaSettings(
+            formulaSettings = StatisticsTrainingFormulaSettingsEntity(
                 lastMistakeWeight = 1.0,
                 avgMistakesWeight = 0.0,
                 recencyWeight = 0.0,

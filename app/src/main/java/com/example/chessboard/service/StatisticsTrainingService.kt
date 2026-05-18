@@ -11,13 +11,14 @@ package com.example.chessboard.service
  */
 
 import com.example.chessboard.entity.LineEntity
+import com.example.chessboard.entity.StatisticsTrainingFormulaSettingsEntity
 import com.example.chessboard.entity.TrainingResultEntity
 import com.example.chessboard.repository.AppDatabase
 import com.example.chessboard.repository.TrainingResultDao
 import kotlin.math.min
 
 private const val MillisPerDay = 24L * 60L * 60L * 1000L
-private val DefaultStatisticsTrainingFormulaSettings = StatisticsTrainingFormulaSettings()
+private val DefaultStatisticsTrainingFormulaSettings = StatisticsTrainingFormulaSettingsEntity()
 private val DefaultStatisticsTrainingRecommendationSettings = StatisticsTrainingRecommendationSettings()
 
 data class LineTrainingStats(
@@ -52,8 +53,11 @@ class StatisticsTrainingService(
     suspend fun getRecommendation(
         recommendationSettings: StatisticsTrainingRecommendationSettings = DefaultStatisticsTrainingRecommendationSettings,
         nowMillis: Long = System.currentTimeMillis(),
-        formulaSettings: StatisticsTrainingFormulaSettings = DefaultStatisticsTrainingFormulaSettings,
     ): List<StatisticsTrainingRecommendationItem> {
+        val formulaSettings = StatisticsTrainingFormulaSettingsService(
+            dao = database.statisticsTrainingFormulaSettingsDao(),
+        ).getSettings()
+
         return buildStatisticsTrainingRecommendation(
             allLines = database.lineDao().getAllLines(),
             recentResults = database.trainingResultDao().getRecentResults(TrainingResultDao.MAX_TRAINING_RESULTS),
@@ -69,7 +73,7 @@ internal fun buildStatisticsTrainingRecommendation(
     recentResults: List<TrainingResultEntity>,
     nowMillis: Long = System.currentTimeMillis(),
     recommendationSettings: StatisticsTrainingRecommendationSettings = DefaultStatisticsTrainingRecommendationSettings,
-    formulaSettings: StatisticsTrainingFormulaSettings = DefaultStatisticsTrainingFormulaSettings,
+    formulaSettings: StatisticsTrainingFormulaSettingsEntity = DefaultStatisticsTrainingFormulaSettings,
 ): List<StatisticsTrainingRecommendationItem> {
     val resultsByLineId = recentResults
         .groupBy { result -> result.lineId }
@@ -169,7 +173,7 @@ private fun shouldIncludeRecommendation(
 
 private fun computeNeedScore(
     stats: LineTrainingStats,
-    formulaSettings: StatisticsTrainingFormulaSettings,
+    formulaSettings: StatisticsTrainingFormulaSettingsEntity,
 ): Double {
     val recencyDays = min(stats.daysSinceLastTraining, formulaSettings.recencyDaysCap.coerceAtLeast(0))
     return formulaSettings.lastMistakeWeight * min(stats.mistakesLast, formulaSettings.maxMistakesLast.coerceAtLeast(0)) +
@@ -184,7 +188,7 @@ private fun computeNeedScore(
 
 private fun resolveLowAttemptsBoost(
     attemptsCount: Int,
-    formulaSettings: StatisticsTrainingFormulaSettings,
+    formulaSettings: StatisticsTrainingFormulaSettingsEntity,
 ): Double {
     if (attemptsCount <= 0) {
         return formulaSettings.noAttemptsBoost
@@ -210,7 +214,7 @@ private fun resolveDaysSinceLastTraining(lastTrainedAt: Long?, nowMillis: Long):
 private fun mapScoreToWeight(
     score: Double,
     recommendationSettings: StatisticsTrainingRecommendationSettings,
-    formulaSettings: StatisticsTrainingFormulaSettings,
+    formulaSettings: StatisticsTrainingFormulaSettingsEntity,
 ): Int {
     val safeMaxWeight = recommendationSettings.maxWeight.coerceAtLeast(1)
     val rawWeight = when {

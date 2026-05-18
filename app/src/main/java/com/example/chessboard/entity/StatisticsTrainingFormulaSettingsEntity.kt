@@ -1,16 +1,21 @@
-package com.example.chessboard.service
+package com.example.chessboard.entity
 
 /*
- * Defines the tunable parameters for statistics-based training recommendations.
+ * Stores the persisted formula settings for statistics-based training recommendations.
  *
- * Keep formula coefficients, caps, boosts, and score-to-weight thresholds here.
- * Do not add database access, UI state, or screen-specific selection settings
- * such as the currently requested recommendation limit.
+ * Keep only database columns and storage defaults here. Do not add formula
+ * calculation logic, DAO access, or UI-facing editor state.
  *
  * Validation date: 2026-05-18
  */
 
-data class StatisticsTrainingFormulaSettings(
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "statistics_training_formula_settings")
+data class StatisticsTrainingFormulaSettingsEntity(
+    @PrimaryKey
+    val id: Long = SINGLE_ROW_ID,
     /** Number of latest training results used to calculate recent mistakes and perfect rate for one line. */
     val recentResultsPerLine: Int = 5,
     /** Maximum days since last training that can contribute to the recency part of the score. */
@@ -41,4 +46,8 @@ data class StatisticsTrainingFormulaSettings(
     val weight3ScoreThreshold: Double = 4.0,
     /** Minimum score that maps a recommended line to weight 2. Lower scores map to weight 1. */
     val weight2ScoreThreshold: Double = 2.0,
-)
+) {
+    companion object {
+        const val SINGLE_ROW_ID = 1L
+    }
+}
