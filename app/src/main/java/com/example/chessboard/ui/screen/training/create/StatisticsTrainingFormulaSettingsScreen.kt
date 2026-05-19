@@ -57,7 +57,11 @@ import com.example.chessboard.ui.theme.TrainingAccentTeal
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
+
+private const val FormulaDoubleStep = 0.1
 
 private data class FormulaSettingsMessage(
     val title: String,
@@ -379,27 +383,36 @@ private fun StatisticsTrainingFormulaSettingsScreen(
         FormulaSettingsGroup(title = "Weight Thresholds") {
             FormulaExplanationText(
                 text = "After score is calculated, thresholds convert score to raw line weight. " +
+                    "They must stay in strict descending order: Weight 5 > Weight 4 > Weight 3 > Weight 2. " +
                     "The Max weight limit on the training screen can still cap the final weight."
             )
             DoubleFormulaStepper(
                 label = "Weight 5 score threshold",
                 value = settings.weight5ScoreThreshold,
-                onValueChange = { onSettingsChange(settings.copy(weight5ScoreThreshold = it)) },
+                onValueChange = {
+                    onSettingsChange(updateWeight5ScoreThreshold(settings = settings, value = it))
+                },
             )
             DoubleFormulaStepper(
                 label = "Weight 4 score threshold",
                 value = settings.weight4ScoreThreshold,
-                onValueChange = { onSettingsChange(settings.copy(weight4ScoreThreshold = it)) },
+                onValueChange = {
+                    onSettingsChange(updateWeight4ScoreThreshold(settings = settings, value = it))
+                },
             )
             DoubleFormulaStepper(
                 label = "Weight 3 score threshold",
                 value = settings.weight3ScoreThreshold,
-                onValueChange = { onSettingsChange(settings.copy(weight3ScoreThreshold = it)) },
+                onValueChange = {
+                    onSettingsChange(updateWeight3ScoreThreshold(settings = settings, value = it))
+                },
             )
             DoubleFormulaStepper(
                 label = "Weight 2 score threshold",
                 value = settings.weight2ScoreThreshold,
-                onValueChange = { onSettingsChange(settings.copy(weight2ScoreThreshold = it)) },
+                onValueChange = {
+                    onSettingsChange(updateWeight2ScoreThreshold(settings = settings, value = it))
+                },
             )
         }
         PrimaryButton(
@@ -489,8 +502,8 @@ private fun DoubleFormulaStepper(
     FormulaStepperRow(
         label = label,
         valueText = formatFormulaDouble(value),
-        onDecreaseClick = { onValueChange(stepFormulaDouble(value, -0.1)) },
-        onIncreaseClick = { onValueChange(stepFormulaDouble(value, 0.1)) },
+        onDecreaseClick = { onValueChange(stepFormulaDouble(value, -FormulaDoubleStep)) },
+        onIncreaseClick = { onValueChange(stepFormulaDouble(value, FormulaDoubleStep)) },
     )
 }
 
@@ -530,6 +543,61 @@ private fun FormulaStepperRow(
 
 private fun stepFormulaDouble(value: Double, delta: Double): Double {
     return (((value + delta).coerceAtLeast(0.0)) * 10.0).roundToInt() / 10.0
+}
+
+internal fun updateWeight5ScoreThreshold(
+    settings: StatisticsTrainingFormulaSettingsEntity,
+    value: Double,
+): StatisticsTrainingFormulaSettingsEntity {
+    val minValue = settings.weight4ScoreThreshold + FormulaDoubleStep
+    return settings.copy(weight5ScoreThreshold = max(value, minValue).roundFormulaDouble())
+}
+
+internal fun updateWeight4ScoreThreshold(
+    settings: StatisticsTrainingFormulaSettingsEntity,
+    value: Double,
+): StatisticsTrainingFormulaSettingsEntity {
+    return settings.copy(
+        weight4ScoreThreshold = value.coerceFormulaThreshold(
+            minValue = settings.weight3ScoreThreshold + FormulaDoubleStep,
+            maxValue = settings.weight5ScoreThreshold - FormulaDoubleStep,
+        )
+    )
+}
+
+internal fun updateWeight3ScoreThreshold(
+    settings: StatisticsTrainingFormulaSettingsEntity,
+    value: Double,
+): StatisticsTrainingFormulaSettingsEntity {
+    return settings.copy(
+        weight3ScoreThreshold = value.coerceFormulaThreshold(
+            minValue = settings.weight2ScoreThreshold + FormulaDoubleStep,
+            maxValue = settings.weight4ScoreThreshold - FormulaDoubleStep,
+        )
+    )
+}
+
+internal fun updateWeight2ScoreThreshold(
+    settings: StatisticsTrainingFormulaSettingsEntity,
+    value: Double,
+): StatisticsTrainingFormulaSettingsEntity {
+    return settings.copy(
+        weight2ScoreThreshold = min(
+            value.coerceAtLeast(0.0),
+            settings.weight3ScoreThreshold - FormulaDoubleStep,
+        ).roundFormulaDouble()
+    )
+}
+
+private fun Double.coerceFormulaThreshold(
+    minValue: Double,
+    maxValue: Double,
+): Double {
+    return min(max(this, minValue), maxValue).roundFormulaDouble()
+}
+
+private fun Double.roundFormulaDouble(): Double {
+    return (this * 10.0).roundToInt() / 10.0
 }
 
 private fun formatFormulaDouble(value: Double): String {
