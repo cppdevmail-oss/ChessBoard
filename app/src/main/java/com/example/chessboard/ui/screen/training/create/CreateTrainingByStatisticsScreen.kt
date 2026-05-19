@@ -323,6 +323,16 @@ fun CreateTrainingByStatisticsScreenContainer(
         isLoading = false
     }
 
+    LaunchedEffect(statisticsTrainingRuntimeContext.formulaRevision) {
+        if (!statisticsTrainingRuntimeContext.isLoadedFormulaOutOfDate()) {
+            return@LaunchedEffect
+        }
+
+        isLoading = true
+        refreshSelection()
+        isLoading = false
+    }
+
     messageDialog?.let { message ->
         AppMessageDialog(
             title = message.title,
