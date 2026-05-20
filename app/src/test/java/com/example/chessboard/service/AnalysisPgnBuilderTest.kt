@@ -163,6 +163,25 @@ class AnalysisPgnBuilderTest {
     }
 
     @Test
+    fun `buildAnalysisPgn round-trips imported bishop move from e-file without castling notation`() {
+        val sourcePgn = """
+            1. d4 c6 2. Bf4 Qb6 3. Nf3 Nf6 4. Nbd2 Nh5 5. Be3 Qxb2 6. Nb3 Qa3 7. Bc1 Qa4 8. e4 g6
+        """.trimIndent()
+
+        val firstImportedLines = parsePgnToUciLines(sourcePgn)
+        val firstExportedPgn = buildAnalysisPgn(firstImportedLines)
+        val secondImportedLines = parsePgnToUciLines(firstExportedPgn)
+        val secondExportedPgn = buildAnalysisPgn(secondImportedLines)
+
+        assertEquals(
+            "1. d4 c6 2. Bf4 Qb6 3. Nf3 Nf6 4. Nbd2 Nh5 5. Be3 Qxb2 6. Nb3 Qa3 7. Bc1 Qa4 8. e4 g6",
+            firstExportedPgn,
+        )
+        assertEquals(firstImportedLines, secondImportedLines)
+        assertEquals(firstExportedPgn, secondExportedPgn)
+    }
+
+    @Test
     fun `buildAnalysisPgn exports Caro Kann Panov with black fifth move choice`() {
         val sourcePgn = """
             1. e4 c6 2. d4 d5 3. exd5 cxd5 4. c4 Nf6 5. Nc3 e6 (5... Nc6) 6. Nf3 Be7 7. cxd5 Nxd5 8. Bd3 O-O 9. O-O Nc6 10. Re1

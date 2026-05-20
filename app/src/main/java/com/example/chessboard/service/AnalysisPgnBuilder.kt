@@ -216,7 +216,10 @@ private fun resolveAnalysisSanMove(
         board = board,
         movingPiece = movingPiece,
     )
-    val castleNotation = resolveAnalysisCastleNotation(move)
+    val castleNotation = resolveAnalysisCastleNotation(
+        move = move,
+        movingPiece = movingPiece,
+    )
 
     val baseNotation = if (castleNotation != null) {
         castleNotation
@@ -336,16 +339,20 @@ private fun resolveAnalysisDisambiguation(
 
 private fun resolveAnalysisCastleNotation(
     move: Move,
+    movingPiece: Piece,
 ): String? {
-    if (move.from.value()[0] != 'E') {
+    if (movingPiece.pieceType != PieceType.KING) {
         return null
     }
 
-    if (move.to.value()[0] == 'G') {
+    val fromSquare = move.from.value()
+    val toSquare = move.to.value()
+
+    if ((fromSquare == "E1" && toSquare == "G1") || (fromSquare == "E8" && toSquare == "G8")) {
         return "O-O"
     }
 
-    if (move.to.value()[0] == 'C') {
+    if ((fromSquare == "E1" && toSquare == "C1") || (fromSquare == "E8" && toSquare == "C8")) {
         return "O-O-O"
     }
 
