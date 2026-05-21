@@ -53,6 +53,7 @@ import com.example.chessboard.ui.screen.positions.positionSearch.PositionSearchS
 import com.example.chessboard.ui.screen.positions.positionSearch.PositionSearchSettingsScreenContainer
 import com.example.chessboard.ui.screen.positions.savedPositions.SavedPositionsScreenContainer
 import com.example.chessboard.ui.screen.trainSingleLine.TrainSingleLineLauncherScreenContainer
+import com.example.chessboard.ui.screen.trainSingleLine.TrainSingleLineSessionProgress
 import com.example.chessboard.ui.screen.training.create.CreateTrainingByStatisticsScreenContainer
 import com.example.chessboard.ui.screen.training.create.CreateTrainingChoiceScreenContainer
 import com.example.chessboard.ui.screen.training.create.StatisticsTrainingFormulaSettingsScreenContainer
@@ -543,15 +544,17 @@ class MainActivity : ComponentActivity() {
                         keepLineIfZero = !removeLineIfRepIsZero,
                         simpleViewEnabled = simpleViewEnabled,
                         trainingRuntimeContext = runtimeContext.trainingSession,
-                        hasNextTrainingLine = regularTrainingFlow.hasNextLine(
-                            trainingId = screen.trainingId,
-                            lineId = screen.lineId,
+                        sessionProgress = TrainSingleLineSessionProgress(
+                            hasNextTrainingLine = regularTrainingFlow.hasNextLine(
+                                trainingId = screen.trainingId,
+                                lineId = screen.lineId,
+                            ),
+                            sessionCurrent = regularTrainingFlow.sessionCurrent(
+                                trainingId = screen.trainingId,
+                                lineId = screen.lineId,
+                            ),
+                            sessionTotal = regularTrainingFlow.sessionTotal(screen.trainingId),
                         ),
-                        sessionCurrent = regularTrainingFlow.sessionCurrent(
-                            trainingId = screen.trainingId,
-                            lineId = screen.lineId,
-                        ),
-                        sessionTotal = regularTrainingFlow.sessionTotal(screen.trainingId),
                         onTrainingFinished = { result ->
                             applyTrainingFlowResult(
                                 regularTrainingFlow.finishLine(result)
@@ -740,9 +743,11 @@ class MainActivity : ComponentActivity() {
                         keepLineIfZero = !removeLineIfRepIsZero,
                         simpleViewEnabled = simpleViewEnabled,
                         trainingRuntimeContext = runtimeContext.trainingSession,
-                        hasNextTrainingLine = smartTrainingFlow.hasNextLine(screen.lineId),
-                        sessionCurrent = smartTrainingFlow.sessionCurrent(screen.lineId),
-                        sessionTotal = smartTrainingFlow.sessionTotal(),
+                        sessionProgress = TrainSingleLineSessionProgress(
+                            hasNextTrainingLine = smartTrainingFlow.hasNextLine(screen.lineId),
+                            sessionCurrent = smartTrainingFlow.sessionCurrent(screen.lineId),
+                            sessionTotal = smartTrainingFlow.sessionTotal(),
+                        ),
                         onTrainingFinished = {
                             applyTrainingFlowResult(smartTrainingFlow.finishLine())
                         },

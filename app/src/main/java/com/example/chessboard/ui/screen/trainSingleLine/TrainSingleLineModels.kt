@@ -24,6 +24,12 @@ data class TrainSingleLineResult(
     val mistakesCount: Int
 )
 
+data class TrainSingleLineSessionProgress(
+    val hasNextTrainingLine: Boolean = false,
+    val sessionCurrent: Int = 0,
+    val sessionTotal: Int = 0,
+)
+
 internal const val ShowLineMoveDelayMs = 500L
 internal const val MinShowLineMoveDelayMs = 100L
 internal const val MaxShowLineMoveDelayMs = 4000L
@@ -61,8 +67,7 @@ internal data class TrainSingleLineContentState(
     val trainingLineData: TrainSingleLineData,
     val currentOrientation: BoardOrientation,
     val sidesCount: Int,
-    val sessionCurrent: Int,
-    val sessionTotal: Int,
+    val sessionProgress: TrainSingleLineSessionProgress,
     val currentPly: Int,
     val moveLabels: List<String>,
     val phase: TrainSingleLinePhase,

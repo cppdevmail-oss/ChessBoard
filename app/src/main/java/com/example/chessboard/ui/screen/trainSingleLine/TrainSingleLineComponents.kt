@@ -179,8 +179,8 @@ private fun TrainingSessionInfoRow(
     if (simpleViewEnabled) {
         AppProgressCard(
             label = "Lines completed",
-            progress = (state.sessionCurrent - 1).coerceAtLeast(0),
-            total = state.sessionTotal,
+            progress = (state.sessionProgress.sessionCurrent - 1).coerceAtLeast(0),
+            total = state.sessionProgress.sessionTotal,
             modifier = modifier,
         )
         return
@@ -224,13 +224,13 @@ private fun RenderTrainingSessionProgressBar(
     state: TrainSingleLineContentState,
     modifier: Modifier = Modifier,
 ) {
-    if (state.sessionTotal <= 1) {
+    if (state.sessionProgress.sessionTotal <= 1) {
         return
     }
 
     TrainingSessionProgressBar(
-        current = state.sessionCurrent,
-        total = state.sessionTotal,
+        current = state.sessionProgress.sessionCurrent,
+        total = state.sessionProgress.sessionTotal,
         modifier = modifier,
     )
 }

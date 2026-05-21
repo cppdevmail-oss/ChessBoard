@@ -96,9 +96,7 @@ fun TrainSingleLineScreenContainer(
     trainingLineData: TrainSingleLineData,
     trainingRuntimeContext: TrainingRuntimeContext,
     keepLineIfZero: Boolean = false,
-    hasNextTrainingLine: Boolean = false,
-    sessionCurrent: Int = 0,
-    sessionTotal: Int = 0,
+    sessionProgress: TrainSingleLineSessionProgress = TrainSingleLineSessionProgress(),
     onTrainingFinished: (TrainSingleLineResult) -> Unit = {},
     onNextTrainingClick: (TrainSingleLineResult) -> Unit = {},
     autoNextLine: Boolean = false,
@@ -144,9 +142,7 @@ fun TrainSingleLineScreenContainer(
         trainingId = trainingId,
         trainingLineData = trainingLineData,
         trainingRuntimeContext = trainingRuntimeContext,
-        hasNextTrainingLine = hasNextTrainingLine,
-        sessionCurrent = sessionCurrent,
-        sessionTotal = sessionTotal,
+        sessionProgress = sessionProgress,
         levelUpState = levelUpState,
         onLevelUpDismiss = { levelUpState = null },
         onLineCompleted = { result ->
@@ -204,9 +200,7 @@ private fun TrainSingleLineScreen(
     trainingId: Long,
     trainingLineData: TrainSingleLineData,
     trainingRuntimeContext: TrainingRuntimeContext,
-    hasNextTrainingLine: Boolean = false,
-    sessionCurrent: Int = 0,
-    sessionTotal: Int = 0,
+    sessionProgress: TrainSingleLineSessionProgress = TrainSingleLineSessionProgress(),
     levelUpState: TrainSingleLineLevelUpState? = null,
     onLevelUpDismiss: () -> Unit = {},
     onLineCompleted: (TrainSingleLineResult) -> Unit = {},
@@ -338,7 +332,7 @@ private fun TrainSingleLineScreen(
     }
 
     fun createNextTrainingClickAction(): (() -> Unit)? {
-        if (!hasNextTrainingLine) {
+        if (!sessionProgress.hasNextTrainingLine) {
             return null
         }
 
@@ -471,7 +465,7 @@ private fun TrainSingleLineScreen(
         val dialog = completionDialog ?: return@LaunchedEffect
         if (!autoNextLine) return@LaunchedEffect
         if (levelUpState != null) return@LaunchedEffect  // wait until user dismisses the level-up dialog
-        if (!dialog.hasNextSide && !hasNextTrainingLine) return@LaunchedEffect
+        if (!dialog.hasNextSide && !sessionProgress.hasNextTrainingLine) return@LaunchedEffect
 
         if (dialog.hasNextSide) {
             uiState = handleCompletionFinish(
@@ -629,7 +623,7 @@ private fun TrainSingleLineScreen(
         }
     ) { paddingValues ->
         val autoNextWillAdvance = autoNextLine && completionDialog != null &&
-            (completionDialog.hasNextSide || hasNextTrainingLine)
+            (completionDialog.hasNextSide || sessionProgress.hasNextTrainingLine)
 
         if (levelUpState == null) {
             RenderCompletionDialog(
@@ -670,8 +664,7 @@ private fun TrainSingleLineScreen(
                     trainingLineData = trainingLineData,
                     currentOrientation = currentOrientation,
                     sidesCount = trainingSides.size,
-                    sessionCurrent = sessionCurrent,
-                    sessionTotal = sessionTotal,
+                    sessionProgress = sessionProgress,
                     currentPly = lineController.currentMoveIndex,
                     moveLabels = moveLabels,
                     phase = uiState.phase,
