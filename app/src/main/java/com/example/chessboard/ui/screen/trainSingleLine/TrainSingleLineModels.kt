@@ -24,6 +24,13 @@ data class TrainSingleLineResult(
     val mistakesCount: Int
 )
 
+data class TrainSingleLineLaunchRequest(
+    val trainingId: Long,
+    val lineId: Long,
+    val moveFrom: Int = 1,
+    val moveTo: Int = 0,
+)
+
 data class TrainSingleLineSessionProgress(
     val hasNextTrainingLine: Boolean = false,
     val sessionCurrent: Int = 0,

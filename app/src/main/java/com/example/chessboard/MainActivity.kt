@@ -53,6 +53,7 @@ import com.example.chessboard.ui.screen.positions.positionSearch.PositionSearchS
 import com.example.chessboard.ui.screen.positions.positionSearch.PositionSearchSettingsScreenContainer
 import com.example.chessboard.ui.screen.positions.savedPositions.SavedPositionsScreenContainer
 import com.example.chessboard.ui.screen.trainSingleLine.TrainSingleLineLauncherScreenContainer
+import com.example.chessboard.ui.screen.trainSingleLine.TrainSingleLineLaunchRequest
 import com.example.chessboard.ui.screen.trainSingleLine.TrainSingleLineSessionProgress
 import com.example.chessboard.ui.screen.training.create.CreateTrainingByStatisticsScreenContainer
 import com.example.chessboard.ui.screen.training.create.CreateTrainingChoiceScreenContainer
@@ -537,10 +538,12 @@ class MainActivity : ComponentActivity() {
                     )
 
                     is ScreenType.TrainSingleLine -> TrainSingleLineLauncherScreenContainer(
-                        trainingId = screen.trainingId,
-                        lineId = screen.lineId,
-                        moveFrom = runtimeContext.trainingMoveFrom,
-                        moveTo = runtimeContext.trainingMoveTo,
+                        launchRequest = TrainSingleLineLaunchRequest(
+                            trainingId = screen.trainingId,
+                            lineId = screen.lineId,
+                            moveFrom = runtimeContext.trainingMoveFrom,
+                            moveTo = runtimeContext.trainingMoveTo,
+                        ),
                         keepLineIfZero = !removeLineIfRepIsZero,
                         simpleViewEnabled = simpleViewEnabled,
                         trainingRuntimeContext = runtimeContext.trainingSession,
@@ -738,8 +741,10 @@ class MainActivity : ComponentActivity() {
                     )
 
                     is ScreenType.SmartTrainLine -> TrainSingleLineLauncherScreenContainer(
-                        trainingId = screen.trainingId,
-                        lineId = screen.lineId,
+                        launchRequest = TrainSingleLineLaunchRequest(
+                            trainingId = screen.trainingId,
+                            lineId = screen.lineId,
+                        ),
                         keepLineIfZero = !removeLineIfRepIsZero,
                         simpleViewEnabled = simpleViewEnabled,
                         trainingRuntimeContext = runtimeContext.trainingSession,

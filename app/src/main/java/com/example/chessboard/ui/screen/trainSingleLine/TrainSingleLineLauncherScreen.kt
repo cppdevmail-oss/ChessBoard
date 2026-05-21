@@ -50,10 +50,7 @@ private sealed interface TrainSingleLineLaunchState {
 @Composable
 // Loads the training line data or shows a launch error before opening the training screen.
 fun TrainSingleLineLauncherScreenContainer(
-    trainingId: Long,
-    lineId: Long,
-    moveFrom: Int = 1,
-    moveTo: Int = 0,
+    launchRequest: TrainSingleLineLaunchRequest,
     trainingRuntimeContext: TrainingRuntimeContext,
     keepLineIfZero: Boolean = false,
     sessionProgress: TrainSingleLineSessionProgress = TrainSingleLineSessionProgress(),
@@ -75,15 +72,21 @@ fun TrainSingleLineLauncherScreenContainer(
     var launchState by remember { mutableStateOf<TrainSingleLineLaunchState>(TrainSingleLineLaunchState.Loading) }
 
     fun clearInvalidTrainingRuntimeState() {
+        val trainingId = launchRequest.trainingId
+        val lineId = launchRequest.lineId
+
         trainingRuntimeContext.clearLineProgress(trainingId, lineId)
         if (trainingRuntimeContext.lineIdInTraining(trainingId) == lineId) {
             trainingRuntimeContext.setLineIdInTraining(trainingId, null)
         }
     }
 
-    LaunchedEffect(trainingId, lineId) {
+    LaunchedEffect(launchRequest.trainingId, launchRequest.lineId) {
         launchState = withContext(Dispatchers.IO) {
-            when (val launchData = trainSingleLineService.getTrainingLineLaunchData(trainingId, lineId)) {
+            when (val launchData = trainSingleLineService.getTrainingLineLaunchData(
+                launchRequest.trainingId,
+                launchRequest.lineId,
+            )) {
                 is TrainingLineLaunchTrainingNotFound,
                 is TrainingLineLaunchBrokenTrainingDeleted,
                 TrainingLineLaunchNoTrainings -> {
@@ -103,8 +106,12 @@ fun TrainSingleLineLauncherScreenContainer(
                         ?: return@withContext TrainSingleLineLaunchState.LineNotFound
 
                     val allMoves = parsePgnMoves(line.pgn)
-                    val startPly = ((moveFrom - 1) * 2).coerceAtMost(allMoves.size)
-                    val endPly = if (moveTo > 0) (moveTo * 2).coerceAtMost(allMoves.size) else allMoves.size
+                    val startPly = ((launchRequest.moveFrom - 1) * 2).coerceAtMost(allMoves.size)
+                    val endPly = if (launchRequest.moveTo > 0) {
+                        (launchRequest.moveTo * 2).coerceAtMost(allMoves.size)
+                    } else {
+                        allMoves.size
+                    }
                     val moves = allMoves.subList(startPly, endPly)
                     val startFen = if (startPly == 0) null else {
                         val board = Board()
@@ -121,7 +128,7 @@ fun TrainSingleLineLauncherScreenContainer(
                             line = line,
                             uciMoves = moves,
                             startFen = startFen,
-                            hasMoveCap = moveTo > 0,
+                            hasMoveCap = launchRequest.moveTo > 0,
                             analysisUciMoves = allMoves,
                             analysisStartPly = startPly,
                         ),
@@ -151,7 +158,9 @@ fun TrainSingleLineLauncherScreenContainer(
         TrainingLaunchErrorDialog(
             title = "Line not found",
             message = "The selected line is unavailable to start.",
-            onDismiss = { screenContext.onNavigate(ScreenType.EditTraining(trainingId)) },
+            onDismiss = {
+                screenContext.onNavigate(ScreenType.EditTraining(launchRequest.trainingId))
+            },
         )
         return
     }
@@ -163,7 +172,9 @@ fun TrainSingleLineLauncherScreenContainer(
         TrainingLaunchErrorDialog(
             title = "Line removed from training",
             message = "The selected line no longer belongs to this training.",
-            onDismiss = { screenContext.onNavigate(ScreenType.EditTraining(trainingId)) },
+            onDismiss = {
+                screenContext.onNavigate(ScreenType.EditTraining(launchRequest.trainingId))
+            },
         )
         return
     }
@@ -171,8 +182,8 @@ fun TrainSingleLineLauncherScreenContainer(
     val readyState = launchState as? TrainSingleLineLaunchState.Ready ?: return
 
     TrainSingleLineScreenContainer(
-        lineId = lineId,
-        trainingId = trainingId,
+        lineId = launchRequest.lineId,
+        trainingId = launchRequest.trainingId,
         trainingLineData = readyState.trainingLineData,
         trainingRuntimeContext = trainingRuntimeContext,
         keepLineIfZero = keepLineIfZero,
