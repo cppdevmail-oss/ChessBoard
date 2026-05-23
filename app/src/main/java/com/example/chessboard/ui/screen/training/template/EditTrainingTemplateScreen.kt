@@ -99,7 +99,7 @@ fun EditTrainingTemplateScreenContainer(
     val onBackClick = screenContext.onBackClick
     val onNavigate = screenContext.onNavigate
     val inDbProvider = screenContext.inDbProvider
-    val lineCollectionRuntimeContext = screenContext.runtimeContext.lineCollections
+    val lineCollectionRuntimeContext = screenContext.runtimeContext.templateLineSelection
     val trainingTemplateService = remember(inDbProvider) { inDbProvider.createTrainingTemplateService() }
     var loadState by remember { mutableStateOf(TrainingTemplateLoadState()) }
     var templateSaveSuccess by remember { mutableStateOf<TrainingTemplateSaveSuccess?>(null) }
