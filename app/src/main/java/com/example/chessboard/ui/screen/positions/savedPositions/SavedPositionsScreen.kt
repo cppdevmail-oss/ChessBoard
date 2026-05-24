@@ -111,6 +111,12 @@ private data class SavedPositionsDeviationDialog(
     val deviationItems: List<OpeningDeviationItem>,
 )
 
+internal data class SavedPositionsSearchActions(
+    val onDialogVisibilityChange: (Boolean) -> Unit,
+    val onDraftFilterStateChange: (SavedPositionsFilterState) -> Unit,
+    val onApplyFilter: () -> Unit,
+)
+
 internal data class SavedPositionsDeviationSearchDialog(
     val positionName: String,
 )
@@ -281,6 +287,27 @@ internal fun SavedPositionsScreenContainer(
         )
     }
 
+    fun createSearchActions(): SavedPositionsSearchActions {
+        return SavedPositionsSearchActions(
+            onDialogVisibilityChange = { isVisible ->
+                state = resolveSearchDialogVisibilityState(isVisible)
+            },
+            onDraftFilterStateChange = { filterState ->
+                state = state.copy(
+                    searchState = state.searchState.copy(draftFilterState = filterState),
+                )
+            },
+            onApplyFilter = {
+                state = state.copy(
+                    searchState = state.searchState.copy(
+                        activeFilterState = state.searchState.draftFilterState,
+                        showDialog = false,
+                    )
+                )
+            },
+        )
+    }
+
     LaunchedEffect(savedSearchPositionService) {
         val positions = withContext(Dispatchers.IO) {
             savedSearchPositionService.getAll().map(::toSavedPositionListItem)
@@ -335,22 +362,7 @@ internal fun SavedPositionsScreenContainer(
         onPositionToDeleteChange = { position ->
             state = state.copy(positionToDelete = position)
         },
-        onSearchDialogVisibilityChange = { isVisible ->
-            state = resolveSearchDialogVisibilityState(isVisible)
-        },
-        onDraftFilterStateChange = { filterState ->
-            state = state.copy(
-                searchState = state.searchState.copy(draftFilterState = filterState),
-            )
-        },
-        onApplyFilter = {
-            state = state.copy(
-                searchState = state.searchState.copy(
-                    activeFilterState = state.searchState.draftFilterState,
-                    showDialog = false,
-                )
-            )
-        },
+        searchActions = createSearchActions(),
         onDeletePosition = { position ->
             scope.launch {
                 withContext(Dispatchers.IO) {
@@ -441,9 +453,7 @@ private fun SavedPositionsScreen(
     onOpenPreviousPageClick: () -> Unit,
     onOpenNextPageClick: () -> Unit,
     onPositionToDeleteChange: (SavedPositionListItem?) -> Unit,
-    onSearchDialogVisibilityChange: (Boolean) -> Unit,
-    onDraftFilterStateChange: (SavedPositionsFilterState) -> Unit,
-    onApplyFilter: () -> Unit,
+    searchActions: SavedPositionsSearchActions,
     onDeletePosition: (SavedPositionListItem) -> Unit,
     foundLinesDialogActions: PositionSearchResultDialogActions,
     onInfoDialogDismiss: () -> Unit,
@@ -493,9 +503,7 @@ private fun SavedPositionsScreen(
     RenderSavedPositionsSearchDialog(
         visible = state.searchState.showDialog,
         filterState = state.searchState.draftFilterState,
-        onDismiss = { onSearchDialogVisibilityChange(false) },
-        onFilterStateChange = onDraftFilterStateChange,
-        onApplyClick = onApplyFilter,
+        actions = searchActions,
     )
     RenderPositionSearchResultDialog(
         foundLineIds = state.foundLineIds,
@@ -529,7 +537,7 @@ private fun SavedPositionsScreen(
                         canOpenPreviousPage = currentPage > 1,
                         canOpenNextPage = currentPage < totalPages,
                     ),
-                    onSearchClick = { onSearchDialogVisibilityChange(true) },
+                    onSearchClick = { searchActions.onDialogVisibilityChange(true) },
                     onOpenPreviousPageClick = onOpenPreviousPageClick,
                     onOpenNextPageClick = onOpenNextPageClick,
                 )
