@@ -50,28 +50,26 @@ internal fun matchesSavedPositionsFilter(
 internal fun RenderSavedPositionsSearchDialog(
     visible: Boolean,
     filterState: SavedPositionsFilterState,
-    onDismiss: () -> Unit,
-    onFilterStateChange: (SavedPositionsFilterState) -> Unit,
-    onApplyClick: () -> Unit,
+    actions: SavedPositionsSearchActions,
 ) {
     if (!visible) {
         return
     }
 
     fun updateQuery(query: String) {
-        onFilterStateChange(
+        actions.onDraftFilterStateChange(
             filterState.copy(query = query)
         )
     }
 
     fun updateCaseSensitive(isCaseSensitive: Boolean) {
-        onFilterStateChange(
+        actions.onDraftFilterStateChange(
             filterState.copy(isCaseSensitive = isCaseSensitive)
         )
     }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { actions.onDialogVisibilityChange(false) },
         containerColor = Background.ScreenDark,
         title = {
             SectionTitleText(text = "Search Positions")
@@ -115,11 +113,11 @@ internal fun RenderSavedPositionsSearchDialog(
         confirmButton = {
             PrimaryButton(
                 text = "Apply",
-                onClick = onApplyClick
+                onClick = actions.onApplyFilter
             )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = { actions.onDialogVisibilityChange(false) }) {
                 CardMetaText(text = "Cancel")
             }
         }

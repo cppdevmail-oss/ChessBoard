@@ -43,14 +43,14 @@ class LinesExplorerCloneTest {
                 RenderLinesExplorerLineActionsDialog(
                     visible = true,
                     onDismiss = {},
-                    onResetClick = {},
-                    onAnalyzeClick = {},
-                    onCloneClick = {
-                        clonedLine = parsedLine.line
-                    },
-                    canUseSelectedLineActions = true,
-                    canCopyLinesPgn = false,
-                    onCopyLinesPgnClick = {},
+                    resetAction = CallbackWithCfg(canUse = true, onClick = {}),
+                    analyzeAction = CallbackWithCfg(canUse = true, onClick = {}),
+                    cloneAction = CallbackWithCfg(
+                        canUse = true,
+                        onClick = { clonedLine = parsedLine.line },
+                    ),
+                    copyLinesPgnAction = CallbackWithCfg(canUse = false, onClick = {}),
+                    deleteExplorerLinesAction = CallbackWithCfg(canUse = false, onClick = {}),
                 )
             }
         }
@@ -89,12 +89,14 @@ class LinesExplorerCloneTest {
                 RenderLinesExplorerLineActionsDialog(
                     visible = true,
                     onDismiss = {},
-                    onResetClick = {},
-                    onAnalyzeClick = { analyzeClicks += 1 },
-                    onCloneClick = {},
-                    canUseSelectedLineActions = true,
-                    canCopyLinesPgn = false,
-                    onCopyLinesPgnClick = {},
+                    resetAction = CallbackWithCfg(canUse = true, onClick = {}),
+                    analyzeAction = CallbackWithCfg(
+                        canUse = true,
+                        onClick = { analyzeClicks += 1 },
+                    ),
+                    cloneAction = CallbackWithCfg(canUse = true, onClick = {}),
+                    copyLinesPgnAction = CallbackWithCfg(canUse = false, onClick = {}),
+                    deleteExplorerLinesAction = CallbackWithCfg(canUse = false, onClick = {}),
                 )
             }
         }
@@ -104,6 +106,35 @@ class LinesExplorerCloneTest {
 
         composeRule.runOnIdle {
             assertEquals(1, analyzeClicks)
+        }
+    }
+
+    @Test
+    fun linesExplorer_deleteLinesButtonInvokesCallback() {
+        var deleteClicks = 0
+
+        composeRule.setContent {
+            ChessBoardTheme {
+                RenderLinesExplorerLineActionsDialog(
+                    visible = true,
+                    onDismiss = {},
+                    resetAction = CallbackWithCfg(canUse = false, onClick = {}),
+                    analyzeAction = CallbackWithCfg(canUse = false, onClick = {}),
+                    cloneAction = CallbackWithCfg(canUse = false, onClick = {}),
+                    copyLinesPgnAction = CallbackWithCfg(canUse = false, onClick = {}),
+                    deleteExplorerLinesAction = CallbackWithCfg(
+                        canUse = true,
+                        onClick = { deleteClicks += 1 },
+                    ),
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Delete explorer lines").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.runOnIdle {
+            assertEquals(1, deleteClicks)
         }
     }
 }
