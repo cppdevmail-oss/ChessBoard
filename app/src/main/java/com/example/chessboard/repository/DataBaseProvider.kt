@@ -33,6 +33,7 @@ import com.example.chessboard.entity.TrainingEntity
 import com.example.chessboard.entity.TrainingResultEntity
 import com.example.chessboard.entity.TrainingTemplateEntity
 import com.example.chessboard.entity.UserProfileEntity
+import com.example.chessboard.service.DubiousLineService
 import com.example.chessboard.service.GlobalTrainingStatsService
 import com.example.chessboard.service.LineBackupService
 import com.example.chessboard.service.LineDeleter
@@ -198,6 +199,10 @@ class DatabaseProvider private constructor(
 
     fun createDubiousLineDao(): DubiousLineDao {
         return database.dubiousLineDao()
+    }
+
+    fun createDubiousLineService(): DubiousLineService {
+        return DubiousLineService(database.dubiousLineDao())
     }
 
     fun createSavedSearchPositionService(): SavedSearchPositionService {

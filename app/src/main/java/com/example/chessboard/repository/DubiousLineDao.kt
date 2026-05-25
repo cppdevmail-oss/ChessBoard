@@ -18,6 +18,9 @@ import com.example.chessboard.entity.DubiousLineEntity
 
 @Dao
 interface DubiousLineDao {
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertIfAbsent(marker: DubiousLineEntity): Long
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrReplace(marker: DubiousLineEntity)
 
