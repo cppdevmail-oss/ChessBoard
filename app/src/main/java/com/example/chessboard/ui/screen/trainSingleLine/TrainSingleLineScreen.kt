@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.IconButton
@@ -173,6 +174,25 @@ fun TrainSingleLineScreenContainer(
                 onNextTrainingClick(result)
             }
         },
+        onMarkDubiousAndNextTrainingClick = { result ->
+            scope.launch {
+                withContext(Dispatchers.IO) {
+                    inDbProvider.createDubiousLineService().markDubious(result.lineId)
+                    inDbProvider.finishTrainingLine(
+                        trainingId = result.trainingId,
+                        lineId = result.lineId,
+                        mistakesCount = result.mistakesCount,
+                        keepLineIfZero = keepLineIfZero
+                    )
+                }
+                onNextTrainingClick(result)
+            }
+        },
+        onMarkDubiousClick = { lineId ->
+            scope.launch(Dispatchers.IO) {
+                inDbProvider.createDubiousLineService().markDubious(lineId)
+            }
+        },
         autoNextLine = autoNextLine,
         onAutoNextLineChange = { enabled ->
             autoNextLine = enabled
@@ -204,6 +224,8 @@ private fun TrainSingleLineScreen(
     checkAndRecordStats: suspend (TrainSingleLineResult) -> Boolean = { false },
     onTrainingFinished: (TrainSingleLineResult) -> Unit = {},
     onNextTrainingClick: (TrainSingleLineResult) -> Unit = {},
+    onMarkDubiousAndNextTrainingClick: (TrainSingleLineResult) -> Unit = {},
+    onMarkDubiousClick: (Long) -> Unit = {},
     autoNextLine: Boolean = false,
     onAutoNextLineChange: (Boolean) -> Unit = {},
     onInterruptTrainingClick: () -> Unit,
@@ -330,7 +352,21 @@ private fun TrainSingleLineScreen(
         }
     }
 
-    fun createNextTrainingClickAction(): (() -> Unit)? {
+    fun completeCurrentLineAndRun(action: (TrainSingleLineResult) -> Unit) {
+        val result = TrainSingleLineResult(
+            lineId = lineId,
+            trainingId = trainingId,
+            mistakesCount = uiState.mistakesCount,
+        )
+        hasInitializedSession = false
+        trainingRuntimeContext.clearLineProgress(trainingId, lineId)
+        uiState = uiState.copy(completionDialog = null)
+        action(result)
+    }
+
+    fun createNextTrainingClickAction(
+        action: (TrainSingleLineResult) -> Unit,
+    ): (() -> Unit)? {
         if (!sessionProgress.hasNextTrainingLine) {
             return null
         }
@@ -340,17 +376,7 @@ private fun TrainSingleLineScreen(
             return null
         }
 
-        return {
-            val result = TrainSingleLineResult(
-                lineId = lineId,
-                trainingId = trainingId,
-                mistakesCount = uiState.mistakesCount,
-            )
-            hasInitializedSession = false
-            trainingRuntimeContext.clearLineProgress(trainingId, lineId)
-            uiState = uiState.copy(completionDialog = null)
-            onNextTrainingClick(result)
-        }
+        return { completeCurrentLineAndRun(action) }
     }
 
     LaunchedEffect(lineController, loadedLine.id) {
@@ -644,7 +670,10 @@ private fun TrainSingleLineScreen(
                         onTrainingFinished = onTrainingFinished
                     )
                 },
-                onNextTrainingClick = createNextTrainingClickAction()
+                onNextTrainingClick = createNextTrainingClickAction(onNextTrainingClick),
+                onMarkDubiousAndNextTrainingClick = createNextTrainingClickAction(
+                    onMarkDubiousAndNextTrainingClick,
+                )
             )
         }
 
@@ -699,6 +728,10 @@ private fun TrainSingleLineScreen(
             showAdditionalMenu = false
             copyTrainingLinePgn()
         },
+        onMarkDubiousClick = {
+            showAdditionalMenu = false
+            onMarkDubiousClick(lineId)
+        },
     )
 
     linePgnMessage?.let { message ->
@@ -736,6 +769,7 @@ private fun RenderAdditionalMenu(
     onCloneClick: () -> Unit,
     onEditClick: () -> Unit,
     onCopyLinePgnClick: () -> Unit,
+    onMarkDubiousClick: () -> Unit,
 ) {
     if (!visible) {
         return
@@ -779,6 +813,16 @@ private fun RenderAdditionalMenu(
                     IconMd(
                         imageVector = Icons.Default.Edit,
                         contentDescription = "Edit line",
+                        tint = resolveTrainingLineDialogActionTint(isEnabled),
+                    )
+                }
+                TrainingLineDialogAction(
+                    label = "Doubt",
+                    onClick = onMarkDubiousClick,
+                ) { isEnabled ->
+                    IconMd(
+                        imageVector = Icons.Default.ReportProblem,
+                        contentDescription = "Mark line as dubious",
                         tint = resolveTrainingLineDialogActionTint(isEnabled),
                     )
                 }
