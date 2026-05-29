@@ -38,6 +38,7 @@ import com.example.chessboard.ui.OpeningDeviationDisplayContentTestTag
 import com.example.chessboard.ui.OpeningDeviationSelectionContentTestTag
 import com.example.chessboard.ui.OpeningDeviationSelectionStartTestTag
 import com.example.chessboard.ui.OpeningDeviationSourceBoardTestTag
+import com.example.chessboard.ui.PositionSearchResultMessageTestTag
 import com.example.chessboard.ui.PositionSearchResultTemplateActionTestTag
 import com.example.chessboard.ui.PositionSearchResultTrainingActionTestTag
 import com.example.chessboard.ui.PositionTemplateNameConfirmTestTag
@@ -215,10 +216,7 @@ class SavedPositionsNavigationTest {
         composeRule.onNodeWithTag(savedPositionCreateButtonTestTag(positionId)).performClick()
 
         waitForTextDisplayed("Lines Found")
-        composeRule.onNodeWithText(
-            "saved lines match this position",
-            substring = true,
-        ).assertIsDisplayed()
+        composeRule.onNodeWithTag(PositionSearchResultMessageTestTag).assertIsDisplayed()
         composeRule.onNodeWithTag(PositionSearchResultTrainingActionTestTag).assertIsDisplayed()
         composeRule.onNodeWithTag(PositionSearchResultTemplateActionTestTag).performClick()
         waitForTextDisplayed("New Template")

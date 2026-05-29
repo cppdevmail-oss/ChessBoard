@@ -39,8 +39,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.R
 import com.example.chessboard.boardmodel.BoardPiece
@@ -208,6 +210,27 @@ fun PositionSearchScreenContainer(
             controller.loadPreviewFen(toLoadableFen(EmptyBoardFen))
         }
     }
+    val resources = LocalContext.current.resources
+    val failedApplyFenMessage = stringResource(R.string.position_search_failed_apply_fen)
+    val templateCreatedTitle = stringResource(R.string.position_search_template_created_title)
+    val templateCreatedMessageFormat = stringResource(R.string.position_search_template_created_message)
+    val templateErrorTitle = stringResource(R.string.position_search_template_error_title)
+    val templateErrorMessage = stringResource(R.string.position_search_template_error_message)
+    val duplicateNameMessage = stringResource(R.string.position_search_duplicate_name)
+    val duplicateSearchFenMessage = stringResource(R.string.position_search_duplicate_search_fen)
+    val duplicateFullFenMessage = stringResource(R.string.position_search_duplicate_full_fen)
+    val failedSavePositionMessage = stringResource(R.string.position_search_failed_save_position)
+    val positionNameRequiredMessage = stringResource(R.string.position_search_position_name_required)
+    val positionSavedTitle = stringResource(R.string.position_search_position_saved_title)
+    val positionSavedMessageFormat = stringResource(R.string.position_search_position_saved_message)
+    val simpleTrainingName = stringResource(R.string.position_search_training_name_from_position)
+    val trainingCreatedTitle = stringResource(R.string.position_search_training_created_title)
+    val trainingErrorTitle = stringResource(R.string.position_search_training_error_title)
+    val trainingErrorMessage = stringResource(R.string.position_search_training_error_message)
+    val createTrainingScreenTitle = stringResource(R.string.position_search_create_training_screen_title)
+    val linesFoundCountLabel = stringResource(R.string.position_search_lines_found_count_label)
+    val defaultTemplateName = stringResource(R.string.position_search_template_default_name)
+
     var uiState by remember { mutableStateOf(PositionSearchUiState()) }
     var saveDialogState by remember { mutableStateOf<PositionSearchSaveDialogState?>(null) }
     var templateNameDialogState by remember { mutableStateOf<PositionTemplateNameDialogState?>(null) }
@@ -264,7 +287,7 @@ fun PositionSearchScreenContainer(
         )
         val wasLoaded = lineController.loadFromFen(toLoadableFen(normalizedFen))
         if (!wasLoaded) {
-            uiState = uiState.copy(fenError = "Failed to apply FEN")
+            uiState = uiState.copy(fenError = failedApplyFenMessage)
             return false
         }
 
@@ -318,7 +341,10 @@ fun PositionSearchScreenContainer(
     fun openTemplateNameDialog() {
         val foundLineIds = uiState.foundLineIds ?: return
         uiState = uiState.copy(foundLineIds = null)
-        templateNameDialogState = PositionTemplateNameDialogState(lineIds = foundLineIds)
+        templateNameDialogState = PositionTemplateNameDialogState(
+            lineIds = foundLineIds,
+            templateName = defaultTemplateName,
+        )
     }
 
     fun createTemplateFromFoundLines() {
@@ -337,8 +363,11 @@ fun PositionSearchScreenContainer(
             if (templateId != null) {
                 uiState = uiState.copy(
                     infoDialog = PositionSearchInfoDialog(
-                        title = "Template Created",
-                        message = "Template ID: $templateId\nLines added: ${currentDialogState.lineIds.size}"
+                        title = templateCreatedTitle,
+                        message = templateCreatedMessageFormat.format(
+                            templateId,
+                            currentDialogState.lineIds.size,
+                        )
                     ),
                     fenError = null
                 )
@@ -347,8 +376,8 @@ fun PositionSearchScreenContainer(
 
             uiState = uiState.copy(
                 infoDialog = PositionSearchInfoDialog(
-                    title = "Template Error",
-                    message = "Found lines could not be saved as a template."
+                    title = templateErrorTitle,
+                    message = templateErrorMessage
                 ),
                 fenError = null
             )
@@ -367,18 +396,18 @@ fun PositionSearchScreenContainer(
         }
 
         if (result is SaveSavedSearchPositionResult.DuplicateName) {
-            return "Position name already exists."
+            return duplicateNameMessage
         }
 
         if (result is SaveSavedSearchPositionResult.DuplicateSearchFen) {
-            return "This search position has already been saved."
+            return duplicateSearchFenMessage
         }
 
         if (result is SaveSavedSearchPositionResult.DuplicateFullFen) {
-            return "This exact position has already been saved."
+            return duplicateFullFenMessage
         }
 
-        return "Failed to save position."
+        return failedSavePositionMessage
     }
 
     LaunchedEffect(uiState.selectedSide) {
@@ -502,7 +531,7 @@ fun PositionSearchScreenContainer(
                     if (currentSaveDialogState != null) {
                         val trimmedName = currentSaveDialogState.positionName.trim()
                         if (trimmedName.isBlank()) {
-                            updateSaveDialogError("Position name is required.")
+                            updateSaveDialogError(positionNameRequiredMessage)
                         } else {
                             scope.launch {
                                 if (!applyPositionSearchFen(uiState.fenText)) {
@@ -527,8 +556,11 @@ fun PositionSearchScreenContainer(
                                 saveDialogState = null
                                 uiState = uiState.copy(
                                     infoDialog = PositionSearchInfoDialog(
-                                        title = "Position Saved",
-                                        message = "Position \"$trimmedName\" saved.\nID: $savedPositionId"
+                                        title = positionSavedTitle,
+                                        message = positionSavedMessageFormat.format(
+                                            trimmedName,
+                                            savedPositionId,
+                                        )
                                     ),
                                     fenError = null
                                 )
@@ -550,22 +582,26 @@ fun PositionSearchScreenContainer(
                                     allLinesById[lineId]?.let { OneLineTrainingData(lineId = lineId, weight = 1) }
                                 }
                                 screenContext.inDbProvider.createTrainingService().createTrainingFromLines(
-                                    name = "Games from position",
+                                    name = simpleTrainingName,
                                     lines = trainingLines,
                                 )
                             }
                             uiState = if (trainingId != null) {
                                 uiState.copy(
                                     infoDialog = PositionSearchInfoDialog(
-                                        title = "Training Created",
-                                        message = "Training created with ${foundLineIds.size} lines."
+                                        title = trainingCreatedTitle,
+                                        message = resources.getQuantityString(
+                                            R.plurals.position_search_training_created_message,
+                                            foundLineIds.size,
+                                            foundLineIds.size,
+                                        )
                                     )
                                 )
                             } else {
                                 uiState.copy(
                                     infoDialog = PositionSearchInfoDialog(
-                                        title = "Training Error",
-                                        message = "Found lines could not be saved as a training."
+                                        title = trainingErrorTitle,
+                                        message = trainingErrorMessage
                                     )
                                 )
                             }
@@ -577,8 +613,8 @@ fun PositionSearchScreenContainer(
                             lineIds = foundLineIds,
                             backTarget = ScreenType.PositionSearch,
                             initialTrainingName = null,
-                            screenTitle = "Create Training From Position",
-                            linesCountLabel = "Lines found for position",
+                            screenTitle = createTrainingScreenTitle,
+                            linesCountLabel = linesFoundCountLabel,
                         )
                     )
                 },
@@ -643,7 +679,7 @@ private fun PositionSearchScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             AppTopBar(
-                title = "Position Search",
+                title = stringResource(R.string.position_search_title),
                 onBackClick = navigation.onBackClick,
                 actions = {
                     HomeIconButton(onClick = navigation.onHomeClick)
@@ -651,14 +687,14 @@ private fun PositionSearchScreen(
                     IconButton(onClick = actions.topBar.onSavePositionClick) {
                         IconMd(
                             imageVector = Icons.Default.Save,
-                            contentDescription = "Save",
+                            contentDescription = stringResource(R.string.position_search_save_content_description),
                             tint = TrainingAccentTeal,
                         )
                     }
                     IconButton(onClick = actions.topBar.onFindLinesClick) {
                         IconMd(
                             imageVector = Icons.Default.Search,
-                            contentDescription = "Find Lines",
+                            contentDescription = stringResource(R.string.position_search_find_lines_content_description),
                             tint = TrainingTextPrimary,
                         )
                     }
@@ -692,10 +728,10 @@ private fun PositionSearchScreen(
 
             item {
                 PasteInputBlock(
-                    title = "FEN",
+                    title = stringResource(R.string.position_search_fen_label),
                     text = state.search.fenText,
                     onTextChange = actions.position.onFenTextChange,
-                    placeholder = "Paste FEN string here...",
+                    placeholder = stringResource(R.string.position_search_fen_placeholder),
                     minLines = 3
                 )
             }
@@ -746,7 +782,7 @@ private fun RenderPositionSearchFenError(
     }
 
     AppMessageDialog(
-        title = "Invalid FEN",
+        title = stringResource(R.string.position_search_invalid_fen_title),
         message = fenError,
         onDismiss = onDismiss
     )
@@ -863,63 +899,84 @@ private fun PositionSearchBoardControlsBar(
     onForwardClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val whiteLabel = stringResource(R.string.position_search_side_white)
+    val blackLabel = stringResource(R.string.position_search_side_black)
+    val resetLabel = stringResource(R.string.common_reset)
+    val clearLabel = stringResource(R.string.position_search_clear)
+    val backLabel = stringResource(R.string.common_back)
+    val forwardLabel = stringResource(R.string.common_forward)
+
     BoardActionNavigationBar(
         modifier = modifier,
         maxVisibleItems = 6,
         items = EditableLineSide.entries.map { side ->
+            val sideLabel = if (side == EditableLineSide.AS_WHITE) whiteLabel else blackLabel
             BoardActionNavigationItem(
-                label = if (side == EditableLineSide.AS_WHITE) "White" else "Black",
+                label = sideLabel,
                 selected = side == selectedSide,
                 onClick = { onSideSelected(side) },
             ) {
                 PositionSearchSideIcon(
                     side = side,
                     selected = side == selectedSide,
+                    contentDescription = sideLabel,
                 )
             }
         } + listOf(
             BoardActionNavigationItem(
-                label = "Reset",
+                label = resetLabel,
                 modifier = Modifier.testTag(PositionSearchInitialPositionTestTag),
                 onClick = onResetClick,
             ) {
                 IconMd(
                     imageVector = Icons.Filled.Refresh,
-                    contentDescription = "Initial position",
+                    contentDescription = stringResource(
+                        R.string.position_search_initial_position_content_description
+                    ),
                     tint = BottomBarContentColor,
                 )
             },
             BoardActionNavigationItem(
-                label = "Clear",
+                label = clearLabel,
                 modifier = Modifier.testTag(PositionSearchClearBoardTestTag),
                 onClick = onClearBoardClick,
             ) {
                 IconMd(
                     imageVector = Icons.Filled.Delete,
-                    contentDescription = "Clear board",
+                    contentDescription = stringResource(
+                        R.string.position_search_clear_board_content_description
+                    ),
                     tint = BottomBarContentColor,
                 )
             },
             BoardActionNavigationItem(
-                label = "Back",
+                label = backLabel,
                 enabled = canGoBack,
                 onClick = onBackClick,
             ) {
                 IconMd(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                    contentDescription = "Back",
-                    tint = if (canGoBack) BottomBarContentColor else BottomBarContentColor.copy(alpha = 0.5f),
+                    contentDescription = backLabel,
+                    tint = if (canGoBack) {
+                        BottomBarContentColor
+                    } else {
+                        BottomBarContentColor.copy(alpha = 0.5f)
+                    },
                 )
             },
             BoardActionNavigationItem(
-                label = "Forward",
+                label = forwardLabel,
                 enabled = canGoForward,
                 onClick = onForwardClick,
             ) {
                 IconMd(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = "Forward",
-                    tint = if (canGoForward) BottomBarContentColor else BottomBarContentColor.copy(alpha = 0.5f),
+                    contentDescription = forwardLabel,
+                    tint = if (canGoForward) {
+                        BottomBarContentColor
+                    } else {
+                        BottomBarContentColor.copy(alpha = 0.5f)
+                    },
                 )
             },
         ),
@@ -930,11 +987,12 @@ private fun PositionSearchBoardControlsBar(
 private fun PositionSearchSideIcon(
     side: EditableLineSide,
     selected: Boolean,
+    contentDescription: String,
     modifier: Modifier = Modifier,
 ) {
     Icon(
         painter = painterResource(R.drawable.ic_king),
-        contentDescription = side.toDisplayText(),
+        contentDescription = contentDescription,
         tint = if (selected) TrainingAccentTeal else BottomBarContentColor,
         modifier = modifier.size(AppIconSizes.Lg),
     )

@@ -34,7 +34,8 @@ fun AppMessageDialog(
     onConfirm: (() -> Unit)? = null,
     dismissText: String? = null,
     onDismissClick: (() -> Unit)? = null,
-    actions: List<AppMessageDialogAction>? = null
+    actions: List<AppMessageDialogAction>? = null,
+    messageModifier: Modifier = Modifier,
 ) {
     @Composable
     fun RenderMessageDialogConfirmButton() {
@@ -110,7 +111,7 @@ fun AppMessageDialog(
             SectionTitleText(text = title)
         },
         text = {
-            BodySecondaryText(text = message)
+            BodySecondaryText(text = message, modifier = messageModifier)
         },
         confirmButton = {
             RenderMessageDialogConfirmButton()

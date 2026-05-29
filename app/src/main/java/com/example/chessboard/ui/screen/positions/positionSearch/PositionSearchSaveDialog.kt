@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.example.chessboard.R
 import com.example.chessboard.ui.PositionSearchSaveNameFieldTestTag
 import com.example.chessboard.ui.components.AppTextField
 import com.example.chessboard.ui.components.BodySecondaryText
@@ -38,18 +40,18 @@ internal fun RenderPositionSearchSaveDialog(
     AlertDialog(
         onDismissRequest = actions.onDismiss,
         title = {
-            ScreenTitleText(text = "Save Position")
+            ScreenTitleText(text = stringResource(R.string.position_search_save_position_title))
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)) {
                 BodySecondaryText(
-                    text = "Enter a name for this position."
+                    text = stringResource(R.string.position_search_save_position_prompt)
                 )
                 AppTextField(
                     value = currentState.positionName,
                     onValueChange = actions.onPositionNameChange,
-                    label = "Position Name",
-                    placeholder = "e.g., Carlsbad Structure",
+                    label = stringResource(R.string.position_search_position_name_label),
+                    placeholder = stringResource(R.string.position_search_position_name_placeholder),
                     isError = currentState.errorMessage != null,
                     inputTestTag = PositionSearchSaveNameFieldTestTag
                 )
@@ -63,13 +65,13 @@ internal fun RenderPositionSearchSaveDialog(
         },
         confirmButton = {
             PrimaryButton(
-                text = "Save",
+                text = stringResource(R.string.position_search_save_action),
                 onClick = actions.onConfirm
             )
         },
         dismissButton = {
             TextButton(onClick = actions.onDismiss) {
-                CardMetaText(text = "Cancel")
+                CardMetaText(text = stringResource(R.string.common_cancel))
             }
         },
         containerColor = Background.ScreenDark,

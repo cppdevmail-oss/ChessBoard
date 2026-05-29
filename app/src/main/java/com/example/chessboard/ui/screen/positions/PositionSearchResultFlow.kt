@@ -13,10 +13,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.example.chessboard.R
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.ui.PositionTemplateNameConfirmTestTag
 import com.example.chessboard.service.OneLineTrainingData
 import com.example.chessboard.ui.PositionSearchResultShowLinesActionTestTag
+import com.example.chessboard.ui.PositionSearchResultMessageTestTag
 import com.example.chessboard.ui.PositionSearchResultTemplateActionTestTag
 import com.example.chessboard.ui.PositionSearchResultTrainingActionTestTag
 import com.example.chessboard.ui.components.AppTextField
@@ -69,15 +73,19 @@ internal fun RenderPositionSearchResultDialog(
             title = resolveFoundLineIdsTitle(foundLineIds),
             message = resolveFoundLineIdsMessage(foundLineIds),
             onDismiss = actions.onDismiss,
+            messageModifier = Modifier.testTag(PositionSearchResultMessageTestTag),
         )
         return
     }
 
+    val showLinesText = stringResource(R.string.position_search_result_show_lines_action)
+    val templateText = stringResource(R.string.position_search_result_template_action)
+    val trainingText = stringResource(R.string.position_search_result_training_action)
     val resultActions = buildList {
         actions.onShowLinesClick?.let { onShowLinesClick ->
             add(
                 AppMessageDialogAction(
-                    text = "Show Lines",
+                    text = showLinesText,
                     onClick = onShowLinesClick,
                     testTag = PositionSearchResultShowLinesActionTestTag,
                 )
@@ -86,7 +94,7 @@ internal fun RenderPositionSearchResultDialog(
         if (actions.showTemplateAction) {
             add(
                 AppMessageDialogAction(
-                    text = "Template",
+                    text = templateText,
                     onClick = actions.onCreateTemplateClick,
                     testTag = PositionSearchResultTemplateActionTestTag,
                 )
@@ -94,7 +102,7 @@ internal fun RenderPositionSearchResultDialog(
         }
         add(
             AppMessageDialogAction(
-                text = "Training",
+                text = trainingText,
                 onClick = actions.onCreateTrainingClick,
                 testTag = PositionSearchResultTrainingActionTestTag,
             )
@@ -106,6 +114,7 @@ internal fun RenderPositionSearchResultDialog(
         message = resolveFoundLineIdsMessage(foundLineIds),
         onDismiss = actions.onDismiss,
         actions = resultActions,
+        messageModifier = Modifier.testTag(PositionSearchResultMessageTestTag),
     )
 }
 
@@ -146,50 +155,56 @@ private fun RenderPositionTemplateNameDialog(
         onDismissRequest = onDismiss,
         containerColor = Background.ScreenDark,
         title = {
-            ScreenTitleText(text = "New Template")
+            ScreenTitleText(text = stringResource(R.string.position_search_new_template_title))
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)) {
                 BodySecondaryText(
-                    text = "Name the template created from the matched lines."
+                    text = stringResource(R.string.position_search_template_name_prompt)
                 )
                 AppTextField(
                     value = currentState.templateName,
                     onValueChange = onTemplateNameChange,
-                    label = "Template Name",
-                    placeholder = PositionTemplateDefaultName,
+                    label = stringResource(R.string.position_search_template_name_label),
+                    placeholder = stringResource(R.string.position_search_template_default_name),
                 )
             }
         },
         confirmButton = {
             PrimaryButton(
-                text = "Template",
+                text = stringResource(R.string.position_search_result_template_action),
                 onClick = onConfirm,
                 modifier = Modifier.testTag(PositionTemplateNameConfirmTestTag),
             )
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                CardMetaText(text = "Cancel")
+                CardMetaText(text = stringResource(R.string.common_cancel))
             }
         },
     )
 }
 
+@Composable
 private fun resolveFoundLineIdsTitle(foundLineIds: List<Long>): String {
     if (foundLineIds.isEmpty()) {
-        return "Lines Not Found"
+        return stringResource(R.string.position_search_lines_not_found_title)
     }
 
-    return "Lines Found"
+    return stringResource(R.string.position_search_lines_found_title)
 }
 
+@Composable
 private fun resolveFoundLineIdsMessage(foundLineIds: List<Long>): String {
     if (foundLineIds.isEmpty()) {
-        return "No saved lines contain this position."
+        return stringResource(R.string.position_search_no_lines_found_message)
     }
 
-    return "${foundLineIds.size} saved lines match this position. Choose what to create from them."
+    return pluralStringResource(
+        R.plurals.position_search_found_lines_message,
+        foundLineIds.size,
+        foundLineIds.size,
+    )
 }
 
 private fun resolvePositionTemplateName(templateName: String): String {

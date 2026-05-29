@@ -7,6 +7,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.example.chessboard.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -46,7 +48,7 @@ private fun PositionSearchSettingsScreen(
     modifier: Modifier = Modifier
 ) {
     AppSettingsScaffold(
-        title = "Position Search Settings",
+        title = stringResource(R.string.position_search_settings_title),
         selectedNavItem = ScreenType.PositionSearch,
         onBackClick = onBackClick,
         onNavigate = onNavigate,
@@ -57,7 +59,7 @@ private fun PositionSearchSettingsScreen(
             contentPadding = PaddingValues(0.dp),
         ) {
             Text(
-                text = "CASTLING",
+                text = stringResource(R.string.position_search_castling_section),
                 modifier = Modifier.padding(
                     start = AppDimens.spaceLg,
                     top = AppDimens.spaceLg,
