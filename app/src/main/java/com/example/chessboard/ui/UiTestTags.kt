@@ -17,6 +17,7 @@ const val SavedPositionsSearchNameFieldTestTag = "saved-positions-search-name-fi
 const val PositionSearchResultTemplateActionTestTag = "position-search-result-template-action"
 const val PositionSearchResultTrainingActionTestTag = "position-search-result-training-action"
 const val PositionSearchResultShowLinesActionTestTag = "position-search-result-show-lines-action"
+const val PositionSearchResultMessageTestTag = "position-search-result-message"
 const val PositionTemplateNameConfirmTestTag = "position-template-name-confirm"
 const val SavedPositionsDeviationDialogActionTestTag = "saved-positions-deviation-dialog-action"
 const val SavedPositionsDeviationSearchDialogTestTag = "saved-positions-deviation-search-dialog"

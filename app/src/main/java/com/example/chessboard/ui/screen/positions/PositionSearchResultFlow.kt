@@ -17,6 +17,7 @@ import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.ui.PositionTemplateNameConfirmTestTag
 import com.example.chessboard.service.OneLineTrainingData
 import com.example.chessboard.ui.PositionSearchResultShowLinesActionTestTag
+import com.example.chessboard.ui.PositionSearchResultMessageTestTag
 import com.example.chessboard.ui.PositionSearchResultTemplateActionTestTag
 import com.example.chessboard.ui.PositionSearchResultTrainingActionTestTag
 import com.example.chessboard.ui.components.AppTextField
@@ -53,11 +54,14 @@ internal fun RenderPositionSearchResultDialog(
     foundLineIds: List<Long>?,
     actions: PositionSearchResultDialogActions,
 ) {
+    val strings = positionSearchResultStrings()
+
     RenderPositionTemplateNameDialog(
         dialogState = actions.templateNameDialogState,
         onTemplateNameChange = actions.onTemplateNameChange,
         onDismiss = actions.onTemplateNameDismiss,
         onConfirm = actions.onConfirmTemplateName,
+        strings = strings,
     )
 
     if (foundLineIds == null) {
@@ -66,9 +70,10 @@ internal fun RenderPositionSearchResultDialog(
 
     if (foundLineIds.isEmpty()) {
         AppMessageDialog(
-            title = resolveFoundLineIdsTitle(foundLineIds),
-            message = resolveFoundLineIdsMessage(foundLineIds),
+            title = resolveFoundLineIdsTitle(foundLineIds, strings),
+            message = resolveFoundLineIdsMessage(foundLineIds, strings),
             onDismiss = actions.onDismiss,
+            messageModifier = Modifier.testTag(PositionSearchResultMessageTestTag),
         )
         return
     }
@@ -77,7 +82,7 @@ internal fun RenderPositionSearchResultDialog(
         actions.onShowLinesClick?.let { onShowLinesClick ->
             add(
                 AppMessageDialogAction(
-                    text = "Show Lines",
+                    text = strings.showLinesAction,
                     onClick = onShowLinesClick,
                     testTag = PositionSearchResultShowLinesActionTestTag,
                 )
@@ -86,7 +91,7 @@ internal fun RenderPositionSearchResultDialog(
         if (actions.showTemplateAction) {
             add(
                 AppMessageDialogAction(
-                    text = "Template",
+                    text = strings.templateAction,
                     onClick = actions.onCreateTemplateClick,
                     testTag = PositionSearchResultTemplateActionTestTag,
                 )
@@ -94,7 +99,7 @@ internal fun RenderPositionSearchResultDialog(
         }
         add(
             AppMessageDialogAction(
-                text = "Training",
+                text = strings.trainingAction,
                 onClick = actions.onCreateTrainingClick,
                 testTag = PositionSearchResultTrainingActionTestTag,
             )
@@ -102,10 +107,11 @@ internal fun RenderPositionSearchResultDialog(
     }
 
     AppMessageDialog(
-        title = resolveFoundLineIdsTitle(foundLineIds),
-        message = resolveFoundLineIdsMessage(foundLineIds),
+        title = resolveFoundLineIdsTitle(foundLineIds, strings),
+        message = resolveFoundLineIdsMessage(foundLineIds, strings),
         onDismiss = actions.onDismiss,
         actions = resultActions,
+        messageModifier = Modifier.testTag(PositionSearchResultMessageTestTag),
     )
 }
 
@@ -139,6 +145,7 @@ private fun RenderPositionTemplateNameDialog(
     onTemplateNameChange: (String) -> Unit,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
+    strings: PositionSearchResultStrings,
 ) {
     val currentState = dialogState ?: return
 
@@ -146,50 +153,56 @@ private fun RenderPositionTemplateNameDialog(
         onDismissRequest = onDismiss,
         containerColor = Background.ScreenDark,
         title = {
-            ScreenTitleText(text = "New Template")
+            ScreenTitleText(text = strings.newTemplateTitle)
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)) {
                 BodySecondaryText(
-                    text = "Name the template created from the matched lines."
+                    text = strings.templateNamePrompt
                 )
                 AppTextField(
                     value = currentState.templateName,
                     onValueChange = onTemplateNameChange,
-                    label = "Template Name",
-                    placeholder = PositionTemplateDefaultName,
+                    label = strings.templateNameLabel,
+                    placeholder = strings.templateDefaultName,
                 )
             }
         },
         confirmButton = {
             PrimaryButton(
-                text = "Template",
+                text = strings.templateAction,
                 onClick = onConfirm,
                 modifier = Modifier.testTag(PositionTemplateNameConfirmTestTag),
             )
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                CardMetaText(text = "Cancel")
+                CardMetaText(text = strings.cancelAction)
             }
         },
     )
 }
 
-private fun resolveFoundLineIdsTitle(foundLineIds: List<Long>): String {
+private fun resolveFoundLineIdsTitle(
+    foundLineIds: List<Long>,
+    strings: PositionSearchResultStrings,
+): String {
     if (foundLineIds.isEmpty()) {
-        return "Lines Not Found"
+        return strings.linesNotFoundTitle
     }
 
-    return "Lines Found"
+    return strings.linesFoundTitle
 }
 
-private fun resolveFoundLineIdsMessage(foundLineIds: List<Long>): String {
+private fun resolveFoundLineIdsMessage(
+    foundLineIds: List<Long>,
+    strings: PositionSearchResultStrings,
+): String {
     if (foundLineIds.isEmpty()) {
-        return "No saved lines contain this position."
+        return strings.noLinesFoundMessage
     }
 
-    return "${foundLineIds.size} saved lines match this position. Choose what to create from them."
+    return strings.foundLinesMessage(foundLineIds.size)
 }
 
 private fun resolvePositionTemplateName(templateName: String): String {

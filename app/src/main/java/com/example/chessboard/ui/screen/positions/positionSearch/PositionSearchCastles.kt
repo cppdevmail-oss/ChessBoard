@@ -14,6 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import com.example.chessboard.R
 import com.example.chessboard.ui.PositionSearchBlackLongCastleTestTag
 import com.example.chessboard.ui.PositionSearchBlackShortCastleTestTag
 import com.example.chessboard.ui.PositionSearchWhiteLongCastleTestTag
@@ -76,7 +78,10 @@ internal fun PositionSearchCastlesSection(
     ScreenSection(modifier = modifier) {
         Column(modifier = Modifier.fillMaxWidth()) {
             if (showTitle) {
-                SectionTitleText(text = "Castling", color = TextColor.Secondary)
+                SectionTitleText(
+                    text = stringResource(R.string.position_search_castling_title),
+                    color = TextColor.Secondary,
+                )
                 Spacer(modifier = Modifier.height(AppDimens.spaceMd))
             }
 
