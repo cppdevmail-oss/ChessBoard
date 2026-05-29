@@ -13,9 +13,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
-import com.example.chessboard.R
 import com.example.chessboard.repository.DatabaseProvider
 import com.example.chessboard.ui.PositionTemplateNameConfirmTestTag
 import com.example.chessboard.service.OneLineTrainingData
@@ -57,11 +54,14 @@ internal fun RenderPositionSearchResultDialog(
     foundLineIds: List<Long>?,
     actions: PositionSearchResultDialogActions,
 ) {
+    val strings = positionSearchResultStrings()
+
     RenderPositionTemplateNameDialog(
         dialogState = actions.templateNameDialogState,
         onTemplateNameChange = actions.onTemplateNameChange,
         onDismiss = actions.onTemplateNameDismiss,
         onConfirm = actions.onConfirmTemplateName,
+        strings = strings,
     )
 
     if (foundLineIds == null) {
@@ -70,22 +70,19 @@ internal fun RenderPositionSearchResultDialog(
 
     if (foundLineIds.isEmpty()) {
         AppMessageDialog(
-            title = resolveFoundLineIdsTitle(foundLineIds),
-            message = resolveFoundLineIdsMessage(foundLineIds),
+            title = resolveFoundLineIdsTitle(foundLineIds, strings),
+            message = resolveFoundLineIdsMessage(foundLineIds, strings),
             onDismiss = actions.onDismiss,
             messageModifier = Modifier.testTag(PositionSearchResultMessageTestTag),
         )
         return
     }
 
-    val showLinesText = stringResource(R.string.position_search_result_show_lines_action)
-    val templateText = stringResource(R.string.position_search_result_template_action)
-    val trainingText = stringResource(R.string.position_search_result_training_action)
     val resultActions = buildList {
         actions.onShowLinesClick?.let { onShowLinesClick ->
             add(
                 AppMessageDialogAction(
-                    text = showLinesText,
+                    text = strings.showLinesAction,
                     onClick = onShowLinesClick,
                     testTag = PositionSearchResultShowLinesActionTestTag,
                 )
@@ -94,7 +91,7 @@ internal fun RenderPositionSearchResultDialog(
         if (actions.showTemplateAction) {
             add(
                 AppMessageDialogAction(
-                    text = templateText,
+                    text = strings.templateAction,
                     onClick = actions.onCreateTemplateClick,
                     testTag = PositionSearchResultTemplateActionTestTag,
                 )
@@ -102,7 +99,7 @@ internal fun RenderPositionSearchResultDialog(
         }
         add(
             AppMessageDialogAction(
-                text = trainingText,
+                text = strings.trainingAction,
                 onClick = actions.onCreateTrainingClick,
                 testTag = PositionSearchResultTrainingActionTestTag,
             )
@@ -110,8 +107,8 @@ internal fun RenderPositionSearchResultDialog(
     }
 
     AppMessageDialog(
-        title = resolveFoundLineIdsTitle(foundLineIds),
-        message = resolveFoundLineIdsMessage(foundLineIds),
+        title = resolveFoundLineIdsTitle(foundLineIds, strings),
+        message = resolveFoundLineIdsMessage(foundLineIds, strings),
         onDismiss = actions.onDismiss,
         actions = resultActions,
         messageModifier = Modifier.testTag(PositionSearchResultMessageTestTag),
@@ -148,6 +145,7 @@ private fun RenderPositionTemplateNameDialog(
     onTemplateNameChange: (String) -> Unit,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
+    strings: PositionSearchResultStrings,
 ) {
     val currentState = dialogState ?: return
 
@@ -155,56 +153,56 @@ private fun RenderPositionTemplateNameDialog(
         onDismissRequest = onDismiss,
         containerColor = Background.ScreenDark,
         title = {
-            ScreenTitleText(text = stringResource(R.string.position_search_new_template_title))
+            ScreenTitleText(text = strings.newTemplateTitle)
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(AppDimens.spaceMd)) {
                 BodySecondaryText(
-                    text = stringResource(R.string.position_search_template_name_prompt)
+                    text = strings.templateNamePrompt
                 )
                 AppTextField(
                     value = currentState.templateName,
                     onValueChange = onTemplateNameChange,
-                    label = stringResource(R.string.position_search_template_name_label),
-                    placeholder = stringResource(R.string.position_search_template_default_name),
+                    label = strings.templateNameLabel,
+                    placeholder = strings.templateDefaultName,
                 )
             }
         },
         confirmButton = {
             PrimaryButton(
-                text = stringResource(R.string.position_search_result_template_action),
+                text = strings.templateAction,
                 onClick = onConfirm,
                 modifier = Modifier.testTag(PositionTemplateNameConfirmTestTag),
             )
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                CardMetaText(text = stringResource(R.string.common_cancel))
+                CardMetaText(text = strings.cancelAction)
             }
         },
     )
 }
 
-@Composable
-private fun resolveFoundLineIdsTitle(foundLineIds: List<Long>): String {
+private fun resolveFoundLineIdsTitle(
+    foundLineIds: List<Long>,
+    strings: PositionSearchResultStrings,
+): String {
     if (foundLineIds.isEmpty()) {
-        return stringResource(R.string.position_search_lines_not_found_title)
+        return strings.linesNotFoundTitle
     }
 
-    return stringResource(R.string.position_search_lines_found_title)
+    return strings.linesFoundTitle
 }
 
-@Composable
-private fun resolveFoundLineIdsMessage(foundLineIds: List<Long>): String {
+private fun resolveFoundLineIdsMessage(
+    foundLineIds: List<Long>,
+    strings: PositionSearchResultStrings,
+): String {
     if (foundLineIds.isEmpty()) {
-        return stringResource(R.string.position_search_no_lines_found_message)
+        return strings.noLinesFoundMessage
     }
 
-    return pluralStringResource(
-        R.plurals.position_search_found_lines_message,
-        foundLineIds.size,
-        foundLineIds.size,
-    )
+    return strings.foundLinesMessage(foundLineIds.size)
 }
 
 private fun resolvePositionTemplateName(templateName: String): String {
