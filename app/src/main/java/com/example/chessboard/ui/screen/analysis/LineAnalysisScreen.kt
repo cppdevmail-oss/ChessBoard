@@ -37,6 +37,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.chessboard.R
 import com.example.chessboard.boardmodel.LineController
@@ -203,6 +204,7 @@ internal fun LineAnalysisScreen(
     val moveTreeMaxHeight = LocalConfiguration.current.screenHeightDp.dp / 3
     val clipboardManager = LocalClipboard.current
     val coroutineScope = rememberCoroutineScope()
+    val strings = lineAnalysisStrings()
     val canCopyAnalysisPgn = variationLines.isNotEmpty()
     var isBuildingAnalysisPgn by remember { mutableStateOf(false) }
     var showPgnCopiedDialog by remember { mutableStateOf(false) }
@@ -228,7 +230,7 @@ internal fun LineAnalysisScreen(
                 clipboardManager.setClipEntry(
                     ClipEntry(
                         ClipData.newPlainText(
-                            "Analysis PGN",
+                            strings.pgnClipLabel,
                             analysisPgn,
                         )
                     )
@@ -244,8 +246,8 @@ internal fun LineAnalysisScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             AppTopBar(
-                title = "Analyze Line",
-                subtitle = "Explore lines without saving",
+                title = strings.title,
+                subtitle = strings.subtitle,
                 onBackClick = onBackClick,
                 actions = {
                     HomeIconButton(onClick = onHomeClick)
@@ -255,8 +257,12 @@ internal fun LineAnalysisScreen(
                     ) {
                         IconMd(
                             imageVector = Icons.Default.FileDownload,
-                            contentDescription = "Copy analysis PGN",
-                            tint = if (canCopyAnalysisPgn) BottomBarContentColor else BottomBarContentColor.copy(alpha = 0.5f),
+                            contentDescription = strings.copyPgnContentDescription,
+                            tint = if (canCopyAnalysisPgn) {
+                                BottomBarContentColor
+                            } else {
+                                BottomBarContentColor.copy(alpha = 0.5f)
+                            },
                         )
                     }
                     IconButton(
@@ -265,7 +271,7 @@ internal fun LineAnalysisScreen(
                     ) {
                         IconMd(
                             imageVector = Icons.Default.Search,
-                            contentDescription = "Search by position",
+                            contentDescription = strings.searchByPositionContentDescription,
                         )
                     }
                 },
@@ -315,24 +321,24 @@ internal fun LineAnalysisScreen(
 
     if (showPgnCopiedDialog) {
         AppMessageDialog(
-            title = "PGN copied",
-            message = "Analysis PGN was copied to the clipboard.",
+            title = strings.pgnCopiedTitle,
+            message = strings.pgnCopiedMessage,
             onDismiss = { showPgnCopiedDialog = false },
         )
     }
 
     if (showPgnUnavailableDialog) {
         AppMessageDialog(
-            title = "PGN unavailable",
-            message = "Analysis PGN could not be built.",
+            title = strings.pgnUnavailableTitle,
+            message = strings.pgnUnavailableMessage,
             onDismiss = { showPgnUnavailableDialog = false },
         )
     }
 
     if (isBuildingAnalysisPgn) {
         AppLoadingDialog(
-            title = "Building PGN",
-            message = "Preparing analysis PGN...",
+            title = strings.buildingPgnTitle,
+            message = strings.buildingPgnMessage,
         )
     }
 
@@ -349,56 +355,100 @@ private fun LineAnalysisBoardControlsBar(
     onResetMovesClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    data class ControlsStrings(
+        val whiteSideLabel: String,
+        val blackSideLabel: String,
+        val resetLabel: String,
+        val backLabel: String,
+        val forwardLabel: String,
+        val previousMoveContentDescription: String,
+        val nextMoveContentDescription: String,
+    ) {
+        fun sideLabel(side: EditableLineSide): String {
+            if (side == EditableLineSide.AS_BLACK) {
+                return blackSideLabel
+            }
+
+            return whiteSideLabel
+        }
+    }
+
+    val strings = ControlsStrings(
+        whiteSideLabel = stringResource(R.string.line_analysis_side_white),
+        blackSideLabel = stringResource(R.string.line_analysis_side_black),
+        resetLabel = stringResource(R.string.common_reset),
+        backLabel = stringResource(R.string.common_back),
+        forwardLabel = stringResource(R.string.common_forward),
+        previousMoveContentDescription = stringResource(
+            R.string.line_analysis_previous_move_content_description
+        ),
+        nextMoveContentDescription = stringResource(
+            R.string.line_analysis_next_move_content_description
+        ),
+    )
+
     BoardActionNavigationBar(
         modifier = modifier.testTag(LineAnalysisMoveControlsTestTag),
         items = EditableLineSide.entries.map { side ->
             BoardActionNavigationItem(
-                label = if (side == EditableLineSide.AS_WHITE) "White" else "Black",
+                label = strings.sideLabel(side),
                 selected = side == selectedSide,
                 onClick = { onSideSelected(side) },
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_king),
-                    contentDescription = side.toDisplayText(),
+                    contentDescription = strings.sideLabel(side),
                     tint = if (side == selectedSide) TrainingAccentTeal else BottomBarContentColor,
                     modifier = Modifier.size(AppIconSizes.Lg),
                 )
             }
         } + listOf(
             BoardActionNavigationItem(
-                label = "Reset",
+                label = strings.resetLabel,
                 enabled = canUndo,
                 modifier = Modifier.testTag(LineAnalysisResetMovesTestTag),
                 onClick = onResetMovesClick,
             ) {
                 IconMd(
                     imageVector = Icons.Default.Refresh,
-                    contentDescription = "Reset",
-                    tint = if (canUndo) BottomBarContentColor else BottomBarContentColor.copy(alpha = 0.5f),
+                    contentDescription = strings.resetLabel,
+                    tint = if (canUndo) {
+                        BottomBarContentColor
+                    } else {
+                        BottomBarContentColor.copy(alpha = 0.5f)
+                    },
                 )
             },
             BoardActionNavigationItem(
-                label = "Back",
+                label = strings.backLabel,
                 enabled = canUndo,
                 modifier = Modifier.testTag(LineAnalysisPreviousMoveTestTag),
                 onClick = onPreviousMoveClick,
             ) {
                 IconMd(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                    contentDescription = "Previous move",
-                    tint = if (canUndo) BottomBarContentColor else BottomBarContentColor.copy(alpha = 0.5f),
+                    contentDescription = strings.previousMoveContentDescription,
+                    tint = if (canUndo) {
+                        BottomBarContentColor
+                    } else {
+                        BottomBarContentColor.copy(alpha = 0.5f)
+                    },
                 )
             },
             BoardActionNavigationItem(
-                label = "Forward",
+                label = strings.forwardLabel,
                 enabled = canRedo,
                 modifier = Modifier.testTag(LineAnalysisNextMoveTestTag),
                 onClick = onNextMoveClick,
             ) {
                 IconMd(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = "Next move",
-                    tint = if (canRedo) BottomBarContentColor else BottomBarContentColor.copy(alpha = 0.5f),
+                    contentDescription = strings.nextMoveContentDescription,
+                    tint = if (canRedo) {
+                        BottomBarContentColor
+                    } else {
+                        BottomBarContentColor.copy(alpha = 0.5f)
+                    },
                 )
             },
         ),
