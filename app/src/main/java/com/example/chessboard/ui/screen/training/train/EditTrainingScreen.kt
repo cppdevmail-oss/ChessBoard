@@ -13,6 +13,7 @@ package com.example.chessboard.ui.screen.training.train
 import com.example.chessboard.ui.screen.training.common.CreateTrainingEditorState
 import com.example.chessboard.ui.screen.training.common.DEFAULT_TRAINING_NAME
 import com.example.chessboard.ui.screen.training.common.TrainingCollectionEditorBarsFactory
+import com.example.chessboard.ui.screen.training.common.trainingCollectionEditorBarStrings
 import com.example.chessboard.ui.screen.training.common.TrainingCollectionEditorScreen
 import com.example.chessboard.ui.screen.training.common.TrainingCollectionEditorStrings
 import com.example.chessboard.ui.screen.training.common.TrainingEditorLineSection
@@ -37,6 +38,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.example.chessboard.R
 import com.example.chessboard.runtimecontext.RuntimeContext
 import com.example.chessboard.runtimecontext.TrainingRuntimeContext
 import com.example.chessboard.entity.LineEntity
@@ -444,7 +447,11 @@ fun EditTrainingScreen(
         hasSelection = selectedLine != null,
         onEditClick = ::openSelectedLineEditor,
         onDeleteClick = ::removeSelectedLine,
-        deleteContentDescription = "Remove line from training",
+        strings = trainingCollectionEditorBarStrings(
+            deleteContentDescription = stringResource(
+                R.string.edit_training_remove_line_content_description,
+            ),
+        ),
         canUndo = canUndo,
         onPrevClick = { boardSession.lineController.undoMove() },
         canRedo = canRedo,

@@ -10,6 +10,7 @@ package com.example.chessboard.ui.screen.training.template
 
 import com.example.chessboard.ui.screen.training.common.CreateTrainingEditorState
 import com.example.chessboard.ui.screen.training.common.TrainingCollectionEditorBarsFactory
+import com.example.chessboard.ui.screen.training.common.trainingCollectionEditorBarStrings
 import com.example.chessboard.ui.screen.training.common.TrainingCollectionEditorScreen
 import com.example.chessboard.ui.screen.training.common.TrainingCollectionEditorStrings
 import com.example.chessboard.ui.screen.training.common.TrainingEditorLineSection
@@ -379,8 +380,10 @@ fun EditTrainingTemplateScreen(
         hasSelection = selectedLine != null,
         onEditClick = ::openSelectedLineEditor,
         onDeleteClick = ::removeSelectedLine,
-        deleteContentDescription = stringResource(
-            R.string.training_template_remove_line_content_description,
+        strings = trainingCollectionEditorBarStrings(
+            deleteContentDescription = stringResource(
+                R.string.training_template_remove_line_content_description,
+            ),
         ),
         canUndo = canUndo,
         onPrevClick = { boardSession.lineController.undoMove() },
