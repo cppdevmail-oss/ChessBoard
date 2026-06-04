@@ -429,6 +429,19 @@
     <string name="statistics_formula_recency_part_description">Recency part = recency weight * min(days since last training, recency days cap).</string>
     <string name="statistics_formula_perfect_penalty_description">Perfect penalty = perfect rate penalty * recent perfect-training rate.</string>
     <string name="statistics_formula_selection_description">Higher scores select lines earlier. Weight thresholds then map the score to weight 1-5.</string>
+    <string name="line_editor_opening_name_label">Opening Name</string>
+    <string name="line_editor_default_opening">Opening</string>
+    <string name="line_editor_side_as_white">As White</string>
+    <string name="line_editor_side_as_black">As Black</string>
+    <string name="line_editor_delete_title">Delete Opening</string>
+    <string name="line_editor_delete_fallback_opening">this opening</string>
+    <string name="line_editor_delete_message">Delete "%1$s"? This cannot be undone.</string>
+    <string name="line_editor_line_actions_content_description">Line actions</string>
+    <string name="line_editor_line_actions_title">Line Actions</string>
+    <string name="line_editor_remove_doubt_action">Remove Doubt</string>
+    <string name="line_editor_doubt_action">Doubt</string>
+    <string name="line_editor_remove_dubious_content_description">Remove dubious mark</string>
+    <string name="line_editor_mark_dubious_content_description">Mark line as dubious</string>
     <string name="line_analysis_title">Analyze Line</string>
     <string name="line_analysis_subtitle">Explore lines without saving</string>
     <string name="line_analysis_copy_pgn_content_description">Copy analysis PGN</string>
