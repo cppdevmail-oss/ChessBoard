@@ -55,6 +55,7 @@ import com.example.chessboard.ui.components.AppConfirmDialog
 import com.example.chessboard.ui.components.AppDivider
 import com.example.chessboard.ui.components.AppIconSizes
 import com.example.chessboard.ui.components.AppScreenScaffold
+import com.example.chessboard.ui.components.AppTextField
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.BoardActionNavigationBar
 import com.example.chessboard.ui.components.BoardActionNavigationItem
@@ -65,7 +66,6 @@ import com.example.chessboard.ui.components.HomeIconButton
 import com.example.chessboard.ui.components.IconMd
 import com.example.chessboard.ui.components.LineMoveTreeSection
 import com.example.chessboard.ui.components.SectionTitleText
-import com.example.chessboard.ui.screen.training.DarkInputField
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.BottomBarContentColor
@@ -397,7 +397,7 @@ fun LineEditorScreen(
                     modifier = Modifier.padding(horizontal = AppDimens.spaceLg, vertical = AppDimens.spaceMd)
                 )
 
-                DarkInputField(
+                AppTextField(
                     value = editedName,
                     onValueChange = { editedName = it },
                     label = stringResource(R.string.line_editor_opening_name_label),
@@ -407,7 +407,7 @@ fun LineEditorScreen(
 
                 Spacer(modifier = Modifier.height(AppDimens.spaceMd))
 
-                DarkInputField(
+                AppTextField(
                     value = editedEco,
                     onValueChange = { editedEco = it },
                     label = stringResource(R.string.create_opening_eco_label),
