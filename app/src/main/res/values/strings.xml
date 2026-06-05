@@ -27,6 +27,7 @@
     <string name="line_move_tree_empty">No moves yet. Import a PGN or add moves on the board.</string>
     <string name="paste_input_from_file">From File</string>
     <string name="common_ok">OK</string>
+    <string name="common_confirm">Confirm</string>
     <string name="common_delete">Delete</string>
     <string name="common_back">Back</string>
     <string name="common_forward">Forward</string>
