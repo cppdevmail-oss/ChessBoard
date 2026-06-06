@@ -11,6 +11,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import com.example.chessboard.R
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import com.example.chessboard.ui.theme.Background
@@ -30,12 +32,66 @@ fun AppMessageDialog(
     message: String,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
-    confirmText: String = "OK",
     onConfirm: (() -> Unit)? = null,
     dismissText: String? = null,
     onDismissClick: (() -> Unit)? = null,
     actions: List<AppMessageDialogAction>? = null,
     messageModifier: Modifier = Modifier,
+) {
+    RenderAppMessageDialog(
+        title = title,
+        message = message,
+        onDismiss = onDismiss,
+        modifier = modifier,
+        confirmText = stringResource(R.string.common_ok),
+        onConfirm = onConfirm,
+        dismissText = dismissText,
+        onDismissClick = onDismissClick,
+        actions = actions,
+        messageModifier = messageModifier,
+    )
+}
+
+/** Displays a standard app dialog for informational messages and simple actions. */
+@Composable
+fun AppMessageDialog(
+    title: String,
+    message: String,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    confirmText: String,
+    onConfirm: (() -> Unit)? = null,
+    dismissText: String? = null,
+    onDismissClick: (() -> Unit)? = null,
+    actions: List<AppMessageDialogAction>? = null,
+    messageModifier: Modifier = Modifier,
+) {
+    RenderAppMessageDialog(
+        title = title,
+        message = message,
+        onDismiss = onDismiss,
+        modifier = modifier,
+        confirmText = confirmText,
+        onConfirm = onConfirm,
+        dismissText = dismissText,
+        onDismissClick = onDismissClick,
+        actions = actions,
+        messageModifier = messageModifier,
+    )
+}
+
+@Composable
+private fun RenderAppMessageDialog(
+    title: String,
+    message: String,
+    onDismiss: () -> Unit,
+    modifier: Modifier,
+    confirmText: String,
+    onConfirm: (() -> Unit)?,
+    dismissText: String?,
+    onDismissClick: (() -> Unit)?,
+    actions: List<AppMessageDialogAction>?,
+    messageModifier: Modifier,
 ) {
     @Composable
     fun RenderMessageDialogConfirmButton() {
@@ -130,10 +186,84 @@ fun AppConfirmDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
     modifier: Modifier = Modifier,
-    confirmText: String = "Confirm",
     confirmButtonModifier: Modifier = Modifier,
-    dismissText: String = "Cancel",
-    isDestructive: Boolean = false
+    isDestructive: Boolean = false,
+) {
+    RenderAppConfirmDialog(
+        title = title,
+        message = message,
+        onDismiss = onDismiss,
+        onConfirm = onConfirm,
+        modifier = modifier,
+        confirmText = stringResource(R.string.common_confirm),
+        confirmButtonModifier = confirmButtonModifier,
+        dismissText = stringResource(R.string.common_cancel),
+        isDestructive = isDestructive,
+    )
+}
+
+/** Displays a standard app confirmation dialog for irreversible or important actions. */
+@Composable
+fun AppConfirmDialog(
+    title: String,
+    message: String,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+    modifier: Modifier = Modifier,
+    confirmText: String,
+    confirmButtonModifier: Modifier = Modifier,
+    isDestructive: Boolean = false,
+) {
+    RenderAppConfirmDialog(
+        title = title,
+        message = message,
+        onDismiss = onDismiss,
+        onConfirm = onConfirm,
+        modifier = modifier,
+        confirmText = confirmText,
+        confirmButtonModifier = confirmButtonModifier,
+        dismissText = stringResource(R.string.common_cancel),
+        isDestructive = isDestructive,
+    )
+}
+
+/** Displays a standard app confirmation dialog for irreversible or important actions. */
+@Composable
+fun AppConfirmDialog(
+    title: String,
+    message: String,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+    modifier: Modifier = Modifier,
+    confirmText: String,
+    confirmButtonModifier: Modifier = Modifier,
+    dismissText: String,
+    isDestructive: Boolean = false,
+) {
+    RenderAppConfirmDialog(
+        title = title,
+        message = message,
+        onDismiss = onDismiss,
+        onConfirm = onConfirm,
+        modifier = modifier,
+        confirmText = confirmText,
+        confirmButtonModifier = confirmButtonModifier,
+        dismissText = dismissText,
+        isDestructive = isDestructive,
+    )
+}
+
+@Composable
+private fun RenderAppConfirmDialog(
+    title: String,
+    message: String,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+    modifier: Modifier,
+    confirmText: String,
+    confirmButtonModifier: Modifier,
+    dismissText: String,
+    isDestructive: Boolean,
 ) {
     AlertDialog(
         modifier = modifier,

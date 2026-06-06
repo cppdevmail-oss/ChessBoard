@@ -48,6 +48,7 @@ import com.example.chessboard.boardmodel.LineController
 import com.example.chessboard.ui.CreateOpeningContentTestTag
 import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.components.AppScreenScaffold
+import com.example.chessboard.ui.components.AppTextField
 import com.example.chessboard.ui.components.AppTopBar
 import com.example.chessboard.ui.components.ChessBoardSection
 import com.example.chessboard.ui.components.HomeIconButton
@@ -56,7 +57,6 @@ import com.example.chessboard.ui.components.PasteInputBlock
 import com.example.chessboard.ui.components.ScreenSection
 import com.example.chessboard.ui.screen.EditableLineSide
 import com.example.chessboard.ui.components.LineMoveTreeSection
-import com.example.chessboard.ui.screen.training.DarkInputField
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 import kotlinx.coroutines.launch
@@ -168,7 +168,7 @@ internal fun CreateOpeningScreen(
                     horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd),
                     verticalAlignment = Alignment.Bottom
                 ) {
-                    DarkInputField(
+                    AppTextField(
                         value = state.openingName,
                         onValueChange = actions.onOpeningNameChange,
                         placeholder = stringResource(R.string.create_opening_name_placeholder),
@@ -177,7 +177,7 @@ internal fun CreateOpeningScreen(
                         focusRequester = nameFocusRequester,
                         modifier = Modifier.weight(1f)
                     )
-                    DarkInputField(
+                    AppTextField(
                         value = state.ecoCode,
                         onValueChange = actions.onEcoCodeChange,
                         placeholder = stringResource(R.string.create_opening_eco_placeholder),
@@ -226,17 +226,4 @@ internal fun CreateOpeningScreen(
             Spacer(modifier = Modifier.height(AppDimens.spaceLg))
         }
     }
-}
-
-internal fun buildImportedLineEventName(
-    baseName: String,
-    index: Int,
-    total: Int
-): String? {
-    val resolvedBaseName = baseName.ifBlank { "Opening" }
-    if (total <= 1 || index == 0) {
-        return resolvedBaseName
-    }
-
-    return "$resolvedBaseName (Line ${index + 1})"
 }
