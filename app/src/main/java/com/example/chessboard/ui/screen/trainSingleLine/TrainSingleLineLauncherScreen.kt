@@ -76,6 +76,7 @@ fun TrainSingleLineLauncherScreenContainer(
     val trainSingleLineService = remember(inDbProvider) {
         inDbProvider.createTrainSingleLineService()
     }
+    val unknownExceptionName = stringResource(R.string.train_single_line_unknown_exception)
     var launchState by remember { mutableStateOf<TrainSingleLineLaunchState>(TrainSingleLineLaunchState.Loading) }
 
     fun clearInvalidTrainingRuntimeState() {
@@ -87,7 +88,11 @@ fun TrainSingleLineLauncherScreenContainer(
         }
     }
 
-    LaunchedEffect(launchRequest.target.trainingId, launchRequest.target.lineId) {
+    LaunchedEffect(
+        launchRequest.target.trainingId,
+        launchRequest.target.lineId,
+        unknownExceptionName,
+    ) {
         launchState = try {
             withContext(Dispatchers.IO) {
                 when (val launchData = trainSingleLineService.getTrainingLineLaunchData(
@@ -142,7 +147,12 @@ fun TrainSingleLineLauncherScreenContainer(
         } catch (error: CancellationException) {
             throw error
         } catch (error: Exception) {
-            TrainSingleLineLaunchState.Failed(formatTrainingLaunchException(error))
+            TrainSingleLineLaunchState.Failed(
+                formatTrainingLaunchException(
+                    error = error,
+                    unknownExceptionName = unknownExceptionName,
+                )
+            )
         }
     }
 
@@ -234,8 +244,13 @@ private fun createTrainingStartFen(
     return board.fen
 }
 
-private fun formatTrainingLaunchException(error: Exception): String {
-    val exceptionName = error::class.qualifiedName ?: error::class.simpleName ?: "Unknown exception"
+private fun formatTrainingLaunchException(
+    error: Exception,
+    unknownExceptionName: String,
+): String {
+    val exceptionName = error::class.qualifiedName
+        ?: error::class.simpleName
+        ?: unknownExceptionName
     if (error.message.isNullOrBlank()) {
         return "$exceptionName\n\n${error.stackTraceToString()}"
     }

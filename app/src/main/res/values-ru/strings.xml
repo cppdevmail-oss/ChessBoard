@@ -615,6 +615,7 @@
     <string name="line_editor_remove_dubious_content_description">Убрать метку сомнения</string>
     <string name="line_editor_mark_dubious_content_description">Пометить как сомнительную</string>
     <string name="train_single_line_launch_failed_title">Ошибка запуска тренировки</string>
+    <string name="train_single_line_unknown_exception">Неизвестная ошибка</string>
     <string name="train_single_line_training_not_found_title">Тренировка не найдена</string>
     <string name="train_single_line_training_not_found_message">Выбранная тренировка недоступна для запуска.</string>
     <string name="train_single_line_line_not_found_title">Линия не найдена</string>
