@@ -4,7 +4,7 @@
     <string name="settings_subtitle">Прилагодите своје искуство</string>
     <string name="settings_language_section">ЈЕЗИК</string>
     <string name="settings_language_title">Језик апликације</string>
-    <string name="settings_language_subtitle">Изаберите језик који користи апликација</string>
+    <string name="settings_language_subtitle">Изаберите језик апликације</string>
     <string name="settings_language_english">English</string>
     <string name="settings_language_russian">Руски</string>
     <string name="settings_language_serbian">Српски</string>
@@ -12,7 +12,7 @@
     <string name="settings_simple_view_title">Симпле Виев</string>
     <string name="settings_simple_view_subtitle">Поједностављени интерфејс са минималним ометањима</string>
     <string name="settings_training_section">ОБУКА</string>
-    <string name="settings_remove_line_if_rep_zero_title">Уклони линију при 0 понављања</string>
+    <string name="settings_remove_line_if_rep_zero_title">Уклони при 0 понављања</string>
     <string name="settings_remove_line_if_rep_zero_subtitle">Уклоните линије са тренинга када понављања достигну нулу</string>
     <string name="settings_hide_lines_weight_zero_title">Сакриј линије са тежином 0</string>
     <string name="settings_hide_lines_weight_zero_subtitle">Сакријте исцрпљене линије из уређивача обуке</string>
@@ -53,9 +53,9 @@
     <string name="app_error_unexpected_title">Неочекивана грешка</string>
     <string name="app_error_unexpected_message">Нешто је пошло по злу. Покушајте поново.</string>
     <string name="main_error_failed_load_app_settings">Није успело учитавање подешавања</string>
-    <string name="main_error_failed_open_lines">Отварање редова није успело</string>
+    <string name="main_error_failed_open_lines">Линије нису отворене</string>
     <string name="main_error_failed_open_matching_lines">Отварање одговарајућих линија није успело</string>
-    <string name="main_error_failed_save_settings">Чување подешавања није успело</string>
+    <string name="main_error_failed_save_settings">Подешавања нису сачувана</string>
     <string name="main_error_failed_save_language">Чување језика није успело</string>
     <string name="bottom_nav_training">Обука</string>
     <string name="bottom_nav_search">Тражи</string>
@@ -73,7 +73,7 @@
     <string name="profile_accuracy_label">Прецизност</string>
     <string name="profile_best_streak_label">Најбољи низ</string>
     <string name="profile_achievements_title">Достигнућа</string>
-    <string name="profile_send_feedback_title">Повратне информације</string>
+    <string name="profile_send_feedback_title">Повратна веза</string>
     <string name="profile_send_feedback_subtitle">Пријавите грешке или предложите функције на GitHub</string>
     <string name="profile_clear_all_data_subtitle">Ресетујте сав напредак и статистику</string>
     <string name="profile_tier_pawn">Павн</string>
@@ -87,7 +87,7 @@
     <string name="profile_rank_title_pawn_with_dreams">Павн Витх Дреамс</string>
     <string name="profile_rank_title_rage_quitter">Раге Куиттер</string>
     <string name="profile_rank_title_center_feeder">Центер Феедер</string>
-    <string name="profile_rank_title_one_move_genius">Геније у једном покрету</string>
+    <string name="profile_rank_title_one_move_genius">Геније једног хода</string>
     <string name="profile_rank_title_hope_chess_beginner">Нада шах почетник</string>
     <string name="profile_rank_title_sacrifice_without_reason">Жртвовање без разлога</string>
     <string name="profile_rank_title_still_learning_rules">Још увек учим правила</string>
@@ -117,7 +117,7 @@
     <string name="profile_rank_title_late_line_blunderer">Лате Лине Блундерер</string>
     <string name="profile_rank_title_panic_defender">Паниц Дефендер</string>
     <string name="profile_rank_title_somehow_winning">Некако побеђује</string>
-    <string name="profile_rank_title_queen_blunder_specialist">Краљица специјалиста за грешке</string>
+    <string name="profile_rank_title_queen_blunder_specialist">Специјалиста за зевак даме</string>
     <string name="profile_rank_title_it_was_a_sacrifice">\"Ит Вас а Сацрифице\"</string>
     <string name="profile_rank_title_tilt_manager">Тилт Манагер</string>
     <string name="profile_rank_title_calculation_optional">Калкулација Опциона</string>
@@ -125,14 +125,14 @@
     <string name="profile_rank_title_overconfident_player">Превише самоуверен играч</string>
     <string name="profile_rank_title_attack_without_plan">Напад без плана</string>
     <string name="profile_rank_title_fake_tactician">Лажни тактичар</string>
-    <string name="profile_rank_title_blunder_recovery_expert">Експерт за опоравак од грешака</string>
+    <string name="profile_rank_title_blunder_recovery_expert">Експерт за спас зевкова</string>
     <string name="profile_rank_title_chaos_creator">Цхаос Цреатор</string>
     <string name="profile_rank_title_blunders_mate_in_one">Грешке Мате у 1</string>
-    <string name="profile_rank_title_self_check_artist">Уметник за самопроверу</string>
+    <string name="profile_rank_title_self_check_artist">Мастер самошаха</string>
     <string name="profile_rank_title_i_didnt_see_that">\"И Нисам то видео\"</string>
     <string name="profile_rank_title_still_not_gm">Још увек није ГМ</string>
     <string name="profile_rank_title_king_in_danger">Краљ у опасности</string>
-    <string name="profile_rank_title_panic_mode_activated">Паник режим је активиран</string>
+    <string name="profile_rank_title_panic_mode_activated">Режим панике укључен</string>
     <string name="profile_rank_title_last_hope_defender">Ласт Хопе Дефендер</string>
     <string name="profile_rank_title_barely_surviving">једва преживљава</string>
     <string name="profile_rank_title_lucky_survivor">Луцки Сурвивор</string>
@@ -152,21 +152,21 @@
     <string name="home_unnamed_training">Неименовани тренинг</string>
     <string name="home_search_openings">Отварање претраге...</string>
     <string name="home_trainings_title">Тренинзи</string>
-    <string name="home_trainings_subtitle">Отворите сачуване планове обуке</string>
+    <string name="home_trainings_subtitle">Отворите планове тренинга</string>
     <string name="home_lines_title">Линије</string>
     <string name="home_lines_subtitle">Прегледајте сачуване отворе</string>
     <string name="home_create_training_title">Креирајте обуку</string>
-    <string name="home_create_training_subtitle">Направите тренинг од сачуваних линија</string>
+    <string name="home_create_training_subtitle">Направите тренинг из линија</string>
     <string name="home_templates_title">Шаблони</string>
     <string name="home_templates_subtitle">Преглед и измена шаблона</string>
-    <string name="home_create_opening_title">Креирајте отварање</string>
-    <string name="home_create_opening_subtitle">Сачувајте нову почетну линију</string>
+    <string name="home_create_opening_title">Креирај отварање</string>
+    <string name="home_create_opening_subtitle">Сачувајте нову линију</string>
     <string name="home_position_search_title">Претрага позиције</string>
     <string name="home_position_search_subtitle">Поставите прилагођену позицију на плочи</string>
     <string name="home_saved_positions_title">Сачуване позиције</string>
-    <string name="home_saved_positions_subtitle">Отворите сачуване позиције на табли</string>
+    <string name="home_saved_positions_subtitle">Отворите сачуване позиције</string>
     <string name="home_backup_lines_title">Резервне линије</string>
-    <string name="home_backup_lines_subtitle">Извезите све линије у датотеку PGN</string>
+    <string name="home_backup_lines_subtitle">Извоз свих линија у PGN</string>
     <string name="home_exit_title">Изађи</string>
     <string name="home_exit_subtitle">Затворите апликацију</string>
     <string name="home_no_trainings_available">Нема доступних обука.</string>
@@ -193,10 +193,10 @@
     <string name="home_failed_prepare_smart_training">Припрема паметног тренинга није успела.</string>
     <string name="home_preparing_smart_training_title">Припрема паметне обуке</string>
     <string name="home_checking_openings_and_trainings">Проверавамо расположива места и обуке...</string>
-    <string name="home_no_lines_for_smart_training">Прво направите бар један дебют или линију.</string>
+    <string name="home_no_lines_for_smart_training">Прво направите отварање или линију.</string>
     <string name="home_no_training_title">Још нема обуке</string>
     <string name="home_no_training_for_smart_training">Прво направите бар један тренинг.</string>
-    <string name="smart_training_no_lines_found_title">Нису пронађене линије</string>
+    <string name="smart_training_no_lines_found_title">Линије нису нађене</string>
     <string name="smart_training_no_lines_found_message">Тренутно нема линија за понављање.\n\nЛиније без грешака се прескачу 3 дана. Ако за 3 дана нема линија, приказују се линије старије од 5 дана.\n\nПробајте \"Само линије са грешкама\" за линије које још нисте савладали.</string>
     <string name="smart_training_title">Смарт Траининг</string>
     <string name="smart_training_subtitle">Изаберите отворе за вежбање</string>
@@ -206,7 +206,7 @@
     <string name="smart_training_selected_openings">Одабрани отвори</string>
     <string name="smart_training_mastered">савладао</string>
     <string name="smart_training_search_placeholder">Тражи тренинге...</string>
-    <string name="smart_training_how_it_works_title">Како функционише ваша обука</string>
+    <string name="smart_training_how_it_works_title">Како ради тренинг</string>
     <string name="smart_training_dismiss_content_description">Одбаци</string>
     <string name="smart_training_how_it_works_intro">Користимо паметно понављање да боље запамтите отварања:</string>
     <string name="smart_training_mistakes_many_label">2+ грешке</string>
@@ -220,7 +220,7 @@
     <string name="smart_training_select_all">Изаберите Све</string>
     <string name="smart_training_clear">Јасно</string>
     <plurals name="smart_training_selected_openings_count">
-        <item quantity="one">Изабрано је %1$d отварање</item>
+        <item quantity="one">%1$d отварање изабрано</item>
         <item quantity="few">Изабрана су %1$d отварања</item>
         <item quantity="many">Изабрано је %1$d отварања</item>
         <item quantity="other">Изабрано је %1$d отварања</item>
@@ -251,8 +251,8 @@
     <string name="create_training_choice_all_lines">Обука из свих линија</string>
     <string name="create_training_choice_statistics">Обука по статистици</string>
     <string name="create_training_choice_template">Обука из шаблона</string>
-    <string name="create_opening_title">Креирајте отварање</string>
-    <string name="create_opening_subtitle">Направите свој дебют</string>
+    <string name="create_opening_title">Креирај отварање</string>
+    <string name="create_opening_subtitle">Направите отварање</string>
     <string name="create_opening_import_failed_title">Увоз није успео</string>
     <string name="create_opening_save_failed_title">Чување није успело</string>
     <string name="create_opening_save_content_description">Сачувај</string>
@@ -273,15 +273,15 @@
     <string name="create_opening_pgn_error_line_parse_failed">%1$s у %2$s</string>
     <string name="create_opening_pgn_error_unrecognized_notation">Не могу да разобрам %1$s (ход %2$d, %3$s): непозната нотација</string>
     <string name="create_opening_pgn_error_illegal_move">Не могу да играм %1$s (померај %2$d, %3$s): недозвољен потез</string>
-    <string name="create_opening_failed_read_selected_file">Није могуће прочитати изабрану датотеку</string>
-    <string name="create_opening_failed_read_file">Читање датотеке није успело</string>
+    <string name="create_opening_failed_read_selected_file">Изабрани фајл није прочитан</string>
+    <string name="create_opening_failed_read_file">Грешка читања фајла</string>
     <string name="create_opening_default_opening_name">Отварање</string>
     <string name="create_opening_default_chapter_name">Поглавље %1$d</string>
     <string name="create_opening_no_imported_chapters_saved">Ниједно од увезених поглавља није било сачувано</string>
     <string name="create_opening_line_event_name">%1$s (линија %2$d)</string>
     <string name="create_opening_no_imported_lines_saved">Није сачувана ниједна линија</string>
     <string name="create_opening_save_lines_title">Сачувај линије</string>
-    <string name="create_opening_failed_save_opening">Чување отварања није успело</string>
+    <string name="create_opening_failed_save_opening">Отварање није сачувано</string>
     <string name="create_opening_saving_lines_title">Чување линија</string>
     <string name="create_opening_total_lines">Укупно линија: %1$d</string>
     <string name="create_opening_processed_lines">Обрађене линије: %1$d/%2$d</string>
@@ -293,7 +293,7 @@
     <string name="create_opening_create_template_title">Цреате Темплате</string>
     <string name="create_opening_post_save_create">Креирај</string>
     <string name="create_opening_post_save_skip">Скип</string>
-    <string name="create_opening_training_create_failed">Линије су сачуване, али тренинг није могао да се направи</string>
+    <string name="create_opening_training_create_failed">Линије су сачуване, али тренинг није направљен</string>
     <string name="create_opening_template_create_failed">Линије су сачуване, али шаблон није могао да се креира</string>
     <plurals name="create_opening_chapters_count">
         <item quantity="one">%1$d поглавље</item>
@@ -325,7 +325,7 @@
     <string name="opening_deviation_display_title">Одступања отварања</string>
     <string name="opening_deviation_source_position_title">Девиатион Поситион</string>
     <string name="opening_deviation_branch_title">Бранцх %1$d</string>
-    <string name="opening_deviation_move">Померање: %1$s</string>
+    <string name="opening_deviation_move">Ход: %1$s</string>
     <string name="opening_deviation_lines_count">Линије: %1$d</string>
     <string name="opening_deviation_display_empty">Нема доступних грана за одступање.</string>
     <string name="opening_deviation_open_lines_content_description">Отвори линије са изабраном позицијом</string>
@@ -334,9 +334,9 @@
     <string name="saved_positions_title">Сачуване позиције</string>
     <string name="saved_positions_subtitle">Позиције: %1$d • Страница %2$d/%3$d</string>
     <string name="saved_positions_search_content_description">Претражите сачуване позиције</string>
-    <string name="saved_positions_previous_page_content_description">Претходна страница сачуваних позиција</string>
+    <string name="saved_positions_previous_page_content_description">Претходна страница позиција</string>
     <string name="saved_positions_next_page_content_description">Следећа страница позиција</string>
-    <string name="saved_positions_empty">Нема доступних сачуваних позиција.</string>
+    <string name="saved_positions_empty">Нема сачуваних позиција.</string>
     <string name="saved_positions_empty_filter">Нема позиција за тренутни филтер.</string>
     <string name="saved_positions_unnamed_position">Уннамед Поситион</string>
     <string name="saved_positions_selected">Одабрано</string>
@@ -363,7 +363,7 @@
     <string name="saved_positions_no_deviations_message">За ову позицију нема одступања.</string>
     <string name="saved_positions_deviation_search_title">Сеарцхинг Девиатионс</string>
     <string name="saved_positions_deviation_search_message">Анализа сачуваних линија за "%1$s".</string>
-    <string name="saved_positions_deviation_search_help">Ово може потрајати. Откажите да бисте зауставили анализу.</string>
+    <string name="saved_positions_deviation_search_help">Ово може потрајати. Откажите анализу.</string>
     <string name="saved_positions_opening_deviations_title">Одступања отварања</string>
     <string name="saved_positions_opening_deviations_message">Нађено позиција са одступањима: %1$d. Отворите списак за преглед.</string>
     <string name="saved_positions_deviations_action">Одступања</string>
@@ -388,7 +388,7 @@
     <string name="position_search_duplicate_name">Назив позиције већ постоји.</string>
     <string name="position_search_duplicate_search_fen">Ова позиција претраге је већ сачувана.</string>
     <string name="position_search_duplicate_full_fen">Ова тачна позиција је већ сачувана.</string>
-    <string name="position_search_failed_save_position">Чување позиције није успело.</string>
+    <string name="position_search_failed_save_position">Позиција није сачувана.</string>
     <string name="position_search_position_saved_title">Позиција је сачувана</string>
     <string name="position_search_position_saved_message">Позиција "%1$s" је сачувана.\nИД: %2$d</string>
     <string name="position_search_template_created_title">Темплате Цреатед</string>
@@ -397,7 +397,7 @@
     <string name="position_search_template_error_message">Пронађене линије не могу да се сачувају као шаблон.</string>
     <string name="position_search_training_created_title">Тренинг Цреатед</string>
     <plurals name="position_search_training_created_message">
-        <item quantity="one">Тренинг је направљен са %1$d линијом.</item>
+        <item quantity="one">Тренинг: %1$d линија.</item>
         <item quantity="few">Тренинг је направљен са %1$d линије.</item>
         <item quantity="many">Тренинг је направљен са %1$d линија.</item>
         <item quantity="other">Тренинг је направљен са %1$d линија.</item>
@@ -433,7 +433,7 @@
     <string name="position_search_new_template_title">Нови шаблон</string>
     <string name="position_search_template_name_prompt">Именујте шаблон креиран од подударних линија.</string>
     <string name="position_search_template_name_label">Име шаблона</string>
-    <string name="position_search_lines_not_found_title">Линије нису пронађене</string>
+    <string name="position_search_lines_not_found_title">Линије нису нађене</string>
     <string name="position_search_lines_found_title">Пронађене линије</string>
     <string name="position_search_no_lines_found_message">Нема линија са овом позицијом.</string>
     <plurals name="position_search_found_lines_message">
@@ -443,7 +443,7 @@
         <item quantity="other">%1$d сачуваних линија се подудара са овом позицијом. Изаберите радњу.</item>
     </plurals>
     <string name="backup_title">Бацкуп</string>
-    <string name="backup_subtitle">Извезите и вратите сачуване линије</string>
+    <string name="backup_subtitle">Извоз и враћање линија</string>
     <string name="backup_content_title">Лине Бацкуп</string>
     <string name="backup_content_subtitle">Направите PGN-бекап или касније вратите линије.</string>
     <string name="backup_create_action">Направи бекап</string>
@@ -551,7 +551,7 @@
     <string name="statistics_training_title">Обука по статистици</string>
     <string name="statistics_training_default_name">Статистицс Траининг</string>
     <string name="statistics_training_lines_count_label">Линије одабране статистиком</string>
-    <string name="statistics_training_limits_title">Ограничења статистике</string>
+    <string name="statistics_training_limits_title">Лимити статистике</string>
     <string name="statistics_training_limits_summary">Линије: %1$d, дани: %2$d, тежина: %3$d</string>
     <string name="statistics_training_change_limits_content_description">Промените границе</string>
     <string name="statistics_training_limits_dialog_title">Границе обуке</string>
@@ -592,7 +592,7 @@
     <string name="statistics_formula_perfect_rate_penalty_label">Перфектна казна</string>
     <string name="statistics_formula_attempt_boosts_title">Покушај појачања</string>
     <string name="statistics_formula_attempt_boosts_description">Бонус зависи од броја покушаја линије: 0 — бонус без покушаја, 1 — бонус једног покушаја, 2 — бонус два покушаја, 3+ додаје 0.</string>
-    <string name="statistics_formula_no_attempts_boost_label">Нема покушаја појачања</string>
+    <string name="statistics_formula_no_attempts_boost_label">Бонус без покушаја</string>
     <string name="statistics_formula_one_attempt_boost_label">Један покушај појачања</string>
     <string name="statistics_formula_two_attempts_boost_label">Два покушаја појачање</string>
     <string name="statistics_formula_weight_thresholds_title">Прагови тежине</string>
@@ -605,7 +605,7 @@
     <string name="statistics_formula_description_title">Формула</string>
     <string name="statistics_formula_score_description">Резултат = део последње грешке + просечна грешка + део недавности + појачање покушаја - савршена казна.</string>
     <string name="statistics_formula_last_mistake_part_description">Део последње грешке = тежина последње грешке * мин (последње грешке у тренингу, максималне последње грешке).</string>
-    <string name="statistics_formula_average_mistake_part_description">Просечан део грешке = просечна тежина грешака * мин (просечне недавне грешке, максималне просечне грешке).</string>
+    <string name="statistics_formula_average_mistake_part_description">Део средњих грешака = тежина грешака * min(просек последњих грешака, максимум).</string>
     <string name="statistics_formula_recency_part_description">Део недавности = тежина недавног датума * мин (дани од последњег тренинга, ограничење броја дана недавног).</string>
     <string name="statistics_formula_perfect_penalty_description">Савршена казна = казна савршене стопе * недавна стопа савршеног тренинга.</string>
     <string name="statistics_formula_selection_description">Већи резултати бирају линије раније. Прагови тежине затим мапирају резултат на тежину 1-5.</string>
@@ -615,7 +615,7 @@
     <string name="line_editor_side_as_black">Као Црни</string>
     <string name="line_editor_delete_title">Избриши отварање</string>
     <string name="line_editor_delete_fallback_opening">ово отварање</string>
-    <string name="line_editor_delete_message">Избрисати "%1$s"? Ово се не може поништити.</string>
+    <string name="line_editor_delete_message">Избрисати "%1$s"? Нема поништавања.</string>
     <string name="line_editor_line_actions_content_description">Линијске акције</string>
     <string name="line_editor_line_actions_title">Лине Ацтионс</string>
     <string name="line_editor_remove_doubt_action">Уклоните сумњу</string>
@@ -626,7 +626,7 @@
     <string name="train_single_line_unknown_exception">Непознати изузетак</string>
     <string name="train_single_line_training_not_found_title">Обука није пронађена</string>
     <string name="train_single_line_training_not_found_message">Изабрана обука није доступна за почетак.</string>
-    <string name="train_single_line_line_not_found_title">Линија није пронађена</string>
+    <string name="train_single_line_line_not_found_title">Линија није нађена</string>
     <string name="train_single_line_line_not_found_message">Изабрана линија није доступна за покретање.</string>
     <string name="train_single_line_line_removed_title">Линија је уклоњена са тренинга</string>
     <string name="train_single_line_line_removed_message">Изабрана линија више не припада овој обуци.</string>
@@ -668,7 +668,7 @@
     <string name="train_single_line_mistakes">Грешке: %1$d</string>
     <string name="train_single_line_progress">Линија %1$d од %2$d</string>
     <string name="train_single_line_completed_count">%1$d завршено</string>
-    <string name="train_single_line_analyze_content_description">Анализирајте линију</string>
+    <string name="train_single_line_analyze_content_description">Анализ линије</string>
     <string name="train_single_line_start_training_content_description">Почните да тренирате</string>
     <string name="train_single_line_stop_training_content_description">Престани да тренираш</string>
     <string name="train_single_line_show_line">Покажи линију</string>
@@ -687,7 +687,7 @@
     <string name="line_analysis_pgn_copied_title">PGN копирано</string>
     <string name="line_analysis_pgn_copied_message">Анализа PGN је копирана у међуспремник.</string>
     <string name="line_analysis_pgn_unavailable_title">PGN недоступан</string>
-    <string name="line_analysis_pgn_unavailable_message">Анализа PGN није могла да се направи.</string>
+    <string name="line_analysis_pgn_unavailable_message">PGN није направљен.</string>
     <string name="line_analysis_building_pgn_title">Зграда PGN</string>
     <string name="line_analysis_building_pgn_message">Припрема анализе PGN...</string>
     <string name="line_analysis_side_white">Бела</string>
@@ -695,17 +695,17 @@
     <string name="line_analysis_previous_move_content_description">Претходни потез</string>
     <string name="line_analysis_next_move_content_description">Следећи потез</string>
     <string name="lines_explorer_title">Линес Екплорер</string>
-    <string name="lines_explorer_subtitle">Линије: %1$d • Страница %2$d/%3$d</string>
-    <string name="lines_explorer_filtered_subtitle">Пронађено: %1$d • Страница %2$d/%3$d</string>
+    <string name="lines_explorer_subtitle">Линија: %1$d • Стр. %2$d/%3$d</string>
+    <string name="lines_explorer_filtered_subtitle">Нађено: %1$d • Стр. %2$d/%3$d</string>
     <string name="lines_explorer_empty_filtered">Нема линија за тренутни филтер.</string>
-    <string name="lines_explorer_empty">Нема сачуваних линија.\nНаправите дебют на главном екрану.</string>
+    <string name="lines_explorer_empty">Нема сачуваних линија.\nНаправите отварање.</string>
     <string name="lines_explorer_default_line_name">Отварање</string>
     <string name="lines_explorer_this_line">ову линију</string>
     <string name="lines_explorer_training_name">Линије Тренинг</string>
     <string name="lines_explorer_training_screen_title">Траининг Фром Линес</string>
     <string name="lines_explorer_training_lines_count_label">Одабране линије</string>
     <string name="lines_explorer_pgn_unavailable_title">PGN недоступан</string>
-    <string name="lines_explorer_pgn_unavailable_message">Линије PGN нису могле бити изграђене.</string>
+    <string name="lines_explorer_pgn_unavailable_message">PGN није направљен.</string>
     <string name="lines_explorer_pgn_clip_label">Линес Екплорер PGN</string>
     <string name="lines_explorer_pgn_copied_title">PGN копирано</string>
     <string name="lines_explorer_pgn_copied_message">Редови PGN су копирани у међуспремник.</string>
@@ -718,8 +718,8 @@
     <string name="lines_explorer_delete_lines_title">Избриши линије</string>
     <string name="lines_explorer_search_lines">Тражи линије</string>
     <string name="lines_explorer_clear_search">Претрага чистих линија</string>
-    <string name="lines_explorer_previous_page">Страница претходних редова</string>
-    <string name="lines_explorer_next_page">Страница следећих редова</string>
+    <string name="lines_explorer_previous_page">Претходна</string>
+    <string name="lines_explorer_next_page">Следећа</string>
     <string name="lines_explorer_action_edit">Уреди</string>
     <string name="lines_explorer_edit_line">Уреди ред</string>
     <string name="lines_explorer_delete_line">Избриши линију</string>
@@ -728,10 +728,10 @@
     <string name="lines_explorer_export_lines_pgn">Извозне линије PGN</string>
     <string name="lines_explorer_create_training">Креирајте обуку</string>
     <string name="lines_explorer_analyze">Анализирај</string>
-    <string name="lines_explorer_analyze_line">Анализирајте линију</string>
+    <string name="lines_explorer_analyze_line">Анализ линије</string>
     <string name="lines_explorer_clone">Клон</string>
     <string name="lines_explorer_clone_line">Цлоне лине</string>
-    <string name="lines_explorer_delete_explorer_lines">Избришите линије истраживача</string>
+    <string name="lines_explorer_delete_explorer_lines">Избриши линије обзора</string>
     <string name="lines_explorer_search_title">Сеарцх Линес</string>
     <string name="lines_explorer_line_name">Име линије</string>
     <string name="lines_explorer_line_name_placeholder">Унесите део наслова</string>
@@ -740,7 +740,7 @@
     <string name="lines_explorer_dubious_lines">Сумњиви редови</string>
     <string name="lines_explorer_dubious_lines_subtitle">Тражи само сумњиве линије</string>
     <string name="lines_explorer_side">Сиде</string>
-    <string name="lines_explorer_side_any">Било који</string>
+    <string name="lines_explorer_side_any">Све</string>
     <string name="lines_explorer_side_white">Бела</string>
     <string name="lines_explorer_side_black">Црно</string>
     <plurals name="lines_explorer_moves_count">
@@ -750,9 +750,9 @@
         <item quantity="other">%1$d потеза</item>
     </plurals>
     <plurals name="lines_explorer_delete_lines_message">
-        <item quantity="one">Избрисати %1$d линију из тренутних резултата прегледа? Ово се не може поништити.</item>
-        <item quantity="few">Избрисати %1$d линије из тренутних резултата прегледа? Ово се не може поништити.</item>
+        <item quantity="one">Избрисати %1$d линију из резултата? Ово се не може поништити.</item>
+        <item quantity="few">Избрисати %1$d линије из резултата? Ово се не може поништити.</item>
         <item quantity="many">Избрисати %1$d линија из тренутних резултата прегледа? Ово се не може поништити.</item>
-        <item quantity="other">Избрисати %1$d линија из тренутних резултата прегледа? Ово се не може поништити.</item>
+        <item quantity="other">Избрисати %1$d линија из резултата? Ово се не може поништити.</item>
     </plurals>
 </resources>
