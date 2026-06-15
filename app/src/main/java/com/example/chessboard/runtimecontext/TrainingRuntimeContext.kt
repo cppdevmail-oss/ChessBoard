@@ -8,7 +8,7 @@ package com.example.chessboard.runtimecontext
  * Not allowed here:
  * - composable UI, navigation rendering, or screen layout code
  * - database persistence, repository access, or long-term storage logic
- * Validation date: 2026-04-25
+ * Validation date: 2026-06-15
  */
 
 import androidx.compose.runtime.mutableStateMapOf
@@ -46,6 +46,10 @@ class TrainingRuntimeContext {
 
     fun orderedLineIds(trainingId: Long): List<Long> {
         return lineCollections.orderedLineIds(trainingId)
+    }
+
+    fun setEditorOrderedLineIds(trainingId: Long, orderedLineIds: List<Long>) {
+        lineCollections.setOrderedLineIds(trainingId, orderedLineIds)
     }
 
     fun lineIdInTraining(trainingId: Long): Long? {

@@ -25,6 +25,13 @@ Follow these collaboration rules when working with the user on this project.
 - Do not automatically apply review feedback after the review step.
 - Summarize the findings for the user and wait for approval before changing code.
 
+## Test And Build Runs
+
+- The user runs tests, compilation, and verification checks themselves by default.
+- Always ask the user before running any test, compilation, build, lint, Gradle verification, or connected Android test command.
+- Do not run checks proactively after code changes unless the user explicitly asks for that run.
+- It is acceptable to inspect files, diffs, and static code context without asking.
+
 ## Practical Rule
 
 - The default behavior after review is: report first, change later.

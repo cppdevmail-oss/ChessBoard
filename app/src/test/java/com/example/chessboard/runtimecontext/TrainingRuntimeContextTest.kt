@@ -8,7 +8,7 @@ package com.example.chessboard.runtimecontext
  * Not allowed here:
  * - Compose UI tests, navigation rendering checks, or persistence-backed behavior
  * - unrelated RuntimeContext wrapper tests that belong in separate test files
- * Validation date: 2026-04-26
+ * Validation date: 2026-06-15
  */
 
 import com.example.chessboard.ui.screen.trainSingleLine.TrainSingleLinePhase
@@ -31,6 +31,34 @@ class TrainingRuntimeContextTest {
 
         assertEquals(20L, runtimeContext.lineIdInTraining(1L))
         assertEquals(listOf(10L, 20L, 30L), runtimeContext.orderedLineIds(1L))
+    }
+
+    @Test
+    fun `setEditorOrderedLineIds stores ordered ids without starting active training line`() {
+        val runtimeContext = TrainingRuntimeContext()
+
+        runtimeContext.setEditorOrderedLineIds(
+            trainingId = 1L,
+            orderedLineIds = listOf(10L, 20L, 30L),
+        )
+
+        assertNull(runtimeContext.lineIdInTraining(1L))
+        assertEquals(listOf(10L, 20L, 30L), runtimeContext.orderedLineIds(1L))
+    }
+
+    @Test
+    fun `setEditorOrderedLineIds makes previously selected editor line resolvable`() {
+        val runtimeContext = TrainingRuntimeContext()
+        runtimeContext.setSelectedLineId(trainingId = 1L, lineId = 20L)
+
+        assertNull(runtimeContext.editorSelectedLineId(1L))
+
+        runtimeContext.setEditorOrderedLineIds(
+            trainingId = 1L,
+            orderedLineIds = listOf(10L, 20L, 30L),
+        )
+
+        assertEquals(20L, runtimeContext.editorSelectedLineId(1L))
     }
 
     @Test
