@@ -8,7 +8,7 @@ package com.example.chessboard.ui.screen.training.train
  * Not allowed here:
  * - reusable generic editor UI that belongs in shared training/common files
  * - persistence helpers unrelated to this concrete screen flow
- * Validation date: 2026-04-25
+ * Validation date: 2026-06-15
  */
 import com.example.chessboard.ui.screen.training.common.CreateTrainingEditorState
 import com.example.chessboard.ui.screen.training.common.TrainingCollectionEditorBarsFactory
@@ -402,6 +402,8 @@ fun EditTrainingScreen(
     // (for example after removal or reordering), move selection to the
     // first remaining line so editor actions always point to a valid line.
     LaunchedEffect(trainingId, orderedLineIds) {
+        trainingRuntimeContext.setEditorOrderedLineIds(trainingId, orderedLineIds)
+
         if (resolveSelectedLineId() in orderedLineIds) {
             return@LaunchedEffect
         }
