@@ -73,6 +73,30 @@ class GameOpeningAnalyzerTest {
     }
 
     /**
+     * Verifies that position mode reports selected-side divergence after a known position.
+     * This covers the same result semantics as move-sequence mode using the position index path.
+     */
+    @Test
+    fun `position mode returns deviation when selected side leaves book after matching prefix`() {
+        val result = analyze(
+            gameMoves = listOf("e2e4", "e7e5", "f1c4"),
+            bookLines = listOf(line(id = 1, moves = listOf("e2e4", "e7e5", "g1f3"))),
+            selectedSide = OpeningSide.WHITE,
+            matchMode = OpeningMatchMode.POSITION,
+        )
+
+        val deviation = assertResult<GameOpeningDeviation>(result)
+        assertEquals(OpeningSide.WHITE, deviation.selectedSide)
+        assertEquals(OpeningMatchMode.POSITION, deviation.matchMode)
+        assertEquals(AfterE4E5Key, deviation.positionFen)
+        assertEquals(2, deviation.ply)
+        assertEquals("f1c4", deviation.playedMoveUci)
+        assertEquals(AfterE4E5Bc4Key, deviation.playedResultFen)
+        assertEquals(listOf("g1f3"), deviation.expectedMoves.map { move -> move.moveUci })
+        assertEquals(listOf(0), deviation.matchingLineRefs.map { ref -> ref.lineIndex })
+    }
+
+    /**
      * Verifies that opponent divergence is reported separately from selected-side deviation.
      * This keeps the user-facing analysis focused on the chosen side's opening choices.
      */
@@ -88,6 +112,30 @@ class GameOpeningAnalyzerTest {
         val opponentLeftBook = assertResult<GameOpeningOpponentLeftBook>(result)
         assertEquals(OpeningSide.WHITE, opponentLeftBook.selectedSide)
         assertEquals(OpeningMatchMode.MOVE_SEQUENCE, opponentLeftBook.matchMode)
+        assertEquals(AfterE4Key, opponentLeftBook.positionFen)
+        assertEquals(1, opponentLeftBook.ply)
+        assertEquals("c7c5", opponentLeftBook.playedMoveUci)
+        assertEquals(AfterE4C5Key, opponentLeftBook.playedResultFen)
+        assertEquals(listOf("e7e5"), opponentLeftBook.expectedMoves.map { move -> move.moveUci })
+        assertEquals(listOf(0), opponentLeftBook.matchingLineRefs.map { ref -> ref.lineIndex })
+    }
+
+    /**
+     * Verifies that position mode also separates opponent divergence from selected-side deviation.
+     * This protects the branch that decides the result type after a known indexed position.
+     */
+    @Test
+    fun `position mode returns opponent left book when opponent leaves book`() {
+        val result = analyze(
+            gameMoves = listOf("e2e4", "c7c5"),
+            bookLines = listOf(line(id = 1, moves = listOf("e2e4", "e7e5", "g1f3"))),
+            selectedSide = OpeningSide.WHITE,
+            matchMode = OpeningMatchMode.POSITION,
+        )
+
+        val opponentLeftBook = assertResult<GameOpeningOpponentLeftBook>(result)
+        assertEquals(OpeningSide.WHITE, opponentLeftBook.selectedSide)
+        assertEquals(OpeningMatchMode.POSITION, opponentLeftBook.matchMode)
         assertEquals(AfterE4Key, opponentLeftBook.positionFen)
         assertEquals(1, opponentLeftBook.ply)
         assertEquals("c7c5", opponentLeftBook.playedMoveUci)
@@ -113,6 +161,30 @@ class GameOpeningAnalyzerTest {
         val tooShort = assertResult<GameOpeningBookTooShort>(result)
         assertEquals(OpeningSide.WHITE, tooShort.selectedSide)
         assertEquals(OpeningMatchMode.MOVE_SEQUENCE, tooShort.matchMode)
+        assertEquals(AfterE4E5Key, tooShort.lastKnownPositionFen)
+        assertEquals(2, tooShort.matchedPly)
+        assertEquals(8, tooShort.minimumKnownPrefixPly)
+        assertEquals("g1f3", tooShort.nextGameMoveUci)
+        assertEquals(listOf(0), tooShort.endedLineRefs.map { ref -> ref.lineIndex })
+    }
+
+    /**
+     * Verifies that position mode reports short book coverage when an indexed line ends.
+     * This covers the path that reads ended refs from the position index.
+     */
+    @Test
+    fun `position mode returns book too short when book ends before game continues`() {
+        val result = analyze(
+            gameMoves = listOf("e2e4", "e7e5", "g1f3"),
+            bookLines = listOf(line(id = 1, moves = listOf("e2e4", "e7e5"))),
+            selectedSide = OpeningSide.WHITE,
+            matchMode = OpeningMatchMode.POSITION,
+            minimumKnownPrefixPly = 8,
+        )
+
+        val tooShort = assertResult<GameOpeningBookTooShort>(result)
+        assertEquals(OpeningSide.WHITE, tooShort.selectedSide)
+        assertEquals(OpeningMatchMode.POSITION, tooShort.matchMode)
         assertEquals(AfterE4E5Key, tooShort.lastKnownPositionFen)
         assertEquals(2, tooShort.matchedPly)
         assertEquals(8, tooShort.minimumKnownPrefixPly)
