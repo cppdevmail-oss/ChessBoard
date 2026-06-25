@@ -86,8 +86,8 @@ data class GameOpeningBookTooShort(
     val matchedPly: Int,
 
     /**
-     * Required minimum number of matched half-moves for the analysis to be considered
-     * sufficiently covered.
+     * Minimum known prefix requested by the caller.
+     * Included so the UI can explain whether the ended book line was shorter than the requested depth.
      */
     val minimumKnownPrefixPly: Int,
 
