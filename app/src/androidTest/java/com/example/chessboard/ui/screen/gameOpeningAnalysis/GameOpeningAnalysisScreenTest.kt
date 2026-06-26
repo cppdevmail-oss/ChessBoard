@@ -3,11 +3,11 @@
 package com.example.chessboard.ui.screen.gameOpeningAnalysis
 
 /*
- * File role: verifies the initial game-opening analysis screen shell.
+ * File role: verifies the game-opening analysis screen shell and paste import flow.
  * Allowed here:
- * - Compose tests for the imported-games screen shell, top bar, and back callback
+ * - Compose tests for the imported-games screen shell, top bar, back callback, and paste import dialog
  * Not allowed here:
- * - Home navigation coverage, PGN import tests, database access, or analyzer execution tests
+ * - Home navigation coverage, database access, file-picker behavior, or analyzer execution tests
  * Validation date: 2026-06-26
  */
 
@@ -22,12 +22,19 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import com.example.chessboard.runtimecontext.GameOpeningAnalysisRuntimeContext
 import com.example.chessboard.runtimecontext.ImportedGameCandidate
 import com.example.chessboard.service.ParsedPgnGame
+import com.example.chessboard.ui.GameOpeningAnalysisAddGamesTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisContentTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisEmptyStateTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisGameListTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisImportConfirmTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisImportDialogTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisImportFromFileTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisImportSummaryDialogTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisImportTextInputTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisNextMoveTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisPreviewTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisPreviousMoveTestTag
@@ -163,6 +170,64 @@ class GameOpeningAnalysisScreenTest {
         composeRule.onNodeWithTag(GameOpeningAnalysisPreviousMoveTestTag).performClick()
 
         composeRule.onNodeWithTag(GameOpeningAnalysisNextMoveTestTag).assertIsEnabled()
+    }
+
+    @Test
+    fun gameOpeningAnalysisScreen_addGamesOpensImportDialog() {
+        // Scenario: the add-games action opens the paste import dialog with a disabled file action placeholder.
+        val runtimeContext = GameOpeningAnalysisRuntimeContext()
+
+        setScreenContent(runtimeContext = runtimeContext)
+
+        composeRule.onNodeWithTag(GameOpeningAnalysisAddGamesTestTag).performClick()
+
+        composeRule.onNodeWithTag(GameOpeningAnalysisImportDialogTestTag).assertIsDisplayed()
+        composeRule.onNodeWithText("Add Games").assertIsDisplayed()
+        composeRule.onNodeWithText("PGN text").assertIsDisplayed()
+        composeRule.onNodeWithTag(GameOpeningAnalysisImportConfirmTestTag).assertIsNotEnabled()
+        composeRule
+            .onNodeWithTag(GameOpeningAnalysisImportFromFileTestTag)
+            .assertIsDisplayed()
+            .assertIsNotEnabled()
+    }
+
+    @Test
+    fun gameOpeningAnalysisScreen_importPgnClosesDialogShowsSummaryAndAddsGame() {
+        // Scenario: pasted PGN is imported into runtime context, closes the import dialog, and shows summary counts.
+        val runtimeContext = GameOpeningAnalysisRuntimeContext()
+        val pgnText =
+            """
+            [Event "Imported Event"]
+            [White "Alice"]
+            [Black "Bob"]
+
+            1. e4 e5 *
+            """.trimIndent()
+
+        setScreenContent(runtimeContext = runtimeContext)
+
+        composeRule.onNodeWithTag(GameOpeningAnalysisAddGamesTestTag).performClick()
+        composeRule.onNodeWithTag(GameOpeningAnalysisImportTextInputTestTag).performTextInput(pgnText)
+        composeRule.onNodeWithTag(GameOpeningAnalysisImportConfirmTestTag).performClick()
+
+        composeRule.onAllNodesWithTag(GameOpeningAnalysisImportDialogTestTag).fetchSemanticsNodes().let { nodes ->
+            check(nodes.isEmpty()) {
+                "Expected import dialog to close after import"
+            }
+        }
+        composeRule.onNodeWithTag(GameOpeningAnalysisImportSummaryDialogTestTag).assertIsDisplayed()
+        composeRule.onNodeWithText("Import Summary").assertIsDisplayed()
+
+        composeRule.onNodeWithText("OK").performClick()
+
+        composeRule.onNodeWithText("Games: 1 • Showing: 1").assertIsDisplayed()
+        composeRule.onNodeWithText("Imported Event").assertIsDisplayed()
+        composeRule.onNodeWithText("Alice - Bob").assertIsDisplayed()
+        composeRule.runOnIdle {
+            check(runtimeContext.importedGames.size == 1) {
+                "Expected one imported game, got ${runtimeContext.importedGames.size}"
+            }
+        }
     }
 
     @Test

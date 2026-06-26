@@ -338,6 +338,16 @@
     <string name="game_opening_analysis_game_ply_count">Ply: %1$d</string>
     <string name="game_opening_analysis_previous_move_content_description">Previous imported game move</string>
     <string name="game_opening_analysis_next_move_content_description">Next imported game move</string>
+    <string name="game_opening_analysis_add_games_content_description">Add imported games</string>
+    <string name="game_opening_analysis_import_dialog_title">Add Games</string>
+    <string name="game_opening_analysis_import_pgn_label">PGN text</string>
+    <string name="game_opening_analysis_import_pgn_placeholder">Paste one or more PGN games</string>
+    <string name="game_opening_analysis_import_action">Import</string>
+    <string name="game_opening_analysis_import_summary_title">Import Summary</string>
+    <string name="game_opening_analysis_import_summary_message">Scanned: %1$d
+Added: %2$d
+Skipped duplicates: %3$d
+Skipped parse errors: %4$d</string>
     <string name="saved_positions_subtitle">Positions: %1$d • Page %2$d/%3$d</string>
     <string name="saved_positions_search_content_description">Search saved positions</string>
     <string name="saved_positions_previous_page_content_description">Previous saved positions page</string>
