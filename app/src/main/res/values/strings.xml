@@ -331,6 +331,7 @@
     <string name="game_opening_analysis_title">Game Opening Analysis</string>
     <string name="game_opening_analysis_subtitle">Games: %1$d • Showing: %2$d</string>
     <string name="game_opening_analysis_empty">No imported games.</string>
+    <string name="game_opening_analysis_empty_filtered">No imported games match the filter.</string>
     <string name="game_opening_analysis_list_hint">Imported games are shown in import order.</string>
     <string name="game_opening_analysis_unknown_event">Unknown event</string>
     <string name="game_opening_analysis_unknown_player">Unknown player</string>
@@ -348,6 +349,22 @@
 Added: %2$d
 Skipped duplicates: %3$d
 Skipped parse errors: %4$d</string>
+    <string name="game_opening_analysis_filter_content_description">Search imported games</string>
+    <string name="game_opening_analysis_clear_filter_content_description">Clear imported games filter</string>
+    <string name="game_opening_analysis_filter_title">Filter Games</string>
+    <string name="game_opening_analysis_filter_player_color">Player color</string>
+    <string name="game_opening_analysis_filter_white">White</string>
+    <string name="game_opening_analysis_filter_black">Black</string>
+    <string name="game_opening_analysis_filter_player_name">Player name</string>
+    <string name="game_opening_analysis_filter_player_name_placeholder">Optional player name</string>
+    <string name="game_opening_analysis_filter_match_mode">Name match</string>
+    <string name="game_opening_analysis_filter_contains">Contains</string>
+    <string name="game_opening_analysis_filter_exact">Exact</string>
+    <string name="game_opening_analysis_filter_case_sensitive">Case sensitive</string>
+    <string name="game_opening_analysis_filter_case_sensitive_subtitle">Match player name capitalization exactly.</string>
+    <string name="game_opening_analysis_filter_min_ply">Minimum ply</string>
+    <string name="game_opening_analysis_filter_min_ply_placeholder">Any length</string>
+    <string name="game_opening_analysis_filter_apply">Apply</string>
     <string name="saved_positions_subtitle">Positions: %1$d • Page %2$d/%3$d</string>
     <string name="saved_positions_search_content_description">Search saved positions</string>
     <string name="saved_positions_previous_page_content_description">Previous saved positions page</string>

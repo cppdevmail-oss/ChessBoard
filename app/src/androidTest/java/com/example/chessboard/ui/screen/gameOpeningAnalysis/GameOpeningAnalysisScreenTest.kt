@@ -5,7 +5,7 @@ package com.example.chessboard.ui.screen.gameOpeningAnalysis
 /*
  * File role: verifies the game-opening analysis screen shell and paste import flow.
  * Allowed here:
- * - Compose tests for the imported-games screen shell, top bar, back callback, and paste import dialog
+ * - Compose tests for the imported-games screen shell, top bar, back callback, paste import dialog, and filter dialog
  * Not allowed here:
  * - Home navigation coverage, database access, file-picker behavior, or analyzer execution tests
  * Validation date: 2026-06-26
@@ -29,6 +29,11 @@ import com.example.chessboard.service.ParsedPgnGame
 import com.example.chessboard.ui.GameOpeningAnalysisAddGamesTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisContentTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisEmptyStateTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisFilterBlackSideTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisFilterCaseSensitiveTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisFilterExactMatchTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisFilterMinPlyTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisFilterPlayerNameTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisGameListTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisImportConfirmTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisImportDialogTestTag
@@ -38,6 +43,7 @@ import com.example.chessboard.ui.GameOpeningAnalysisImportTextInputTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisNextMoveTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisPreviewTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisPreviousMoveTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisSearchActionTestTag
 import com.example.chessboard.ui.theme.ChessBoardTheme
 import org.junit.Rule
 import org.junit.Test
@@ -231,6 +237,59 @@ class GameOpeningAnalysisScreenTest {
     }
 
     @Test
+    fun gameOpeningAnalysisScreen_filterDialogFiltersByPlayerSideNameMatchModeCaseAndMinPly() {
+        // Scenario: applying the filter uses selected player color, exact case-sensitive name, and minimum ply.
+        val runtimeContext = GameOpeningAnalysisRuntimeContext()
+        runtimeContext.addImportedGames(
+            listOf(
+                parsedCandidate(
+                    sourceIndex = 0,
+                    event = "Target Game",
+                    white = "Alice",
+                    black = "Bob",
+                    moves = listOf("e2e4", "e7e5", "g1f3"),
+                ),
+                parsedCandidate(
+                    sourceIndex = 1,
+                    event = "Case Miss",
+                    white = "Alice",
+                    black = "bob",
+                    moves = listOf("e2e4", "e7e5", "g1f3"),
+                ),
+                parsedCandidate(
+                    sourceIndex = 2,
+                    event = "Contains Miss",
+                    white = "Alice",
+                    black = "Bobby",
+                    moves = listOf("e2e4", "e7e5", "g1f3"),
+                ),
+                parsedCandidate(
+                    sourceIndex = 3,
+                    event = "Short Miss",
+                    white = "Alice",
+                    black = "Bob",
+                    moves = listOf("e2e4", "e7e5"),
+                ),
+            ),
+        )
+
+        setScreenContent(runtimeContext = runtimeContext)
+
+        composeRule.onNodeWithTag(GameOpeningAnalysisSearchActionTestTag).performClick()
+        composeRule.onNodeWithTag(GameOpeningAnalysisFilterBlackSideTestTag).performClick()
+        composeRule.onNodeWithTag(GameOpeningAnalysisFilterPlayerNameTestTag).performTextInput("Bob")
+        composeRule.onNodeWithTag(GameOpeningAnalysisFilterExactMatchTestTag).performClick()
+        composeRule.onNodeWithTag(GameOpeningAnalysisFilterCaseSensitiveTestTag).performClick()
+        composeRule.onNodeWithTag(GameOpeningAnalysisFilterMinPlyTestTag).performTextInput("3")
+        composeRule.onNodeWithText("Apply").performClick()
+
+        composeRule.onNodeWithText("Target Game").assertIsDisplayed()
+        assertTextIsAbsent("Case Miss")
+        assertTextIsAbsent("Contains Miss")
+        assertTextIsAbsent("Short Miss")
+    }
+
+    @Test
     fun gameOpeningAnalysisScreen_limitsVisibleGamesToFirstTwenty() {
         // Scenario: the screen uses runtime paging and renders only the first page of imported games.
         val runtimeContext = GameOpeningAnalysisRuntimeContext()
@@ -256,6 +315,14 @@ class GameOpeningAnalysisScreenTest {
         composeRule.onAllNodesWithText("Imported Game 21").fetchSemanticsNodes().let { nodes ->
             check(nodes.isEmpty()) {
                 "Expected Imported Game 21 to stay outside the visible page"
+            }
+        }
+    }
+
+    private fun assertTextIsAbsent(text: String) {
+        composeRule.onAllNodesWithText(text).fetchSemanticsNodes().let { nodes ->
+            check(nodes.isEmpty()) {
+                "Expected $text to be absent"
             }
         }
     }

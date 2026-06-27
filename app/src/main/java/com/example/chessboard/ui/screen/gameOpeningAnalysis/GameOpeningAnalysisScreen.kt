@@ -6,7 +6,7 @@ package com.example.chessboard.ui.screen.gameOpeningAnalysis
  * File role: renders the game-opening analysis screen entry point and imported-game list shell.
  * Allowed here:
  * - screen-level UI for imported game opening analysis
- * - summary, empty state, import dialog orchestration, imported-game list rendering, and selected-game preview
+ * - summary, empty state, import and filter dialog orchestration, imported-game list rendering, and selected-game preview
  * Not allowed here:
  * - PGN parsing, database access, analyzer orchestration, or reusable generic components
  * Validation date: 2026-06-26
@@ -29,6 +29,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -52,12 +54,14 @@ import androidx.compose.ui.window.DialogProperties
 import com.example.chessboard.R
 import com.example.chessboard.analysis.OpeningSide
 import com.example.chessboard.boardmodel.LineController
+import com.example.chessboard.runtimecontext.GameOpeningAnalysisFilter
 import com.example.chessboard.runtimecontext.GameOpeningAnalysisRuntimeContext
 import com.example.chessboard.runtimecontext.ImportGamesSummary
 import com.example.chessboard.runtimecontext.ImportedGameItem
 import com.example.chessboard.runtimecontext.importGameOpeningAnalysisPgnText
 import com.example.chessboard.ui.BoardOrientation
 import com.example.chessboard.ui.GameOpeningAnalysisAddGamesTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisClearFilterTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisContentTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisEmptyStateTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisGameListTestTag
@@ -69,6 +73,7 @@ import com.example.chessboard.ui.GameOpeningAnalysisImportTextInputTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisNextMoveTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisPreviewTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisPreviousMoveTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisSearchActionTestTag
 import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.components.AppScreenScaffold
 import com.example.chessboard.ui.components.AppTopBar
@@ -112,7 +117,10 @@ internal fun GameOpeningAnalysisScreen(
     val visibleGames = runtimeContext.visibleGames()
     val selectedGame = visibleGames.firstOrNull { game -> game.id == runtimeContext.selectedGameId }
     val lineController = remember { LineController(resolveBoardOrientation(runtimeContext.filter.side)) }
+    val hasActiveFilter = runtimeContext.filter != GameOpeningAnalysisFilter()
     var showImportDialog by remember { mutableStateOf(false) }
+    var showFilterDialog by remember { mutableStateOf(false) }
+    var draftFilter by remember { mutableStateOf(runtimeContext.filter) }
     var importPgnText by remember { mutableStateOf("") }
     var importSummary by remember { mutableStateOf<ImportGamesSummary?>(null) }
 
@@ -164,6 +172,17 @@ internal fun GameOpeningAnalysisScreen(
         )
     }
 
+    GameOpeningAnalysisFilterDialog(
+        visible = showFilterDialog,
+        filter = draftFilter,
+        onFilterChange = { draftFilter = it },
+        onDismiss = { showFilterDialog = false },
+        onApplyClick = {
+            runtimeContext.updateFilter(draftFilter)
+            showFilterDialog = false
+        },
+    )
+
     AppScreenScaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
@@ -179,6 +198,37 @@ internal fun GameOpeningAnalysisScreen(
                 handleSystemBack = true,
                 filledBackButton = true,
                 actions = {
+                    IconButton(
+                        onClick = {
+                            draftFilter = runtimeContext.filter
+                            showFilterDialog = true
+                        },
+                        modifier = Modifier.testTag(GameOpeningAnalysisSearchActionTestTag),
+                    ) {
+                        IconMd(
+                            imageVector = Icons.Default.Search,
+                            contentDescription =
+                                stringResource(
+                                    R.string.game_opening_analysis_filter_content_description,
+                                ),
+                            tint = TextColor.Primary,
+                        )
+                    }
+                    if (hasActiveFilter) {
+                        IconButton(
+                            onClick = { runtimeContext.clearFilter() },
+                            modifier = Modifier.testTag(GameOpeningAnalysisClearFilterTestTag),
+                        ) {
+                            IconMd(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription =
+                                    stringResource(
+                                        R.string.game_opening_analysis_clear_filter_content_description,
+                                    ),
+                                tint = TextColor.Primary,
+                            )
+                        }
+                    }
                     IconButton(
                         onClick = { showImportDialog = true },
                         modifier = Modifier.testTag(GameOpeningAnalysisAddGamesTestTag),
@@ -215,7 +265,7 @@ internal fun GameOpeningAnalysisScreen(
             verticalArrangement = Arrangement.spacedBy(AppDimens.spaceMd),
         ) {
             if (visibleGames.isEmpty()) {
-                GameOpeningAnalysisEmptyState()
+                GameOpeningAnalysisEmptyState(hasImportedGames = importedGames.isNotEmpty())
                 return@Column
             }
 
@@ -371,7 +421,7 @@ private fun GameOpeningAnalysisBoardControlsBar(
 }
 
 @Composable
-private fun GameOpeningAnalysisEmptyState() {
+private fun GameOpeningAnalysisEmptyState(hasImportedGames: Boolean) {
     Box(
         modifier =
             Modifier
@@ -380,8 +430,15 @@ private fun GameOpeningAnalysisEmptyState() {
                 .testTag(GameOpeningAnalysisEmptyStateTestTag),
         contentAlignment = Alignment.Center,
     ) {
+        val emptyMessage =
+            if (hasImportedGames) {
+                stringResource(R.string.game_opening_analysis_empty_filtered)
+            } else {
+                stringResource(R.string.game_opening_analysis_empty)
+            }
+
         BodySecondaryText(
-            text = stringResource(R.string.game_opening_analysis_empty),
+            text = emptyMessage,
             color = TextColor.Secondary,
             textAlign = TextAlign.Center,
         )
