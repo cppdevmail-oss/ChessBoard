@@ -12,6 +12,9 @@ package com.example.chessboard.ui.screen.gameOpeningAnalysis
  */
 
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -32,6 +35,8 @@ import com.example.chessboard.runtimecontext.GameOpeningBatchAnalysisSummary
 import com.example.chessboard.runtimecontext.ImportedGameAnalysisResult
 import com.example.chessboard.runtimecontext.ImportedGameCandidate
 import com.example.chessboard.service.ParsedPgnGame
+import com.example.chessboard.testing.fenStateDescriptionMatcher
+import com.example.chessboard.testing.normalizeFenForAssertion
 import com.example.chessboard.ui.GameOpeningAnalysisAddGamesTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisAnalyzeActionTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisContentTestTag
@@ -52,6 +57,9 @@ import com.example.chessboard.ui.GameOpeningAnalysisOptionsAnalyzeTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisOptionsDialogTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisPreviewTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisPreviousMoveTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisResultListTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisResultPreviewBoardTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisResultPreviewTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisResultsContentTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisSearchActionTestTag
 import com.example.chessboard.ui.theme.ChessBoardTheme
@@ -303,6 +311,7 @@ class GameOpeningAnalysisScreenTest {
     fun gameOpeningAnalysisScreen_analyzeDialogRunsAnalysisAndStoresResults() {
         // Scenario: analyze opens options, stores results, switches to results view, and returns to imported games.
         val runtimeContext = GameOpeningAnalysisRuntimeContext()
+        val expectedFinalFen = "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"
         runtimeContext.addImportedGames(
             listOf(
                 parsedCandidate(
@@ -328,7 +337,7 @@ class GameOpeningAnalysisScreenTest {
                                     selectedSide = OpeningSide.WHITE,
                                     matchMode = OpeningMatchMode.MOVE_SEQUENCE,
                                     matchedPly = game.mainLineMoves.size,
-                                    finalPositionFen = "analysis-final-fen",
+                                    finalPositionFen = expectedFinalFen,
                                     matchingLineRefs = emptyList(),
                                 ),
                         ),
@@ -356,6 +365,14 @@ class GameOpeningAnalysisScreenTest {
         composeRule.onNodeWithText("Analysis Game").assertIsDisplayed()
         composeRule.onNodeWithText("Matches known opening").assertIsDisplayed()
         composeRule.onNodeWithText("Matched ply: 2").assertIsDisplayed()
+
+        composeRule.onAllNodesWithTag(GameOpeningAnalysisResultListTestTag)[0].performClick()
+
+        composeRule.onNodeWithTag(GameOpeningAnalysisResultPreviewTestTag).assertIsDisplayed()
+        assertBoardFenEventually(
+            boardTag = GameOpeningAnalysisResultPreviewBoardTestTag,
+            expectedFen = expectedFinalFen,
+        )
 
         composeRule.onNodeWithContentDescription("Back").performClick()
 
@@ -428,6 +445,28 @@ class GameOpeningAnalysisScreenTest {
             }
         }
     }
+
+    private fun assertBoardFenEventually(
+        boardTag: String,
+        expectedFen: String,
+    ) {
+        val normalizedExpectedFen = normalizeFenForAssertion(expectedFen)
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            currentBoardFen(boardTag)?.let(::normalizeFenForAssertion) == normalizedExpectedFen
+        }
+        composeRule.onNodeWithTag(boardTag, useUnmergedTree = true).assert(
+            fenStateDescriptionMatcher(expectedFen),
+        )
+    }
+
+    private fun currentBoardFen(boardTag: String): String? =
+        runCatching {
+            composeRule
+                .onNodeWithTag(boardTag, useUnmergedTree = true)
+                .fetchSemanticsNode()
+                .config
+                .getOrNull(SemanticsProperties.StateDescription)
+        }.getOrNull()
 
     private fun setScreenContent(
         runtimeContext: GameOpeningAnalysisRuntimeContext,

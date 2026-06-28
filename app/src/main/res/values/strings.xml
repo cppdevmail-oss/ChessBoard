@@ -808,4 +808,7 @@ Skipped parse errors: %4$d</string>
     <string name="game_opening_analysis_result_matched_ply">Matched ply: %1$d</string>
     <string name="game_opening_analysis_result_invalid_move_detail">Invalid move: %1$s (%2$s)</string>
     <string name="game_opening_analysis_result_invalid_initial_position_detail">Initial position cannot be parsed</string>
+    <string name="game_opening_analysis_result_played_move">Played move: %1$s</string>
+    <string name="game_opening_analysis_result_next_game_move">Next game move: %1$s</string>
+    <string name="game_opening_analysis_result_no_board_preview">No board preview is available for this result.</string>
 </resources>
