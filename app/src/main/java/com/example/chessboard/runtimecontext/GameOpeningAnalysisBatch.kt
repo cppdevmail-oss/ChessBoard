@@ -108,10 +108,9 @@ fun analyzeImportedGameOpeningsAgainstBook(
         runtimeContext = runtimeContext,
         options = options,
         analyzeGame = { input ->
-            analyzer.analyzePrepared(
+            preparedBook.analyze(
                 gameMoves = input.game.mainLineMoves,
                 gameInitialFen = gameInitialFen,
-                preparedBook = preparedBook,
                 selectedSide = input.selectedSide,
                 minimumKnownPrefixPly = input.options.minimumKnownPrefixPly,
             )

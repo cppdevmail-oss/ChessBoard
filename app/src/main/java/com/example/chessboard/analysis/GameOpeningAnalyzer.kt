@@ -20,6 +20,13 @@ class GameOpeningAnalyzer(
 ) {
     sealed interface PreparedGameOpeningBook {
         val matchMode: OpeningMatchMode
+
+        fun analyze(
+            gameMoves: List<String>,
+            gameInitialFen: String,
+            selectedSide: OpeningSide,
+            minimumKnownPrefixPly: Int,
+        ): GameOpeningAnalysisResult
     }
 
     fun prepareBook(
@@ -30,11 +37,13 @@ class GameOpeningAnalyzer(
         return when (matchMode) {
             OpeningMatchMode.MOVE_SEQUENCE -> {
                 PreparedSequenceBook(
+                    analyzer = this,
                     sequenceLines = buildSequenceLines(bookLinesSnapshot),
                 )
             }
             OpeningMatchMode.POSITION -> {
                 PreparedPositionBook(
+                    analyzer = this,
                     index = indexBuilder.build(bookLinesSnapshot),
                 )
             }
@@ -54,16 +63,15 @@ class GameOpeningAnalyzer(
                 bookLines = bookLines,
                 matchMode = matchMode,
             )
-        return analyzePrepared(
+        return preparedBook.analyze(
             gameMoves = gameMoves,
             gameInitialFen = gameInitialFen,
-            preparedBook = preparedBook,
             selectedSide = selectedSide,
             minimumKnownPrefixPly = minimumKnownPrefixPly,
         )
     }
 
-    fun analyzePrepared(
+    private fun analyzePrepared(
         gameMoves: List<String>,
         gameInitialFen: String,
         preparedBook: PreparedGameOpeningBook,
@@ -109,15 +117,45 @@ class GameOpeningAnalyzer(
     }
 
     private data class PreparedSequenceBook(
+        val analyzer: GameOpeningAnalyzer,
         val sequenceLines: List<SequenceLine>,
     ) : PreparedGameOpeningBook {
         override val matchMode: OpeningMatchMode = OpeningMatchMode.MOVE_SEQUENCE
+
+        override fun analyze(
+            gameMoves: List<String>,
+            gameInitialFen: String,
+            selectedSide: OpeningSide,
+            minimumKnownPrefixPly: Int,
+        ): GameOpeningAnalysisResult =
+            analyzer.analyzePrepared(
+                gameMoves = gameMoves,
+                gameInitialFen = gameInitialFen,
+                preparedBook = this,
+                selectedSide = selectedSide,
+                minimumKnownPrefixPly = minimumKnownPrefixPly,
+            )
     }
 
     private data class PreparedPositionBook(
+        val analyzer: GameOpeningAnalyzer,
         val index: OpeningBookIndex,
     ) : PreparedGameOpeningBook {
         override val matchMode: OpeningMatchMode = OpeningMatchMode.POSITION
+
+        override fun analyze(
+            gameMoves: List<String>,
+            gameInitialFen: String,
+            selectedSide: OpeningSide,
+            minimumKnownPrefixPly: Int,
+        ): GameOpeningAnalysisResult =
+            analyzer.analyzePrepared(
+                gameMoves = gameMoves,
+                gameInitialFen = gameInitialFen,
+                preparedBook = this,
+                selectedSide = selectedSide,
+                minimumKnownPrefixPly = minimumKnownPrefixPly,
+            )
     }
 
     /**
