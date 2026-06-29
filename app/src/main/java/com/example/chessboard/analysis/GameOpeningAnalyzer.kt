@@ -7,7 +7,7 @@ package com.example.chessboard.analysis
  * - move replay and result selection for game-opening analysis scenarios
  * Not allowed here:
  * - database access, Compose UI, screen navigation, or persistence workflows
- * Validation date: 2026-06-25
+ * Validation date: 2026-06-29
  */
 import com.example.chessboard.boardmodel.buildChesslibMoveFromUci
 import com.example.chessboard.entity.LineEntity
@@ -18,6 +18,28 @@ import com.github.bhlangonijr.chesslib.move.Move
 class GameOpeningAnalyzer(
     private val indexBuilder: OpeningBookIndexBuilder = OpeningBookIndexBuilder(),
 ) {
+    sealed interface PreparedGameOpeningBook {
+        val matchMode: OpeningMatchMode
+    }
+
+    fun prepareBook(
+        bookLines: List<LineEntity>,
+        matchMode: OpeningMatchMode,
+    ): PreparedGameOpeningBook {
+        val bookLinesSnapshot = bookLines.toList()
+        return when (matchMode) {
+            OpeningMatchMode.MOVE_SEQUENCE -> {
+                PreparedSequenceBook(
+                    sequenceLines = buildSequenceLines(bookLinesSnapshot),
+                )
+            }
+            OpeningMatchMode.POSITION -> {
+                PreparedPositionBook(
+                    index = indexBuilder.build(bookLinesSnapshot),
+                )
+            }
+        }
+    }
 
     fun analyze(
         gameMoves: List<String>,
@@ -25,6 +47,27 @@ class GameOpeningAnalyzer(
         bookLines: List<LineEntity>,
         selectedSide: OpeningSide,
         matchMode: OpeningMatchMode,
+        minimumKnownPrefixPly: Int,
+    ): GameOpeningAnalysisResult {
+        val preparedBook =
+            prepareBook(
+                bookLines = bookLines,
+                matchMode = matchMode,
+            )
+        return analyzePrepared(
+            gameMoves = gameMoves,
+            gameInitialFen = gameInitialFen,
+            preparedBook = preparedBook,
+            selectedSide = selectedSide,
+            minimumKnownPrefixPly = minimumKnownPrefixPly,
+        )
+    }
+
+    fun analyzePrepared(
+        gameMoves: List<String>,
+        gameInitialFen: String,
+        preparedBook: PreparedGameOpeningBook,
+        selectedSide: OpeningSide,
         minimumKnownPrefixPly: Int,
     ): GameOpeningAnalysisResult {
         require(minimumKnownPrefixPly >= 0) {
@@ -35,30 +78,46 @@ class GameOpeningAnalyzer(
         if (board == null) {
             return GameOpeningInvalidInitialPosition(
                 selectedSide = selectedSide,
-                matchMode = matchMode,
+                matchMode = preparedBook.matchMode,
                 initialFen = gameInitialFen,
             )
         }
 
-        return when (matchMode) {
-            OpeningMatchMode.MOVE_SEQUENCE -> analyzeMoveSequence(
-                gameMoves = gameMoves,
-                board = board,
-                gameInitialFen = gameInitialFen,
-                sequenceLines = buildSequenceLines(bookLines),
-                selectedSide = selectedSide,
-                matchMode = matchMode,
-                minimumKnownPrefixPly = minimumKnownPrefixPly,
-            )
-            OpeningMatchMode.POSITION -> analyzePosition(
-                gameMoves = gameMoves,
-                board = board,
-                index = indexBuilder.build(bookLines),
-                selectedSide = selectedSide,
-                matchMode = matchMode,
-                minimumKnownPrefixPly = minimumKnownPrefixPly,
-            )
+        return when (preparedBook) {
+            is PreparedSequenceBook -> {
+                analyzeMoveSequence(
+                    gameMoves = gameMoves,
+                    board = board,
+                    gameInitialFen = gameInitialFen,
+                    sequenceLines = preparedBook.sequenceLines,
+                    selectedSide = selectedSide,
+                    matchMode = preparedBook.matchMode,
+                    minimumKnownPrefixPly = minimumKnownPrefixPly,
+                )
+            }
+            is PreparedPositionBook -> {
+                analyzePosition(
+                    gameMoves = gameMoves,
+                    board = board,
+                    index = preparedBook.index,
+                    selectedSide = selectedSide,
+                    matchMode = preparedBook.matchMode,
+                    minimumKnownPrefixPly = minimumKnownPrefixPly,
+                )
+            }
         }
+    }
+
+    private data class PreparedSequenceBook(
+        val sequenceLines: List<SequenceLine>,
+    ) : PreparedGameOpeningBook {
+        override val matchMode: OpeningMatchMode = OpeningMatchMode.MOVE_SEQUENCE
+    }
+
+    private data class PreparedPositionBook(
+        val index: OpeningBookIndex,
+    ) : PreparedGameOpeningBook {
+        override val matchMode: OpeningMatchMode = OpeningMatchMode.POSITION
     }
 
     /**
