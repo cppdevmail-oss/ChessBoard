@@ -105,7 +105,11 @@ internal fun resolveGameOpeningAnalysisImportParallelism(
     availableProcessors: Int = Runtime.getRuntime().availableProcessors(),
 ): Int {
     val safeProcessors = availableProcessors.coerceAtLeast(1)
-    return (safeProcessors / 2).coerceAtLeast(1)
+    if (safeProcessors <= 2) {
+        return 1
+    }
+
+    return (safeProcessors + 1) / 2
 }
 
 private fun parseGameOpeningAnalysisPgnCandidate(record: PgnRecord): ImportedGameCandidate {

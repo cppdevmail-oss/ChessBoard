@@ -7,7 +7,7 @@ package com.example.chessboard.runtimecontext
  * - tests for import summaries and in-memory context updates caused by PGN text import
  * Not allowed here:
  * - Compose rendering, file picker tests, database access, or opening analyzer execution tests
- * Validation date: 2026-06-26
+ * Validation date: 2026-06-29
  */
 
 import kotlinx.coroutines.runBlocking
@@ -16,15 +16,16 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class GameOpeningAnalysisImportTest {
-    // Checks that import parallelism uses half of available processors, rounded down, with a minimum of one.
+    // Checks that import parallelism uses half of available processors, rounded up, with a minimum of one.
     @Test
-    fun `resolveGameOpeningAnalysisImportParallelism uses half of available processors`() {
+    fun `resolveGameOpeningAnalysisImportParallelism uses half of available processors rounded up`() {
         assertEquals(1, resolveGameOpeningAnalysisImportParallelism(availableProcessors = 0))
         assertEquals(1, resolveGameOpeningAnalysisImportParallelism(availableProcessors = 1))
         assertEquals(1, resolveGameOpeningAnalysisImportParallelism(availableProcessors = 2))
-        assertEquals(1, resolveGameOpeningAnalysisImportParallelism(availableProcessors = 3))
+        assertEquals(2, resolveGameOpeningAnalysisImportParallelism(availableProcessors = 3))
         assertEquals(2, resolveGameOpeningAnalysisImportParallelism(availableProcessors = 4))
-        assertEquals(4, resolveGameOpeningAnalysisImportParallelism(availableProcessors = 8))
+        assertEquals(3, resolveGameOpeningAnalysisImportParallelism(availableProcessors = 5))
+        assertEquals(3, resolveGameOpeningAnalysisImportParallelism(availableProcessors = 6))
     }
 
     // Checks that every valid PGN record is imported as one runtime game in source order.
