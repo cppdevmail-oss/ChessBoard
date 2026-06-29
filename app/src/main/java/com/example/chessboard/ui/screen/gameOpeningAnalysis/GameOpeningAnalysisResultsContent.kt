@@ -5,29 +5,23 @@ package com.example.chessboard.ui.screen.gameOpeningAnalysis
 /*
  * File role: renders the game-opening analysis results list for the analysis screen.
  * Allowed here:
- * - screen-specific result list cards, selected-result preview, short result summaries, paging controls, and result selection callbacks
+ * - screen-specific result list cards, selected-result preview, short result summaries, and result selection callbacks
  * - read-only board preview for the selected analysis result position
  * Not allowed here:
  * - analyzer execution, result mutation, detail-screen rendering, database access, or PGN parsing
- * Validation date: 2026-06-27
+ * Validation date: 2026-06-29
  */
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
@@ -36,8 +30,6 @@ import com.example.chessboard.R
 import com.example.chessboard.boardmodel.LineController
 import com.example.chessboard.runtimecontext.GameOpeningAnalysisRuntimeContext
 import com.example.chessboard.runtimecontext.ImportedGameAnalysisResult
-import com.example.chessboard.ui.GameOpeningAnalysisNextResultsPageTestTag
-import com.example.chessboard.ui.GameOpeningAnalysisPreviousResultsPageTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisResultDetailActionTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisResultListTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisResultPreviewBoardTestTag
@@ -47,7 +39,6 @@ import com.example.chessboard.ui.components.BodySecondaryText
 import com.example.chessboard.ui.components.CardMetaText
 import com.example.chessboard.ui.components.CardSurface
 import com.example.chessboard.ui.components.ChessBoardSection
-import com.example.chessboard.ui.components.IconMd
 import com.example.chessboard.ui.components.SecondaryButton
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.theme.AppDimens
@@ -90,13 +81,6 @@ internal fun GameOpeningAnalysisResultsContent(
                 onClick = { runtimeContext.selectResult(analysisResult.gameId) },
             )
         }
-
-        GameOpeningAnalysisResultsPagingControls(
-            canOpenPreviousPage = runtimeContext.canOpenPreviousResultsPage(),
-            canOpenNextPage = runtimeContext.canOpenNextResultsPage(),
-            onOpenPreviousPageClick = { runtimeContext.openPreviousResultsPage() },
-            onOpenNextPageClick = { runtimeContext.openNextResultsPage() },
-        )
     }
 }
 
@@ -191,55 +175,10 @@ private fun GameOpeningAnalysisResultPreview(
     }
 }
 
-@Composable
-private fun GameOpeningAnalysisResultsPagingControls(
-    canOpenPreviousPage: Boolean,
-    canOpenNextPage: Boolean,
-    onOpenPreviousPageClick: () -> Unit,
-    onOpenNextPageClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(
-            onClick = onOpenPreviousPageClick,
-            enabled = canOpenPreviousPage,
-            modifier = Modifier.testTag(GameOpeningAnalysisPreviousResultsPageTestTag),
-        ) {
-            IconMd(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                contentDescription = stringResource(R.string.common_previous),
-                tint = resolvePageArrowTint(canOpenPreviousPage),
-            )
-        }
-        IconButton(
-            onClick = onOpenNextPageClick,
-            enabled = canOpenNextPage,
-            modifier = Modifier.testTag(GameOpeningAnalysisNextResultsPageTestTag),
-        ) {
-            IconMd(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = stringResource(R.string.common_next),
-                tint = resolvePageArrowTint(canOpenNextPage),
-            )
-        }
-    }
-}
-
 private fun resolveResultCardColor(selected: Boolean): Color {
     if (selected) {
         return BottomBarContentColor.copy(alpha = 0.18f)
     }
 
     return Background.CardDark
-}
-
-private fun resolvePageArrowTint(enabled: Boolean): Color {
-    if (enabled) {
-        return BottomBarContentColor
-    }
-
-    return TextColor.Secondary
 }

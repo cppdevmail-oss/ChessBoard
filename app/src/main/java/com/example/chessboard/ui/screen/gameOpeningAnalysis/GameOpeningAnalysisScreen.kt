@@ -12,7 +12,7 @@ package com.example.chessboard.ui.screen.gameOpeningAnalysis
  * - thin container wiring that supplies saved opening lines to the runtime batch-analysis runner
  * Not allowed here:
  * - PGN parsing, analyzer algorithms, persistence writes, or reusable generic components
- * Validation date: 2026-06-28
+ * Validation date: 2026-06-29
  */
 
 import android.content.Context
@@ -89,9 +89,11 @@ import com.example.chessboard.ui.GameOpeningAnalysisImportSummaryDialogTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisImportTextInputTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisNextGamesPageTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisNextMoveTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisNextResultsPageTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisPreviewTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisPreviousGamesPageTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisPreviousMoveTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisPreviousResultsPageTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisSearchActionTestTag
 import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.components.AppScreenScaffold
@@ -431,6 +433,36 @@ internal fun GameOpeningAnalysisScreen(
                 filledBackButton = true,
                 actions = {
                     HomeIconButton(onClick = onHomeClick)
+                    if (showingResults) {
+                        IconButton(
+                            onClick = { runtimeContext.openPreviousResultsPage() },
+                            enabled = runtimeContext.canOpenPreviousResultsPage(),
+                            modifier = Modifier.testTag(GameOpeningAnalysisPreviousResultsPageTestTag),
+                        ) {
+                            IconMd(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                contentDescription = stringResource(R.string.common_previous),
+                                tint =
+                                    resolveGameOpeningAnalysisPageArrowTint(
+                                        runtimeContext.canOpenPreviousResultsPage(),
+                                    ),
+                            )
+                        }
+                        IconButton(
+                            onClick = { runtimeContext.openNextResultsPage() },
+                            enabled = runtimeContext.canOpenNextResultsPage(),
+                            modifier = Modifier.testTag(GameOpeningAnalysisNextResultsPageTestTag),
+                        ) {
+                            IconMd(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                contentDescription = stringResource(R.string.common_next),
+                                tint =
+                                    resolveGameOpeningAnalysisPageArrowTint(
+                                        runtimeContext.canOpenNextResultsPage(),
+                                    ),
+                            )
+                        }
+                    }
                     if (!showingResults && !showingResultDetail) {
                         IconButton(
                             onClick = {
