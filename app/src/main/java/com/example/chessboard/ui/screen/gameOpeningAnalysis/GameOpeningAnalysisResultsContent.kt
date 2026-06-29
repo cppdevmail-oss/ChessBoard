@@ -104,7 +104,7 @@ private fun GameOpeningAnalysisResultCard(
         SectionTitleText(text = game.displayEvent(unknownEvent))
         CardMetaText(text = game.displayPlayers(unknownPlayer))
         CardMetaText(text = resultTypeLabel(analysisResult.result))
-        BodySecondaryText(
+        CardMetaText(
             text = resultDetailText(analysisResult.result),
             color = TextColor.Secondary,
         )
@@ -144,12 +144,12 @@ private fun GameOpeningAnalysisResultPreview(
         SectionTitleText(text = game.displayEvent(unknownEvent))
         CardMetaText(text = game.displayPlayers(unknownPlayer))
         CardMetaText(text = resultTypeLabel(result))
-        BodySecondaryText(
+        CardMetaText(
             text = resultDetailText(result),
             color = TextColor.Secondary,
         )
         resultExtraDetailTexts(result).forEach { detail ->
-            BodySecondaryText(
+            CardMetaText(
                 text = detail,
                 color = TextColor.Secondary,
             )
@@ -160,7 +160,7 @@ private fun GameOpeningAnalysisResultPreview(
             modifier = Modifier.testTag(GameOpeningAnalysisResultDetailActionTestTag),
         )
         if (previewFen == null) {
-            BodySecondaryText(
+            CardMetaText(
                 text = stringResource(R.string.game_opening_analysis_result_no_board_preview),
                 color = TextColor.Secondary,
             )
