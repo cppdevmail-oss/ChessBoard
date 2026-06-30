@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -71,7 +70,7 @@ internal fun GameOpeningAnalysisResultDetailContent(
         }
 
         GameOpeningAnalysisResultGameCard(analysisResult)
-        GameOpeningAnalysisResultBoardCard(analysisResult.result)
+        GameOpeningAnalysisResultBoardCard(analysisResult)
         GameOpeningAnalysisResultSummaryCard(analysisResult.result)
         GameOpeningAnalysisContinuationCard(analysisResult.result)
     }
@@ -93,20 +92,19 @@ private fun GameOpeningAnalysisResultGameCard(analysisResult: ImportedGameAnalys
 }
 
 @Composable
-private fun GameOpeningAnalysisResultBoardCard(result: GameOpeningAnalysisResult) {
+private fun GameOpeningAnalysisResultBoardCard(analysisResult: ImportedGameAnalysisResult) {
+    val result = analysisResult.result
     val previewFen = resultPreviewFen(result)
-    val lineController = remember { LineController(resolveResultBoardOrientation(result)) }
-
-    LaunchedEffect(previewFen, result.selectedSide) {
-        lineController.setOrientation(resolveResultBoardOrientation(result))
-        lineController.setUserMovesEnabled(false)
-        if (previewFen == null) {
-            return@LaunchedEffect
+    val lineController =
+        remember(analysisResult.gameId, previewFen, result.selectedSide) {
+            LineController(resolveResultBoardOrientation(result)).also { controller ->
+                controller.setUserMovesEnabled(false)
+                if (previewFen != null) {
+                    controller.loadFromFen(previewFen)
+                    controller.setUserMovesEnabled(false)
+                }
+            }
         }
-
-        lineController.loadFromFen(previewFen)
-        lineController.setUserMovesEnabled(false)
-    }
 
     CardSurface(modifier = Modifier.fillMaxWidth()) {
         SectionTitleText(text = stringResource(R.string.game_opening_analysis_result_detail_position_title))
