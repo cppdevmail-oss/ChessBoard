@@ -99,7 +99,6 @@ import com.example.chessboard.ui.theme.TextColor
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
@@ -170,15 +169,11 @@ internal fun GameOpeningAnalysisScreen(
     val hasActiveFilter = runtimeContext.filter != GameOpeningAnalysisFilter()
     val dialogs = rememberGameOpeningAnalysisDialogState()
     val exportState = rememberGameOpeningAnalysisExportState()
+    val importState = rememberGameOpeningAnalysisImportState()
     var draftFilter by remember { mutableStateOf(runtimeContext.filter) }
     var draftAnalysisOptions by remember { mutableStateOf(runtimeContext.lastAnalysisOptions) }
     var analysisCancelFlag by remember { mutableStateOf<AtomicBoolean?>(null) }
-    var importJob by remember { mutableStateOf<Job?>(null) }
-    var importProgress by remember { mutableStateOf<GameOpeningAnalysisImportProgress?>(null) }
     var analysisRunMessage by remember { mutableStateOf<GameOpeningAnalysisRunMessage?>(null) }
-    var importPgnText by remember { mutableStateOf("") }
-    var importSummary by remember { mutableStateOf<ImportGamesSummary?>(null) }
-    var importFileErrorMessage by remember { mutableStateOf<String?>(null) }
     val failedReadSelectedFileMessage = stringResource(R.string.game_opening_analysis_failed_read_selected_file)
     val failedReadFileMessage = stringResource(R.string.game_opening_analysis_failed_read_file)
     val failedOpenExportDestinationMessage =
@@ -195,7 +190,7 @@ internal fun GameOpeningAnalysisScreen(
         val job =
             coroutineScope.launch(start = CoroutineStart.LAZY) {
                 try {
-                    importProgress = GameOpeningAnalysisImportProgress(
+                    importState.progress = GameOpeningAnalysisImportProgress(
                         processedCount = 0,
                         totalCount = 0,
                         parallelism = importParallelism,
@@ -213,7 +208,7 @@ internal fun GameOpeningAnalysisScreen(
                                 parallelism = importParallelism,
                                 onProgress = { processedCount, totalCount ->
                                     withContext(Dispatchers.Main) {
-                                        importProgress =
+                                        importState.progress =
                                             GameOpeningAnalysisImportProgress(
                                                 processedCount = processedCount,
                                                 totalCount = totalCount,
@@ -223,14 +218,14 @@ internal fun GameOpeningAnalysisScreen(
                                 },
                             )
                         }
-                    importSummary = runtimeContext.addImportedGames(candidates)
-                    importPgnText = ""
+                    importState.summary = runtimeContext.addImportedGames(candidates)
+                    importState.pgnText = ""
                 } finally {
-                    importProgress = null
-                    importJob = null
+                    importState.progress = null
+                    importState.job = null
                 }
             }
-        importJob = job
+        importState.job = job
         job.start()
     }
 
@@ -257,13 +252,13 @@ internal fun GameOpeningAnalysisScreen(
                             throw error
                         } catch (_: Exception) {
                             fileReadErrorHandled = true
-                            importFileErrorMessage = failedReadFileMessage
+                            importState.fileErrorMessage = failedReadFileMessage
                             null
                         }
                     },
                     onLoadFailed = {
                         if (!fileReadErrorHandled) {
-                            importFileErrorMessage = failedReadSelectedFileMessage
+                            importState.fileErrorMessage = failedReadSelectedFileMessage
                         }
                     },
                 )
@@ -384,20 +379,20 @@ internal fun GameOpeningAnalysisScreen(
 
     if (dialogs.showImportDialog) {
         GameOpeningAnalysisImportDialog(
-            pgnText = importPgnText,
-            onPgnTextChange = { importPgnText = it },
+            pgnText = importState.pgnText,
+            onPgnTextChange = { importState.pgnText = it },
             onDismiss = { dialogs.showImportDialog = false },
-            onImportClick = { startPastedTextImport(importPgnText) },
+            onImportClick = { startPastedTextImport(importState.pgnText) },
             onImportFromFileClick = { filePickerLauncher.launch(arrayOf("*/*")) },
         )
     }
 
-    val currentImportFileErrorMessage = importFileErrorMessage
+    val currentImportFileErrorMessage = importState.fileErrorMessage
     if (currentImportFileErrorMessage != null) {
         AppMessageDialog(
             title = stringResource(R.string.game_opening_analysis_import_failed_title),
             message = currentImportFileErrorMessage,
-            onDismiss = { importFileErrorMessage = null },
+            onDismiss = { importState.fileErrorMessage = null },
         )
     }
 
@@ -419,12 +414,12 @@ internal fun GameOpeningAnalysisScreen(
         )
     }
 
-    val currentImportSummary = importSummary
+    val currentImportSummary = importState.summary
     if (currentImportSummary != null) {
         AppMessageDialog(
             title = stringResource(R.string.game_opening_analysis_import_summary_title),
             message = gameOpeningAnalysisImportSummaryMessage(currentImportSummary),
-            onDismiss = { importSummary = null },
+            onDismiss = { importState.summary = null },
             modifier = Modifier.testTag(GameOpeningAnalysisImportSummaryDialogTestTag),
         )
     }
@@ -454,8 +449,8 @@ internal fun GameOpeningAnalysisScreen(
     )
 
     GameOpeningAnalysisImportProgressDialog(
-        progress = importProgress,
-        onCancel = { importJob?.cancel() },
+        progress = importState.progress,
+        onCancel = { importState.job?.cancel() },
     )
 
     if (exportState.inProgress) {

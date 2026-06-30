@@ -15,7 +15,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.example.chessboard.runtimecontext.ImportGamesSummary
 import com.example.chessboard.runtimecontext.ImportedGameItem
+import kotlinx.coroutines.Job
 
 internal class GameOpeningAnalysisDialogState {
     var showImportDialog by mutableStateOf(false)
@@ -42,4 +44,17 @@ internal class GameOpeningAnalysisExportState {
 @Composable
 internal fun rememberGameOpeningAnalysisExportState(): GameOpeningAnalysisExportState {
     return remember { GameOpeningAnalysisExportState() }
+}
+
+internal class GameOpeningAnalysisImportState {
+    var job by mutableStateOf<Job?>(null)
+    var progress by mutableStateOf<GameOpeningAnalysisImportProgress?>(null)
+    var pgnText by mutableStateOf("")
+    var summary by mutableStateOf<ImportGamesSummary?>(null)
+    var fileErrorMessage by mutableStateOf<String?>(null)
+}
+
+@Composable
+internal fun rememberGameOpeningAnalysisImportState(): GameOpeningAnalysisImportState {
+    return remember { GameOpeningAnalysisImportState() }
 }
