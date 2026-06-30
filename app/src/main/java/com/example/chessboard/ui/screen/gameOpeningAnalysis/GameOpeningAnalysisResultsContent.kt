@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -121,18 +120,16 @@ private fun GameOpeningAnalysisResultPreview(
     val unknownEvent = stringResource(R.string.game_opening_analysis_unknown_event)
     val unknownPlayer = stringResource(R.string.game_opening_analysis_unknown_player)
     val previewFen = resultPreviewFen(result)
-    val lineController = remember { LineController(resolveResultBoardOrientation(result)) }
-
-    LaunchedEffect(previewFen, result.selectedSide) {
-        lineController.setOrientation(resolveResultBoardOrientation(result))
-        lineController.setUserMovesEnabled(false)
-        if (previewFen == null) {
-            return@LaunchedEffect
+    val lineController =
+        remember(analysisResult.gameId, previewFen, result.selectedSide) {
+            LineController(resolveResultBoardOrientation(result)).also { controller ->
+                controller.setUserMovesEnabled(false)
+                if (previewFen != null) {
+                    controller.loadFromFen(previewFen)
+                    controller.setUserMovesEnabled(false)
+                }
+            }
         }
-
-        lineController.loadFromFen(previewFen)
-        lineController.setUserMovesEnabled(false)
-    }
 
     CardSurface(
         modifier =
