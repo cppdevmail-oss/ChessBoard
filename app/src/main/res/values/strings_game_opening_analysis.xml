@@ -19,6 +19,10 @@
     <string name="game_opening_analysis_delete_game_content_description">Delete selected imported game</string>
     <string name="game_opening_analysis_delete_game_title">Delete Game</string>
     <string name="game_opening_analysis_delete_game_message">Delete \"%1$s\"?</string>
+    <string name="game_opening_analysis_game_actions">Game Actions</string>
+    <string name="game_opening_analysis_delete_filtered_games_action">Delete Filtered</string>
+    <string name="game_opening_analysis_delete_filtered_games_content_description">Delete filtered imported games</string>
+    <string name="game_opening_analysis_delete_filtered_games_title">Delete Filtered Games</string>
     <string name="game_opening_analysis_import_dialog_title">Add Games</string>
     <string name="game_opening_analysis_import_pgn_label">PGN text</string>
     <string name="game_opening_analysis_import_pgn_placeholder">Paste one or more PGN games</string>
@@ -89,4 +93,8 @@
     <string name="game_opening_analysis_result_detail_no_continuations">No known continuations are available for this result.</string>
     <string name="game_opening_analysis_result_detail_continuation_move">Move: %1$s</string>
     <string name="game_opening_analysis_result_detail_continuation_lines">Lines: %1$d</string>
+    <plurals name="game_opening_analysis_delete_filtered_games_message">
+        <item quantity="one">Delete %1$d filtered imported game? This cannot be undone.</item>
+        <item quantity="other">Delete %1$d filtered imported games? This cannot be undone.</item>
+    </plurals>
 </resources>

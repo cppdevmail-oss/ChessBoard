@@ -19,6 +19,10 @@
     <string name="game_opening_analysis_delete_game_content_description">Удалить выбранную импортированную партию</string>
     <string name="game_opening_analysis_delete_game_title">Удалить партию</string>
     <string name="game_opening_analysis_delete_game_message">Удалить \"%1$s\"?</string>
+    <string name="game_opening_analysis_game_actions">Действия с партиями</string>
+    <string name="game_opening_analysis_delete_filtered_games_action">Удалить по фильтру</string>
+    <string name="game_opening_analysis_delete_filtered_games_content_description">Удалить отфильтрованные импортированные партии</string>
+    <string name="game_opening_analysis_delete_filtered_games_title">Удалить партии по фильтру</string>
     <string name="game_opening_analysis_import_dialog_title">Добавить партии</string>
     <string name="game_opening_analysis_import_pgn_label">Текст PGN</string>
     <string name="game_opening_analysis_import_pgn_placeholder">Вставьте одну или несколько партий PGN</string>
@@ -89,4 +93,10 @@
     <string name="game_opening_analysis_result_detail_no_continuations">Для этого результата нет известных продолжений.</string>
     <string name="game_opening_analysis_result_detail_continuation_move">Ход: %1$s</string>
     <string name="game_opening_analysis_result_detail_continuation_lines">Линий: %1$d</string>
+    <plurals name="game_opening_analysis_delete_filtered_games_message">
+        <item quantity="one">Удалить %1$d отфильтрованную импортированную партию? Это нельзя отменить.</item>
+        <item quantity="few">Удалить %1$d отфильтрованные импортированные партии? Это нельзя отменить.</item>
+        <item quantity="many">Удалить %1$d отфильтрованных импортированных партий? Это нельзя отменить.</item>
+        <item quantity="other">Удалить %1$d отфильтрованные импортированные партии? Это нельзя отменить.</item>
+    </plurals>
 </resources>
