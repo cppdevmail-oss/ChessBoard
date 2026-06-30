@@ -12,7 +12,7 @@ package com.example.chessboard.ui.screen.gameOpeningAnalysis
  * - thin container wiring that supplies saved opening lines to the runtime batch-analysis runner
  * Not allowed here:
  * - PGN parsing, analyzer algorithms, persistence writes, or reusable generic components
- * Validation date: 2026-06-28
+ * Validation date: 2026-06-29
  */
 
 import android.content.Context
@@ -36,6 +36,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Biotech
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.IconButton
@@ -74,7 +75,7 @@ import com.example.chessboard.runtimecontext.ImportedGameAnalysisResult
 import com.example.chessboard.runtimecontext.ImportedGameItem
 import com.example.chessboard.runtimecontext.analyzeImportedGameOpeningsAgainstBook
 import com.example.chessboard.runtimecontext.parseGameOpeningAnalysisPgnCandidatesWithProgress
-import com.example.chessboard.runtimecontext.resolveGameOpeningAnalysisImportParallelism
+import com.example.chessboard.runtimecontext.resolveGameOpeningAnalysisParallelism
 import com.example.chessboard.ui.BoardOrientation
 import com.example.chessboard.ui.GameOpeningAnalysisAddGamesTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisAnalyzeActionTestTag
@@ -89,9 +90,11 @@ import com.example.chessboard.ui.GameOpeningAnalysisImportSummaryDialogTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisImportTextInputTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisNextGamesPageTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisNextMoveTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisNextResultsPageTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisPreviewTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisPreviousGamesPageTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisPreviousMoveTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisPreviousResultsPageTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisSearchActionTestTag
 import com.example.chessboard.ui.components.AppMessageDialog
 import com.example.chessboard.ui.components.AppScreenScaffold
@@ -106,7 +109,6 @@ import com.example.chessboard.ui.components.HomeIconButton
 import com.example.chessboard.ui.components.IconMd
 import com.example.chessboard.ui.components.LineMoveTreeSection
 import com.example.chessboard.ui.components.PasteInputBlock
-import com.example.chessboard.ui.components.PrimaryButton
 import com.example.chessboard.ui.components.SecondaryButton
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.screen.ScreenContainerContext
@@ -208,7 +210,7 @@ internal fun GameOpeningAnalysisScreen(
         onLoadFailed: () -> Unit,
     ) {
         showImportDialog = false
-        val importParallelism = resolveGameOpeningAnalysisImportParallelism()
+        val importParallelism = resolveGameOpeningAnalysisParallelism()
         val job =
             coroutineScope.launch(start = CoroutineStart.LAZY) {
                 try {
@@ -431,6 +433,36 @@ internal fun GameOpeningAnalysisScreen(
                 filledBackButton = true,
                 actions = {
                     HomeIconButton(onClick = onHomeClick)
+                    if (showingResults) {
+                        IconButton(
+                            onClick = { runtimeContext.openPreviousResultsPage() },
+                            enabled = runtimeContext.canOpenPreviousResultsPage(),
+                            modifier = Modifier.testTag(GameOpeningAnalysisPreviousResultsPageTestTag),
+                        ) {
+                            IconMd(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                contentDescription = stringResource(R.string.common_previous),
+                                tint =
+                                    resolveGameOpeningAnalysisPageArrowTint(
+                                        runtimeContext.canOpenPreviousResultsPage(),
+                                    ),
+                            )
+                        }
+                        IconButton(
+                            onClick = { runtimeContext.openNextResultsPage() },
+                            enabled = runtimeContext.canOpenNextResultsPage(),
+                            modifier = Modifier.testTag(GameOpeningAnalysisNextResultsPageTestTag),
+                        ) {
+                            IconMd(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                contentDescription = stringResource(R.string.common_next),
+                                tint =
+                                    resolveGameOpeningAnalysisPageArrowTint(
+                                        runtimeContext.canOpenNextResultsPage(),
+                                    ),
+                            )
+                        }
+                    }
                     if (!showingResults && !showingResultDetail) {
                         IconButton(
                             onClick = {
@@ -509,6 +541,11 @@ internal fun GameOpeningAnalysisScreen(
                     onPreviousMoveClick = { lineController.undoMove() },
                     onNextMoveClick = { lineController.redoMove() },
                     onAddGamesClick = { showImportDialog = true },
+                    onAnalyzeClick = {
+                        draftAnalysisOptions = runtimeContext.lastAnalysisOptions
+                        showAnalysisOptionsDialog = true
+                    },
+                    canAnalyze = filteredGames.isNotEmpty() && runtimeContext.analysisProgress == null,
                 )
             }
         },
@@ -547,19 +584,6 @@ internal fun GameOpeningAnalysisScreen(
             BodySecondaryText(
                 text = stringResource(R.string.game_opening_analysis_list_hint),
                 color = TextColor.Secondary,
-            )
-
-            PrimaryButton(
-                text = stringResource(R.string.game_opening_analysis_analyze_action),
-                onClick = {
-                    draftAnalysisOptions = runtimeContext.lastAnalysisOptions
-                    showAnalysisOptionsDialog = true
-                },
-                enabled = filteredGames.isNotEmpty() && runtimeContext.analysisProgress == null,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .testTag(GameOpeningAnalysisAnalyzeActionTestTag),
             )
 
             visibleGames.forEach { game ->
@@ -754,11 +778,13 @@ private fun GameOpeningAnalysisBoardControlsBar(
     onPreviousMoveClick: () -> Unit,
     onNextMoveClick: () -> Unit,
     onAddGamesClick: () -> Unit,
+    onAnalyzeClick: () -> Unit,
+    canAnalyze: Boolean,
     modifier: Modifier = Modifier,
 ) {
     BoardActionNavigationBar(
         modifier = modifier,
-        maxVisibleItems = 3,
+        maxVisibleItems = 4,
         items =
             listOf(
                 BoardActionNavigationItem(
@@ -774,6 +800,19 @@ private fun GameOpeningAnalysisBoardControlsBar(
                                 R.string.game_opening_analysis_add_games_content_description,
                             ),
                         tint = TrainingAccentTeal,
+                    )
+                },
+                BoardActionNavigationItem(
+                    label = stringResource(R.string.game_opening_analysis_analyze_action),
+                    selected = true,
+                    enabled = canAnalyze,
+                    modifier = Modifier.testTag(GameOpeningAnalysisAnalyzeActionTestTag),
+                    onClick = onAnalyzeClick,
+                ) {
+                    IconMd(
+                        imageVector = Icons.Default.Biotech,
+                        contentDescription = stringResource(R.string.game_opening_analysis_analyze_action),
+                        tint = resolveMoveControlTint(canAnalyze),
                     )
                 },
                 BoardActionNavigationItem(

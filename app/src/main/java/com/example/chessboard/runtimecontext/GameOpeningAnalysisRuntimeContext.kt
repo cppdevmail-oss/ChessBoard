@@ -7,7 +7,7 @@ package com.example.chessboard.runtimecontext
  * - pure runtime helpers for deduplication, filtering, paging, and result-type matching
  * Not allowed here:
  * - Compose UI rendering, navigation routing, database access, PGN file reading, or analyzer execution
- * Validation date: 2026-06-26
+ * Validation date: 2026-06-29
  */
 
 import androidx.compose.runtime.getValue
@@ -94,7 +94,14 @@ data class ImportGamesSummary(
 data class GameOpeningAnalysisProgress(
     val analyzedCount: Int,
     val totalCount: Int,
-)
+    val stage: Stage = Stage.ANALYZING_GAMES,
+    val parallelism: Int? = null,
+) {
+    enum class Stage {
+        BUILDING_BOOK,
+        ANALYZING_GAMES,
+    }
+}
 
 sealed interface ImportedGameCandidate {
     data class Parsed(
@@ -282,23 +289,41 @@ class GameOpeningAnalysisRuntimeContext(
         lastAnalysisOptions = options
     }
 
-    fun startAnalysis(totalCount: Int) {
+    fun startAnalysisBookBuild() {
+        clearAnalysisResults()
+        analysisProgress =
+            GameOpeningAnalysisProgress(
+                analyzedCount = 0,
+                totalCount = 0,
+                stage = GameOpeningAnalysisProgress.Stage.BUILDING_BOOK,
+            )
+    }
+
+    fun startAnalysis(
+        totalCount: Int,
+        parallelism: Int? = null,
+    ) {
         clearAnalysisResults()
         analysisProgress =
             GameOpeningAnalysisProgress(
                 analyzedCount = 0,
                 totalCount = totalCount,
+                stage = GameOpeningAnalysisProgress.Stage.ANALYZING_GAMES,
+                parallelism = parallelism,
             )
     }
 
     fun updateAnalysisProgress(
         analyzedCount: Int,
         totalCount: Int,
+        parallelism: Int? = null,
     ) {
         analysisProgress =
             GameOpeningAnalysisProgress(
                 analyzedCount = analyzedCount.coerceAtLeast(0),
                 totalCount = totalCount.coerceAtLeast(0),
+                stage = GameOpeningAnalysisProgress.Stage.ANALYZING_GAMES,
+                parallelism = parallelism,
             )
     }
 
