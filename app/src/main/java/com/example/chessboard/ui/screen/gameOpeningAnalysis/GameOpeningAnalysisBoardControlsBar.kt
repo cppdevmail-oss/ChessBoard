@@ -37,21 +37,69 @@ import com.example.chessboard.ui.components.IconMd
 import com.example.chessboard.ui.theme.BottomBarContentColor
 import com.example.chessboard.ui.theme.TrainingAccentTeal
 
-@Composable
-internal fun GameOpeningAnalysisBoardControlsBar(
+internal data class GameOpeningAnalysisBoardControls(
+    val state: GameOpeningAnalysisBoardControlsState,
+    val actions: GameOpeningAnalysisBoardControlsActions,
+)
+
+internal data class GameOpeningAnalysisBoardControlsState(
+    val canUndo: Boolean,
+    val canRedo: Boolean,
+    val canAnalyze: Boolean,
+    val canDeleteGame: Boolean,
+    val hasGameActions: Boolean,
+)
+
+internal data class GameOpeningAnalysisBoardControlsActions(
+    val onPreviousMoveClick: () -> Unit,
+    val onNextMoveClick: () -> Unit,
+    val onAddGamesClick: () -> Unit,
+    val onDeleteGameClick: () -> Unit,
+    val onGameActionsClick: () -> Unit,
+    val onAnalyzeClick: () -> Unit,
+)
+
+internal fun gameOpeningAnalysisBoardControls(
     canUndo: Boolean,
     canRedo: Boolean,
+    canAnalyze: Boolean,
+    canDeleteGame: Boolean,
+    hasGameActions: Boolean,
     onPreviousMoveClick: () -> Unit,
     onNextMoveClick: () -> Unit,
     onAddGamesClick: () -> Unit,
     onDeleteGameClick: () -> Unit,
     onGameActionsClick: () -> Unit,
     onAnalyzeClick: () -> Unit,
-    canAnalyze: Boolean,
-    canDeleteGame: Boolean,
-    hasGameActions: Boolean,
+): GameOpeningAnalysisBoardControls {
+    return GameOpeningAnalysisBoardControls(
+        state =
+            GameOpeningAnalysisBoardControlsState(
+                canUndo = canUndo,
+                canRedo = canRedo,
+                canAnalyze = canAnalyze,
+                canDeleteGame = canDeleteGame,
+                hasGameActions = hasGameActions,
+            ),
+        actions =
+            GameOpeningAnalysisBoardControlsActions(
+                onPreviousMoveClick = onPreviousMoveClick,
+                onNextMoveClick = onNextMoveClick,
+                onAddGamesClick = onAddGamesClick,
+                onDeleteGameClick = onDeleteGameClick,
+                onGameActionsClick = onGameActionsClick,
+                onAnalyzeClick = onAnalyzeClick,
+            ),
+    )
+}
+
+@Composable
+internal fun GameOpeningAnalysisBoardControlsBar(
+    controls: GameOpeningAnalysisBoardControls,
     modifier: Modifier = Modifier,
 ) {
+    val state = controls.state
+    val actions = controls.actions
     BoardActionNavigationBar(
         modifier = modifier,
         maxVisibleItems = 6,
@@ -61,7 +109,7 @@ internal fun GameOpeningAnalysisBoardControlsBar(
                     label = stringResource(R.string.game_opening_analysis_add_games_action),
                     selected = true,
                     modifier = Modifier.testTag(GameOpeningAnalysisAddGamesTestTag),
-                    onClick = onAddGamesClick,
+                    onClick = actions.onAddGamesClick,
                 ) {
                     IconMd(
                         imageVector = Icons.Default.Add,
@@ -74,9 +122,9 @@ internal fun GameOpeningAnalysisBoardControlsBar(
                 },
                 BoardActionNavigationItem(
                     label = stringResource(R.string.common_delete),
-                    enabled = canDeleteGame,
+                    enabled = state.canDeleteGame,
                     modifier = Modifier.testTag(GameOpeningAnalysisDeleteGameTestTag),
-                    onClick = onDeleteGameClick,
+                    onClick = actions.onDeleteGameClick,
                 ) {
                     IconMd(
                         imageVector = Icons.Default.Delete,
@@ -84,39 +132,39 @@ internal fun GameOpeningAnalysisBoardControlsBar(
                             stringResource(
                                 R.string.game_opening_analysis_delete_game_content_description,
                             ),
-                        tint = resolveMoveControlTint(canDeleteGame),
+                        tint = resolveMoveControlTint(state.canDeleteGame),
                     )
                 },
                 BoardActionNavigationItem(
                     label = stringResource(R.string.game_opening_analysis_analyze_action),
                     selected = true,
-                    enabled = canAnalyze,
+                    enabled = state.canAnalyze,
                     modifier = Modifier.testTag(GameOpeningAnalysisAnalyzeActionTestTag),
-                    onClick = onAnalyzeClick,
+                    onClick = actions.onAnalyzeClick,
                 ) {
                     IconMd(
                         imageVector = Icons.Default.Biotech,
                         contentDescription = stringResource(R.string.game_opening_analysis_analyze_action),
-                        tint = resolveMoveControlTint(canAnalyze),
+                        tint = resolveMoveControlTint(state.canAnalyze),
                     )
                 },
                 BoardActionNavigationItem(
                     label = stringResource(R.string.common_menu),
-                    enabled = hasGameActions,
+                    enabled = state.hasGameActions,
                     modifier = Modifier.testTag(GameOpeningAnalysisGameActionsTestTag),
-                    onClick = onGameActionsClick,
+                    onClick = actions.onGameActionsClick,
                 ) {
                     IconMd(
                         imageVector = Icons.Default.Menu,
                         contentDescription = stringResource(R.string.game_opening_analysis_game_actions),
-                        tint = resolveMoveControlTint(hasGameActions),
+                        tint = resolveMoveControlTint(state.hasGameActions),
                     )
                 },
                 BoardActionNavigationItem(
                     label = stringResource(R.string.common_back),
-                    enabled = canUndo,
+                    enabled = state.canUndo,
                     modifier = Modifier.testTag(GameOpeningAnalysisPreviousMoveTestTag),
-                    onClick = onPreviousMoveClick,
+                    onClick = actions.onPreviousMoveClick,
                 ) {
                     IconMd(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
@@ -124,14 +172,14 @@ internal fun GameOpeningAnalysisBoardControlsBar(
                             stringResource(
                                 R.string.game_opening_analysis_previous_move_content_description,
                             ),
-                        tint = resolveMoveControlTint(canUndo),
+                        tint = resolveMoveControlTint(state.canUndo),
                     )
                 },
                 BoardActionNavigationItem(
                     label = stringResource(R.string.common_forward),
-                    enabled = canRedo,
+                    enabled = state.canRedo,
                     modifier = Modifier.testTag(GameOpeningAnalysisNextMoveTestTag),
-                    onClick = onNextMoveClick,
+                    onClick = actions.onNextMoveClick,
                 ) {
                     IconMd(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
@@ -139,7 +187,7 @@ internal fun GameOpeningAnalysisBoardControlsBar(
                             stringResource(
                                 R.string.game_opening_analysis_next_move_content_description,
                             ),
-                        tint = resolveMoveControlTint(canRedo),
+                        tint = resolveMoveControlTint(state.canRedo),
                     )
                 },
             ),

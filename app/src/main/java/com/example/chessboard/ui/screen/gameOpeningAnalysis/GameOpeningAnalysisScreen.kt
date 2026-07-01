@@ -636,31 +636,32 @@ internal fun GameOpeningAnalysisScreen(
         },
         bottomBar = {
             if (!snapshot.showingResults && !snapshot.showingResultDetail) {
+                val canUseFilteredGameActions =
+                    snapshot.filteredGames.isNotEmpty() &&
+                        runtimeContext.analysisProgress == null &&
+                        !exportState.inProgress
                 GameOpeningAnalysisBoardControlsBar(
-                    canUndo = snapshot.selectedGame != null && lineController.canUndo,
-                    canRedo = snapshot.selectedGame != null && lineController.canRedo,
-                    onPreviousMoveClick = { lineController.undoMove() },
-                    onNextMoveClick = { lineController.redoMove() },
-                    onAddGamesClick = { dialogs.showImportDialog = true },
-                    onDeleteGameClick = {
-                        if (snapshot.selectedGame != null) {
-                            dialogs.showDeleteGameDialog = true
-                        }
-                    },
-                    onGameActionsClick = { dialogs.showGameActionsDialog = true },
-                    onAnalyzeClick = {
-                        drafts.analysisOptions = runtimeContext.lastAnalysisOptions
-                        dialogs.showAnalysisOptionsDialog = true
-                    },
-                    canAnalyze =
-                        snapshot.filteredGames.isNotEmpty() &&
-                            runtimeContext.analysisProgress == null &&
-                            !exportState.inProgress,
-                    canDeleteGame = snapshot.selectedGame != null,
-                    hasGameActions =
-                        snapshot.filteredGames.isNotEmpty() &&
-                            runtimeContext.analysisProgress == null &&
-                            !exportState.inProgress,
+                    controls =
+                        gameOpeningAnalysisBoardControls(
+                            canUndo = snapshot.selectedGame != null && lineController.canUndo,
+                            canRedo = snapshot.selectedGame != null && lineController.canRedo,
+                            canAnalyze = canUseFilteredGameActions,
+                            canDeleteGame = snapshot.selectedGame != null,
+                            hasGameActions = canUseFilteredGameActions,
+                            onPreviousMoveClick = { lineController.undoMove() },
+                            onNextMoveClick = { lineController.redoMove() },
+                            onAddGamesClick = { dialogs.showImportDialog = true },
+                            onDeleteGameClick = {
+                                if (snapshot.selectedGame != null) {
+                                    dialogs.showDeleteGameDialog = true
+                                }
+                            },
+                            onGameActionsClick = { dialogs.showGameActionsDialog = true },
+                            onAnalyzeClick = {
+                                drafts.analysisOptions = runtimeContext.lastAnalysisOptions
+                                dialogs.showAnalysisOptionsDialog = true
+                            },
+                        ),
                 )
             }
         },
