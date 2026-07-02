@@ -43,6 +43,7 @@ internal data class GameOpeningAnalysisBoardControls(
 )
 
 internal data class GameOpeningAnalysisBoardControlsState(
+    val hasImportedGames: Boolean,
     val canUndo: Boolean,
     val canRedo: Boolean,
     val canAnalyze: Boolean,
@@ -60,6 +61,7 @@ internal data class GameOpeningAnalysisBoardControlsActions(
 )
 
 internal fun gameOpeningAnalysisBoardControls(
+    hasImportedGames: Boolean,
     canUndo: Boolean,
     canRedo: Boolean,
     canAnalyze: Boolean,
@@ -75,6 +77,7 @@ internal fun gameOpeningAnalysisBoardControls(
     return GameOpeningAnalysisBoardControls(
         state =
             GameOpeningAnalysisBoardControlsState(
+                hasImportedGames = hasImportedGames,
                 canUndo = canUndo,
                 canRedo = canRedo,
                 canAnalyze = canAnalyze,
@@ -100,11 +103,9 @@ internal fun GameOpeningAnalysisBoardControlsBar(
 ) {
     val state = controls.state
     val actions = controls.actions
-    BoardActionNavigationBar(
-        modifier = modifier,
-        maxVisibleItems = 6,
-        items =
-            listOf(
+    val items =
+        buildList {
+            add(
                 BoardActionNavigationItem(
                     label = stringResource(R.string.game_opening_analysis_add_games_action),
                     selected = true,
@@ -120,6 +121,12 @@ internal fun GameOpeningAnalysisBoardControlsBar(
                         tint = TrainingAccentTeal,
                     )
                 },
+            )
+            if (!state.hasImportedGames) {
+                return@buildList
+            }
+
+            add(
                 BoardActionNavigationItem(
                     label = stringResource(R.string.common_delete),
                     enabled = state.canDeleteGame,
@@ -135,6 +142,8 @@ internal fun GameOpeningAnalysisBoardControlsBar(
                         tint = resolveMoveControlTint(state.canDeleteGame),
                     )
                 },
+            )
+            add(
                 BoardActionNavigationItem(
                     label = stringResource(R.string.game_opening_analysis_analyze_action),
                     selected = true,
@@ -148,6 +157,8 @@ internal fun GameOpeningAnalysisBoardControlsBar(
                         tint = resolveMoveControlTint(state.canAnalyze),
                     )
                 },
+            )
+            add(
                 BoardActionNavigationItem(
                     label = stringResource(R.string.common_menu),
                     enabled = state.hasGameActions,
@@ -160,6 +171,8 @@ internal fun GameOpeningAnalysisBoardControlsBar(
                         tint = resolveMoveControlTint(state.hasGameActions),
                     )
                 },
+            )
+            add(
                 BoardActionNavigationItem(
                     label = stringResource(R.string.common_back),
                     enabled = state.canUndo,
@@ -175,6 +188,8 @@ internal fun GameOpeningAnalysisBoardControlsBar(
                         tint = resolveMoveControlTint(state.canUndo),
                     )
                 },
+            )
+            add(
                 BoardActionNavigationItem(
                     label = stringResource(R.string.common_forward),
                     enabled = state.canRedo,
@@ -190,7 +205,12 @@ internal fun GameOpeningAnalysisBoardControlsBar(
                         tint = resolveMoveControlTint(state.canRedo),
                     )
                 },
-            ),
+            )
+        }
+    BoardActionNavigationBar(
+        modifier = modifier,
+        maxVisibleItems = 6,
+        items = items,
     )
 }
 

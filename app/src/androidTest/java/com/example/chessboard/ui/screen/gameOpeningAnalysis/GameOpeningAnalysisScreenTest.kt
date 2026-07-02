@@ -58,6 +58,7 @@ import com.example.chessboard.ui.GameOpeningAnalysisFilterExactMatchTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisFilterMinPlyTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisFilterPlayerNameTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisGameListTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisGameActionsTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisImportConfirmTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisImportDialogTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisImportFromFileTestTag
@@ -132,6 +133,19 @@ class GameOpeningAnalysisScreenTest {
         assertTagIsAbsent(GameOpeningAnalysisClearFilterTestTag)
         assertTagIsAbsent(GameOpeningAnalysisPreviousGamesPageTestTag)
         assertTagIsAbsent(GameOpeningAnalysisNextGamesPageTestTag)
+    }
+
+    @Test
+    fun gameOpeningAnalysisScreen_emptyStateShowsOnlyAddInBottomBar() {
+        // Scenario: with no imported games, the bottom bar keeps only the add-games action.
+        setScreenContent(runtimeContext = GameOpeningAnalysisRuntimeContext())
+
+        composeRule.onNodeWithTag(GameOpeningAnalysisAddGamesTestTag).assertIsDisplayed()
+        assertTagIsAbsent(GameOpeningAnalysisDeleteGameTestTag)
+        assertTagIsAbsent(GameOpeningAnalysisAnalyzeActionTestTag)
+        assertTagIsAbsent(GameOpeningAnalysisGameActionsTestTag)
+        assertTagIsAbsent(GameOpeningAnalysisPreviousMoveTestTag)
+        assertTagIsAbsent(GameOpeningAnalysisNextMoveTestTag)
     }
 
     @Test

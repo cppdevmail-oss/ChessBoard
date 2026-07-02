@@ -623,6 +623,7 @@ internal fun GameOpeningAnalysisScreen(
                 GameOpeningAnalysisBoardControlsBar(
                     controls =
                         gameOpeningAnalysisBoardControls(
+                            hasImportedGames = snapshot.importedGames.isNotEmpty(),
                             canUndo = snapshot.selectedGame != null && lineController.canUndo,
                             canRedo = snapshot.selectedGame != null && lineController.canRedo,
                             canAnalyze = runtimeContext.analysisProgress == null && !exportState.inProgress,

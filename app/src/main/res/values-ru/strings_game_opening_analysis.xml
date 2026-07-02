@@ -105,7 +105,7 @@
     <string name="game_opening_analysis_result_detail_game_title">Проанализированная партия</string>
     <string name="game_opening_analysis_result_detail_position_title">Позиция результата</string>
     <string name="game_opening_analysis_result_detail_result_title">Детали результата</string>
-    <string name="game_opening_analysis_record_deviation_mistake_action">Добавить ошибку</string>
+    <string name="game_opening_analysis_record_deviation_mistake_action">Записать ошибку дебюта и удалить партию сравнения</string>
     <string name="game_opening_analysis_record_deviation_mistake_progress_title">Запись ошибки</string>
     <string name="game_opening_analysis_record_deviation_mistake_progress_message">Обновляем статистику тренировки...</string>
     <string name="game_opening_analysis_record_deviation_mistake_saved_title">Ошибка добавлена</string>
