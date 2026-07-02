@@ -1,4 +1,4 @@
-package com.example.chessboard.ui.screen.gameOpeningAnalysis
+package com.example.chessboard.ui.screen.gameOpeningAnalysis.state
 
 /*
  * File role: stores local Compose state holders for the game-opening analysis screen.
@@ -19,6 +19,7 @@ import com.example.chessboard.runtimecontext.GameOpeningAnalysisFilter
 import com.example.chessboard.runtimecontext.GameOpeningAnalysisOptions
 import com.example.chessboard.runtimecontext.ImportGamesSummary
 import com.example.chessboard.runtimecontext.ImportedGameItem
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.GameOpeningAnalysisImportProgress
 import kotlinx.coroutines.Job
 
 internal sealed interface GameOpeningAnalysisRunMessage {

@@ -21,6 +21,9 @@ import com.example.chessboard.runtimecontext.GameOpeningAnalysisProgress
 import com.example.chessboard.ui.GameOpeningAnalysisExportProgressDialogTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisRecordDeviationMistakeProgressTestTag
 import com.example.chessboard.ui.components.AppLoadingDialog
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.state.GameOpeningAnalysisDeviationMistakeState
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.state.GameOpeningAnalysisExportState
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.state.GameOpeningAnalysisImportState
 
 @Composable
 internal fun GameOpeningAnalysisBlockingDialogs(
