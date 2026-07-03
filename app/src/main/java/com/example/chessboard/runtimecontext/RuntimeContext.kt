@@ -168,9 +168,17 @@ class RuntimeContext {
     class ObservableLinesPage(
         private val limit: Int
     ) {
+        enum class LinesSortMode {
+            DEFAULT,
+            MISTAKES_DESC,
+            MISTAKES_ASC,
+        }
+
         data class State(
+            val defaultLineIds: List<Long> = emptyList(),
             val lineIds: List<Long> = emptyList(),
             val lineMistakeTotalsByLineId: Map<Long, Int> = emptyMap(),
+            val sortMode: LinesSortMode = LinesSortMode.DEFAULT,
             val offset: Int = 0,
         )
 
@@ -197,15 +205,55 @@ class RuntimeContext {
             }
 
             state = State(
-                lineIds = snapshot.lineIds,
+                defaultLineIds = snapshot.lineIds,
+                lineIds = sortLineIds(
+                    lineIds = snapshot.lineIds,
+                    sortMode = state.sortMode,
+                    lineMistakeTotalsByLineId = lineMistakeTotalsByLineId,
+                    defaultLineIds = snapshot.lineIds,
+                ),
                 lineMistakeTotalsByLineId = lineMistakeTotalsByLineId,
+                sortMode = state.sortMode,
             )
             clearFilter()
         }
 
         fun setLineIds(lineIds: List<Long>) {
-            state = State(lineIds = lineIds)
+            state = State(
+                defaultLineIds = lineIds,
+                lineIds = sortLineIds(
+                    lineIds = lineIds,
+                    sortMode = state.sortMode,
+                    lineMistakeTotalsByLineId = state.lineMistakeTotalsByLineId,
+                    defaultLineIds = lineIds,
+                ),
+                lineMistakeTotalsByLineId = state.lineMistakeTotalsByLineId,
+                sortMode = state.sortMode,
+            )
             clearFilter()
+        }
+
+        fun updateSortMode(sortMode: LinesSortMode) {
+            state = state.copy(
+                lineIds = sortLineIds(
+                    lineIds = state.defaultLineIds,
+                    sortMode = sortMode,
+                    lineMistakeTotalsByLineId = state.lineMistakeTotalsByLineId,
+                    defaultLineIds = state.defaultLineIds,
+                ),
+                sortMode = sortMode,
+                offset = 0,
+            )
+            filteredOffset = 0
+        }
+
+        fun sortLineIds(lineIds: List<Long>): List<Long> {
+            return sortLineIds(
+                lineIds = lineIds,
+                sortMode = state.sortMode,
+                lineMistakeTotalsByLineId = state.lineMistakeTotalsByLineId,
+                defaultLineIds = state.defaultLineIds,
+            )
         }
 
         fun updateFilterCriteria(filterCriteria: FilterCriteria) {
@@ -289,6 +337,7 @@ class RuntimeContext {
             }
 
             state = state.copy(
+                defaultLineIds = state.defaultLineIds.filterNot { currentLineId -> currentLineId == lineId },
                 lineIds = mutableLineIds,
                 offset = resolveOffsetAfterRemove(mutableLineIds.size)
             )
@@ -306,6 +355,7 @@ class RuntimeContext {
             }
 
             state = state.copy(
+                defaultLineIds = state.defaultLineIds.filterNot { lineId -> lineId in lineIdsToRemove },
                 lineIds = nextLineIds,
                 offset = resolveOffsetAfterRemove(nextLineIds.size)
             )
@@ -323,6 +373,40 @@ class RuntimeContext {
             }
 
             return ((nextLineCount - 1) / limit) * limit
+        }
+
+        private fun sortLineIds(
+            lineIds: List<Long>,
+            sortMode: LinesSortMode,
+            lineMistakeTotalsByLineId: Map<Long, Int>,
+            defaultLineIds: List<Long>,
+        ): List<Long> {
+            if (sortMode == LinesSortMode.DEFAULT) {
+                return lineIds
+            }
+
+            val defaultOrderByLineId = defaultLineIds.withIndex().associate { indexedLineId ->
+                indexedLineId.value to indexedLineId.index
+            }
+            val currentOrderByLineId = lineIds.withIndex().associate { indexedLineId ->
+                indexedLineId.value to indexedLineId.index
+            }
+
+            fun resolveOrder(lineId: Long): Int {
+                return defaultOrderByLineId[lineId] ?: currentOrderByLineId[lineId] ?: Int.MAX_VALUE
+            }
+
+            if (sortMode == LinesSortMode.MISTAKES_DESC) {
+                return lineIds.sortedWith(
+                    compareByDescending<Long> { lineId -> lineMistakeTotalsByLineId[lineId] ?: 0 }
+                        .thenBy { lineId -> resolveOrder(lineId) }
+                )
+            }
+
+            return lineIds.sortedWith(
+                compareBy<Long> { lineId -> lineMistakeTotalsByLineId[lineId] ?: 0 }
+                    .thenBy { lineId -> resolveOrder(lineId) }
+            )
         }
     }
 }

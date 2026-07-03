@@ -17,6 +17,7 @@ package com.example.chessboard.ui.screen.linesExplorer
  * - logic for unrelated screens
  * - broad app-wide UI utilities
  */
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,6 +37,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -49,6 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import com.example.chessboard.R
 import com.example.chessboard.boardmodel.LineController
 import com.example.chessboard.entity.SideMask
+import com.example.chessboard.runtimecontext.RuntimeContext
 import com.example.chessboard.service.ParsedLine
 import com.example.chessboard.ui.LinesExplorerAnalyzeActionTestTag
 import com.example.chessboard.ui.LinesExplorerBulkDeleteActionTestTag
@@ -581,6 +584,89 @@ internal fun RenderLinesExplorerSearchDialog(
             }
         }
     )
+}
+
+@Composable
+internal fun RenderLinesExplorerSortDialog(
+    visible: Boolean,
+    selectedSortMode: RuntimeContext.ObservableLinesPage.LinesSortMode,
+    onSortModeChange: (RuntimeContext.ObservableLinesPage.LinesSortMode) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    if (!visible) {
+        return
+    }
+
+    fun selectSortMode(sortMode: RuntimeContext.ObservableLinesPage.LinesSortMode) {
+        onSortModeChange(sortMode)
+        onDismiss()
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                CardMetaText(text = stringResource(R.string.common_cancel))
+            }
+        },
+        title = {
+            SectionTitleText(text = stringResource(R.string.lines_explorer_sort_title))
+        },
+        text = {
+            Column {
+                RuntimeContext.ObservableLinesPage.LinesSortMode.entries.forEach { sortMode ->
+                    LinesExplorerSortModeOption(
+                        text = resolveLinesExplorerSortModeLabel(sortMode),
+                        selectedSortMode = selectedSortMode,
+                        sortMode = sortMode,
+                        onSortModeChange = ::selectSortMode,
+                    )
+                }
+            }
+        },
+    )
+}
+
+@Composable
+private fun LinesExplorerSortModeOption(
+    text: String,
+    selectedSortMode: RuntimeContext.ObservableLinesPage.LinesSortMode,
+    sortMode: RuntimeContext.ObservableLinesPage.LinesSortMode,
+    onSortModeChange: (RuntimeContext.ObservableLinesPage.LinesSortMode) -> Unit,
+) {
+    val selected = selectedSortMode == sortMode
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onSortModeChange(sortMode) },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(
+            selected = selected,
+            onClick = null,
+        )
+        Text(
+            text = text,
+            color = TextColor.Primary,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+        )
+    }
+}
+
+@Composable
+private fun resolveLinesExplorerSortModeLabel(
+    sortMode: RuntimeContext.ObservableLinesPage.LinesSortMode,
+): String {
+    if (sortMode == RuntimeContext.ObservableLinesPage.LinesSortMode.MISTAKES_DESC) {
+        return stringResource(R.string.lines_explorer_sort_mistakes_desc)
+    }
+
+    if (sortMode == RuntimeContext.ObservableLinesPage.LinesSortMode.MISTAKES_ASC) {
+        return stringResource(R.string.lines_explorer_sort_mistakes_asc)
+    }
+
+    return stringResource(R.string.lines_explorer_sort_default)
 }
 
 @Composable

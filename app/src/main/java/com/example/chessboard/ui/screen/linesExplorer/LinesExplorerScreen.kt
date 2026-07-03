@@ -32,6 +32,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
@@ -105,6 +106,7 @@ internal data class LinesExplorerScreenState(
     val selectedLineIdx: Int,
     val totalLinesCount: Int,
     val lineMistakeTotalsByLineId: Map<Long, Int>,
+    val sortMode: RuntimeContext.ObservableLinesPage.LinesSortMode,
     val currentPage: Int,
     val totalPages: Int,
     val simpleViewEnabled: Boolean,
@@ -150,7 +152,11 @@ fun LinesExplorerScreenContainer(
     var linesPgnMessage by remember { mutableStateOf<LinesExplorerPgnMessage?>(null) }
     var isDeletingExplorerLines by remember { mutableStateOf(false) }
 
-    val activeLineIds = filteredLineIds ?: observableLinesState.lineIds
+    val activeLineIds = if (filteredLineIds != null) {
+        observableLinesPage.sortLineIds(filteredLineIds.orEmpty())
+    } else {
+        observableLinesState.lineIds
+    }
     val activeOffset = resolveLinesExplorerActiveOffset(
         filteredLineIds = filteredLineIds,
         filteredOffset = filteredOffset,
@@ -358,6 +364,12 @@ fun LinesExplorerScreenContainer(
         observableLinesPage.openNextPage()
     }
 
+    fun updateSortMode(sortMode: RuntimeContext.ObservableLinesPage.LinesSortMode) {
+        observableLinesPage.updateSortMode(sortMode)
+        selectedLineIdx = -1
+        lineController.resetToStartPosition()
+    }
+
     LaunchedEffect(activeFilterState) {
         if (!hasLinesExplorerActiveFilter(activeFilterState)) {
             filteredLineIds = null
@@ -411,6 +423,7 @@ fun LinesExplorerScreenContainer(
             selectedLineIdx = selectedLineIdx,
             totalLinesCount = totalLinesCount,
             lineMistakeTotalsByLineId = observableLinesState.lineMistakeTotalsByLineId,
+            sortMode = observableLinesState.sortMode,
             currentPage = currentPage,
             totalPages = totalPages,
             simpleViewEnabled = simpleViewEnabled,
@@ -452,6 +465,7 @@ fun LinesExplorerScreenContainer(
         onAnalyzeLineClick = onAnalyzeLineClick,
         onApplyFilter = ::applyLinesFilter,
         onClearFilter = ::clearLinesFilter,
+        onSortModeChange = ::updateSortMode,
         onCloneLineClick = { line ->
             onCloneLineClick(
                 buildLineDraftFromSourceLine(
@@ -502,6 +516,7 @@ internal fun LinesExplorerScreen(
     onAnalyzeLineClick: (List<String>, Int) -> Unit = { _, _ -> },
     onApplyFilter: (LinesExplorerFilterState) -> Unit = {},
     onClearFilter: () -> Unit = {},
+    onSortModeChange: (RuntimeContext.ObservableLinesPage.LinesSortMode) -> Unit,
     onMovePlyClick: (lineIdx: Int, ply: Int) -> Unit = { _, _ -> },
     onDeleteLineClick: (lineId: Long) -> Unit = {},
 ) {
@@ -515,6 +530,7 @@ internal fun LinesExplorerScreen(
 
     val currentPly = state.lineController.currentMoveIndex
     var showSearchDialog by remember { mutableStateOf(false) }
+    var showSortDialog by remember { mutableStateOf(false) }
     var draftFilterState by remember { mutableStateOf(state.activeFilterState) }
     val displayedLines = state.parsedLines.withIndex().toList()
     val selectedLine = resolveDisplayedSelectedLine(
@@ -605,6 +621,13 @@ internal fun LinesExplorerScreen(
         }
     )
 
+    RenderLinesExplorerSortDialog(
+        visible = showSortDialog,
+        selectedSortMode = state.sortMode,
+        onSortModeChange = onSortModeChange,
+        onDismiss = { showSortDialog = false },
+    )
+
     RenderLinesExplorerLineActionsDialog(
         visible = showLineActionsDialog.value && hasLineActions,
         onDismiss = { showLineActionsDialog.value = false },
@@ -681,6 +704,13 @@ internal fun LinesExplorerScreen(
                         IconMd(
                             imageVector = Icons.Default.Search,
                             contentDescription = stringResource(R.string.lines_explorer_search_lines),
+                            tint = TrainingTextPrimary,
+                        )
+                    }
+                    IconButton(onClick = { showSortDialog = true }) {
+                        IconMd(
+                            imageVector = Icons.Default.Sort,
+                            contentDescription = stringResource(R.string.lines_explorer_sort_lines),
                             tint = TrainingTextPrimary,
                         )
                     }
