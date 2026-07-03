@@ -39,6 +39,7 @@ import com.example.chessboard.service.GameOpeningAnalysisMistakeService
 import com.example.chessboard.service.GlobalTrainingStatsService
 import com.example.chessboard.service.LineBackupService
 import com.example.chessboard.service.LineDeleter
+import com.example.chessboard.service.LinesExplorerDataService
 import com.example.chessboard.service.LineListService
 import com.example.chessboard.service.LineSaver
 import com.example.chessboard.service.LineUpdater
@@ -246,6 +247,10 @@ class DatabaseProvider private constructor(
         return LineListService(database.lineDao())
     }
 
+    fun createLinesExplorerDataService(): LinesExplorerDataService {
+        return LinesExplorerDataService(database)
+    }
+
     fun createDubiousLineService(): DubiousLineService {
         return DubiousLineService(database.dubiousLineDao())
     }
@@ -266,7 +271,7 @@ class DatabaseProvider private constructor(
         return TrainingTemplateService(database.trainingTemplateDao())
     }
 
-    private fun createTrainingResultService(): TrainingResultService {
+    fun createTrainingResultService(): TrainingResultService {
         return TrainingResultService(database)
     }
 

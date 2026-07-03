@@ -10,6 +10,7 @@ package com.example.chessboard.ui.screen.gameOpeningAnalysis
  * Validation date: 2026-07-01
  */
 
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.state.GameOpeningAnalysisDeviationMistakeState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

@@ -1,4 +1,4 @@
-package com.example.chessboard.ui.screen.gameOpeningAnalysis
+package com.example.chessboard.ui.screen.gameOpeningAnalysis.state
 
 /*
  * File role: builds immutable per-composition snapshots for the game-opening analysis screen.

@@ -756,6 +756,12 @@
         <item quantity="many">%1$d потеза</item>
         <item quantity="other">%1$d потеза</item>
     </plurals>
+    <plurals name="lines_explorer_training_mistakes_count">
+        <item quantity="one">Грешака у тренинзима: %1$d</item>
+        <item quantity="few">Грешака у тренинзима: %1$d</item>
+        <item quantity="many">Грешака у тренинзима: %1$d</item>
+        <item quantity="other">Грешака у тренинзима: %1$d</item>
+    </plurals>
     <plurals name="lines_explorer_delete_lines_message">
         <item quantity="one">Избрисати %1$d линију из резултата? Ово се не може поништити.</item>
         <item quantity="few">Избрисати %1$d линије из резултата? Ово се не може поништити.</item>

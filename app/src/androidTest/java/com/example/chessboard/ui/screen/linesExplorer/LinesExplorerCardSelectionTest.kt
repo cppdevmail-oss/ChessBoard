@@ -62,6 +62,7 @@ class LinesExplorerCardSelectionTest {
                     parsedLine = parsedLine,
                     isSelected = false,
                     lineController = LineController(),
+                    totalMistakes = 0,
                     onSelectClick = { selectedPly = 0 },
                     onMovePlyClick = {},
                     modifier = Modifier.testTag(lineBlockTestTag),
@@ -107,6 +108,7 @@ class LinesExplorerCardSelectionTest {
                     parsedLine = parsedLine,
                     isSelected = true,
                     lineController = lineController,
+                    totalMistakes = 0,
                     onSelectClick = {},
                     onMovePlyClick = { ply ->
                         lineController.loadFromUciMoves(uciMoves, targetPly = ply)

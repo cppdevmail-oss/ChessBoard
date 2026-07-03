@@ -1,6 +1,6 @@
 @file:Suppress("FunctionName")
 
-package com.example.chessboard.ui.screen.gameOpeningAnalysis
+package com.example.chessboard.ui.screen.gameOpeningAnalysis.dialogs
 
 /*
  * File role: renders non-blocking status dialogs for the game-opening analysis screen.
@@ -21,6 +21,10 @@ import com.example.chessboard.runtimecontext.GameOpeningAnalysisProgress
 import com.example.chessboard.runtimecontext.ImportGamesSummary
 import com.example.chessboard.ui.GameOpeningAnalysisImportSummaryDialogTestTag
 import com.example.chessboard.ui.components.AppMessageDialog
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.state.GameOpeningAnalysisDeviationMistakeState
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.state.GameOpeningAnalysisExportState
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.state.GameOpeningAnalysisImportState
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.state.GameOpeningAnalysisRunMessage
 
 @Composable
 internal fun GameOpeningAnalysisStatusDialogs(

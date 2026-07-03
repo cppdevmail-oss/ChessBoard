@@ -75,8 +75,10 @@ import com.example.chessboard.ui.GameOpeningAnalysisImportDialogTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisImportFromFileTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisImportTextInputTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisNextGamesPageTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisNextResultDetailTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisNextResultsPageTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisPreviousGamesPageTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisPreviousResultDetailTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisPreviousResultsPageTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisSearchActionTestTag
 import com.example.chessboard.ui.components.AppScreenScaffold
@@ -88,6 +90,27 @@ import com.example.chessboard.ui.components.SecondaryButton
 import com.example.chessboard.ui.components.SectionTitleText
 import com.example.chessboard.ui.screen.ScreenContainerContext
 import com.example.chessboard.ui.screen.ScreenType
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.dialogs.DeleteAnalysisResultGamesDialog
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.dialogs.DeleteFilteredImportedGamesDialog
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.dialogs.DeleteImportedGameDialog
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.dialogs.GameOpeningAnalysisActionsDialog
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.dialogs.GameOpeningAnalysisDialogAction
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.dialogs.GameOpeningAnalysisImportProgress
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.dialogs.GameOpeningAnalysisOptionsDialog
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.dialogs.GameOpeningAnalysisStatusDialogs
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.results.GameOpeningAnalysisResultDetailContent
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.results.GameOpeningAnalysisResultsContent
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.results.GameOpeningAnalysisResultsControlsBar
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.results.displayEvent
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.state.GameOpeningAnalysisExportState
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.state.GameOpeningAnalysisRunMessage
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.state.GameOpeningAnalysisScreenSnapshot
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.state.rememberGameOpeningAnalysisDeviationMistakeState
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.state.rememberGameOpeningAnalysisDialogState
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.state.rememberGameOpeningAnalysisDraftState
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.state.rememberGameOpeningAnalysisExportState
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.state.rememberGameOpeningAnalysisImportState
+import com.example.chessboard.ui.screen.gameOpeningAnalysis.state.toScreenSnapshot
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TextColor
@@ -539,6 +562,41 @@ internal fun GameOpeningAnalysisScreen(
                 actions = {
                     HomeIconButton(onClick = onHomeClick)
                     if (snapshot.importedGames.isNotEmpty()) {
+                        if (snapshot.showingResultDetail) {
+                            val canNavigateResultDetail = runtimeContext.analysisResults.size > 1
+                            IconButton(
+                                onClick = {
+                                    val selectedResult = snapshot.selectedAnalysisResult
+                                    if (selectedResult != null) {
+                                        runtimeContext.selectPreviousResult(selectedResult.gameId)
+                                    }
+                                },
+                                enabled = canNavigateResultDetail,
+                                modifier = Modifier.testTag(GameOpeningAnalysisPreviousResultDetailTestTag),
+                            ) {
+                                IconMd(
+                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                    contentDescription = stringResource(R.string.common_previous),
+                                    tint = resolveGameOpeningAnalysisPageArrowTint(canNavigateResultDetail),
+                                )
+                            }
+                            IconButton(
+                                onClick = {
+                                    val selectedResult = snapshot.selectedAnalysisResult
+                                    if (selectedResult != null) {
+                                        runtimeContext.selectNextResult(selectedResult.gameId)
+                                    }
+                                },
+                                enabled = canNavigateResultDetail,
+                                modifier = Modifier.testTag(GameOpeningAnalysisNextResultDetailTestTag),
+                            ) {
+                                IconMd(
+                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                    contentDescription = stringResource(R.string.common_next),
+                                    tint = resolveGameOpeningAnalysisPageArrowTint(canNavigateResultDetail),
+                                )
+                            }
+                        }
                         if (snapshot.showingResults) {
                             IconButton(
                                 onClick = { runtimeContext.openPreviousResultsPage() },

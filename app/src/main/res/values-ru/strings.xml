@@ -756,6 +756,12 @@
         <item quantity="many">%1$d ходов</item>
         <item quantity="other">%1$d хода</item>
     </plurals>
+    <plurals name="lines_explorer_training_mistakes_count">
+        <item quantity="one">Ошибок в тренировках: %1$d</item>
+        <item quantity="few">Ошибок в тренировках: %1$d</item>
+        <item quantity="many">Ошибок в тренировках: %1$d</item>
+        <item quantity="other">Ошибок в тренировках: %1$d</item>
+    </plurals>
     <plurals name="lines_explorer_delete_lines_message">
         <item quantity="one">Удалить %1$d линию из текущих результатов обзора? Это нельзя отменить.</item>
         <item quantity="few">Удалить %1$d линии из текущих результатов обзора? Это нельзя отменить.</item>
