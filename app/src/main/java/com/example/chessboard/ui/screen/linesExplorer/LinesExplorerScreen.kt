@@ -104,6 +104,7 @@ internal data class LinesExplorerScreenState(
     val activeFilterState: LinesExplorerFilterState,
     val selectedLineIdx: Int,
     val totalLinesCount: Int,
+    val lineMistakeTotalsByLineId: Map<Long, Int>,
     val currentPage: Int,
     val totalPages: Int,
     val simpleViewEnabled: Boolean,
@@ -409,6 +410,7 @@ fun LinesExplorerScreenContainer(
             activeFilterState = activeFilterState,
             selectedLineIdx = selectedLineIdx,
             totalLinesCount = totalLinesCount,
+            lineMistakeTotalsByLineId = observableLinesState.lineMistakeTotalsByLineId,
             currentPage = currentPage,
             totalPages = totalPages,
             simpleViewEnabled = simpleViewEnabled,
@@ -799,6 +801,7 @@ internal fun LinesExplorerScreen(
                             parsedLine = parsedLine,
                             isSelected = isSelected,
                             lineController = state.lineController,
+                            totalMistakes = state.lineMistakeTotalsByLineId[parsedLine.line.id] ?: 0,
                             onSelectClick = { onMovePlyClick(lineIdx, 0) },
                             onMovePlyClick = { ply -> onMovePlyClick(lineIdx, ply) },
                         )

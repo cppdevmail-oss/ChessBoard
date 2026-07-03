@@ -112,6 +112,7 @@ internal fun LineBlock(
     parsedLine: ParsedLine,
     isSelected: Boolean,
     lineController: LineController,
+    totalMistakes: Int,
     onSelectClick: () -> Unit,
     onMovePlyClick: (ply: Int) -> Unit,
     modifier: Modifier = Modifier
@@ -144,6 +145,13 @@ internal fun LineBlock(
                 LineBlockMetaRow(
                     eco = parsedLine.line.eco,
                     lineId = parsedLine.line.id
+                )
+                CardMetaText(
+                    text = pluralStringResource(
+                        R.plurals.lines_explorer_training_mistakes_count,
+                        totalMistakes,
+                        totalMistakes,
+                    )
                 )
             }
             CardMetaText(

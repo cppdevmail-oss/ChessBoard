@@ -44,6 +44,7 @@ class LinesExplorerBulkDeleteTest {
                         activeFilterState = LinesExplorerFilterState(),
                         selectedLineIdx = -1,
                         totalLinesCount = 3,
+                        lineMistakeTotalsByLineId = emptyMap(),
                         currentPage = 1,
                         totalPages = 1,
                         simpleViewEnabled = false,
