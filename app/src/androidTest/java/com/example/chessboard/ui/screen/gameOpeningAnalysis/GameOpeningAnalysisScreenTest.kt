@@ -500,7 +500,7 @@ class GameOpeningAnalysisScreenTest {
         }
         composeRule.onNodeWithTag(GameOpeningAnalysisResultsContentTestTag).assertIsDisplayed()
         composeRule.onNodeWithText("Analysis Results").assertIsDisplayed()
-        composeRule.onNodeWithText("Results: 1 • Showing: 1").assertIsDisplayed()
+        assertResultsSubtitle(resultsCount = 1, showingCount = 1)
         composeRule.onNodeWithText("Analysis Game").assertIsDisplayed()
         composeRule.onNodeWithText("Matches known opening").assertIsDisplayed()
         composeRule.onNodeWithText("Matched ply: 2").assertIsDisplayed()
@@ -842,6 +842,14 @@ class GameOpeningAnalysisScreenTest {
     ) {
         composeRule.onNodeWithText("Games: $gamesCount").assertIsDisplayed()
         composeRule.onNodeWithText("Page $currentPage/$totalPages").assertIsDisplayed()
+    }
+
+    private fun assertResultsSubtitle(
+        resultsCount: Int,
+        showingCount: Int,
+    ) {
+        composeRule.onNodeWithText("Results: $resultsCount").assertIsDisplayed()
+        composeRule.onNodeWithText("Showing: $showingCount").assertIsDisplayed()
     }
 
     private fun assertTagIsAbsent(tag: String) {
