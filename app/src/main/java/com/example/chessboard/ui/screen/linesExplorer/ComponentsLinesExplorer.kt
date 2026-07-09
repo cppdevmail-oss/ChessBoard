@@ -604,6 +604,7 @@ internal fun RenderLinesExplorerSortDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = Background.ScreenDark,
         confirmButton = {
             TextButton(onClick = onDismiss) {
                 CardMetaText(text = stringResource(R.string.common_cancel))
