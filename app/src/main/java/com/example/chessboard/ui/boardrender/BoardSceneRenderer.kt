@@ -154,25 +154,6 @@ private fun getColor(row: Int, col: Int): Color {
     return if (isLight) ChessLight else ChessDark
 }
 
-private fun squareToBoardCoords(
-    square: String,
-    orientation: BoardOrientation
-): Pair<Int, Int> {
-    if (square.length != 2 || square[0] !in 'a'..'h' || square[1] !in '1'..'8') {
-        return squareToBoardCoords("a1", orientation)
-    }
-
-    val file = square[0] - 'a'
-    val rank = square[1].digitToInt()
-    val row = CellCount - rank
-    val col = file
-    if (orientation == BoardOrientation.WHITE) {
-        return row to col
-    }
-
-    return (7 - row) to (7 - col)
-}
-
 private fun DrawScope.drawHighlight(
     square: String?,
     orientation: BoardOrientation,
@@ -225,12 +206,6 @@ private fun DrawScope.drawFigure(
         top = displayRow * squareSize,
         squareSize = squareSize,
     )
-}
-
-private fun fieldToBoardCoords(square: String): Pair<Int, Int> {
-    val col = square[0] - 'a'
-    val row = CellCount - (square[1] - '0')
-    return row to col
 }
 
 private fun DrawScope.drawFigureDragged(
