@@ -10,6 +10,7 @@ package com.example.chessboard.ui.screen.trainSingleLine
 import com.example.chessboard.boardmodel.LastMoveHighlight
 import com.example.chessboard.boardmodel.LineController
 import com.example.chessboard.ui.BoardOrientation
+import com.example.chessboard.ui.boardanimation.AnimateCaptureMoveAction
 import com.example.chessboard.ui.boardanimation.AnimateSimpleMoveAction
 import com.example.chessboard.ui.boardrender.buildBoardRenderScene
 import org.junit.Assert.assertEquals
@@ -48,14 +49,14 @@ class TrainSingleLineBoardAnimationTest {
                     to = "e4",
                     lastMoveHighlight = LastMoveHighlight(from = "e2", to = "e4"),
                     logicalPlyAfter = 1,
-                    durationMs = TrainSingleLineSimpleMoveDurationMs,
+                    durationMs = TrainSingleLineMoveAnimationDurationMs,
                 ),
                 AnimateSimpleMoveAction(
                     from = "e7",
                     to = "e5",
                     lastMoveHighlight = LastMoveHighlight(from = "e7", to = "e5"),
                     logicalPlyAfter = 2,
-                    durationMs = TrainSingleLineSimpleMoveDurationMs,
+                    durationMs = TrainSingleLineMoveAnimationDurationMs,
                 ),
             ),
             actions,
@@ -114,5 +115,97 @@ class TrainSingleLineBoardAnimationTest {
         )
 
         assertNull(actions)
+    }
+
+    @Test
+    fun buildTrainSingleLineProgressAnimationActions_returnsCaptureUserMoveAndForcedReply() {
+        val lineController = LineController(BoardOrientation.WHITE)
+        lineController.loadFromUciMoves(listOf("e2e4", "d7d5"), 2)
+        val uiState = TrainSingleLineUiState(
+            phase = TrainSingleLinePhase.Training,
+            expectedPly = 2,
+        )
+        val scene = buildBoardRenderScene(
+            position = lineController.getBoardPosition(),
+            orientation = lineController.getSide(),
+        )
+
+        lineController.tryMove("e4", "d5")
+
+        val actions = buildTrainSingleLineProgressAnimationActions(
+            scene = scene,
+            uiState = uiState,
+            lineController = lineController,
+            uciMoves = listOf("e2e4", "d7d5", "e4d5", "g8f6"),
+            currentOrientation = BoardOrientation.WHITE,
+            hasMoveCap = false,
+        )
+
+        assertEquals(
+            listOf(
+                AnimateCaptureMoveAction(
+                    from = "e4",
+                    to = "d5",
+                    capturedSquare = "d5",
+                    lastMoveHighlight = LastMoveHighlight(from = "e4", to = "d5"),
+                    logicalPlyAfter = 3,
+                    durationMs = TrainSingleLineMoveAnimationDurationMs,
+                ),
+                AnimateSimpleMoveAction(
+                    from = "g8",
+                    to = "f6",
+                    lastMoveHighlight = LastMoveHighlight(from = "g8", to = "f6"),
+                    logicalPlyAfter = 4,
+                    durationMs = TrainSingleLineMoveAnimationDurationMs,
+                ),
+            ),
+            actions,
+        )
+    }
+
+    @Test
+    fun buildTrainSingleLineProgressAnimationActions_returnsQuietUserMoveAndForcedReplyCapture() {
+        val lineController = LineController(BoardOrientation.WHITE)
+        lineController.loadFromUciMoves(listOf("g1f3"), 1)
+        val uiState = TrainSingleLineUiState(
+            phase = TrainSingleLinePhase.Training,
+            expectedPly = 1,
+        )
+        val scene = buildBoardRenderScene(
+            position = lineController.getBoardPosition(),
+            orientation = lineController.getSide(),
+        )
+
+        lineController.tryMove("e7", "e5")
+
+        val actions = buildTrainSingleLineProgressAnimationActions(
+            scene = scene,
+            uiState = uiState,
+            lineController = lineController,
+            uciMoves = listOf("g1f3", "e7e5", "f3e5"),
+            currentOrientation = BoardOrientation.BLACK,
+            hasMoveCap = false,
+        )
+
+        assertEquals(
+            listOf(
+                AnimateSimpleMoveAction(
+                    from = "e7",
+                    to = "e5",
+                    lastMoveHighlight = LastMoveHighlight(from = "e7", to = "e5"),
+                    logicalPlyAfter = 2,
+                    durationMs = TrainSingleLineMoveAnimationDurationMs,
+                ),
+                AnimateCaptureMoveAction(
+                    from = "f3",
+                    to = "e5",
+                    capturedSquare = "e5",
+                    lastMoveHighlight = LastMoveHighlight(from = "f3", to = "e5"),
+                    logicalPlyAfter = 3,
+                    durationMs = TrainSingleLineMoveAnimationDurationMs,
+                ),
+            ),
+            actions,
+        )
     }
 }

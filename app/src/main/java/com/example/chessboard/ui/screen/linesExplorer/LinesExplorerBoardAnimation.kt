@@ -2,19 +2,19 @@ package com.example.chessboard.ui.screen.linesExplorer
 
 /**
  * Screen-local animation wiring helpers for the Lines Explorer board.
- * Keep only the first-screen integration logic here for deciding when explorer moves can use simple queued animation.
+ * Keep only the first-screen integration logic here for deciding when explorer moves can use queued board animation.
  * Do not add generic board animation abstractions, Room access, or unrelated screen flow code to this file.
  * Validation date: 2026-07-10
  */
 
 import com.example.chessboard.boardmodel.LineController
 import com.example.chessboard.service.ParsedLine
-import com.example.chessboard.ui.boardanimation.AnimateSimpleMoveAction
+import com.example.chessboard.ui.boardanimation.AnimatedBoardMoveAction
 import com.example.chessboard.ui.boardanimation.BoardAnimationQueueController
 import com.example.chessboard.ui.boardanimation.replay.buildReplayNextMoveAnimationAction
 import com.example.chessboard.ui.boardanimation.replay.resetAnimatedReplayBoard
 
-private const val LinesExplorerSimpleMoveDurationMs = 80
+private const val LinesExplorerMoveAnimationDurationMs = 80
 
 internal fun resetLinesExplorerAnimatedBoard(
     boardAnimationController: BoardAnimationQueueController,
@@ -31,10 +31,10 @@ internal fun resetLinesExplorerAnimatedBoard(
 internal fun buildLinesExplorerNextMoveAnimationAction(
     parsedLine: ParsedLine,
     lineController: LineController,
-): AnimateSimpleMoveAction? {
+): AnimatedBoardMoveAction? {
     return buildReplayNextMoveAnimationAction(
         uciMoves = parsedLine.uciMoves,
         lineController = lineController,
-        durationMs = LinesExplorerSimpleMoveDurationMs,
+        durationMs = LinesExplorerMoveAnimationDurationMs,
     )
 }

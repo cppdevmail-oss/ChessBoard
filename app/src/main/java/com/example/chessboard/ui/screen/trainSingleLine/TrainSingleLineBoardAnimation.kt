@@ -9,14 +9,14 @@ package com.example.chessboard.ui.screen.trainSingleLine
 
 import com.example.chessboard.boardmodel.LineController
 import com.example.chessboard.ui.BoardOrientation
-import com.example.chessboard.ui.boardanimation.AnimateSimpleMoveAction
+import com.example.chessboard.ui.boardanimation.AnimatedBoardMoveAction
 import com.example.chessboard.ui.boardanimation.BoardAnimationQueueController
-import com.example.chessboard.ui.boardanimation.applyAnimatedSimpleMove
-import com.example.chessboard.ui.boardanimation.replay.buildReplaySimpleMoveActionOrNull
+import com.example.chessboard.ui.boardanimation.applyAnimatedBoardMove
+import com.example.chessboard.ui.boardanimation.replay.buildReplayForwardMoveActionOrNull
 import com.example.chessboard.ui.boardanimation.replay.resetAnimatedReplayBoard
 import com.example.chessboard.ui.boardrender.BoardRenderScene
 
-internal const val TrainSingleLineSimpleMoveDurationMs = 80
+internal const val TrainSingleLineMoveAnimationDurationMs = 80
 
 internal fun resetTrainSingleLineAnimatedBoard(
     boardAnimationController: BoardAnimationQueueController,
@@ -35,7 +35,7 @@ internal fun buildTrainSingleLineProgressAnimationActions(
     uciMoves: List<String>,
     currentOrientation: BoardOrientation,
     hasMoveCap: Boolean,
-): List<AnimateSimpleMoveAction>? {
+): List<AnimatedBoardMoveAction>? {
     val currentScene = scene ?: return null
     if (!isTrainSingleLineCorrectUserMove(uiState, lineController, uciMoves, currentOrientation)) {
         return null
@@ -88,13 +88,13 @@ private fun buildTrainSingleLineAnimationActions(
     uciMoves: List<String>,
     currentOrientation: BoardOrientation,
     hasMoveCap: Boolean,
-): List<AnimateSimpleMoveAction>? {
+): List<AnimatedBoardMoveAction>? {
     val userMoveUci = uciMoves.getOrNull(expectedPly) ?: return null
-    val userMoveAction = buildReplaySimpleMoveActionOrNull(
+    val userMoveAction = buildReplayForwardMoveActionOrNull(
         scene = scene,
         moveUci = userMoveUci,
         logicalPlyAfter = expectedPly + 1,
-        durationMs = TrainSingleLineSimpleMoveDurationMs,
+        durationMs = TrainSingleLineMoveAnimationDurationMs,
     ) ?: return null
 
     if (!shouldAnimateForcedReply(
@@ -107,14 +107,14 @@ private fun buildTrainSingleLineAnimationActions(
         return listOf(userMoveAction)
     }
 
-    val sceneAfterUserMove = applyAnimatedSimpleMove(scene, userMoveAction)
+    val sceneAfterUserMove = applyAnimatedBoardMove(scene, userMoveAction)
     val forcedReplyPly = expectedPly + 1
     val forcedReplyUci = uciMoves.getOrNull(forcedReplyPly) ?: return null
-    val forcedReplyAction = buildReplaySimpleMoveActionOrNull(
+    val forcedReplyAction = buildReplayForwardMoveActionOrNull(
         scene = sceneAfterUserMove,
         moveUci = forcedReplyUci,
         logicalPlyAfter = forcedReplyPly + 1,
-        durationMs = TrainSingleLineSimpleMoveDurationMs,
+        durationMs = TrainSingleLineMoveAnimationDurationMs,
     ) ?: return null
 
     return listOf(userMoveAction, forcedReplyAction)

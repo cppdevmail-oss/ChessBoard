@@ -9,6 +9,7 @@ package com.example.chessboard.ui.boardanimation.replay
 
 import com.example.chessboard.boardmodel.LastMoveHighlight
 import com.example.chessboard.ui.BoardOrientation
+import com.example.chessboard.ui.boardanimation.AnimateCaptureMoveAction
 import com.example.chessboard.ui.boardanimation.AnimateSimpleMoveAction
 import com.example.chessboard.ui.boardrender.BoardRenderPiece
 import com.example.chessboard.ui.boardrender.BoardRenderScene
@@ -19,8 +20,8 @@ import org.junit.Test
 class ReplayBoardAnimationTest {
 
     @Test
-    fun buildReplaySimpleMoveActionOrNull_returnsActionForQuietMove() {
-        val action = buildReplaySimpleMoveActionOrNull(
+    fun buildReplayForwardMoveActionOrNull_returnsActionForQuietMove() {
+        val action = buildReplayForwardMoveActionOrNull(
             scene = buildScene(
                 pieces = listOf(
                     BoardRenderPiece(letter = 'P', square = "e2"),
@@ -44,8 +45,8 @@ class ReplayBoardAnimationTest {
     }
 
     @Test
-    fun buildReplaySimpleMoveActionOrNull_returnsNullForCapture() {
-        val action = buildReplaySimpleMoveActionOrNull(
+    fun buildReplayForwardMoveActionOrNull_returnsCaptureActionForOccupiedTarget() {
+        val action = buildReplayForwardMoveActionOrNull(
             scene = buildScene(
                 pieces = listOf(
                     BoardRenderPiece(letter = 'P', square = "e4"),
@@ -57,12 +58,22 @@ class ReplayBoardAnimationTest {
             durationMs = 80,
         )
 
-        assertNull(action)
+        assertEquals(
+            AnimateCaptureMoveAction(
+                from = "e4",
+                to = "d5",
+                capturedSquare = "d5",
+                lastMoveHighlight = LastMoveHighlight(from = "e4", to = "d5"),
+                logicalPlyAfter = 2,
+                durationMs = 80,
+            ),
+            action,
+        )
     }
 
     @Test
-    fun buildReplaySimpleMoveActionOrNull_returnsNullForPromotion() {
-        val action = buildReplaySimpleMoveActionOrNull(
+    fun buildReplayForwardMoveActionOrNull_returnsNullForPromotion() {
+        val action = buildReplayForwardMoveActionOrNull(
             scene = buildScene(
                 pieces = listOf(
                     BoardRenderPiece(letter = 'P', square = "e7"),
@@ -77,8 +88,8 @@ class ReplayBoardAnimationTest {
     }
 
     @Test
-    fun buildReplaySimpleMoveActionOrNull_returnsNullForCastling() {
-        val action = buildReplaySimpleMoveActionOrNull(
+    fun buildReplayForwardMoveActionOrNull_returnsNullForCastling() {
+        val action = buildReplayForwardMoveActionOrNull(
             scene = buildScene(
                 pieces = listOf(
                     BoardRenderPiece(letter = 'K', square = "e1"),
@@ -94,8 +105,8 @@ class ReplayBoardAnimationTest {
     }
 
     @Test
-    fun buildReplaySimpleMoveActionOrNull_returnsNullForEnPassantLikeMove() {
-        val action = buildReplaySimpleMoveActionOrNull(
+    fun buildReplayForwardMoveActionOrNull_returnsNullForEnPassantLikeMove() {
+        val action = buildReplayForwardMoveActionOrNull(
             scene = buildScene(
                 pieces = listOf(
                     BoardRenderPiece(letter = 'P', square = "e5"),

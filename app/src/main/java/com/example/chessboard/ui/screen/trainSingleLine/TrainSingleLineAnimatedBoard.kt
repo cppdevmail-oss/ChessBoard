@@ -30,7 +30,7 @@ import androidx.compose.ui.platform.testTag
 import com.example.chessboard.boardmodel.LineController
 import com.example.chessboard.ui.BoardOrientation
 import com.example.chessboard.ui.InteractiveChessBoardTestTag
-import com.example.chessboard.ui.boardanimation.AnimateSimpleMoveAction
+import com.example.chessboard.ui.boardanimation.AnimatedBoardMoveAction
 import com.example.chessboard.ui.boardanimation.BoardAnimationQueueController
 import com.example.chessboard.ui.boardanimation.buildAnimatedBoardRenderScene
 import com.example.chessboard.ui.boardrender.BoardRenderScene
@@ -237,7 +237,7 @@ internal fun TrainSingleLineAnimatedBoard(
 // Builds the currently visible board scene, projecting the active queued move when needed.
 private fun buildBaseScene(
     currentScene: BoardRenderScene,
-    activeAction: AnimateSimpleMoveAction?,
+    activeAction: AnimatedBoardMoveAction?,
     progress: Float,
     squareSizePx: Float,
 ): BoardRenderScene {

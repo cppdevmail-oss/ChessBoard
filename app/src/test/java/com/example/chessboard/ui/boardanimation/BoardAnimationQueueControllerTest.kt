@@ -73,7 +73,50 @@ class BoardAnimationQueueControllerTest {
         assertEquals(LastMoveHighlight(from = "e2", to = "e4"), controller.state.currentScene?.lastMoveHighlight)
         assertEquals(1, controller.state.renderPly)
         assertEquals(secondAction, controller.state.activeAction)
-        assertEquals(emptyList<AnimateSimpleMoveAction>(), controller.state.pendingActions)
+        assertEquals(emptyList<AnimatedBoardMoveAction>(), controller.state.pendingActions)
+    }
+
+    @Test
+    fun completeActiveAction_appliesCaptureAndStartsNextPendingAction() {
+        val controller = BoardAnimationQueueController()
+        controller.submit(
+            ResetBoardSceneAction(
+                scene = BoardRenderScene(
+                    pieces = listOf(
+                        BoardRenderPiece(letter = 'P', square = "e4"),
+                        BoardRenderPiece(letter = 'p', square = "d5"),
+                    ),
+                    orientation = BoardOrientation.WHITE,
+                ),
+                renderPly = 1,
+            )
+        )
+
+        val captureAction = AnimateCaptureMoveAction(
+            from = "e4",
+            to = "d5",
+            capturedSquare = "d5",
+            lastMoveHighlight = LastMoveHighlight(from = "e4", to = "d5"),
+            logicalPlyAfter = 2,
+            durationMs = 250,
+        )
+        val secondAction = AnimateSimpleMoveAction(
+            from = "g8",
+            to = "f6",
+            lastMoveHighlight = LastMoveHighlight(from = "g8", to = "f6"),
+            logicalPlyAfter = 3,
+            durationMs = 250,
+        )
+
+        controller.submit(captureAction)
+        controller.submit(secondAction)
+        controller.completeActiveAction()
+
+        assertEquals(listOf(BoardRenderPiece(letter = 'P', square = "d5")), controller.state.currentScene?.pieces)
+        assertEquals(LastMoveHighlight(from = "e4", to = "d5"), controller.state.currentScene?.lastMoveHighlight)
+        assertEquals(2, controller.state.renderPly)
+        assertEquals(secondAction, controller.state.activeAction)
+        assertEquals(emptyList<AnimatedBoardMoveAction>(), controller.state.pendingActions)
     }
 
     @Test
@@ -105,7 +148,7 @@ class BoardAnimationQueueControllerTest {
         assertEquals(resetScene, controller.state.currentScene)
         assertEquals(12, controller.state.renderPly)
         assertNull(controller.state.activeAction)
-        assertEquals(emptyList<AnimateSimpleMoveAction>(), controller.state.pendingActions)
+        assertEquals(emptyList<AnimatedBoardMoveAction>(), controller.state.pendingActions)
         assertFalse(controller.state.isAnimating)
     }
 

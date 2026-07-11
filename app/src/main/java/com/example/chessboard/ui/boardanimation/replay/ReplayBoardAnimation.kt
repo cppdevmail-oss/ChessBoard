@@ -9,7 +9,9 @@ package com.example.chessboard.ui.boardanimation.replay
 
 import com.example.chessboard.boardmodel.LastMoveHighlight
 import com.example.chessboard.boardmodel.LineController
+import com.example.chessboard.ui.boardanimation.AnimateCaptureMoveAction
 import com.example.chessboard.ui.boardanimation.AnimateSimpleMoveAction
+import com.example.chessboard.ui.boardanimation.AnimatedBoardMoveAction
 import com.example.chessboard.ui.boardanimation.BoardAnimationQueueController
 import com.example.chessboard.ui.boardanimation.ResetBoardSceneAction
 import com.example.chessboard.ui.boardrender.BoardRenderPiece
@@ -36,7 +38,7 @@ internal fun buildReplayNextMoveAnimationAction(
     uciMoves: List<String>,
     lineController: LineController,
     durationMs: Int,
-): AnimateSimpleMoveAction? {
+): AnimatedBoardMoveAction? {
     val currentPly = lineController.currentMoveIndex
     val nextMoveUci = uciMoves.getOrNull(currentPly) ?: return null
     val currentScene = buildBoardRenderScene(
@@ -45,7 +47,7 @@ internal fun buildReplayNextMoveAnimationAction(
         lastMoveHighlight = lineController.getLastMoveHighlight(),
     )
 
-    return buildReplaySimpleMoveActionOrNull(
+    return buildReplayForwardMoveActionOrNull(
         scene = currentScene,
         moveUci = nextMoveUci,
         logicalPlyAfter = currentPly + 1,
@@ -53,12 +55,12 @@ internal fun buildReplayNextMoveAnimationAction(
     )
 }
 
-internal fun buildReplaySimpleMoveActionOrNull(
+internal fun buildReplayForwardMoveActionOrNull(
     scene: BoardRenderScene,
     moveUci: String,
     logicalPlyAfter: Int,
     durationMs: Int,
-): AnimateSimpleMoveAction? {
+): AnimatedBoardMoveAction? {
     if (moveUci.length != 4) {
         return null
     }
@@ -66,14 +68,22 @@ internal fun buildReplaySimpleMoveActionOrNull(
     val from = moveUci.substring(0, 2)
     val to = moveUci.substring(2, 4)
     val movingPiece = scene.pieces.find { piece -> piece.square == from } ?: return null
-    if (scene.pieces.any { piece -> piece.square == to }) {
-        return null
-    }
+    val capturedPiece = scene.pieces.find { piece -> piece.square == to }
     if (isReplayCastlingMove(movingPiece, from, to)) {
         return null
     }
-    if (isReplayEnPassantLikeMove(movingPiece, from, to)) {
+    if (isReplayEnPassantLikeMove(movingPiece, from, to, targetOccupied = capturedPiece != null)) {
         return null
+    }
+    if (capturedPiece != null) {
+        return AnimateCaptureMoveAction(
+            from = from,
+            to = to,
+            capturedSquare = to,
+            lastMoveHighlight = LastMoveHighlight(from = from, to = to),
+            logicalPlyAfter = logicalPlyAfter,
+            durationMs = durationMs,
+        )
     }
 
     return AnimateSimpleMoveAction(
@@ -102,9 +112,13 @@ private fun isReplayEnPassantLikeMove(
     movingPiece: BoardRenderPiece,
     from: String,
     to: String,
+    targetOccupied: Boolean,
 ): Boolean {
     val lowerLetter = movingPiece.letter.lowercaseChar()
     if (lowerLetter != 'p') {
+        return false
+    }
+    if (targetOccupied) {
         return false
     }
 

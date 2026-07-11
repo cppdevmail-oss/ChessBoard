@@ -11,8 +11,8 @@ import com.example.chessboard.ui.boardrender.BoardRenderScene
 
 data class BoardAnimationState(
     val currentScene: BoardRenderScene? = null,
-    val pendingActions: List<AnimateSimpleMoveAction> = emptyList(),
-    val activeAction: AnimateSimpleMoveAction? = null,
+    val pendingActions: List<AnimatedBoardMoveAction> = emptyList(),
+    val activeAction: AnimatedBoardMoveAction? = null,
     val renderPly: Int = 0,
 ) {
     val isAnimating: Boolean

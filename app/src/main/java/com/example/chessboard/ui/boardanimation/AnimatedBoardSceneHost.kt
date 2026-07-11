@@ -62,7 +62,7 @@ fun AnimatedBoardSceneHost(
 
 private fun buildSceneToRender(
     currentScene: com.example.chessboard.ui.boardrender.BoardRenderScene,
-    activeAction: AnimateSimpleMoveAction?,
+    activeAction: AnimatedBoardMoveAction?,
     progress: Float,
     squareSizePx: Float,
 ): com.example.chessboard.ui.boardrender.BoardRenderScene {

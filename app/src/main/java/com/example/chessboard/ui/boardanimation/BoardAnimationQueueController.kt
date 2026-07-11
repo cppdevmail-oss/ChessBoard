@@ -21,7 +21,7 @@ class BoardAnimationQueueController(
     fun submit(action: BoardAnimationAction) {
         when (action) {
             is ResetBoardSceneAction -> applyResetAction(action)
-            is AnimateSimpleMoveAction -> enqueueAnimatedMove(action)
+            is AnimatedBoardMoveAction -> enqueueAnimatedMove(action)
         }
     }
 
@@ -29,10 +29,7 @@ class BoardAnimationQueueController(
         val activeAction = state.activeAction ?: return
         val currentScene = state.currentScene ?: return
 
-        val nextScene = applyAnimatedSimpleMove(
-            scene = currentScene,
-            action = activeAction,
-        )
+        val nextScene = applyAnimatedBoardMove(scene = currentScene, action = activeAction)
         val remainingPendingActions = state.pendingActions
         val nextActiveAction = remainingPendingActions.firstOrNull()
 
@@ -53,7 +50,7 @@ class BoardAnimationQueueController(
         )
     }
 
-    private fun enqueueAnimatedMove(action: AnimateSimpleMoveAction) {
+    private fun enqueueAnimatedMove(action: AnimatedBoardMoveAction) {
         if (state.currentScene == null) {
             return
         }
