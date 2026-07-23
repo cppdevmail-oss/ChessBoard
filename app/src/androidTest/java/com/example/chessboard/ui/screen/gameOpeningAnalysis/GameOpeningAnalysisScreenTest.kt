@@ -18,6 +18,7 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -55,6 +56,7 @@ import com.example.chessboard.ui.GameOpeningAnalysisDeleteGameTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisEmptyStateTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisFilterBlackSideTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisFilterCaseSensitiveTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisFilterDialogTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisFilterExactMatchTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisFilterMinPlyTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisFilterPlayerNameTestTag
@@ -73,11 +75,13 @@ import com.example.chessboard.ui.GameOpeningAnalysisPreviewTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisPreviousGamesPageTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisPreviousMoveTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisRecordDeviationMistakeTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisResultCopyPgnActionTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisResultDetailActionTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisResultDetailBoardTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisResultDetailContentTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisResultDeleteActionTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisResultListTestTag
+import com.example.chessboard.ui.GameOpeningAnalysisResultPgnCopiedDialogTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisResultPreviewBoardTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisResultPreviewTestTag
 import com.example.chessboard.ui.GameOpeningAnalysisResultsContentTestTag
@@ -556,6 +560,8 @@ class GameOpeningAnalysisScreenTest {
 
         setScreenContent(runtimeContext = runtimeContext)
 
+        composeRule.onNodeWithTag(GameOpeningAnalysisResultCopyPgnActionTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(GameOpeningAnalysisResultDeleteActionTestTag).assertIsDisplayed()
         composeRule
             .onNodeWithTag(GameOpeningAnalysisResultDetailContentTestTag)
             .performScrollToNode(hasTestTag(GameOpeningAnalysisRecordDeviationMistakeTestTag))
@@ -576,7 +582,76 @@ class GameOpeningAnalysisScreenTest {
 
         setScreenContent(runtimeContext = runtimeContext)
 
+        composeRule.onNodeWithTag(GameOpeningAnalysisResultCopyPgnActionTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(GameOpeningAnalysisResultDeleteActionTestTag).assertIsDisplayed()
         assertTagIsAbsent(GameOpeningAnalysisRecordDeviationMistakeTestTag)
+    }
+
+    @Test
+    fun gameOpeningAnalysisScreen_resultDetailCopiesCompleteGamePgn() {
+        // Scenario: every result detail can copy its complete analyzed game as normalized PGN.
+        val runtimeContext = GameOpeningAnalysisRuntimeContext()
+        runtimeContext.addImportedGames(
+            listOf(
+                parsedCandidate(
+                    sourceIndex = 0,
+                    event = "Copy Complete Game",
+                    white = "Alice",
+                    black = "Bob",
+                    moves = listOf("e2e4", "e7e5", "g1f3", "b8c6"),
+                ),
+            ),
+        )
+        val result = resultForGame(runtimeContext.importedGames.single(), matchesKnownOpeningResult())
+        runtimeContext.replaceAnalysisResults(listOf(result))
+        runtimeContext.selectResult(result.gameId)
+        runtimeContext.openSelectedResultDetail()
+
+        setScreenContent(runtimeContext = runtimeContext)
+
+        composeRule.onNodeWithTag(GameOpeningAnalysisResultCopyPgnActionTestTag).performClick()
+
+        composeRule
+            .onNodeWithTag(GameOpeningAnalysisResultPgnCopiedDialogTestTag)
+            .assertIsDisplayed()
+        composeRule
+            .onNodeWithText("The complete game PGN was copied to the clipboard.")
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun gameOpeningAnalysisScreen_deleteResultDetailOpensNextResultDetail() {
+        // Scenario: deleting from the analyzed-game card removes that game and keeps the next result open.
+        val runtimeContext = GameOpeningAnalysisRuntimeContext()
+        runtimeContext.addImportedGames(
+            listOf(
+                parsedCandidate(sourceIndex = 0, event = "Delete Detail", moves = listOf("e2e4", "e7e5")),
+                parsedCandidate(sourceIndex = 1, event = "Next Detail", moves = listOf("d2d4", "d7d5")),
+            ),
+        )
+        val deleteResult = resultForGame(runtimeContext.importedGames.first(), matchesKnownOpeningResult())
+        val nextResult = resultForGame(runtimeContext.importedGames.last(), matchesKnownOpeningResult())
+        runtimeContext.replaceAnalysisResults(listOf(deleteResult, nextResult))
+        runtimeContext.selectResult(deleteResult.gameId)
+        runtimeContext.openSelectedResultDetail()
+
+        setScreenContent(runtimeContext = runtimeContext)
+
+        composeRule.onNodeWithTag(GameOpeningAnalysisResultDeleteActionTestTag).performClick()
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runtimeContext.currentView == GameOpeningAnalysisView.ANALYSIS_RESULT_DETAIL &&
+                runtimeContext.selectedResultGameId == nextResult.gameId &&
+                runtimeContext.analysisResults.map { result -> result.gameId } == listOf(nextResult.gameId)
+        }
+        composeRule.onNodeWithTag(GameOpeningAnalysisResultDetailContentTestTag).assertIsDisplayed()
+        composeRule
+            .onNode(
+                hasText("Next Detail") and
+                    hasAnyAncestor(hasTestTag(GameOpeningAnalysisResultDetailContentTestTag)),
+            )
+            .assertIsDisplayed()
+        assertTextIsAbsent("Delete Detail")
     }
 
     @Test
@@ -734,6 +809,12 @@ class GameOpeningAnalysisScreenTest {
                 "Apply a player filter before analysis so only one player's games are compared with the library.",
             )
             .assertIsDisplayed()
+
+        composeRule.onNodeWithText("OK").performClick()
+
+        composeRule.onNodeWithTag(GameOpeningAnalysisFilterDialogTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(GameOpeningAnalysisFilterPlayerNameTestTag).assertIsDisplayed()
+        assertTextIsAbsent("Filter Required")
         assertTagIsAbsent(GameOpeningAnalysisOptionsDialogTestTag)
     }
 
