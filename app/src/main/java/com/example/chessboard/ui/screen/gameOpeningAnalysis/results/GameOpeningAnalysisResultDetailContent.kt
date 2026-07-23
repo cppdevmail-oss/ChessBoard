@@ -21,7 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -127,7 +127,7 @@ private fun GameOpeningAnalysisResultGameCard(
                     modifier = Modifier.testTag(GameOpeningAnalysisResultCopyPgnActionTestTag),
                 ) {
                     IconMd(
-                        imageVector = Icons.Default.ContentCopy,
+                        imageVector = Icons.Default.FileDownload,
                         contentDescription =
                             stringResource(R.string.game_opening_analysis_copy_game_pgn_content_description),
                     )
