@@ -726,6 +726,7 @@ internal fun GameOpeningAnalysisScreen(
             GameOpeningAnalysisResultDetailContent(
                 analysisResult = snapshot.selectedAnalysisResult,
                 onRecordDeviationMistakeClick = ::startDeviationMistakeRecording,
+                onDeleteClick = { gameId -> runtimeContext.deleteAnalysisResultGame(gameId) },
                 modifier = Modifier.padding(paddingValues),
             )
             return@AppScreenScaffold

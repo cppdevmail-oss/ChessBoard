@@ -560,6 +560,7 @@ class GameOpeningAnalysisScreenTest {
             .onNodeWithTag(GameOpeningAnalysisResultDetailContentTestTag)
             .performScrollToNode(hasTestTag(GameOpeningAnalysisRecordDeviationMistakeTestTag))
         composeRule.onNodeWithTag(GameOpeningAnalysisRecordDeviationMistakeTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(GameOpeningAnalysisResultDeleteActionTestTag).assertIsDisplayed()
     }
 
     @Test
@@ -576,7 +577,38 @@ class GameOpeningAnalysisScreenTest {
 
         setScreenContent(runtimeContext = runtimeContext)
 
+        composeRule.onNodeWithTag(GameOpeningAnalysisResultDeleteActionTestTag).assertIsDisplayed()
         assertTagIsAbsent(GameOpeningAnalysisRecordDeviationMistakeTestTag)
+    }
+
+    @Test
+    fun gameOpeningAnalysisScreen_deleteResultDetailOpensNextResultDetail() {
+        // Scenario: deleting from the analyzed-game card removes that game and keeps the next result open.
+        val runtimeContext = GameOpeningAnalysisRuntimeContext()
+        runtimeContext.addImportedGames(
+            listOf(
+                parsedCandidate(sourceIndex = 0, event = "Delete Detail", moves = listOf("e2e4", "e7e5")),
+                parsedCandidate(sourceIndex = 1, event = "Next Detail", moves = listOf("d2d4", "d7d5")),
+            ),
+        )
+        val deleteResult = resultForGame(runtimeContext.importedGames.first(), matchesKnownOpeningResult())
+        val nextResult = resultForGame(runtimeContext.importedGames.last(), matchesKnownOpeningResult())
+        runtimeContext.replaceAnalysisResults(listOf(deleteResult, nextResult))
+        runtimeContext.selectResult(deleteResult.gameId)
+        runtimeContext.openSelectedResultDetail()
+
+        setScreenContent(runtimeContext = runtimeContext)
+
+        composeRule.onNodeWithTag(GameOpeningAnalysisResultDeleteActionTestTag).performClick()
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runtimeContext.currentView == GameOpeningAnalysisView.ANALYSIS_RESULT_DETAIL &&
+                runtimeContext.selectedResultGameId == nextResult.gameId &&
+                runtimeContext.analysisResults.map { result -> result.gameId } == listOf(nextResult.gameId)
+        }
+        composeRule.onNodeWithTag(GameOpeningAnalysisResultDetailContentTestTag).assertIsDisplayed()
+        composeRule.onNodeWithText("Next Detail").assertIsDisplayed()
+        assertTextIsAbsent("Delete Detail")
     }
 
     @Test
