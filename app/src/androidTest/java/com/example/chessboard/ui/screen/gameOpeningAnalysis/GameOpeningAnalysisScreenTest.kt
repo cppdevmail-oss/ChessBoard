@@ -18,6 +18,7 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -607,7 +608,12 @@ class GameOpeningAnalysisScreenTest {
                 runtimeContext.analysisResults.map { result -> result.gameId } == listOf(nextResult.gameId)
         }
         composeRule.onNodeWithTag(GameOpeningAnalysisResultDetailContentTestTag).assertIsDisplayed()
-        composeRule.onNodeWithText("Next Detail").assertIsDisplayed()
+        composeRule
+            .onNode(
+                hasText("Next Detail") and
+                    hasAnyAncestor(hasTestTag(GameOpeningAnalysisResultDetailContentTestTag)),
+            )
+            .assertIsDisplayed()
         assertTextIsAbsent("Delete Detail")
     }
 
