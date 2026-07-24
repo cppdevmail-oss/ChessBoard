@@ -12,6 +12,8 @@ package com.example.chessboard.ui.screen
 import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -24,6 +26,7 @@ import com.example.chessboard.service.LineBackupRestoreResult
 import com.example.chessboard.ui.BackupContentTestTag
 import com.example.chessboard.ui.BackupFullCreateTestTag
 import com.example.chessboard.ui.BackupFullRestoreTestTag
+import com.example.chessboard.ui.BackupFullStrictFileSelectionTestTag
 import com.example.chessboard.ui.BackupRestoreCancelTestTag
 import com.example.chessboard.ui.BackupRestoreProgressDialogTestTag
 import com.example.chessboard.ui.theme.ChessBoardTheme
@@ -57,6 +60,27 @@ class BackupScreenTest {
         composeRule.onNodeWithText("Full Database Backup").assertIsDisplayed()
         composeRule.onNodeWithTag(BackupFullCreateTestTag).assertIsDisplayed()
         composeRule.onNodeWithTag(BackupFullRestoreTestTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun backupScreen_fullBackupStrictFileSelectionEnabledByDefaultAndCanBeDisabled() {
+        composeRule.setContent {
+            ChessBoardTheme {
+                BackupScreenContainer(
+                    activity = composeRule.activity,
+                    screenContext =
+                        ScreenContainerContext(
+                            inDbProvider = DatabaseProvider.createInstance(composeRule.activity),
+                        ),
+                )
+            }
+        }
+
+        composeRule
+            .onNodeWithTag(BackupFullStrictFileSelectionTestTag)
+            .assertIsOn()
+            .performClick()
+            .assertIsOff()
     }
 
     @Test
