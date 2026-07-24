@@ -19,6 +19,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -27,11 +28,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -43,6 +46,7 @@ import com.example.chessboard.service.LineBackupRestoreResult
 import com.example.chessboard.ui.BackupContentTestTag
 import com.example.chessboard.ui.BackupFullCreateTestTag
 import com.example.chessboard.ui.BackupFullRestoreTestTag
+import com.example.chessboard.ui.BackupFullStrictFileSelectionTestTag
 import com.example.chessboard.ui.BackupRestoreCancelTestTag
 import com.example.chessboard.ui.BackupRestoreProgressDialogTestTag
 import com.example.chessboard.ui.components.AppBottomNavigation
@@ -60,6 +64,7 @@ import com.example.chessboard.ui.components.ScreenTitleText
 import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.Background
+import com.example.chessboard.ui.theme.TextColor
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -74,6 +79,23 @@ typealias BackupRestoreRunner = suspend (
     uri: Uri,
     onProgress: suspend (LineBackupRestoreProgress) -> Unit,
 ) -> LineBackupRestoreResult
+
+internal const val FullDatabaseBackupMimeType = "application/vnd.sqlite3"
+private const val FullDatabaseBackupFileExtension = "sqlite3"
+private const val GenericBinaryMimeType = "application/octet-stream"
+private const val AnyFileMimeType = "*/*"
+
+internal fun resolveFullDatabaseRestoreMimeTypes(strictFileSelection: Boolean): Array<String> {
+    if (strictFileSelection) {
+        return arrayOf(FullDatabaseBackupMimeType)
+    }
+
+    return arrayOf(
+        FullDatabaseBackupMimeType,
+        GenericBinaryMimeType,
+        AnyFileMimeType,
+    )
+}
 
 @Composable
 fun BackupScreenContainer(
@@ -121,7 +143,7 @@ fun BackupScreenContainer(
     fun resolveDefaultFullBackupFileName(): String {
         val formatter = SimpleDateFormat("yyyy-MM-dd-HH-mm", Locale.US)
         val timestamp = formatter.format(Date())
-        return "chessboard-full-backup-$timestamp.db"
+        return "cb-backup-$timestamp.$FullDatabaseBackupFileExtension"
     }
 
     fun resolveRestoreMessage(result: LineBackupRestoreResult): String {
@@ -178,6 +200,7 @@ fun BackupScreenContainer(
     var pendingFullRestoreUri by remember { mutableStateOf<Uri?>(null) }
     var restoreProgress by remember { mutableStateOf<LineBackupRestoreProgress?>(null) }
     var restoreJob by remember { mutableStateOf<Job?>(null) }
+    var strictFullBackupFileSelection by remember { mutableStateOf(true) }
 
     val backupLauncher =
         rememberLauncherForActivityResult(
@@ -214,7 +237,7 @@ fun BackupScreenContainer(
 
     val fullBackupLauncher =
         rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.CreateDocument("application/vnd.sqlite3"),
+            contract = ActivityResultContracts.CreateDocument(FullDatabaseBackupMimeType),
         ) { uri: Uri? ->
             if (uri == null) {
                 return@rememberLauncherForActivityResult
@@ -450,8 +473,12 @@ fun BackupScreenContainer(
             fullBackupLauncher.launch(resolvedName)
         },
         onRestoreFullBackupClick = {
-            fullRestoreLauncher.launch(arrayOf("application/vnd.sqlite3", "application/octet-stream", "*/*"))
+            fullRestoreLauncher.launch(
+                resolveFullDatabaseRestoreMimeTypes(strictFullBackupFileSelection),
+            )
         },
+        strictFullBackupFileSelection = strictFullBackupFileSelection,
+        onStrictFullBackupFileSelectionChange = { strictFullBackupFileSelection = it },
         modifier = modifier,
     )
 }
@@ -464,6 +491,8 @@ private fun BackupScreen(
     onRestoreLinesClick: () -> Unit = {},
     onCreateFullBackupClick: () -> Unit = {},
     onRestoreFullBackupClick: () -> Unit = {},
+    strictFullBackupFileSelection: Boolean,
+    onStrictFullBackupFileSelectionChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     AppScreenScaffold(
@@ -535,6 +564,10 @@ private fun BackupScreen(
                                 .fillMaxWidth()
                                 .testTag(BackupFullCreateTestTag),
                     )
+                    FullBackupStrictFileSelectionRow(
+                        checked = strictFullBackupFileSelection,
+                        onCheckedChange = onStrictFullBackupFileSelectionChange,
+                    )
                     PrimaryButton(
                         text = stringResource(R.string.backup_full_restore_action),
                         onClick = onRestoreFullBackupClick,
@@ -546,6 +579,36 @@ private fun BackupScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun FullBackupStrictFileSelectionRow(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(AppDimens.spaceXs),
+        ) {
+            BodySecondaryText(
+                text = stringResource(R.string.backup_full_strict_file_selection),
+                color = TextColor.Primary,
+            )
+            CardMetaText(
+                text = stringResource(R.string.backup_full_strict_file_selection_subtitle),
+            )
+        }
+        Checkbox(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            modifier = Modifier.testTag(BackupFullStrictFileSelectionTestTag),
+        )
     }
 }
 
