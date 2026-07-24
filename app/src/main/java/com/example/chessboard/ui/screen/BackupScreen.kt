@@ -17,13 +17,17 @@ import android.app.Activity
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -38,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.example.chessboard.R
@@ -65,6 +70,7 @@ import com.example.chessboard.ui.components.defaultAppBottomNavigationItems
 import com.example.chessboard.ui.theme.AppDimens
 import com.example.chessboard.ui.theme.Background
 import com.example.chessboard.ui.theme.TextColor
+import com.example.chessboard.ui.theme.TrainingAccentTeal
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -529,56 +535,65 @@ private fun BackupScreen(
                     .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(AppDimens.spaceLg),
         ) {
-            ScreenSection {
-                Column(
+            BackupOptionSection {
+                ScreenTitleText(text = stringResource(R.string.backup_content_title))
+                BodySecondaryText(text = stringResource(R.string.backup_content_subtitle))
+                PrimaryButton(
+                    text = stringResource(R.string.backup_create_action),
+                    onClick = onCreateBackupClick,
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(AppDimens.spaceLg),
-                ) {
-                    ScreenTitleText(text = stringResource(R.string.backup_content_title))
-                    BodySecondaryText(text = stringResource(R.string.backup_content_subtitle))
-                    PrimaryButton(
-                        text = stringResource(R.string.backup_create_action),
-                        onClick = onCreateBackupClick,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    PrimaryButton(
-                        text = stringResource(R.string.backup_restore_action),
-                        onClick = onRestoreLinesClick,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
+                )
+                PrimaryButton(
+                    text = stringResource(R.string.backup_restore_action),
+                    onClick = onRestoreLinesClick,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
 
-            ScreenSection {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(AppDimens.spaceLg),
-                ) {
-                    ScreenTitleText(text = stringResource(R.string.backup_full_content_title))
-                    BodySecondaryText(text = stringResource(R.string.backup_full_content_subtitle))
-                    PrimaryButton(
-                        text = stringResource(R.string.backup_full_create_action),
-                        onClick = onCreateFullBackupClick,
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .testTag(BackupFullCreateTestTag),
-                    )
-                    FullBackupStrictFileSelectionRow(
-                        checked = strictFullBackupFileSelection,
-                        onCheckedChange = onStrictFullBackupFileSelectionChange,
-                    )
-                    PrimaryButton(
-                        text = stringResource(R.string.backup_full_restore_action),
-                        onClick = onRestoreFullBackupClick,
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .testTag(BackupFullRestoreTestTag),
-                    )
-                }
+            BackupOptionSection {
+                ScreenTitleText(text = stringResource(R.string.backup_full_content_title))
+                BodySecondaryText(text = stringResource(R.string.backup_full_content_subtitle))
+                PrimaryButton(
+                    text = stringResource(R.string.backup_full_create_action),
+                    onClick = onCreateFullBackupClick,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .testTag(BackupFullCreateTestTag),
+                )
+                FullBackupStrictFileSelectionRow(
+                    checked = strictFullBackupFileSelection,
+                    onCheckedChange = onStrictFullBackupFileSelectionChange,
+                )
+                PrimaryButton(
+                    text = stringResource(R.string.backup_full_restore_action),
+                    onClick = onRestoreFullBackupClick,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .testTag(BackupFullRestoreTestTag),
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun BackupOptionSection(content: @Composable ColumnScope.() -> Unit) {
+    ScreenSection(
+        modifier =
+            Modifier.border(
+                width = 1.dp,
+                color = TrainingAccentTeal,
+                shape = RoundedCornerShape(AppDimens.radiusSm),
+            ),
+        contentPadding = PaddingValues(AppDimens.spaceLg),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(AppDimens.spaceLg),
+            content = content,
+        )
     }
 }
 
